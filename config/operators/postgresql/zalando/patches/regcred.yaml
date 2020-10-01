@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: postgres-operator
+imagePullSecrets:
+  - name: gitlab-registry
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: postgres-pod
+imagePullSecrets:
+  - name: gitlab-registry

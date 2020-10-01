@@ -1,0 +1,11 @@
+domain: cloudlinux.com
+layout: go.kubebuilder.io/v2
+projectName: cm-operator
+repo: cloudmanaged
+resources:
+- group: cloudlinux
+  kind: CloudManaged
+  version: v1
+version: 3-alpha
+plugins:
+  go.sdk.operatorframework.io/v2-alpha: {}

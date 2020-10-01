@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: redis-operator
+  name: redis-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-operator
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: redis-operator
+    spec:
+      serviceAccountName: redis-operator
+      containers:
+        - image: redis-operator:latest
+          imagePullPolicy: IfNotPresent
+          name: redis-operator
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          resources:
+            limits:
+              cpu: 100m
+              memory: 50Mi
+            requests:
+              cpu: 10m
+              memory: 50Mi
+      restartPolicy: Always

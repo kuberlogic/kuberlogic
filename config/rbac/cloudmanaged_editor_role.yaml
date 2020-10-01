@@ -1,0 +1,24 @@
+# permissions for end users to edit cloudmanageds.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cloudmanaged-editor-role
+rules:
+- apiGroups:
+  - cloudlinux.com
+  resources:
+  - cloudmanageds
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloudlinux.com
+  resources:
+  - cloudmanageds/status
+  verbs:
+  - get

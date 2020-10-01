@@ -1,0 +1,10 @@
+patchesStrategicMerge:
+- regcred.yaml
+resources:
+- manager.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: controller
+  newName: gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged
+  newTag: latest

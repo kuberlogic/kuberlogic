@@ -1,0 +1,20 @@
+apiVersion: cloudlinux.com/v1
+kind: CloudManaged
+metadata:
+  name: cloudmanaged-postgresql
+spec:
+  type: postgresql
+  replicas: 2
+
+#  volumeSize: 3Gi
+##
+#  resources:
+#    requests:
+#      memory: 100Mi
+#      cpu: 10m
+#    limits:
+#      memory: 1000Mi
+#      cpu: 100m
+#
+#
+#  version: 12.1.3

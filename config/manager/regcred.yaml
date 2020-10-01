@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: system
+  labels:
+    control-plane: controller-manager
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: gitlab-registry
+      containers:
+        - name: manager
+          env:
+            - name: IMAGE_REPO
+              value: gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/
+            - name: IMAGE_PULL_SECRET
+              value: gitlab-registry

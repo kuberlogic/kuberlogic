@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-operator
+  labels:
+    app: mysql-operator
+spec:
+  replicas: 1
+  serviceName: mysql-operator-orc
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: mysql-operator
+      release: mysql-cluster
+  template:
+    metadata:
+      labels:
+        app: mysql-operator
+        release: mysql-cluster
+      annotations:
+        checksum/config: 71a9db13ff0763682a656e46cf1d667b37f5e7a5769c27e5f05bd9e7e4f0872a
+        checksum/secret: 094102ea7918fd6111c55183a79492e9902941ad4347ddba8eafd8069a2ac382
+    spec:
+      serviceAccountName: mysql-operator
+      containers:
+        - name: mysql-operator
+          image: mysql-operator:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ORC_TOPOLOGY_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-operator-orc
+                  key: TOPOLOGY_USER
+            - name: ORC_TOPOLOGY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-operator-orc
+                  key: TOPOLOGY_PASSWORD
+          args:
+            - --leader-election-namespace=default
+            # connect to orchestrator on localhost
+            - --orchestrator-uri=http://127.0.0.1:3000/api
+            # TODO: need to use private registry to sidecar container?
+            - --sidecar-image=quay.io/presslabs/mysql-operator-sidecar:latest
+          resources:
+            { }
+          # TODO: add livenessProbe to controller
+          # livenessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: 80
+        - name: orchestrator
+          # TODO: need to use private registry to sidecar container?
+          image: quay.io/presslabs/mysql-operator-orchestrator:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: web
+              protocol: TCP
+            - containerPort: 10008
+              name: raft
+              protocol: TCP
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          envFrom:
+            - prefix: ORC_
+              secretRef:
+                name: mysql-operator-orc
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/orchestrator/
+            - name: config
+              mountPath: /templates/
+          livenessProbe:
+            timeoutSeconds: 10
+            initialDelaySeconds: 200
+            httpGet:
+              path: /api/lb-check
+              port: 3000
+          # https://github.com/github/orchestrator/blob/master/docs/raft.md#proxy-healthy-raft-nodes
+          readinessProbe:
+            timeoutSeconds: 10
+            httpGet:
+              path: /api/raft-health
+              port: 3000
+          resources: { }
+
+      volumes:
+        - name: config
+          configMap:
+            name: mysql-operator-orc
+
+      # security context to mount corectly the volume for orc
+      securityContext:
+        fsGroup: 777
+
+      affinity: { }
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

@@ -1,0 +1,20 @@
+apiVersion: cloudlinux.com/v1
+kind: CloudManaged
+metadata:
+  name: cloudmanaged-mysql
+spec:
+  type: mysql
+  replicas: 2
+  secret: my-secret
+
+#  volumeSize: 3Gi
+#
+#  resources:
+#    requests:
+#      memory: 100Mi
+#      cpu: 10m
+#    limits:
+#      memory: 1000Mi
+#      cpu: 100m
+#
+#  version: 5.7.30

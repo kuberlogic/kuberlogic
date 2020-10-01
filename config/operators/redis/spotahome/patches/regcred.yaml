@@ -1,0 +1,6 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: redis-operator
+imagePullSecrets:
+  - name: gitlab-registry
