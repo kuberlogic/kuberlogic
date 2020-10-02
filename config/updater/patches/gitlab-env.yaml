@@ -1,0 +1,16 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: updater
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: updater # (1)
+              env:
+                - name: REGISTRY_API
+                  value: https://gitlab.corp.cloudlinux.com/api/v4/groups/cloudmanaged/registry/repositories?tags=1&tags_count=true
+                - name: REGISTRY_TOKEN
+                  value: D7xUfvCsodyRKGFHeh9e

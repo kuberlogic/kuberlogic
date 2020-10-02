@@ -1,0 +1,19 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: updater
+spec:
+  schedule: "*/10 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          name: cloudmanaged-updater
+          labels:
+            app: cloudmanaged-updater
+        spec:
+          serviceAccountName: cloudmanaged-updater
+          containers:
+            - name: updater
+              image: cloudmanaged-updater:latest
+          restartPolicy: OnFailure

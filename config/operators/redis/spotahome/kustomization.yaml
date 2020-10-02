@@ -1,11 +1,12 @@
-patchesStrategicMerge:
-  - patches/regcred.yaml
-resources:
-  - operator-service-account-rbac.yaml
-  - deployment.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
   - name: redis-operator
     newName: gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/redis-operator
     newTag: latest
+patchesStrategicMerge:
+  - patches/regcred.yaml
+resources:
+  - operator-service-account-rbac.yaml
+  - deployment.yaml
+

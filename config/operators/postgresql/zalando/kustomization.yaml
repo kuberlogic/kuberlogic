@@ -1,3 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+  - name: postgres-operator
+    newName: gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/postgres-operator
+    newTag: latest
 patchesStrategicMerge:
   - patches/regcred.yaml
 resources:
@@ -5,9 +11,4 @@ resources:
   - operator-service-account-rbac.yaml
   - deployment.yaml
   - api-service.yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-images:
-  - name: postgres-operator
-    newName: gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/postgres-operator
-    newTag: latest
+

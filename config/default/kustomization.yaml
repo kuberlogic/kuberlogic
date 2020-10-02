@@ -1,3 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../crd
+  - ../rbac
+  - ../manager
+  - ../updater
+  - ../operators/postgresql/zalando
+  - ../operators/mysql/presslabs
+  - ../operators/redis/spotahome
 # Adds namespace to all resources.
 namespace: default
 
@@ -35,13 +45,3 @@ patchesStrategicMerge:
 # 'CERTMANAGER' needs to be enabled to use ca injection
 #- webhookcainjection_patch.yaml
 
-# the following config is for teaching kustomize how to do var substitution
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-- ../crd
-- ../rbac
-- ../manager
-- ../operators/postgresql/zalando
-- ../operators/mysql/presslabs
-- ../operators/redis/spotahome

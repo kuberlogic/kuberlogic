@@ -1,0 +1,2 @@
+[url "git@gitlab.corp.cloudlinux.com:"]
+	insteadOf = https://gitlab.com/

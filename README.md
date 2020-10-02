@@ -14,16 +14,17 @@ This step is responsible for deploy operators:
 
 # need to create secret for access gitlab registry - see details https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#inspecting-the-secret-regcred
 docker login gitlab.corp.cloudlinux.com:5001
-# should be generated file $HOME/.docker/config.json 
-kubectl create secret generic gitlab-registry --from-file=.dockerconfigjson=$HOME/.docker/config.json --type=kubernetes.io/dockerconfigjson
-
+DOCKER_REGISTRY_SERVER=https://gitlab.corp.cloudlinux.com:5001
+DOCKER_USER=<username>
+DOCKER_PASSWORD=<password>
+kubectl create secret docker-registry gitlab-registry --docker-server=$DOCKER_REGISTRY_SERVER --docker-username=$DOCKER_USER --docker-password=$DOCKER_PASSWORD
 make deploy
 ```
 
 ### Create PostgreSQL cluster
 
 ```
-# kubectl create cloudmanaged/src/cm-operator/config/samle/cm-postgresql.yaml
+kubectl create cloudmanaged/src/cm-operator/config/samle/cm-postgresql.yaml
 ```
 
 ### Create MySQL cluster
