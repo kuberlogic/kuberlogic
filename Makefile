@@ -16,8 +16,13 @@ IMG_REPO = gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged
 # default secrets with credetials to private repo (using for mysql/redis)
 # for postgresql is using service account
 IMG_PULL_SECRET = gitlab-registry
+
 # Image URL to use all building/pushing image targets
-IMG ?= $(IMG_REPO):latest
+OPERATOR_NAME = cloudmanaged-operator
+IMG ?= $(IMG_REPO)/$(OPERATOR_NAME):$(VERSION)
+# updater image
+UPDATER_NAME = cloudmanaged-updater
+UPDATER_IMG ?= $(IMG_REPO)/$(UPDATER_NAME):$(VERSION)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
@@ -53,6 +58,7 @@ uninstall: manifests kustomize
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	cd config/updater && $(KUSTOMIZE) edit set image cloudmanaged-updater=$(UPDATER_IMG)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 undeploy:
@@ -77,10 +83,12 @@ generate: controller-gen
 # Build the docker image
 docker-build: test
 	docker build . -t ${IMG}
+	docker build updater/ -t ${UPDATER_IMG}
 
 # Push the docker image
 docker-push:
 	docker push ${IMG}
+	docker push ${UPDATER_IMG}
 
 # find or download controller-gen
 # download controller-gen if necessary
@@ -119,6 +127,7 @@ endif
 bundle: manifests
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	cd config/updater && $(KUSTOMIZE) edit set image cloudmanaged-updater=$(UPDATER_IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 

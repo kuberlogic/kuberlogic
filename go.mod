@@ -19,6 +19,6 @@ replace (
 	github.com/presslabs/mysql-operator => github.com/cloudlinux/mysql-operator v0.4.1-0.20200922131437-71ac68b234d0
 	github.com/spotahome/redis-operator => github.com/cloudlinux/redis-operator v1.0.1-0.20200922144448-ea17b0f10a01
 	github.com/zalando/postgres-operator => github.com/cloudlinux/postgres-operator v1.5.1-0.20200922100439-a33d339eac3f
-	// Pin k8s deps to 1.18.6
-	k8s.io/client-go => k8s.io/client-go v0.18.6
+	// Pin k8s deps to 1.18.8
+	k8s.io/client-go => k8s.io/client-go v0.18.8
 )
