@@ -124,9 +124,19 @@ func (p *Mysql) isEqualImage(cm *cloudlinuxv1.CloudManaged) bool {
 }
 
 func (p *Mysql) CurrentStatus() string {
-	if int32(p.Operator.Status.ReadyNodes) == *p.Operator.Spec.Replicas {
-		return string(v1.ConditionTrue)
-	} else {
-		return string(v1.ConditionFalse)
+	status := ""
+	for _, v := range p.Operator.Status.Conditions {
+		if v.Type == "Ready" {
+			status = string(v.Status)
+		}
+	}
+
+	switch status {
+	case "False":
+		return cloudlinuxv1.ClusterNotReadyStatus
+	case "True":
+		return cloudlinuxv1.ClusterOkStatus
+	default:
+		return cloudlinuxv1.ClusterUnknownStatus
 	}
 }
