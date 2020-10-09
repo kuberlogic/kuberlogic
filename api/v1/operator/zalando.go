@@ -137,5 +137,14 @@ func (p *Postgres) isEqualImage(cm *cloudlinuxv1.CloudManaged) bool {
 }
 
 func (p *Postgres) CurrentStatus() string {
-	return p.Operator.Status.PostgresClusterStatus
+	switch p.Operator.Status.PostgresClusterStatus {
+	case postgresv1.ClusterStatusCreating, postgresv1.ClusterStatusUpdating, postgresv1.ClusterStatusUnknown:
+		return cloudlinuxv1.ClusterNotReadyStatus
+	case postgresv1.ClusterStatusAddFailed, postgresv1.ClusterStatusUpdateFailed, postgresv1.ClusterStatusSyncFailed, postgresv1.ClusterStatusInvalid:
+		return cloudlinuxv1.ClusterFailedStatus
+	case postgresv1.ClusterStatusRunning:
+		return cloudlinuxv1.ClusterOkStatus
+	default:
+		return cloudlinuxv1.ClusterUnknownStatus
+	}
 }

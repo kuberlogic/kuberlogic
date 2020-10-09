@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"gitlab.com/cloudmanaged/operator/monitoring"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -74,6 +75,25 @@ func (cm *CloudManaged) InitDefaults(defaults Defaults) bool {
 		dirty = true
 	}
 	return dirty
+}
+
+func (cm *CloudManaged) SetMetrics() {
+	metricsMetadata := &monitoring.MetricsMetadata{
+		Name:      cm.ObjectMeta.Name,
+		Namespace: cm.ObjectMeta.Namespace,
+		Type:      cm.Spec.Type,
+	}
+
+	metrics := &monitoring.MetricsStore{
+		Meta: metricsMetadata,
+
+		Ready:    cm.Status.Status == ClusterOkStatus,
+		Replicas: cm.Spec.Replicas,
+		CPULimit: cm.Spec.Resources.Limits.Cpu().MilliValue(),
+		MemLimit: cm.Spec.Resources.Limits.Memory().Value(),
+	}
+
+	metrics.Expose()
 }
 
 // CloudManagedList contains a list of CloudManaged

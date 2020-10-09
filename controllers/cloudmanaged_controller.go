@@ -121,6 +121,8 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		}
 	}
 
+	cloudmanaged.SetMetrics()
+
 	return ctrl.Result{}, nil
 }
 

@@ -6,6 +6,7 @@ require (
 	github.com/go-logr/logr v0.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/presslabs/mysql-operator v0.4.0
+	github.com/prometheus/client_golang v1.0.0
 	github.com/spotahome/redis-operator v1.0.0
 	github.com/zalando/postgres-operator v1.5.1-0.20200903060246-03437b63749e
 	k8s.io/api v0.18.8

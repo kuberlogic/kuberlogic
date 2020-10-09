@@ -7,6 +7,7 @@ import (
 	mysql "github.com/presslabs/mysql-operator/pkg/apis"
 	redis "github.com/spotahome/redis-operator/api/redisfailover/v1"
 	postgres "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
+	"gitlab.com/cloudmanaged/operator/monitoring"
 	"os"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -88,6 +89,10 @@ func main() {
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
+
+	if err = monitoring.Init(); err != nil {
+		setupLog.Error(err, "error initializing metrics")
+	}
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
