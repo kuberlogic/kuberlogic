@@ -78,16 +78,22 @@ func (cm *CloudManaged) InitDefaults(defaults Defaults) bool {
 }
 
 func (cm *CloudManaged) SetMetrics() {
-	metricMetadata := &monitoring.MetricsMetadata{
-		Name:        cm.ObjectMeta.Name,
-		Namespace:   cm.ObjectMeta.Namespace,
-		ClusterType: cm.Spec.Type,
+	metricsMetadata := &monitoring.MetricsMetadata{
+		Name:      cm.ObjectMeta.Name,
+		Namespace: cm.ObjectMeta.Namespace,
+		Type:      cm.Spec.Type,
 	}
 
-	monitoring.PopulateReplicasMetric(metricMetadata, cm.Spec.Replicas)
-	monitoring.PopulateMemLimitMetric(metricMetadata, cm.Spec.Resources.Limits.Memory().Value())
-	monitoring.PopulateCPULimitsMetric(metricMetadata, cm.Spec.Resources.Limits.Cpu().MilliValue())
-	monitoring.PopulateStatusMetric(metricMetadata, cm.Status.Status == ClusterOkStatus)
+	metrics := &monitoring.MetricsStore{
+		Meta: metricsMetadata,
+
+		Ready:    cm.Status.Status == ClusterOkStatus,
+		Replicas: cm.Spec.Replicas,
+		CPULimit: cm.Spec.Resources.Limits.Cpu().MilliValue(),
+		MemLimit: cm.Spec.Resources.Limits.Memory().Value(),
+	}
+
+	metrics.Expose()
 }
 
 // CloudManagedList contains a list of CloudManaged
