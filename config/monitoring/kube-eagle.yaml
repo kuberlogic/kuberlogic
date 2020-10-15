@@ -1,0 +1,119 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: kube-eagle
+  name: sa-kube-eagle
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app: kube-eagle
+  name: kube-eagle
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+      - pods
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - metrics.k8s.io
+    resources:
+      - pods
+      - nodes
+    verbs:
+      - get
+      - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app: kube-eagle
+  name: kube-eagle
+subjects:
+  - kind: ServiceAccount
+    name: sa-kube-eagle
+    namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kube-eagle
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-eagle
+  labels:
+    app: kube-eagle
+    monitoring.cloudlinux.io/scrape: "true"
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: kube-eagle
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-eagle
+  labels:
+    app: kube-eagle
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kube-eagle
+  template:
+    metadata:
+      annotations:
+      labels:
+        app: kube-eagle
+    spec:
+      securityContext:
+        fsGroup: 99
+        runAsUser: 99
+      serviceAccountName: sa-kube-eagle
+      containers:
+        - name: kube-eagle
+          image: "quay.io/google-cloud-tools/kube-eagle:1.1.4"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TELEMETRY_HOST
+              value: "0.0.0.0"
+            - name: TELEMETRY_PORT
+              value: "8080"
+            - name: METRICS_NAMESPACE
+              value: "eagle"
+            - name: LOG_LEVEL
+              value: "info"
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            timeoutSeconds: 5
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            timeoutSeconds: 5
+            httpGet:
+              path: /health
+              port: http
+          resources:
+            {}
+
