@@ -51,11 +51,9 @@ metadata:
   name: kube-eagle
   labels:
     app: kube-eagle
-    monitoring.cloudlinux.io/scrape: "true"
   annotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/port: "8080"
-    prometheus.io/path: "/metrics"
+    monitoring.cloudlinux.com/scrape: "true"
+    monitoring.cloudlinux.com/port: "8080"
 spec:
   type: ClusterIP
   ports:
@@ -115,5 +113,10 @@ spec:
               path: /health
               port: http
           resources:
-            {}
+            limits:
+              cpu: 50m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 32Mi
 
