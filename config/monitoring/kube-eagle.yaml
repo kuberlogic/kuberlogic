@@ -3,14 +3,14 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    app: kube-eagle
+    app.kubernetes.io/name: kube-eagle
   name: sa-kube-eagle
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
-    app: kube-eagle
+    app.kubernetes.io/name: kube-eagle
   name: kube-eagle
 rules:
   - apiGroups:
@@ -29,12 +29,24 @@ rules:
     verbs:
       - get
       - list
+  - apiGroups:
+      - authentication.k8s.io
+    resources:
+      - tokenreviews
+    verbs:
+      - create
+  - apiGroups:
+      - authorization.k8s.io
+    resources:
+      - subjectaccessreviews
+    verbs:
+      - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   labels:
-    app: kube-eagle
+    app.kubernetes.io/name: kube-eagle
   name: kube-eagle
 subjects:
   - kind: ServiceAccount
@@ -50,36 +62,36 @@ kind: Service
 metadata:
   name: kube-eagle
   labels:
-    app: kube-eagle
-  annotations:
-    monitoring.cloudlinux.com/scrape: "true"
-    monitoring.cloudlinux.com/port: "8080"
+    app.kubernetes.io/name: kube-eagle
 spec:
   type: ClusterIP
   ports:
-    - port: 8080
+    - port: 8443
       targetPort: http
       protocol: TCP
       name: http
   selector:
-    app: kube-eagle
+    app.kubernetes.io/name: kube-eagle
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kube-eagle
   labels:
-    app: kube-eagle
+    app.kubernetes.io/name: kube-eagle
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: kube-eagle
+      app.kubernetes.io/name: kube-eagle
   template:
     metadata:
       annotations:
+        monitoring.cloudlinux.com/scrape: "true"
+        monitoring.cloudlinux.com/port: "8443"
+        monitoring.cloudlinux.com/scheme: "https"
       labels:
-        app: kube-eagle
+        app.kubernetes.io/name: kube-eagle
     spec:
       securityContext:
         fsGroup: 99
@@ -91,27 +103,13 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: TELEMETRY_HOST
-              value: "0.0.0.0"
+              value: "127.0.0.1"
             - name: TELEMETRY_PORT
               value: "8080"
             - name: METRICS_NAMESPACE
               value: "eagle"
             - name: LOG_LEVEL
               value: "info"
-          ports:
-            - name: http
-              containerPort: 8080
-              protocol: TCP
-          livenessProbe:
-            timeoutSeconds: 5
-            httpGet:
-              path: /health
-              port: http
-          readinessProbe:
-            timeoutSeconds: 5
-            httpGet:
-              path: /health
-              port: http
           resources:
             limits:
               cpu: 50m
@@ -119,4 +117,22 @@ spec:
             requests:
               cpu: 10m
               memory: 32Mi
-
+        - args:
+            - --secure-listen-address=0.0.0.0:8443
+            - --upstream=http://127.0.0.1:8080/
+            - --logtostderr=true
+            - --v=10
+          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+          imagePullPolicy: IfNotPresent
+          name: kube-rbac-proxy
+          ports:
+            - containerPort: 8443
+              name: https
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 10m
+              memory: 32Mi

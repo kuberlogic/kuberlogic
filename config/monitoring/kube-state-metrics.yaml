@@ -118,6 +118,18 @@ rules:
     resources:
       - volumeattachments
     verbs: ["list", "watch"]
+  - apiGroups:
+      - authentication.k8s.io
+    resources:
+      - tokenreviews
+    verbs:
+      - create
+  - apiGroups:
+      - authorization.k8s.io
+    resources:
+      - subjectaccessreviews
+    verbs:
+      - create
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -169,15 +181,12 @@ metadata:
   namespace: default
   labels:
     app.kubernetes.io/name: kube-state-metrics
-  annotations:
-    monitoring.cloudlinux.com/port: "8080"
-    monitoring.cloudlinux.com/scrape: "true"
 spec:
   type: ClusterIP
   ports:
-    - name: http
-      port: 8080
-      targetPort: http
+    - name: https
+      port: 8443
+      targetPort: https
   selector:
     app.kubernetes.io/name: kube-state-metrics
 ---
@@ -198,6 +207,10 @@ spec:
   minReadySeconds: 0
   template:
     metadata:
+      annotations:
+        monitoring.cloudlinux.com/scrape: "true"
+        monitoring.cloudlinux.com/port: "8443"
+        monitoring.cloudlinux.com/scheme: "https"
       labels:
         app.kubernetes.io/name: kube-state-metrics
     spec:
@@ -237,32 +250,32 @@ spec:
             - --collectors=statefulsets
             - --collectors=storageclasses
             - --collectors=volumeattachments
-          ports:
-            - name: http
-              containerPort: 8080
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: http
-            initialDelaySeconds: 120
-            periodSeconds: 10
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 6
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 6
+            - --host=127.0.0.1
           resources:
             limits:
               cpu: 50m
               memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 32Mi
+        - args:
+            - --secure-listen-address=0.0.0.0:8443
+            - --upstream=http://127.0.0.1:8080/
+            - --logtostderr=true
+            - --v=10
+          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+          imagePullPolicy: IfNotPresent
+          name: kube-rbac-proxy
+          ports:
+            - containerPort: 8443
+              name: https
+              protocol: TCP
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
             requests:
               cpu: 10m
               memory: 32Mi
