@@ -5,6 +5,7 @@ resources:
   - ../rbac
   - ../manager
   - ../updater
+  - ../monitoring
   - ../operators/postgresql/zalando
   - ../operators/mysql/presslabs
   - ../operators/redis/spotahome

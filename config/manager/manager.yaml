@@ -19,6 +19,10 @@ spec:
   replicas: 1
   template:
     metadata:
+      annotations:
+        monitoring.cloudlinux.com/port: "8443"
+        monitoring.cloudlinux.com/scrape: "true"
+        monitoring.cloudlinux.com/scheme: "https"
       labels:
         control-plane: controller-manager
     spec:

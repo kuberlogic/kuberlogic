@@ -1,0 +1,214 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cloudlinux-victoriametrics
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cloudlinux-victoriametrics
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+      - nodes/proxy
+      - nodes/metrics
+      - services
+      - endpoints
+      - pods
+      - ingresses
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - "extensions"
+      - "networking.k8s.io"
+    resources:
+      - ingresses/status
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+  - nonResourceURLs:
+      - "/metrics"
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cloudlinux-victoriametrics
+subjects:
+  - kind: ServiceAccount
+    name: cloudlinux-victoriametrics
+    namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cloudlinux-victoriametrics
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudlinux-victoriametrics-config
+data:
+  victoriametrics.yaml: |
+    global:
+      scrape_interval: 10s
+
+    scrape_configs:
+    - bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      job_name: kubernetes-nodes-cadvisor
+      kubernetes_sd_configs:
+      - role: node
+      relabel_configs:
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+      - replacement: kubernetes.default.svc:443
+        target_label: __address__
+      - regex: (.+)
+        replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
+        source_labels:
+        - __meta_kubernetes_node_name
+        target_label: __metrics_path__
+      scheme: https
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        insecure_skip_verify: true
+    - bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      job_name: kubernetes-pods
+      tls_config:
+        insecure_skip_verify: true
+      kubernetes_sd_configs:
+      - role: pod
+      relabel_configs:
+      - action: keep
+        regex: true
+        source_labels:
+        - __meta_kubernetes_pod_annotation_monitoring_cloudlinux_com_scrape
+      - action: replace
+        regex: (.+)
+        source_labels:
+        - __meta_kubernetes_pod_annotation_monitoring_cloudlinux_com_path
+        target_label: __metrics_path__
+      - action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        source_labels:
+        - __address__
+        - __meta_kubernetes_pod_annotation_monitoring_cloudlinux_com_port
+        target_label: __address__
+      - action: replace
+        regex: (https?)
+        source_labels:
+        - __meta_kubernetes_pod_annotation_monitoring_cloudlinux_com_scheme
+        target_label: __scheme__
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(.+)
+      - action: replace
+        source_labels:
+        - __meta_kubernetes_namespace
+        target_label: kubernetes_namespace
+      - action: replace
+        source_labels:
+        - __meta_kubernetes_pod_name
+        target_label: kubernetes_pod_name
+      - action: drop
+        regex: Pending|Succeeded|Failed
+        source_labels:
+        - __meta_kubernetes_pod_phase
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cloudlinux-victoriametrics-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudlinux-victoriametrics-server
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: cloudlinux-victoriametrics
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: cloudlinux-victoriametrics
+    spec:
+      containers:
+        - args:
+            - -httpListenAddr=:8428
+            - -promscrape.config=/etc/config/victoriametrics.yaml
+            - -storageDataPath=/data
+          image: victoriametrics/victoria-metrics:v1.44.0
+          name: server
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /etc/config
+              name: config-volume
+              readOnly: true
+            - mountPath: /data
+              name: data-volume
+          ports:
+            - containerPort: 8428
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 8428
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 30
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 65534
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
+      serviceAccountName: cloudlinux-victoriametrics
+      terminationGracePeriodSeconds: 300
+      volumes:
+        - configMap:
+            defaultMode: 420
+            name: cloudlinux-victoriametrics-config
+          name: config-volume
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: cloudlinux-victoriametrics-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudlinux-victoriametrics
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8428
+  selector:
+    app: cloudlinux-victoriametrics
+  type: LoadBalancer
