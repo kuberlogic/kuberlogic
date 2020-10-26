@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?= 0.0.1
+VERSION ?= 0.0.2
 # Default bundle image tag
 BUNDLE_IMG ?= controller-bundle:$(VERSION)
 # Options for 'bundle-build'
@@ -23,6 +23,9 @@ IMG ?= $(IMG_REPO)/$(OPERATOR_NAME):$(VERSION)
 # updater image
 UPDATER_NAME = cloudmanaged-updater
 UPDATER_IMG ?= $(IMG_REPO)/$(UPDATER_NAME):$(VERSION)
+# backup image
+BACKUP_PREFIX = cloudmanaged-backup
+#BACKUP_IMG ?= $(IMG_REPO)/$(UPDATER_NAME):$(VERSION)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
@@ -89,6 +92,17 @@ docker-build: test
 docker-push:
 	docker push ${IMG}
 	docker push ${UPDATER_IMG}
+
+
+backup-build:
+	docker build backup/mysql/ -t $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:$(VERSION) -t $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:latest
+	docker build backup/postgres/ -t $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:$(VERSION) -t $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:latest
+
+backup-push:
+	docker push $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:$(VERSION)
+	docker push $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:latest
+	docker push $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:$(VERSION)
+	docker push $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:latest
 
 # find or download controller-gen
 # download controller-gen if necessary

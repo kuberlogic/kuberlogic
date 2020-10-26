@@ -1,8 +1,10 @@
-package operator
+package redis
 
 import (
 	redisv1 "github.com/spotahome/redis-operator/api/redisfailover/v1"
 	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
+	"k8s.io/api/batch/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -87,11 +89,11 @@ func (p *Redis) setVolumeSize(cm *cloudlinuxv1.CloudManaged) {
 }
 
 func (p *Redis) setImage(cm *cloudlinuxv1.CloudManaged) {
-	p.Operator.Spec.Redis.Image = getImage(baseRedisImage, cm.Spec.Version)
-	p.Operator.Spec.Sentinel.Image = getImage(baseRedisImage, cm.Spec.Version)
+	p.Operator.Spec.Redis.Image = util.GetImage(baseRedisImage, cm.Spec.Version)
+	p.Operator.Spec.Sentinel.Image = util.GetImage(baseRedisImage, cm.Spec.Version)
 
 	secrets := []v1.LocalObjectReference{
-		{Name: getImagePullSecret()},
+		{Name: util.GetImagePullSecret()},
 	}
 	p.Operator.Spec.Redis.ImagePullSecrets = secrets
 	p.Operator.Spec.Sentinel.ImagePullSecrets = secrets
@@ -127,11 +129,15 @@ func (p *Redis) isEqualVolumeSize(cm *cloudlinuxv1.CloudManaged) bool {
 }
 
 func (p *Redis) isEqualImage(cm *cloudlinuxv1.CloudManaged) bool {
-	image := getImage(baseRedisImage, cm.Spec.Version)
+	image := util.GetImage(baseRedisImage, cm.Spec.Version)
 	return p.Operator.Spec.Redis.Image == image && p.Operator.Spec.Sentinel.Image == image
 }
 
 func (p *Redis) CurrentStatus() string {
 	// TODO: task for implementation https://gitlab.corp.cloudlinux.com/cloudmanaged/cloudmanaged/-/issues/17
 	return ""
+}
+
+func (p *Redis) GenerateJob(backup *cloudlinuxv1.CloudManagedBackup) v1beta1.CronJob {
+	return v1beta1.CronJob{}
 }

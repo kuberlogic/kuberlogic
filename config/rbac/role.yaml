@@ -2,13 +2,13 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
   name: manager-role
 rules:
   - apiGroups:
       - cloudlinux.com
     resources:
       - cloudmanageds
+      - cloudmanagedbackups
       - postgresqls
       - mysqlclusters
       - redisfailovers
@@ -24,7 +24,21 @@ rules:
       - cloudlinux.com
     resources:
       - cloudmanageds/status
+      - cloudmanagedbackups/status
     verbs:
       - get
       - patch
       - update
+  # for backups:
+  - apiGroups:
+      - batch
+    resources:
+      - cronjobs
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch

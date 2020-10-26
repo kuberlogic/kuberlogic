@@ -2,7 +2,8 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/operator.crd.yaml
+- bases/cloudlinux.com_cloudmanageds.yaml
+- bases/cloudlinux.com_cloudmanagedbackups.yaml
 - bases/postgresql/zalando/postgresql.crd.yaml
 - bases/mysql/presslabs/mysql.crd.yaml
 - bases/mysql/presslabs/mysqlbackup.crd.yaml
