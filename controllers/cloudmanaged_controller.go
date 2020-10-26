@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sync"
 )
 
 // CloudManagedReconciler reconciles a CloudManaged object
@@ -20,6 +21,7 @@ type CloudManagedReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
+	mu     sync.Mutex
 }
 
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=cloudmanageds,verbs=get;list;watch;create;update;patch;delete
@@ -27,6 +29,9 @@ type CloudManagedReconciler struct {
 func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	log := r.Log.WithValues("cloudmanaged", req.NamespacedName)
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	// Fetch the Cloudmanaged instance
 	cloudmanaged := &cloudlinuxv1.CloudManaged{}
@@ -115,7 +120,6 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		//err = r.Status().Update(ctx, cloudmanaged) # FIXME: Figure out why it's failed
 		if err != nil {
 			log.Error(err, "Failed to update cloudmanaged object")
-			return ctrl.Result{}, err
 		} else {
 			log.Info("Cloudmanaged status is updated", "Status", cloudmanaged.GetStatus())
 		}

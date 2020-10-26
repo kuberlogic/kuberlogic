@@ -46,6 +46,14 @@ type CloudManaged struct {
 	Status CloudManagedStatus `json:"status,omitempty"`
 }
 
+// CloudManagedList contains a list of CloudManaged
+// +kubebuilder:object:root=true
+type CloudManagedList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []CloudManaged `json:"items"`
+}
+
 func (cm *CloudManaged) IsEqual(newStatus string) bool {
 	return cm.Status.Status == newStatus
 }
@@ -94,14 +102,6 @@ func (cm *CloudManaged) SetMetrics() {
 	}
 
 	metrics.Expose()
-}
-
-// CloudManagedList contains a list of CloudManaged
-// +kubebuilder:object:root=true
-type CloudManagedList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []CloudManaged `json:"items"`
 }
 
 func init() {

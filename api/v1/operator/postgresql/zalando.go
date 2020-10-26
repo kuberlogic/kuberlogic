@@ -1,14 +1,17 @@
-package operator
+package postgresql
 
 import (
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-const basePgImage = "postgresql"
-const latestPgVersion = "12.1.5"
+const (
+	image   = "postgresql"
+	version = "12.1.5"
+)
 
 type Postgres struct {
 	Operator postgresv1.Postgresql
@@ -67,7 +70,7 @@ func (p *Postgres) Init(cm *cloudlinuxv1.CloudManaged) {
 				LoopWait:             10,
 				RetryTimeout:         10,
 				MaximumLagOnFailover: 33554432,
-				Slots:                map[string]map[string]string{"permanent_logical_1": {"type": "logical", "database": "foo", "plugin": "pgoutput"}},
+				Slots:                map[string]map[string]string{},
 			},
 		},
 	}
@@ -77,7 +80,7 @@ func (p *Postgres) GetDefaults() cloudlinuxv1.Defaults {
 	return cloudlinuxv1.Defaults{
 		VolumeSize: cloudlinuxv1.DefaultVolumeSize,
 		Resources:  cloudlinuxv1.DefaultResources,
-		Version:    latestPgVersion,
+		Version:    version,
 	}
 }
 
@@ -105,7 +108,7 @@ func (p *Postgres) setVolumeSize(cm *cloudlinuxv1.CloudManaged) {
 }
 
 func (p *Postgres) setImage(cm *cloudlinuxv1.CloudManaged) {
-	p.Operator.Spec.DockerImage = getImage(basePgImage, cm.Spec.Version)
+	p.Operator.Spec.DockerImage = util.GetImage(image, cm.Spec.Version)
 }
 
 func (p *Postgres) IsEqual(cm *cloudlinuxv1.CloudManaged) bool {
@@ -133,7 +136,7 @@ func (p *Postgres) isEqualVolumeSize(cm *cloudlinuxv1.CloudManaged) bool {
 }
 
 func (p *Postgres) isEqualImage(cm *cloudlinuxv1.CloudManaged) bool {
-	return p.Operator.Spec.DockerImage == getImage(basePgImage, cm.Spec.Version)
+	return p.Operator.Spec.DockerImage == util.GetImage(image, cm.Spec.Version)
 }
 
 func (p *Postgres) CurrentStatus() string {

@@ -1,7 +1,7 @@
 apiVersion: cloudlinux.com/v1
 kind: CloudManaged
 metadata:
-  name: cloudmanaged-postgresql
+  name: cloudmanaged-pg
 spec:
   type: postgresql
   replicas: 2

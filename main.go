@@ -8,12 +8,11 @@ import (
 	redis "github.com/spotahome/redis-operator/api/redisfailover/v1"
 	postgres "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	"gitlab.com/cloudmanaged/operator/monitoring"
-	"os"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -80,15 +79,26 @@ func main() {
 		os.Exit(1)
 	}
 
+	// create controller for CloudManaged resource
 	if err = (&controllers.CloudManagedReconciler{
 		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("CloudManaged"),
+		Log:    ctrl.Log.WithName("controller").WithName("CloudManaged"),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CloudManaged")
 		os.Exit(1)
 	}
-	// +kubebuilder:scaffold:builder
+
+	// create controller for CloudManagedBackup resource
+	if err = (&controllers.CloudManagedBackupReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controller-backup").WithName("CloudManagedBackup"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create backup controller",
+			"controller-backup", "CloudManagedBackup")
+		os.Exit(1)
+	}
 
 	if err = monitoring.Init(); err != nil {
 		setupLog.Error(err, "error initializing metrics")

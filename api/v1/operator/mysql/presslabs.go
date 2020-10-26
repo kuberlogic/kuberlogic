@@ -1,16 +1,19 @@
-package operator
+package mysql
 
 import (
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
-	v1 "k8s.io/api/core/v1"
+	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-const baseMysqlImage = "percona"
-const latestMysqlVersion = "5.7.31"
+const (
+	image   = "mysql"
+	version = "5.7.31"
+)
 
 type Mysql struct {
 	Operator mysqlv1.MysqlCluster
@@ -42,7 +45,7 @@ func (p *Mysql) GetDefaults() cloudlinuxv1.Defaults {
 	return cloudlinuxv1.Defaults{
 		VolumeSize: cloudlinuxv1.DefaultVolumeSize,
 		Resources:  cloudlinuxv1.DefaultResources,
-		Version:    latestMysqlVersion,
+		Version:    version,
 	}
 }
 
@@ -67,13 +70,13 @@ func (p *Mysql) setResources(cm *cloudlinuxv1.CloudManaged) {
 }
 
 func (p *Mysql) setVolumeSize(cm *cloudlinuxv1.CloudManaged) {
-	resources := v1.ResourceRequirements{
-		Requests: v1.ResourceList{
-			v1.ResourceStorage: resource.MustParse(cm.Spec.VolumeSize),
+	resources := corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceStorage: resource.MustParse(cm.Spec.VolumeSize),
 		},
 	}
 	if p.Operator.Spec.VolumeSpec.PersistentVolumeClaim == nil {
-		p.Operator.Spec.VolumeSpec.PersistentVolumeClaim = &v1.PersistentVolumeClaimSpec{
+		p.Operator.Spec.VolumeSpec.PersistentVolumeClaim = &corev1.PersistentVolumeClaimSpec{
 			Resources: resources,
 		}
 	} else {
@@ -82,10 +85,10 @@ func (p *Mysql) setVolumeSize(cm *cloudlinuxv1.CloudManaged) {
 }
 
 func (p *Mysql) setImage(cm *cloudlinuxv1.CloudManaged) {
-	p.Operator.Spec.Image = getImage(baseMysqlImage, cm.Spec.Version)
+	p.Operator.Spec.Image = util.GetImage(image, cm.Spec.Version)
 
-	secrets := []v1.LocalObjectReference{
-		{Name: getImagePullSecret()},
+	secrets := []corev1.LocalObjectReference{
+		{Name: util.GetImagePullSecret()},
 	}
 	p.Operator.Spec.PodSpec.ImagePullSecrets = secrets
 }
@@ -120,7 +123,7 @@ func (p *Mysql) isEqualVolumeSize(cm *cloudlinuxv1.CloudManaged) bool {
 }
 
 func (p *Mysql) isEqualImage(cm *cloudlinuxv1.CloudManaged) bool {
-	return p.Operator.Spec.Image == getImage(baseMysqlImage, cm.Spec.Version)
+	return p.Operator.Spec.Image == util.GetImage(image, cm.Spec.Version)
 }
 
 func (p *Mysql) CurrentStatus() string {

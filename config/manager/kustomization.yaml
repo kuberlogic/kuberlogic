@@ -3,7 +3,7 @@ kind: Kustomization
 images:
 - name: controller
   newName: gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/cloudmanaged-operator
-  newTag: 0.0.1
+  newTag: 0.0.2
 patchesStrategicMerge:
 - regcred.yaml
 resources:
