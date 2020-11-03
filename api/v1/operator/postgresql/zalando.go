@@ -1,9 +1,11 @@
 package postgresql
 
 import (
+	"fmt"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
+	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -71,6 +73,50 @@ func (p *Postgres) Init(cm *cloudlinuxv1.CloudManaged) {
 				RetryTimeout:         10,
 				MaximumLagOnFailover: 33554432,
 				Slots:                map[string]map[string]string{},
+			},
+			PodAnnotations: map[string]string{
+				"monitoring.cloudlinux.com/scrape": "true",
+				"monitoring.cloudlinux.com/port":   "9187",
+			},
+			Sidecars: []postgresv1.Sidecar{
+				{
+					Name:        "postgres-exporter",
+					DockerImage: "bitnami/postgres-exporter:0.8.0",
+					Ports: []apiv1.ContainerPort{
+						{
+							Name:          "metrics",
+							ContainerPort: 9187,
+						},
+					},
+					Env: []apiv1.EnvVar{
+						{
+							Name:  "DATA_SOURCE_URI",
+							Value: "127.0.0.1/postgres?sslmode=disable",
+						},
+						{
+							Name: "DATA_SOURCE_USER",
+							ValueFrom: &apiv1.EnvVarSource{
+								SecretKeyRef: &apiv1.SecretKeySelector{
+									LocalObjectReference: apiv1.LocalObjectReference{
+										Name: fmt.Sprintf("%s.%s.credentials", "cloudmanaged", cm.Name),
+									},
+									Key: "username",
+								},
+							},
+						},
+						{
+							Name: "DATA_SOURCE_PASS",
+							ValueFrom: &apiv1.EnvVarSource{
+								SecretKeyRef: &apiv1.SecretKeySelector{
+									LocalObjectReference: apiv1.LocalObjectReference{
+										Name: fmt.Sprintf("%s.%s.credentials", "cloudmanaged", cm.Name),
+									},
+									Key: "password",
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
