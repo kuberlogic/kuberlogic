@@ -33,6 +33,31 @@ func (p *Mysql) Init(cm *cloudlinuxv1.CloudManaged) {
 			Name:      cm.Name,
 			Namespace: cm.Namespace,
 		},
+		Spec: mysqlv1.MysqlClusterSpec{
+			PodSpec: mysqlv1.PodSpec{
+				Annotations: map[string]string{
+					"monitoring.cloudlinux.com/scrape": "true",
+					"monitoring.cloudlinux.com/port":   "9125",
+				},
+				InitContainers: []corev1.Container{
+					{
+						Name:  "myisam-repair",
+						Image: util.GetImage(image, cm.Spec.Version),
+						Command: []string{
+							"/bin/sh",
+							"-c",
+							"for f in $(ls /var/lib/mysql/mysql/*MYI); do myisamchk -r --update-state $(echo $f | tr -d .MYI); done",
+						},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      "data",
+								MountPath: "/var/lib/mysql",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	mysqlv1.SetDefaults_MysqlCluster(&p.Operator)
 }
