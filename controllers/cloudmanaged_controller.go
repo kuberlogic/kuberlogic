@@ -2,12 +2,14 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-logr/logr"
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	redisv1 "github.com/spotahome/redis-operator/api/redisfailover/v1"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator"
+	"gitlab.com/cloudmanaged/operator/monitoring"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -33,6 +35,9 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	// metrics key
+	monitoringKey := fmt.Sprintf("%s/%s", req.Name, req.Namespace)
+
 	// Fetch the Cloudmanaged instance
 	cloudmanaged := &cloudlinuxv1.CloudManaged{}
 	err := r.Get(ctx, req.NamespacedName, cloudmanaged)
@@ -41,6 +46,8 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
+			log.Info(req.Namespace, req.Name, " has been deleted")
+			delete(monitoring.CloudManageds, monitoringKey)
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
@@ -125,7 +132,7 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		}
 	}
 
-	cloudmanaged.SetMetrics()
+	monitoring.CloudManageds[monitoringKey] = cloudmanaged
 
 	return ctrl.Result{}, nil
 }

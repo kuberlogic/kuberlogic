@@ -2,69 +2,64 @@ package monitoring
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
 )
+
+var labels = []string{
+	"name",
+	"namespace",
+	"cluster_type",
+}
 
 var (
-	cmStatus = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "cloudmanaged_ready",
-			Help: "CloudManaged application ready status",
-		},
-		labelList,
-	)
-	cmReplicas = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "cloudmanaged_replicas",
-			Help: "CloudManaged application replicas",
-		},
-		labelList,
-	)
-	cmMemLimit = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "cloudmanaged_memory_limit_bytes",
-			Help: "CloudManaged application memory limit",
-		},
-		labelList,
-	)
-	cmCPULimit = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "cloudmanaged_cpu_limit_milliseconds",
-			Help: "CloudManaged application cpu limit",
-		},
-		labelList,
-	)
+	cmReady = prometheus.NewDesc(
+		"cloudmanaged_ready",
+		"CloudManaged application ready status", labels, nil)
+	cmReplicas = prometheus.NewDesc(
+		"cloudmanaged_replicas",
+		"CloudManaged application replicas", labels, nil)
+	cmMemLimit = prometheus.NewDesc(
+		"cloudmanaged_memory_limit_bytes",
+		"CloudManaged application memory limit", labels, nil)
+	cmCPULimit = prometheus.NewDesc(
+		"cloudmanaged_cpu_limit_milliseconds",
+		"CloudManaged application cpu limit", labels, nil)
 )
 
-// Init Registers Prometheus metrics in global metrics registry provided by controller-runtime
-func Init() error {
-	metrics.Registry.MustRegister(
-		cmStatus,
-		cmReplicas,
-		cmMemLimit,
-		cmCPULimit,
-	)
+var CloudManageds = make(map[string]*cloudlinuxv1.CloudManaged)
 
-	return nil
+// Implements prometheus.Collector
+type CloudManagedCollector struct {
 }
 
-func exposeReadinessMetric(ready bool, labels map[string]string) {
-	notReadyVal := 0
-	if ready {
-		notReadyVal = 1
+func (c CloudManagedCollector) Describe(ch chan<- *prometheus.Desc) {
+	ch <- cmReady
+	ch <- cmReplicas
+	ch <- cmMemLimit
+	ch <- cmCPULimit
+}
+
+func (c CloudManagedCollector) Collect(ch chan<- prometheus.Metric) {
+	for _, c := range CloudManageds {
+		ch <- prometheus.MustNewConstMetric(
+			cmReady, prometheus.GaugeValue, calcReadinessMetric(c),
+			c.Name, c.Namespace, c.Spec.Type)
+		ch <- prometheus.MustNewConstMetric(
+			cmReplicas, prometheus.GaugeValue, float64(c.Spec.Replicas),
+			c.Name, c.Namespace, c.Spec.Type)
+		ch <- prometheus.MustNewConstMetric(
+			cmMemLimit, prometheus.GaugeValue, float64(c.Spec.Resources.Limits.Memory().Value()),
+			c.Name, c.Namespace, c.Spec.Type)
+		ch <- prometheus.MustNewConstMetric(
+			cmCPULimit, prometheus.GaugeValue, float64(c.Spec.Resources.Limits.Cpu().MilliValue()),
+			c.Name, c.Namespace, c.Spec.Type)
 	}
-
-	cmStatus.With(labels).Set(float64(notReadyVal))
 }
 
-func exposeReplicasMetric(replicas int32, labels map[string]string) {
-	cmReplicas.With(labels).Set(float64(replicas))
-}
-
-func exposeMemLimitMetric(memLimit int64, labels map[string]string) {
-	cmMemLimit.With(labels).Set(float64(memLimit))
-}
-
-func exposeCPULimitsMetric(cpuLimit int64, labels map[string]string) {
-	cmCPULimit.With(labels).Set(float64(cpuLimit))
+func calcReadinessMetric(cm *cloudlinuxv1.CloudManaged) float64 {
+	if cm.Status.Status == cloudlinuxv1.ClusterOkStatus {
+		return float64(1)
+	} else {
+		return float64(0)
+	}
 }

@@ -7,6 +7,7 @@ import (
 	mysql "github.com/presslabs/mysql-operator/pkg/apis"
 	redis "github.com/spotahome/redis-operator/api/redisfailover/v1"
 	postgres "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
+	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/monitoring"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -15,8 +16,8 @@ import (
 	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/controllers"
 	// +kubebuilder:scaffold:imports
 )
@@ -88,6 +89,9 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "CloudManaged")
 		os.Exit(1)
 	}
+	// init CloudManaged collector
+	cloudManagedCollector := monitoring.CloudManagedCollector{}
+	metrics.Registry.MustRegister(cloudManagedCollector)
 
 	// create controller for CloudManagedBackup resource
 	if err = (&controllers.CloudManagedBackupReconciler{
@@ -98,10 +102,6 @@ func main() {
 		setupLog.Error(err, "unable to create backup controller",
 			"controller-backup", "CloudManagedBackup")
 		os.Exit(1)
-	}
-
-	if err = monitoring.Init(); err != nil {
-		setupLog.Error(err, "error initializing metrics")
 	}
 
 	setupLog.Info("starting manager")
