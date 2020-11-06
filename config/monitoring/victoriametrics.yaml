@@ -63,7 +63,7 @@ data:
 
     scrape_configs:
     - bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-      job_name: kubernetes-nodes-cadvisor
+      job_name: kubernetes-nodes
       kubernetes_sd_configs:
       - role: node
       relabel_configs:
@@ -72,7 +72,7 @@ data:
       - replacement: kubernetes.default.svc:443
         target_label: __address__
       - regex: (.+)
-        replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
+        replacement: /api/v1/nodes/$1/proxy/metrics
         source_labels:
         - __meta_kubernetes_node_name
         target_label: __metrics_path__
