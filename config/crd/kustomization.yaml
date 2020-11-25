@@ -4,6 +4,7 @@
 resources:
 - bases/cloudlinux.com_cloudmanageds.yaml
 - bases/cloudlinux.com_cloudmanagedbackups.yaml
+- bases/cloudlinux.com_cloudmanagedrestores.yaml
 - bases/postgresql/zalando/postgresql.crd.yaml
 - bases/mysql/presslabs/mysql.crd.yaml
 - bases/mysql/presslabs/mysqlbackup.crd.yaml

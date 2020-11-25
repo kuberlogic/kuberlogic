@@ -1,9 +1,10 @@
 apiVersion: cloudlinux.com/v1
 kind: CloudManagedBackup
 metadata:
-  name: cloudmanaged-backup-mysql
+  name: cloudmanaged-backup-mysql-baz
 spec:
   type: s3
   name: cloudmanaged-my
   secret: do-s3
   schedule: "* 1 * * *"
+  database: baz

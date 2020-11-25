@@ -4,7 +4,7 @@ metadata:
   name: cloudmanaged-my
 spec:
   type: mysql
-  replicas: 2
+  replicas: 3
   secret: my-secret
 
 #  volumeSize: 3Gi

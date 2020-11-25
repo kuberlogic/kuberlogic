@@ -8,20 +8,20 @@ import (
 )
 
 const (
-	backupImage = "cloudmanaged-backup-mysql"
-	backupTag   = "latest"
+	restoreImage = "cloudmanaged-restore-mysql"
+	restoreTag   = "latest"
 )
 
-type Backup struct {
-	backup.BaseBackup
+type Restore struct {
+	backup.BaseRestore
 	Cluster Mysql
 }
 
-func (p *Backup) SetBackupImage() {
-	p.Image = util.GetImage(backupImage, backupTag)
+func (p *Restore) SetRestoreImage() {
+	p.Image = util.GetImage(restoreImage, restoreTag)
 }
 
-func (p *Backup) SetBackupEnv(cm *cloudlinuxv1.CloudManagedBackup) {
+func (p *Restore) SetRestoreEnv(cm *cloudlinuxv1.CloudManagedRestore) {
 	env := []v1.EnvVar{
 		{
 			Name:  "SCOPE",
@@ -40,6 +40,10 @@ func (p *Backup) SetBackupEnv(cm *cloudlinuxv1.CloudManagedBackup) {
 		{
 			Name:      "MYSQL_PASSWORD",
 			ValueFrom: util.FromSecret(p.Cluster.Operator.Spec.SecretName, "ROOT_PASSWORD"),
+		},
+		{
+			Name:  "PATH_TO_BACKUP",
+			Value: cm.Spec.Backup,
 		},
 		{
 			Name:  "DATABASE",

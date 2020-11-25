@@ -104,6 +104,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	// create controller for CloudManagedRestore resource
+	if err = (&controllers.CloudManagedRestoreReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controller-backup").WithName("CloudManagedBackup"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create restore controller",
+			"controller-restore-backup", "CloudManagedRestore")
+		os.Exit(1)
+	}
+
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")

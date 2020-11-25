@@ -1,0 +1,10 @@
+apiVersion: cloudlinux.com/v1
+kind: CloudManagedRestore
+metadata:
+  name: cloudmanaged-restore-backup-mysql
+spec:
+  type: s3
+  name: cloudmanaged-my
+  secret: do-s3
+  backup: s3://cloudmanaged/mysql/cloudmanaged-my/logical_backups/bar-1605520343.tar.gz
+  database: "bar"

@@ -3,7 +3,7 @@ kind: Kustomization
 images:
 - name: cloudmanaged-updater
   newName: gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/cloudmanaged-updater
-  newTag: 0.0.2
+  newTag: 0.0.4
 - name: updater
   newName: gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/cloudmanaged-updater
   newTag: latest

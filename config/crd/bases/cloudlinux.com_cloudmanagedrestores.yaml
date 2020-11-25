@@ -6,7 +6,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: cloudmanagedbackups.cloudlinux.com
+  name: cloudmanagedrestores.cloudlinux.com
 spec:
   additionalPrinterColumns:
   - JSONPath: .status.status
@@ -21,18 +21,18 @@ spec:
     description: The backup type
     name: Type
     type: string
-  - JSONPath: .spec.schedule
-    description: The backup schedule
-    name: Schedule
+  - JSONPath: .spec.backup
+    description: The backup link
+    name: Link
     type: string
   group: cloudlinux.com
   names:
-    kind: CloudManagedBackup
-    listKind: CloudManagedBackupList
-    plural: cloudmanagedbackups
+    kind: CloudManagedRestore
+    listKind: CloudManagedRestoreList
+    plural: cloudmanagedrestores
     shortNames:
-    - clb
-    singular: cloudmanagedbackup
+    - clr
+    singular: cloudmanagedrestore
   scope: Namespaced
   subresources: {}
   validation:
@@ -52,16 +52,16 @@ spec:
           type: object
         spec:
           properties:
+            backup:
+              description: link to backup on the storage
+              type: string
             database:
-              description: what database need to backup
+              description: what database need to be restored
               type: string
             name:
               description: 'Cluster name TODO: need to implement validation based
                 on webhook - https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html
                 it gives the ability to check cluster name is exists or not'
-              type: string
-            schedule:
-              description: schedule for the backup
               type: string
             secret:
               description: credentials for storage type
@@ -72,13 +72,14 @@ spec:
               - s3
               type: string
           required:
+          - backup
+          - database
           - name
-          - schedule
           - secret
           - type
           type: object
         status:
-          description: CloudManagedBackupStatus defines the observed state of CloudManagedBackup
+          description: CloudManagedRestoreStatus defines the observed state of CloudManagedRestore
           properties:
             status:
               type: string

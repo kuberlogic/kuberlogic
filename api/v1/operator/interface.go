@@ -29,11 +29,22 @@ type Backup interface {
 	InitFrom(*v1beta1.CronJob)
 	IsEqual(cm *cloudlinuxv1.CloudManagedBackup) bool
 	Update(cm *cloudlinuxv1.CloudManagedBackup)
-	GetJob() *v1beta1.CronJob
+	GetCronJob() *v1beta1.CronJob
 	CurrentStatus(ev batchv1.JobList) string
 
 	SetBackupImage()
 	SetBackupEnv(cm *cloudlinuxv1.CloudManagedBackup)
+}
+
+type Restore interface {
+	New(backup *cloudlinuxv1.CloudManagedRestore) batchv1.Job
+	Init(*cloudlinuxv1.CloudManagedRestore)
+	InitFrom(*batchv1.Job)
+	GetJob() *batchv1.Job
+	CurrentStatus() string
+
+	SetRestoreImage()
+	SetRestoreEnv(cm *cloudlinuxv1.CloudManagedRestore)
 }
 
 func GetOperator(t string) (Operator, error) {
@@ -58,6 +69,22 @@ func GetBackupOperator(op interface{}) (Backup, error) {
 		}, nil
 	case *postgresql.Postgres:
 		return &postgresql.Backup{
+			Cluster: *cluster,
+		}, nil
+	default:
+		return nil, errors.Errorf("Cluster %s is not supported (%T)",
+			cluster, cluster)
+	}
+}
+
+func GetRestoreOperator(op interface{}) (Restore, error) {
+	switch cluster := op.(type) {
+	case *mysql.Mysql:
+		return &mysql.Restore{
+			Cluster: *cluster,
+		}, nil
+	case *postgresql.Postgres:
+		return &postgresql.Restore{
 			Cluster: *cluster,
 		}, nil
 	default:

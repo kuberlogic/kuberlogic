@@ -11,6 +11,9 @@ PG_BIN=$PG_DIR/$PG_VERSION/bin
 DUMP_SIZE_COEFF=5
 ERRORCOUNT=0
 
+BACKUP_NAME=$(date +%s).sql.gz
+[[ ! -z "$DATABASE" ]] && BACKUP_NAME=$DATABASE-$BACKUP_NAME
+
 TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
 K8S_API_URL=https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT/api/v1
 CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
@@ -20,8 +23,11 @@ function estimate_size() {
 }
 
 function dump() {
-  # settings are taken from the environment
-  "$PG_BIN"/pg_dumpall
+  if [ -n "$DATABASE" ]; then
+    "$PG_BIN"/pg_dump $DATABASE
+  else
+    "$PG_BIN"/pg_dumpall
+  fi
 }
 
 function compress() {
@@ -34,7 +40,7 @@ function aws_upload() {
   # mimic bucket setup from Spilo
   # to keep logical backups at the same path as WAL
   # NB: $LOGICAL_BACKUP_S3_BUCKET_SCOPE_SUFFIX already contains the leading "/" when set by the Postgres Operator
-  PATH_TO_BACKUP=s3://$LOGICAL_BACKUP_S3_BUCKET"/postgresql/"$SCOPE$LOGICAL_BACKUP_S3_BUCKET_SCOPE_SUFFIX"/logical_backups/"$(date +%s).sql.gz
+  PATH_TO_BACKUP=s3://$LOGICAL_BACKUP_S3_BUCKET"/postgresql/"$SCOPE$LOGICAL_BACKUP_S3_BUCKET_SCOPE_SUFFIX"/logical_backups/"$BACKUP_NAME
 
   args=()
 

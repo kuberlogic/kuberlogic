@@ -4,7 +4,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type CloudManagedBackupSpec struct {
+type CloudManagedRestoreSpec struct {
 	// Type of the backup storage
 	// +kubebuilder:validation:Enum=s3
 	Type string `json:"type"`
@@ -14,14 +14,14 @@ type CloudManagedBackupSpec struct {
 	ClusterName string `json:"name"`
 	// credentials for storage type
 	SecretName string `json:"secret"`
-	// schedule for the backup
-	Schedule string `json:"schedule"`
-	// what database need to backup
-	Database string `json:"database,omitempty"`
+	// link to backup on the storage
+	Backup string `json:"backup"`
+	// what database need to be restored
+	Database string `json:"database"`
 }
 
-// CloudManagedBackupStatus defines the observed state of CloudManagedBackup
-type CloudManagedBackupStatus struct {
+// CloudManagedRestoreStatus defines the observed state of CloudManagedRestore
+type CloudManagedRestoreStatus struct {
 	Status string `json:"status"`
 }
 
@@ -29,36 +29,36 @@ type CloudManagedBackupStatus struct {
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status",description="The backup status"
 // +kubebuilder:printcolumn:name="Cluster name",type=string,JSONPath=`.spec.name`,description="The cluster name"
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`,description="The backup type"
-// +kubebuilder:printcolumn:name="Schedule",type=string,JSONPath=`.spec.schedule`,description="The backup schedule"
-// +kubebuilder:resource:shortName=clb
-type CloudManagedBackup struct {
+// +kubebuilder:printcolumn:name="Link",type=string,JSONPath=`.spec.backup`,description="The backup link"
+// +kubebuilder:resource:shortName=clr
+type CloudManagedRestore struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CloudManagedBackupSpec   `json:"spec,omitempty"`
-	Status CloudManagedBackupStatus `json:"status,omitempty"`
+	Spec   CloudManagedRestoreSpec   `json:"spec,omitempty"`
+	Status CloudManagedRestoreStatus `json:"status,omitempty"`
 }
 
-// CloudManagedBackupList contains a list of CloudManagedBackup
+// CloudManagedRestoreList contains a list of CloudManagedRestore
 // +kubebuilder:object:root=true
-type CloudManagedBackupList struct {
+type CloudManagedRestoreList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []CloudManaged `json:"items"`
+	Items           []CloudManagedRestore `json:"items"`
 }
 
-func (cm *CloudManagedBackup) IsEqual(newStatus string) bool {
+func (cm *CloudManagedRestore) IsEqual(newStatus string) bool {
 	return cm.Status.Status == newStatus
 }
 
-func (cm *CloudManagedBackup) SetStatus(newStatus string) {
+func (cm *CloudManagedRestore) SetStatus(newStatus string) {
 	cm.Status.Status = newStatus
 }
 
-func (cm *CloudManagedBackup) GetStatus() string {
+func (cm *CloudManagedRestore) GetStatus() string {
 	return cm.Status.Status
 }
 
 func init() {
-	SchemeBuilder.Register(&CloudManagedBackup{}, &CloudManagedBackupList{})
+	SchemeBuilder.Register(&CloudManagedRestore{}, &CloudManagedRestoreList{})
 }

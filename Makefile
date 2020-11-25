@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?= 0.0.2
+VERSION ?= 0.0.4
 # Default bundle image tag
 BUNDLE_IMG ?= controller-bundle:$(VERSION)
 # Options for 'bundle-build'
@@ -23,8 +23,11 @@ IMG ?= $(IMG_REPO)/$(OPERATOR_NAME):$(VERSION)
 # updater image
 UPDATER_NAME = cloudmanaged-updater
 UPDATER_IMG ?= $(IMG_REPO)/$(UPDATER_NAME):$(VERSION)
-# backup image
+# backup image prefix
 BACKUP_PREFIX = cloudmanaged-backup
+# restore from backup image prefix
+RESTORE_PREFIX = cloudmanaged-restore
+
 #BACKUP_IMG ?= $(IMG_REPO)/$(UPDATER_NAME):$(VERSION)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
@@ -83,26 +86,46 @@ vet:
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
-# Build the docker image
-docker-build: test
+# Build the operator images
+operator-build: test
+	echo "Building operator images"
 	docker build . -t ${IMG}
 	docker build updater/ -t ${UPDATER_IMG}
 
-# Push the docker image
-docker-push:
+# Push operator images
+operator-push:
 	docker push ${IMG}
 	docker push ${UPDATER_IMG}
 
-
+# Build backup images
 backup-build:
 	docker build backup/mysql/ -t $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:$(VERSION) -t $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:latest
 	docker build backup/postgres/ -t $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:$(VERSION) -t $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:latest
 
+# Push backup images
 backup-push:
 	docker push $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:$(VERSION)
 	docker push $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:latest
 	docker push $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:$(VERSION)
 	docker push $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:latest
+
+# Build backup restore images
+restore-build:
+	docker build backup/restore/mysql/ -t $(IMG_REPO)/$(RESTORE_PREFIX)-mysql:$(VERSION) -t $(IMG_REPO)/$(RESTORE_PREFIX)-mysql:latest
+	docker build backup/restore/postgres/ -t $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:$(VERSION) -t $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:latest
+
+# Push backup restore images
+restore-push:
+	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-mysql:$(VERSION)
+	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-mysql:latest
+	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:$(VERSION)
+	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:latest
+
+docker-build: operator-build backup-build restore-build
+	#
+
+docker-push: operator-push backup-push restore-push
+	#
 
 # find or download controller-gen
 # download controller-gen if necessary
