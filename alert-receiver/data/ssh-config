@@ -1,0 +1,4 @@
+Host gitlab.corp.cloudlinux.com
+	HostName gitlab.corp.cloudlinux.com
+	User git
+	StrictHostKeyChecking no
