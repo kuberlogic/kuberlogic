@@ -217,7 +217,6 @@ spec:
       securityContext:
         runAsUser: 1001
         fsGroup: 1001
-      hostNetwork: true
       serviceAccountName: kube-state-metrics
       containers:
         - name: kube-state-metrics
