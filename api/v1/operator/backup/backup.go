@@ -12,7 +12,7 @@ import (
 )
 
 type BaseBackup struct {
-	Job v1beta1.CronJob
+	CronJob v1beta1.CronJob
 
 	Image  string
 	EnvVar []corev1.EnvVar
@@ -86,8 +86,8 @@ func (p *BaseBackup) NewCronJob(name, ns, schedule string) v1beta1.CronJob {
 	}
 }
 
-func (p *BaseBackup) GetJob() *v1beta1.CronJob {
-	return &p.Job
+func (p *BaseBackup) GetCronJob() *v1beta1.CronJob {
+	return &p.CronJob
 }
 
 func (p *BaseBackup) New(backup *cloudlinuxv1.CloudManagedBackup) v1beta1.CronJob {
@@ -95,8 +95,6 @@ func (p *BaseBackup) New(backup *cloudlinuxv1.CloudManagedBackup) v1beta1.CronJo
 		backup.Name,
 		backup.Namespace,
 		backup.Spec.Schedule,
-		//p.GetBackupImage(),
-		//p.GetBackupEnv(backup.Spec.SecretName),
 	)
 }
 
@@ -109,11 +107,11 @@ func (p *BaseBackup) GetBackupEnv(secret string) []corev1.EnvVar {
 }
 
 func (p *BaseBackup) Init(cm *cloudlinuxv1.CloudManagedBackup) {
-	p.Job = p.New(cm)
+	p.CronJob = p.New(cm)
 }
 
 func (p *BaseBackup) InitFrom(job *v1beta1.CronJob) {
-	p.Job = *job
+	p.CronJob = *job
 }
 
 func (p *BaseBackup) IsEqual(cm *cloudlinuxv1.CloudManagedBackup) bool {
@@ -122,13 +120,13 @@ func (p *BaseBackup) IsEqual(cm *cloudlinuxv1.CloudManagedBackup) bool {
 }
 
 func (p *BaseBackup) IsEqualSchedule(cm *cloudlinuxv1.CloudManagedBackup) bool {
-	return reflect.DeepEqual(cm.Spec.Schedule, p.Job.Spec.Schedule)
+	return reflect.DeepEqual(cm.Spec.Schedule, p.CronJob.Spec.Schedule)
 }
 
 func (p *BaseBackup) IsEqualTemplate(cm *cloudlinuxv1.CloudManagedBackup) bool {
 	return reflect.DeepEqual(
 		p.New(cm).Spec.JobTemplate,
-		p.Job.Spec.JobTemplate,
+		p.CronJob.Spec.JobTemplate,
 	)
 }
 
@@ -138,9 +136,9 @@ func (p *BaseBackup) Update(cm *cloudlinuxv1.CloudManagedBackup) {
 }
 
 func (p *BaseBackup) UpdateSchedule(cm *cloudlinuxv1.CloudManagedBackup) {
-	p.Job.Spec.Schedule = cm.Spec.Schedule
+	p.CronJob.Spec.Schedule = cm.Spec.Schedule
 }
 
 func (p *BaseBackup) UpdateTemplate(cm *cloudlinuxv1.CloudManagedBackup) {
-	p.Job.Spec.JobTemplate = p.New(cm).Spec.JobTemplate
+	p.CronJob.Spec.JobTemplate = p.New(cm).Spec.JobTemplate
 }

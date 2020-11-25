@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 	"sync"
 )
 
@@ -93,43 +92,43 @@ func (r *CloudManagedBackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 	backupOperator.SetBackupImage()
 	backupOperator.SetBackupEnv(cloudmanagedbackup)
 
-	job := backupOperator.GetJob()
+	cronJob := backupOperator.GetCronJob()
 	err = r.Get(ctx,
 		types.NamespacedName{
 			Name:      cloudmanagedbackup.Name,
 			Namespace: cloudmanagedbackup.Namespace,
 		},
-		job)
+		cronJob)
 	if err != nil && k8serrors.IsNotFound(err) {
-		dep, err := r.defineJob(backupOperator, cloudmanagedbackup)
+		dep, err := r.cronJob(backupOperator, cloudmanagedbackup)
 		if err != nil {
-			log.Error(err, "Could not generate job", "Name", cloudmanagedbackup.Name)
+			log.Error(err, "Could not generate cron cronJob", "Name", cloudmanagedbackup.Name)
 			return ctrl.Result{}, err
 		}
 
-		log.Info("Creating a new BaseBackup", "Name", cloudmanagedbackup.Name)
+		log.Info("Creating a new Backup resource", "Name", cloudmanagedbackup.Name)
 		err = r.Create(ctx, dep)
 		if err != nil && k8serrors.IsAlreadyExists(err) {
-			log.Info("Job already exists", "Name", cloudmanagedbackup.Name)
+			log.Info("CronJob already exists", "Name", cloudmanagedbackup.Name)
 		} else if err != nil {
-			log.Error(err, "Failed to create new Job", "Name", cloudmanagedbackup.Name)
+			log.Error(err, "Failed to create new CronJob", "Name", cloudmanagedbackup.Name)
 			return ctrl.Result{}, err
 		} else {
-			// job created successfully - return and requeue
+			// cronJob created successfully - return and requeue
 			return ctrl.Result{Requeue: true}, nil
 		}
 	}
 
-	backupOperator.InitFrom(job)
+	backupOperator.InitFrom(cronJob)
 	if !backupOperator.IsEqual(cloudmanagedbackup) {
 		backupOperator.Update(cloudmanagedbackup)
 
-		err = r.Update(ctx, backupOperator.GetJob())
+		err = r.Update(ctx, backupOperator.GetCronJob())
 		if err != nil {
 			log.Error(err, "Failed to update object", "Name", cloudmanagedbackup.Name)
 			return ctrl.Result{}, err
 		} else {
-			log.Info("BaseBackup resource is updated", "Name", cloudmanagedbackup.Name)
+			log.Info("Backup resource is updated", "Name", cloudmanagedbackup.Name)
 		}
 	} else {
 		log.Info("No difference", "Name", cloudmanagedbackup.Name)
@@ -157,17 +156,17 @@ func (r *CloudManagedBackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 	return ctrl.Result{}, nil
 }
 
-func (r *CloudManagedBackupReconciler) defineJob(op operator.Backup, cmb *cloudlinuxv1.CloudManagedBackup) (*v1beta1.CronJob, error) {
+func (r *CloudManagedBackupReconciler) cronJob(op operator.Backup, cmb *cloudlinuxv1.CloudManagedBackup) (*v1beta1.CronJob, error) {
 	op.Init(cmb)
 
 	// Set cloudmanage backup instance as the owner and controller
 	// if cloudmanage backup will remove -> dep also should be removed automatically
-	err := ctrl.SetControllerReference(cmb, op.GetJob(), r.Scheme)
+	err := ctrl.SetControllerReference(cmb, op.GetCronJob(), r.Scheme)
 	if err != nil {
 		return nil, err
 	}
 
-	return op.GetJob(), nil
+	return op.GetCronJob(), nil
 }
 
 func (r *CloudManagedBackupReconciler) getJobList(ctx context.Context, cmb *cloudlinuxv1.CloudManagedBackup) (v12.JobList, error) {
@@ -175,19 +174,12 @@ func (r *CloudManagedBackupReconciler) getJobList(ctx context.Context, cmb *clou
 	selector := &client.ListOptions{}
 
 	client.InNamespace(cmb.Namespace).ApplyToList(selector)
-	//client.MatchingFields{
-	//	"involvedObject.uniqueName": MakeUniqueObject("CronJob", cmb.Name),
-	//}.ApplyToList(selector)
 	client.MatchingLabels{
 		"backup-name": cmb.Name,
 	}.ApplyToList(selector)
 
 	err := r.List(ctx, &jobs, selector)
 	return jobs, err
-}
-
-func MakeUniqueObject(args ...string) string {
-	return strings.Join(args, "-")
 }
 
 func (r *CloudManagedBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {

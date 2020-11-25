@@ -9,6 +9,7 @@ rules:
     resources:
       - cloudmanageds
       - cloudmanagedbackups
+      - cloudmanagedrestores
       - postgresqls
       - mysqlclusters
       - redisfailovers
@@ -25,6 +26,7 @@ rules:
     resources:
       - cloudmanageds/status
       - cloudmanagedbackups/status
+      - cloudmanagedrestores/status
     verbs:
       - get
       - patch
@@ -34,6 +36,7 @@ rules:
       - batch
     resources:
       - cronjobs
+      - jobs
     verbs:
       - create
       - delete

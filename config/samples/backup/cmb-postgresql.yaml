@@ -1,9 +1,10 @@
 apiVersion: cloudlinux.com/v1
 kind: CloudManagedBackup
 metadata:
-  name: cloudmanaged-backup-postgresql
+  name: cloudmanaged-backup-postgresql-bar
 spec:
   type: s3
   name: cloudmanaged-pg
   secret: do-s3
-  schedule: "*/2 * * * *"
+  schedule: "* 1 * * *"
+#  database: "bar"

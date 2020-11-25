@@ -1,0 +1,14 @@
+apiVersion: cloudlinux.com/v1
+kind: CloudManagedRestore
+metadata:
+  name: cloudmanaged-restore-backup-postgresql
+spec:
+  type: s3
+  name: cloudmanaged-pg
+  secret: do-s3
+  # full
+  # https://cloudmanaged.fra1.digitaloceanspaces.com/postgresql/cloudmanaged-pg/logical_backups/1605860851.sql.gz
+  # specific db
+  # https://cloudmanaged.fra1.digitaloceanspaces.com/postgresql/cloudmanaged-pg/logical_backups/bar-1605860741.sql.gz
+  backup: s3://cloudmanaged/postgresql/cloudmanaged-pg/logical_backups/bar-1605860741.sql.gz
+  database: "bar"

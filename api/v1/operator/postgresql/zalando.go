@@ -44,14 +44,8 @@ func (p *Postgres) Init(cm *cloudlinuxv1.CloudManaged) {
 			EnableMasterLoadBalancer:  &loadBalancersEnabled,
 			EnableReplicaLoadBalancer: &loadBalancersEnabled,
 			Users: map[string]postgresv1.UserFlags{
-				// cloudmanaged - database owner
+				// required user like teamId name with necessary credentials
 				"cloudmanaged": {"superuser", "createdb"},
-			},
-			Databases: map[string]string{
-				"cloudmanaged": "cloudmanaged",
-			},
-			PreparedDatabases: map[string]postgresv1.PreparedDatabase{
-				"bar": {},
 			},
 			PostgresqlParam: postgresv1.PostgresqlParam{
 				PgVersion: "12",

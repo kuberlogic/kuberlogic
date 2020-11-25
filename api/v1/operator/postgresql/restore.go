@@ -5,31 +5,28 @@ import (
 	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/backup"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
-	v1 "k8s.io/api/core/v1"
+	v12 "k8s.io/api/core/v1"
 )
 
 const (
-	backupImage = "cloudmanaged-backup-postgresql"
-	backupTag   = "latest"
-
-	operatorConfigMap = "cm-postgres-operator"
-	postgreSuperUser  = "postgres" // TODO: Could be grabbed from config map ^
+	restoreImage = "cloudmanaged-restore-postgresql"
+	restoreTag   = "latest"
 )
 
-type Backup struct {
-	backup.BaseBackup
+type Restore struct {
+	backup.BaseRestore
 	Cluster Postgres
 }
 
-func (p *Backup) SetBackupImage() {
-	p.Image = util.GetImage(backupImage, backupTag)
+func (p *Restore) SetRestoreImage() {
+	p.Image = util.GetImage(restoreImage, restoreTag)
 }
 
-func (p *Backup) SetBackupEnv(cm *cloudlinuxv1.CloudManagedBackup) {
+func (p *Restore) SetRestoreEnv(cm *cloudlinuxv1.CloudManagedRestore) {
 	pgDataSecret := fmt.Sprintf("%s.%s.credentials", postgreSuperUser,
 		p.Cluster.Operator.Name)
 
-	env := []v1.EnvVar{
+	env := []v12.EnvVar{
 		{
 			Name:  "SCOPE",
 			Value: p.Cluster.Operator.Name,
@@ -40,8 +37,8 @@ func (p *Backup) SetBackupEnv(cm *cloudlinuxv1.CloudManagedBackup) {
 		},
 		{
 			Name: "POD_NAMESPACE",
-			ValueFrom: &v1.EnvVarSource{
-				FieldRef: &v1.ObjectFieldSelector{
+			ValueFrom: &v12.EnvVarSource{
+				FieldRef: &v12.ObjectFieldSelector{
 					APIVersion: "v1",
 					FieldPath:  "metadata.namespace",
 				},
@@ -71,6 +68,10 @@ func (p *Backup) SetBackupEnv(cm *cloudlinuxv1.CloudManagedBackup) {
 		{
 			Name:      "PGPASSWORD",
 			ValueFrom: util.FromSecret(pgDataSecret, "password"),
+		},
+		{
+			Name:  "PATH_TO_BACKUP",
+			Value: cm.Spec.Backup,
 		},
 		{
 			Name:  "DATABASE",
