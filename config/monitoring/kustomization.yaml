@@ -4,3 +4,4 @@ resources:
 - kube-eagle.yaml
 - kube-state-metrics.yaml
 - victoriametrics.yaml
+- alertmanager.yml
