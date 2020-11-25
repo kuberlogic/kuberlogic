@@ -2,9 +2,11 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-logr/logr"
 	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator"
+	"gitlab.com/cloudmanaged/operator/monitoring"
 	v1 "k8s.io/api/batch/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,6 +33,9 @@ func (r *CloudManagedRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	// metrics key
+	monitoringKey := fmt.Sprintf("%s/%s", req.Name, req.Namespace)
+
 	// Fetch the Cloudmanaged instance
 	cloudmanagedrestore := &cloudlinuxv1.CloudManagedRestore{}
 	err := r.Get(ctx, req.NamespacedName, cloudmanagedrestore)
@@ -43,6 +48,7 @@ func (r *CloudManagedRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result
 		}
 		// Error reading the object - requeue the request.
 		log.Error(err, "Failed to get CloudmanagedBackup")
+		delete(monitoring.CloudManageds, monitoringKey)
 		return ctrl.Result{}, err
 	}
 
@@ -131,6 +137,8 @@ func (r *CloudManagedRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result
 				"Status", cloudmanagedrestore.GetStatus())
 		}
 	}
+
+	monitoring.CloudManagedRestores[monitoringKey] = cloudmanagedrestore
 
 	return ctrl.Result{}, nil
 }
