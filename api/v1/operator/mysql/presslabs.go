@@ -37,7 +37,26 @@ func (p *Mysql) Init(cm *cloudlinuxv1.CloudManaged) {
 			PodSpec: mysqlv1.PodSpec{
 				Annotations: map[string]string{
 					"monitoring.cloudlinux.com/scrape": "true",
-					"monitoring.cloudlinux.com/port":   "9125",
+					"monitoring.cloudlinux.com/port":   "9999",
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  "cloudmanaged-exporter",
+						Image: "gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/exporter:v1",
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      "data",
+								MountPath: "/var/lib/mysql",
+							},
+						},
+						Ports: []corev1.ContainerPort{
+							{
+								Name:          "metrics",
+								ContainerPort: 9999,
+								Protocol:      corev1.ProtocolTCP,
+							},
+						},
+					},
 				},
 				InitContainers: []corev1.Container{
 					{
