@@ -8,18 +8,29 @@ This step is responsible for deploy operators:
 - mysql by [Presslabs](https://github.com/presslabs/mysql-operator)
 - redis by [spotathome.com](https://github.com/spotahome/redis-operator)
 
-```
-# clone cloudmanaged repo into "cloudmanaged" directory
-# cd cloudmanaged/src/cm-operator
-
-# need to create secret for access gitlab registry - see details https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#inspecting-the-secret-regcred
-docker login gitlab.corp.cloudlinux.com:5001
-DOCKER_REGISTRY_SERVER=https://gitlab.corp.cloudlinux.com:5001
-DOCKER_USER=<username>
-DOCKER_PASSWORD=<password>
-kubectl create secret docker-registry gitlab-registry --docker-server=$DOCKER_REGISTRY_SERVER --docker-username=$DOCKER_USER --docker-password=$DOCKER_PASSWORD
-make deploy
-```
+1. Clone the repo
+    ```shell script
+    git clone git@gitlab.corp.cloudlinux.com:cloudmanaged/operator.git
+    cd operator
+    ```
+2. Create gitlab docker registry access token. You can do it here https://gitlab.corp.cloudlinux.com/profile/personal_access_tokens
+3. Make sure you have the minikube installed and running (https://minikube.sigs.k8s.io/docs/start/)
+    ```shell script
+    minikube status
+    ```
+4. Make sure you have Go installed (https://golang.org/doc/install).
+4. Create a secret in kubernetes to access gitlab registry (learn more here https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#inspecting-the-secret-regcred)
+    ```shell script
+    docker login gitlab.corp.cloudlinux.com:5001
+    DOCKER_REGISTRY_SERVER=https://gitlab.corp.cloudlinux.com:5001
+    DOCKER_USER=<username, the one that was given to you during the onboarding>
+    DOCKER_PASSWORD=<access token created in step 2>
+    kubectl create secret docker-registry gitlab-registry --docker-server=$DOCKER_REGISTRY_SERVER --docker-username=$DOCKER_USER --docker-password=$DOCKER_PASSWORD
+    ```
+4. Deploy operators
+    ```shell script
+   make deploy
+    ```
 
 ### Create PostgreSQL cluster
 
