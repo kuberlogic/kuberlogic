@@ -44,7 +44,7 @@ type CloudManagedBackup struct {
 type CloudManagedBackupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []CloudManaged `json:"items"`
+	Items           []CloudManagedBackup `json:"items"`
 }
 
 func (cm *CloudManagedBackup) IsEqual(newStatus string) bool {
