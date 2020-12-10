@@ -85,7 +85,7 @@ func (in *CloudManagedBackupList) DeepCopyInto(out *CloudManagedBackupList) {
 	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
-		*out = make([]CloudManaged, len(*in))
+		*out = make([]CloudManagedBackup, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
