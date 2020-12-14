@@ -40,4 +40,19 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
+      - command:
+          - /apiserver
+        args:
+          - --scheme=http
+        image: apiserver:latest
+        name: apiserver
+        ports:
+          - containerPort: 8001
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
       terminationGracePeriodSeconds: 10
