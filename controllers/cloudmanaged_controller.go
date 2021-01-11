@@ -127,6 +127,7 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		//err = r.Status().Update(ctx, cloudmanaged) # FIXME: Figure out why it's failed
 		if err != nil {
 			log.Error(err, "Failed to update cloudmanaged object")
+			return ctrl.Result{}, err
 		} else {
 			log.Info("Cloudmanaged status is updated", "Status", cloudmanaged.GetStatus())
 		}

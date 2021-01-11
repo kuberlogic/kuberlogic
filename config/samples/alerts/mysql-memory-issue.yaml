@@ -1,0 +1,10 @@
+---
+apiVersion: cloudlinux.com/v1
+kind: CloudManagedAlert
+metadata:
+  name: cm-sample-memory-alert
+spec:
+  alertname: memory-alert
+  alertvalue: "0.05"
+  cluster: cm-mysql
+  pod: test-pod

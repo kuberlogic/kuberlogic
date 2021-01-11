@@ -124,6 +124,20 @@ data:
         - __meta_kubernetes_pod_phase
 ---
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vmalert-rules
+data:
+  alert.rules: |
+    ---
+    groups:
+    - name: cloudmanaged-alerts
+      rules:
+      - alert: cloudmanaged-memory-usage
+        expr: (sum(eagle_pod_container_resource_usage_memory_bytes{pod=~"cloudmanaged-my.*"}) by (pod)) / max(cloudmanaged_memory_limit_bytes{name="cloudmanaged-my"}) > 0.3
+        for: 1m
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: cloudlinux-victoriametrics-data
@@ -137,7 +151,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cloudlinux-victoriametrics-server
+  name: cloudlinux-victoriametrics
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
@@ -153,12 +167,25 @@ spec:
         app: cloudlinux-victoriametrics
     spec:
       containers:
+        - name: vmalert
+          image: victoriametrics/vmalert:v1.45.0
+          args:
+            - -datasource.url=http://localhost:8428
+            - -remoteWrite.url=http://localhost:8428
+            - -remoteRead.url=http://localhost:8428
+            - -notifier.url=http://cm-alertmanager-service:9093
+            - -rule=/etc/vmalert/alert.rules
+          volumeMounts:
+            - mountPath: /etc/vmalert
+              name: vmalert-rules-volume
+          terminationMessagePath: /dev/termaniation-log
+          terminationMessagePolicy: File
         - args:
             - -httpListenAddr=:8428
             - -promscrape.config=/etc/config/victoriametrics.yaml
             - -storageDataPath=/data
-          image: victoriametrics/victoria-metrics:v1.44.0
-          name: server
+          image: victoriametrics/victoria-metrics:v1.45.0
+          name: vmserver
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
           volumeMounts:
@@ -198,6 +225,10 @@ spec:
         - name: data-volume
           persistentVolumeClaim:
             claimName: cloudlinux-victoriametrics-data
+        - configMap:
+            defaultMode: 420
+            name: vmalert-rules
+          name: vmalert-rules-volume
 ---
 apiVersion: v1
 kind: Service
