@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-type Watcher struct {
+type BaseSession struct {
 	Cluster    *cloudlinuxv1.CloudManaged
 	MasterIP   string
 	ReplicaIPs []string
@@ -39,7 +39,7 @@ type Argument struct {
 	Duration int64
 }
 
-func (w *Watcher) GetPods(client *kubernetes.Clientset, matchingLabels client2.MatchingLabels) (*v1.PodList, error) {
+func (session *BaseSession) GetPods(client *kubernetes.Clientset, matchingLabels client2.MatchingLabels) (*v1.PodList, error) {
 	labelMap, err := metav1.LabelSelectorAsMap(&metav1.LabelSelector{
 		MatchLabels: matchingLabels,
 	})
@@ -60,7 +60,7 @@ func (w *Watcher) GetPods(client *kubernetes.Clientset, matchingLabels client2.M
 	return pods, nil
 }
 
-func (w *Watcher) String() string {
+func (session *BaseSession) String() string {
 	return fmt.Sprintf(`
 Cluster: %s
 Master IP: %s
@@ -70,14 +70,14 @@ Password: %s
 Database: %s
 Table: %s
 Port: %d`,
-		w.Cluster.Spec.Type,
-		w.MasterIP,
-		w.ReplicaIPs,
-		w.Username,
-		w.Password,
-		w.Database,
-		w.Table,
-		w.Port,
+		session.Cluster.Spec.Type,
+		session.MasterIP,
+		session.ReplicaIPs,
+		session.Username,
+		session.Password,
+		session.Database,
+		session.Table,
+		session.Port,
 	)
 }
 
@@ -85,8 +85,8 @@ func FormatTime() string {
 	return time.Now().Format(time.Stamp)
 }
 
-func (w *Watcher) MakeQuery(arg Argument) {
-	dir := fmt.Sprintf("/tmp/cm/%s/", w.Cluster.Name)
+func (session *BaseSession) MakeQuery(arg Argument) {
+	dir := fmt.Sprintf("/tmp/cm/%s/", session.Cluster.Name)
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
 		log.Fatal(err)
@@ -102,7 +102,7 @@ func (w *Watcher) MakeQuery(arg Argument) {
 	fmt.Println(filename)
 	writer := bufio.NewWriter(f)
 	for {
-		number, err := arg.Func(arg.Host, w.Table, arg.Duration)
+		number, err := arg.Func(arg.Host, session.Table, arg.Duration)
 		var s string
 		if err != nil {
 			s = fmt.Sprintf("%s: %s/%s: %v\n", FormatTime(), arg.Name, arg.Operation, err)

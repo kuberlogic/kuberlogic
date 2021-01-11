@@ -108,17 +108,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	watcher, err := api.GetWatcher(cluster, client, params.targetDb, params.targetTable)
+	session, err := api.GetSession(cluster, client, params.targetDb, params.targetTable)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println(watcher)
+	log.Println(session)
 
-	if err := watcher.SetupDDL(); err != nil {
+	if err := session.SetupDDL(); err != nil {
 		log.Fatal(err)
 	}
-	watcher.RunQueries(params.delay, params.duration)
+	session.RunQueries(params.delay, params.duration)
 	for {
 		time.Sleep(time.Minute)
 	}

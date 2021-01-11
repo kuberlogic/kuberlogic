@@ -9,14 +9,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-type Watcher interface {
-	String() string
-	SetupDDL() error
-	RunQueries(delay common.Delay, duration common.Duration)
-}
-
-func GetWatcher(cm *cloudlinuxv1.CloudManaged, client *kubernetes.Clientset, db, table string) (Watcher, error) {
-
+func GetSession(cm *cloudlinuxv1.CloudManaged, client *kubernetes.Clientset, db, table string) (common.Session, error) {
 	switch cm.Spec.Type {
 	case "mysql":
 		return mysql.New(cm, client, db, table)
