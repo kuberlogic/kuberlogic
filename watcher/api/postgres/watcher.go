@@ -15,34 +15,38 @@ import (
 	"time"
 )
 
-type Watcher struct {
-	base.Watcher
+type Session struct {
+	base.BaseSession
 }
 
-func New(cm *cloudlinuxv1.CloudManaged, client *kubernetes.Clientset, db, table string) (*Watcher, error) {
-	w := &Watcher{}
+func New(cm *cloudlinuxv1.CloudManaged, client *kubernetes.Clientset, db, table string) (*Session, error) {
+	session := &Session{}
 
-	w.Cluster = cm
-	w.Database = db
-	w.Table = table
-	w.Port = 5432
+	session.Cluster = cm
+	session.Database = db
+	session.Table = table
+	session.Port = 5432
 
-	if err := w.SetMaster(client); err != nil {
+	if err := session.SetMaster(client); err != nil {
 		return nil, err
 	}
-	if err := w.SetReplicas(client); err != nil {
+	if err := session.SetReplicas(client); err != nil {
 		return nil, err
 	}
-	if err := w.SetCredentials(client); err != nil {
+	if err := session.SetCredentials(client); err != nil {
 		return nil, err
 	}
-	return w, nil
+	return session, nil
 }
 
-func (w *Watcher) SetMaster(client *kubernetes.Clientset) error {
-	pods, err := w.GetPods(client, client2.MatchingLabels{
+func (session *Session) GetDatabase() common.Database {
+	return &Database{session}
+}
+
+func (session *Session) SetMaster(client *kubernetes.Clientset) error {
+	pods, err := session.GetPods(client, client2.MatchingLabels{
 		"application":  "spilo",
-		"cluster-name": w.Cluster.Name,
+		"cluster-name": session.Cluster.Name,
 		"spilo-role":   "master",
 	})
 	if err != nil {
@@ -55,15 +59,15 @@ func (w *Watcher) SetMaster(client *kubernetes.Clientset) error {
 		return errors.New("master pod is not unique in the cluster")
 	}
 
-	w.MasterIP = pods.Items[0].Status.PodIP
+	session.MasterIP = pods.Items[0].Status.PodIP
 
 	return nil
 }
 
-func (w *Watcher) SetReplicas(client *kubernetes.Clientset) error {
-	pods, err := w.GetPods(client, client2.MatchingLabels{
+func (session *Session) SetReplicas(client *kubernetes.Clientset) error {
+	pods, err := session.GetPods(client, client2.MatchingLabels{
 		"application":  "spilo",
-		"cluster-name": w.Cluster.Name,
+		"cluster-name": session.Cluster.Name,
 		"spilo-role":   "replica",
 	})
 	if err != nil {
@@ -71,21 +75,21 @@ func (w *Watcher) SetReplicas(client *kubernetes.Clientset) error {
 	}
 
 	for _, pod := range pods.Items {
-		w.ReplicaIPs = append(w.ReplicaIPs, pod.Status.PodIP)
+		session.ReplicaIPs = append(session.ReplicaIPs, pod.Status.PodIP)
 	}
 	return nil
 }
 
-func (w *Watcher) SetCredentials(client *kubernetes.Clientset) error {
+func (session *Session) SetCredentials(client *kubernetes.Clientset) error {
 	secrets, err := client.CoreV1().Secrets("").
 		List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 	for _, secret := range secrets.Items {
-		if secret.Name == fmt.Sprintf("postgres.%s.credentials", w.Cluster.Name) {
-			w.Password = string(secret.Data["password"])
-			w.Username = string(secret.Data["username"])
+		if secret.Name == fmt.Sprintf("postgres.%s.credentials", session.Cluster.Name) {
+			session.Password = string(secret.Data["password"])
+			session.Username = string(secret.Data["username"])
 			break
 		}
 	}
@@ -98,45 +102,31 @@ func dbAlreadyExists(err error) bool {
 	return strings.Contains(err.Error(), "already exists")
 }
 
-func (w *Watcher) SetupDDL() error {
-	if err := w.CreateDatabase(); err != nil && !dbAlreadyExists(err) {
+func (session *Session) SetupDDL() error {
+	if err := session.GetDatabase().Create(session.Database); err != nil && !dbAlreadyExists(err) {
 		return err
 	}
-	if err := w.CreateTable(); err != nil {
+	if err := session.CreateTable(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (w *Watcher) ConnectionString(host, db string) string {
+func (session *Session) ConnectionString(host, db string) string {
 	return fmt.Sprintf("postgresql://%s:%s@%s:%d/%s",
-		w.Username, w.Password, host, w.Port, db)
+		session.Username, session.Password, host, session.Port, db)
 }
 
-func (w *Watcher) CreateDatabase() error {
+func (session *Session) CreateTable() error {
 	ctx := context.TODO()
-	conn, err := pgx.Connect(ctx, w.ConnectionString(w.MasterIP, "postgres"))
-	if err != nil {
-		return err
-	}
-	defer conn.Close(ctx)
-
-	query := fmt.Sprintf("CREATE DATABASE %s;", w.Database)
-
-	_, err = conn.Exec(ctx, query)
-	return err
-}
-
-func (w *Watcher) CreateTable() error {
-	ctx := context.TODO()
-	conn, err := pgx.Connect(ctx, w.ConnectionString(w.MasterIP, w.Database))
+	conn, err := pgx.Connect(ctx, session.ConnectionString(session.MasterIP, session.Database))
 	if err != nil {
 		return err
 	}
 	defer conn.Close(ctx)
 
 	rows, err := conn.Query(ctx,
-		"select table_name from information_schema.tables where table_name=$1", w.Table)
+		"select table_name from information_schema.tables where table_name=$1", session.Table)
 	if err != nil {
 		return err
 	}
@@ -147,17 +137,17 @@ func (w *Watcher) CreateTable() error {
 		if err != nil {
 			return err
 		}
-		if existingTable == w.Table {
+		if existingTable == session.Table {
 			return nil
 		}
 	}
 	_, err = conn.Exec(ctx,
-		fmt.Sprintf("create table %s(id serial primary key)", w.Table))
+		fmt.Sprintf("create table %s(id serial primary key)", session.Table))
 	return err
 }
 
-func (w *Watcher) ReadLastRecord(host, table string, duration int64) (int, error) {
-	config, err := pgx.ParseConfig(w.ConnectionString(host, w.Database))
+func (session *Session) ReadLastRecord(host, table string, duration int64) (int, error) {
+	config, err := pgx.ParseConfig(session.ConnectionString(host, session.Database))
 	if err != nil {
 		return 0, err
 	}
@@ -197,8 +187,8 @@ func (w *Watcher) ReadLastRecord(host, table string, duration int64) (int, error
 	return 0, nil // 0 rows in dataset
 }
 
-func (w *Watcher) WriteRecord(host, table string, duration int64) (int, error) {
-	config, err := pgx.ParseConfig(w.ConnectionString(host, w.Database))
+func (session *Session) WriteRecord(host, table string, duration int64) (int, error) {
+	config, err := pgx.ParseConfig(session.ConnectionString(host, session.Database))
 	if err != nil {
 		return 0, err
 	}
@@ -233,30 +223,30 @@ func (w *Watcher) WriteRecord(host, table string, duration int64) (int, error) {
 
 }
 
-func (w *Watcher) RunQueries(delay common.Delay, duration common.Duration) {
+func (session *Session) RunQueries(delay common.Delay, duration common.Duration) {
 	items := []base.Argument{
 		{
 			"read",
 			"master",
-			w.ReadLastRecord,
-			w.MasterIP,
+			session.ReadLastRecord,
+			session.MasterIP,
 			delay.MasterRead,
 			duration.MasterRead,
 		},
 		{
 			"write",
 			"master",
-			w.WriteRecord,
-			w.MasterIP,
+			session.WriteRecord,
+			session.MasterIP,
 			delay.MasterWrite,
 			duration.MasterWrite,
 		},
 	}
-	for i, ip := range w.ReplicaIPs {
+	for i, ip := range session.ReplicaIPs {
 		items = append(items, base.Argument{
 			"read",
 			fmt.Sprintf("replica-%d", i),
-			w.ReadLastRecord,
+			session.ReadLastRecord,
 			ip,
 			delay.ReplicaRead,
 			duration.ReplicaRead,
@@ -264,6 +254,6 @@ func (w *Watcher) RunQueries(delay common.Delay, duration common.Duration) {
 	}
 
 	for _, arg := range items {
-		go w.MakeQuery(arg)
+		go session.MakeQuery(arg)
 	}
 }
