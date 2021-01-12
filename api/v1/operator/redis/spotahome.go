@@ -14,6 +14,12 @@ import (
 const baseRedisImage = "redis"
 const latestRedisVersion = "6.0.8"
 
+const (
+	redisRoleKey     = ""
+	redisRoleReplica = ""
+	redisRoleMaster  = ""
+)
+
 type Redis struct {
 	Operator redisv1.RedisFailover
 }
@@ -140,4 +146,24 @@ func (p *Redis) CurrentStatus() string {
 
 func (p *Redis) GenerateJob(backup *cloudlinuxv1.CloudManagedBackup) v1beta1.CronJob {
 	return v1beta1.CronJob{}
+}
+
+func (p *Redis) GetPodReplicaSelector(cluster string) map[string]string {
+	return map[string]string{redisRoleKey: redisRoleReplica}
+}
+
+func (p *Redis) GetPodMasterSelector(cluster string) map[string]string {
+	return map[string]string{redisRoleKey: redisRoleMaster}
+}
+
+func (p *Redis) GetMasterService(cluster, namespace string) string {
+	return ""
+}
+
+func (p *Redis) GetReplicaService(cluster, namespace string) string {
+	return ""
+}
+
+func (p *Redis) GetAccessPort() int {
+	return 0
 }
