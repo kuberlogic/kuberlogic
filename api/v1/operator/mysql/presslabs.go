@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"fmt"
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
@@ -13,6 +14,14 @@ import (
 const (
 	image   = "mysql"
 	version = "5.7.31"
+
+	mysqlRoleKey     = "role"
+	mysqlRoleReplica = "replica"
+	mysqlRoleMaster  = "master"
+
+	mysqlPodLabelKey = "mysql.presslabs.org/cluster"
+
+	mysqlPort = 3306
 )
 
 type Mysql struct {
@@ -186,4 +195,30 @@ func (p *Mysql) CurrentStatus() string {
 	default:
 		return cloudlinuxv1.ClusterUnknownStatus
 	}
+}
+
+func (p *Mysql) GetPodReplicaSelector(cluster string) map[string]string {
+	return map[string]string{
+		mysqlRoleKey:     mysqlRoleReplica,
+		mysqlPodLabelKey: cluster,
+	}
+}
+
+func (p *Mysql) GetPodMasterSelector(cluster string) map[string]string {
+	return map[string]string{
+		mysqlRoleKey:     mysqlRoleMaster,
+		mysqlPodLabelKey: cluster,
+	}
+}
+
+func (p *Mysql) GetMasterService(cluster, namespace string) string {
+	return fmt.Sprintf("%s-mysql-master.%s", cluster, namespace)
+}
+
+func (p *Mysql) GetReplicaService(cluster, namespace string) string {
+	return fmt.Sprintf("%s-mysql-replicas.%s", cluster, namespace)
+}
+
+func (p *Mysql) GetAccessPort() int {
+	return mysqlPort
 }
