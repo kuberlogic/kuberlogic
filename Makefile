@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?= 0.0.5
+VERSION ?= 0.0.6
 # Default bundle image tag
 BUNDLE_IMG ?= controller-bundle:$(VERSION)
 # Options for 'bundle-build'
