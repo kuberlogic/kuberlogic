@@ -45,6 +45,7 @@ func (p *Mysql) Init(cm *cloudlinuxv1.CloudManaged) {
 			Namespace: cm.Namespace,
 		},
 		Spec: mysqlv1.MysqlClusterSpec{
+			SecretName: cm.Spec.SecretName,
 			PodSpec: mysqlv1.PodSpec{
 				Annotations: map[string]string{
 					"monitoring.cloudlinux.com/scrape": "true",
