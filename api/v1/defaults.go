@@ -6,10 +6,13 @@ import (
 )
 
 type Defaults struct {
+	User       string
 	VolumeSize string
 	Resources  v1.ResourceRequirements
 	Version    string
 }
+
+const DefaultUser = "cloudmanaged"
 
 const DefaultVolumeSize = "1Gi"
 
