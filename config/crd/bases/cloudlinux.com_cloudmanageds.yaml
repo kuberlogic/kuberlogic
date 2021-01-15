@@ -72,7 +72,7 @@ spec:
             maintenanceWindow:
               properties:
                 duration:
-                  description: window duration in seconds
+                  description: window duration in hours
                   type: integer
                 start:
                   description: start hour, UTC zone is assumed

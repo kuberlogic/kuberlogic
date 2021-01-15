@@ -227,24 +227,24 @@ func (p *Postgres) CurrentStatus() string {
 
 func (p *Postgres) GetPodReplicaSelector() map[string]string {
 	return map[string]string{postgresRoleKey: postgresRoleReplica,
-		postgresPodLabelKey:   p.Operator.ClusterName,
+		postgresPodLabelKey:   p.Operator.ObjectMeta.Name,
 		postgresPodDefaultKey: postgresPodDefaultVal,
 	}
 }
 
 func (p *Postgres) GetPodMasterSelector() map[string]string {
 	return map[string]string{postgresRoleKey: postgresRoleMaster,
-		postgresPodLabelKey:   p.Operator.ClusterName,
+		postgresPodLabelKey:   p.Operator.ObjectMeta.Name,
 		postgresPodDefaultKey: postgresPodDefaultVal,
 	}
 }
 
 func (p *Postgres) GetMasterService() string {
-	return fmt.Sprintf("%s", p.Operator.ClusterName)
+	return fmt.Sprintf("%s", p.Operator.ObjectMeta.Name)
 }
 
 func (p *Postgres) GetReplicaService() string {
-	return fmt.Sprintf("%s-repl", p.Operator.ClusterName)
+	return fmt.Sprintf("%s-repl", p.Operator.ObjectMeta.Name)
 }
 
 func (p *Postgres) GetAccessPort() int {
@@ -256,5 +256,5 @@ func (p *Postgres) GetMainPodContainer() string {
 }
 
 func (p *Postgres) GetDefaultConnectionPassword() (secret, passwordField string) {
-	return fmt.Sprintf("%s.%s.credentials", cloudlinuxv1.DefaultUser, p.Operator.ClusterName), "password"
+	return fmt.Sprintf("%s.%s.credentials", cloudlinuxv1.DefaultUser, p.Operator.ObjectMeta.Name), "password"
 }

@@ -231,16 +231,16 @@ func (p *Mysql) GetPodReplicaSelector() map[string]string {
 func (p *Mysql) GetPodMasterSelector() map[string]string {
 	return map[string]string{
 		mysqlRoleKey:     mysqlRoleMaster,
-		mysqlPodLabelKey: p.Operator.ClusterName,
+		mysqlPodLabelKey: p.Operator.ObjectMeta.Name,
 	}
 }
 
 func (p *Mysql) GetMasterService() string {
-	return fmt.Sprintf("%s-mysql-master", p.Operator.ClusterName)
+	return fmt.Sprintf("%s-mysql-master", p.Operator.ObjectMeta.Name)
 }
 
 func (p *Mysql) GetReplicaService() string {
-	return fmt.Sprintf("%s-mysql-replicas", p.Operator.ClusterName)
+	return fmt.Sprintf("%s-mysql-replicas", p.Operator.ObjectMeta.Name)
 }
 
 func (p *Mysql) GetAccessPort() int {
