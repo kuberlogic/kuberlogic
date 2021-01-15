@@ -33,7 +33,7 @@ type MaintenanceWindow struct {
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=11
 	// +kubebuilder:validation:Type=integer
-	StartHour string `json:"start,omitempty"`
+	StartHour int `json:"start,omitempty"`
 	// day of the week
 	// +kubebuilder:validation:Enum=Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday
 	Weekday string `json:"weekday,omitempty"`
