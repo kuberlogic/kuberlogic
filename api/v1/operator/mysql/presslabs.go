@@ -225,7 +225,7 @@ func (p *Mysql) CurrentStatus() string {
 func (p *Mysql) GetPodReplicaSelector() map[string]string {
 	return map[string]string{
 		mysqlRoleKey:     mysqlRoleReplica,
-		mysqlPodLabelKey: p.Operator.ClusterName,
+		mysqlPodLabelKey: p.Operator.ObjectMeta.Name,
 	}
 }
 
