@@ -37,7 +37,7 @@ type MaintenanceWindow struct {
 	// day of the week
 	// +kubebuilder:validation:Enum=Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday
 	Weekday string `json:"weekday,omitempty"`
-	// window duration in seconds
+	// window duration in hours
 	// +kubebuilder:validation:Type=integer
 	// +kubebuilder:validation:Default=4
 	DurationHours int `json:"duration,omitempty"`
