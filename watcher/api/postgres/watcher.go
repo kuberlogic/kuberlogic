@@ -43,6 +43,10 @@ func (session *Session) GetDatabase() common.Database {
 	return &Database{session}
 }
 
+func (session *Session) GetUser() common.User {
+	return &User{session}
+}
+
 func (session *Session) SetMaster(client *kubernetes.Clientset) error {
 	pods, err := session.GetPods(client, client2.MatchingLabels{
 		"application":  "spilo",

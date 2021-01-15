@@ -44,6 +44,10 @@ func (session *Session) GetDatabase() common.Database {
 	return &Database{session}
 }
 
+func (session *Session) GetUser() common.User {
+	return &User{session}
+}
+
 func (session *Session) SetCredentials(client *kubernetes.Clientset) error {
 	secrets, err := client.CoreV1().Secrets("").
 		List(context.TODO(), metav1.ListOptions{})
