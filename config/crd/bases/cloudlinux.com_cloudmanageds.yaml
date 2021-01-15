@@ -63,6 +63,34 @@ spec:
           type: object
         spec:
           properties:
+            advancedConf:
+              additionalProperties:
+                type: string
+              type: object
+            defaultUser:
+              type: string
+            maintenanceWindow:
+              properties:
+                duration:
+                  description: window duration in seconds
+                  type: integer
+                start:
+                  description: start hour, UTC zone is assumed
+                  maximum: 11
+                  minimum: 0
+                  type: integer
+                weekday:
+                  description: day of the week
+                  enum:
+                  - Monday
+                  - Tuesday
+                  - Wednesday
+                  - Thursday
+                  - Friday
+                  - Saturday
+                  - Sunday
+                  type: string
+              type: object
             replicas:
               description: Amount of replicas
               format: int32

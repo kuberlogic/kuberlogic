@@ -20,7 +20,27 @@ type CloudManagedSpec struct {
 	VolumeSize string `json:"volumeSize,omitempty"`
 	// 2 or 3 digits: 5.7 or 5.7.31
 	// +kubebuilder:validation:Pattern=^\d+\.\d+[\.\d+]*$
-	Version string `json:"version,omitempty"`
+	Version           string            `json:"version,omitempty"`
+	AdvancedConf      map[string]string `json:"advancedConf,omitempty"`
+	MaintenanceWindow `json:"maintenanceWindow,omitempty"`
+
+	// +kubebuilder:validation:Type=string
+	DefaultUser string `json:"defaultUser,omitempty"`
+}
+
+type MaintenanceWindow struct {
+	// start hour, UTC zone is assumed
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=11
+	// +kubebuilder:validation:Type=integer
+	StartHour string `json:"start,omitempty"`
+	// day of the week
+	// +kubebuilder:validation:Enum=Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday
+	Weekday string `json:"weekday,omitempty"`
+	// window duration in seconds
+	// +kubebuilder:validation:Type=integer
+	// +kubebuilder:validation:Default=4
+	DurationHours int `json:"duration,omitempty"`
 }
 
 // CloudManagedStatus defines the observed state of CloudManaged
@@ -81,6 +101,7 @@ func (cm *CloudManaged) InitDefaults(defaults Defaults) bool {
 		cm.Spec.Version = defaults.Version
 		dirty = true
 	}
+	cm.Spec.DefaultUser = defaults.User
 	return dirty
 }
 
