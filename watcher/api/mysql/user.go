@@ -5,19 +5,23 @@ import (
 	"fmt"
 )
 
-//var ProtectedUsers = []string{
-//	"orchestrator",
-//	"root",
-//	"sys_operator",
-//	"sys_replication",
-//	"sys_exporter",
-//	"sys_heartbeat",
-//	"mysql.sys",
-//	"root",
-//}
+var protectedUsers = map[string]bool{
+	"orchestrator":    true,
+	"sys_operator":    true,
+	"sys_replication": true,
+	"sys_exporter":    true,
+	"sys_heartbeat":   true,
+	"mysql.sys":       true,
+	"root":            true,
+}
 
 type User struct {
 	session *Session
+}
+
+func (usr *User) IsProtected(name string) bool {
+	_, ok := protectedUsers[name]
+	return ok
 }
 
 func (usr *User) Create(name, password string) error {
