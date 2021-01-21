@@ -53,7 +53,7 @@ func (p *Mysql) Init(cm *cloudlinuxv1.CloudManaged) {
 				Containers: []corev1.Container{
 					{
 						Name:  "cloudmanaged-exporter",
-						Image: "gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/exporter:v1",
+						Image: "gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/exporter:v2",
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      "data",
