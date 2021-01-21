@@ -3,12 +3,14 @@ package mysql
 import (
 	"fmt"
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
+	util2 "github.com/presslabs/mysql-operator/pkg/util"
 	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"strings"
 )
 
 const (
@@ -221,4 +223,26 @@ func (p *Mysql) GetReplicaService(cluster, namespace string) string {
 
 func (p *Mysql) GetAccessPort() int {
 	return mysqlPort
+}
+
+func (p *Mysql) GetCredentialsSecret() (*corev1.Secret, error) {
+	rootPassword := util2.RandomString(15)
+	userName := "cloudmanaged"
+	userPassword := util2.RandomString(15)
+
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      strings.ToLower(util2.RandStringUser(10)),
+			Namespace: p.Operator.ObjectMeta.Namespace,
+		},
+		StringData: map[string]string{
+			"ROOT_PASSWORD": rootPassword,
+			"USER":          userName,
+			"PASSWORD":      userPassword,
+		},
+	}, nil
+}
+
+func (p *Mysql) SetCredentialsSecret(s string) {
+	p.Operator.Spec.SecretName = s
 }

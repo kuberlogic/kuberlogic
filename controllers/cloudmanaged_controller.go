@@ -89,6 +89,12 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 			return ctrl.Result{}, err
 		}
 
+		log.Info("Creating new Cluster dependencies")
+		if err := r.setupClusterDependencies(op, cloudmanaged, ctx); err != nil {
+			log.Error(err, "Failed to setup dependencies", "Operator", cloudmanaged.Spec.Type)
+			return ctrl.Result{}, err
+		}
+
 		log.Info("Creating a new Cluster", "Operator", cloudmanaged.Spec.Type)
 		err = r.Create(ctx, dep)
 		if err != nil && k8serrors.IsAlreadyExists(err) {
@@ -136,6 +142,21 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	monitoring.CloudManageds[monitoringKey] = cloudmanaged
 
 	return ctrl.Result{}, nil
+}
+
+func (r *CloudManagedReconciler) setupClusterDependencies(op operator.Operator, cm *cloudlinuxv1.CloudManaged, ctx context.Context) error {
+	credSecret, err := op.GetCredentialsSecret()
+	if err != nil {
+		return err
+	}
+	if credSecret != nil {
+		if err := r.Create(ctx, credSecret); err != nil {
+			return err
+		}
+		ctrl.SetControllerReference(cm, credSecret, r.Scheme)
+		op.SetCredentialsSecret(credSecret.ObjectMeta.Name)
+	}
+	return nil
 }
 
 func (r *CloudManagedReconciler) defineCluster(op operator.Operator, cm *cloudlinuxv1.CloudManaged) (runtime.Object, error) {

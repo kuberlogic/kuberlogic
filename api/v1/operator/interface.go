@@ -8,6 +8,7 @@ import (
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/redis"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/batch/v1beta1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -21,6 +22,9 @@ type Operator interface {
 	IsEqual(cm *cloudlinuxv1.CloudManaged) bool
 	CurrentStatus() string
 	GetDefaults() cloudlinuxv1.Defaults
+
+	GetCredentialsSecret() (*v1.Secret, error)
+	SetCredentialsSecret(string)
 
 	GetPodReplicaSelector(string) map[string]string
 	GetPodMasterSelector(string) map[string]string

@@ -230,3 +230,11 @@ func (p *Postgres) GetReplicaService(cluster, namespace string) string {
 func (p *Postgres) GetAccessPort() int {
 	return postgresPort
 }
+
+func (p *Postgres) GetCredentialsSecret() (*apiv1.Secret, error) {
+	return nil, nil
+}
+
+func (p *Postgres) SetCredentialsSecret(s string) {
+
+}

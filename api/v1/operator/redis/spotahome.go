@@ -167,3 +167,11 @@ func (p *Redis) GetReplicaService(cluster, namespace string) string {
 func (p *Redis) GetAccessPort() int {
 	return 0
 }
+
+func (p *Redis) GetCredentialsSecret() (*v1.Secret, error) {
+	return nil, nil
+}
+
+func (p *Redis) SetCredentialsSecret(s string) {
+
+}
