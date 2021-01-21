@@ -14,6 +14,8 @@ const (
 	image   = "postgresql"
 	version = "12.1.5"
 
+	teamId = "cloudmanaged"
+
 	postgresRoleKey     = "spilo-role"
 	postgresRoleReplica = "replica"
 	postgresRoleMaster  = "master"
@@ -47,16 +49,16 @@ func (p *Postgres) Init(cm *cloudlinuxv1.CloudManaged) {
 
 	p.Operator = postgresv1.Postgresql{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cm.Name,
+			Name:      fmt.Sprintf("%s-%s", teamId, cm.Name),
 			Namespace: cm.Namespace,
 		},
 		Spec: postgresv1.PostgresSpec{
-			TeamID:                    "cloudmanaged",
+			TeamID:                    teamId,
 			EnableMasterLoadBalancer:  &loadBalancersEnabled,
 			EnableReplicaLoadBalancer: &loadBalancersEnabled,
 			Users: map[string]postgresv1.UserFlags{
 				// required user like teamId name with necessary credentials
-				"cloudmanaged": {"superuser", "createdb"},
+				teamId: {"superuser", "createdb"},
 			},
 			PostgresqlParam: postgresv1.PostgresqlParam{
 				PgVersion: "12",
