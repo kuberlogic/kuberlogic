@@ -7,6 +7,7 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	"gitlab.com/cloudmanaged/operator/util/cloudmanaged"
 	"gitlab.com/cloudmanaged/operator/watcher/api/base"
 	"gitlab.com/cloudmanaged/operator/watcher/api/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,18 +50,16 @@ func (session *Session) GetUser() common.User {
 }
 
 func (session *Session) SetCredentials(client *kubernetes.Clientset) error {
-	secrets, err := client.CoreV1().Secrets("").
-		List(context.TODO(), metav1.ListOptions{})
+	_, _, secretName, err := cloudmanaged.GetClusterCredentialsInfo(session.Cluster)
 	if err != nil {
 		return err
 	}
-	for _, secret := range secrets.Items {
-		if secret.Name == session.Cluster.Spec.SecretName {
-			session.Password = string(secret.Data["ROOT_PASSWORD"])
-			session.Username = "root"
-			break
-		}
+	secret, err := client.CoreV1().Secrets("").Get(context.TODO(), secretName, metav1.GetOptions{})
+	if err != nil {
+		return err
 	}
+	session.Password = string(secret.Data["ROOT_PASSWORD"])
+	session.Username = "root"
 	return nil
 }
 
