@@ -10,6 +10,7 @@ import (
 	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator"
 	"gitlab.com/cloudmanaged/operator/monitoring"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -150,10 +151,12 @@ func (r *CloudManagedReconciler) setupClusterDependencies(op operator.Operator, 
 		return err
 	}
 	if credSecret != nil {
+		if err := ctrl.SetControllerReference(cm, credSecret, r.Scheme); err != nil {
+			return err
+		}
 		if err := r.Create(ctx, credSecret); err != nil {
 			return err
 		}
-		ctrl.SetControllerReference(cm, credSecret, r.Scheme)
 		op.SetCredentialsSecret(credSecret.ObjectMeta.Name)
 	}
 	return nil
@@ -179,5 +182,6 @@ func (r *CloudManagedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&mysqlv1.MysqlCluster{}).
 		Owns(&redisv1.RedisFailover{}).
 		Owns(&postgresv1.Postgresql{}).
+		Owns(&corev1.Secret{}).
 		Complete(r)
 }
