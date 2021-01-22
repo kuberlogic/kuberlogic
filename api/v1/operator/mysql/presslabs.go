@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"strings"
 )
 
 const (
@@ -255,7 +254,7 @@ func (p *Mysql) GetMainPodContainer() string {
 }
 
 func (p *Mysql) GetDefaultConnectionPassword() (secret, passwordField string) {
-	return p.Operator.Spec.SecretName, "PASSWORD"
+	return p.genCredentialsSecretName(), "PASSWORD"
 }
 
 func (p *Mysql) GetCredentialsSecret() (*corev1.Secret, error) {
@@ -265,7 +264,7 @@ func (p *Mysql) GetCredentialsSecret() (*corev1.Secret, error) {
 
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      strings.ToLower(util2.RandStringUser(10)),
+			Name:      p.genCredentialsSecretName(),
 			Namespace: p.Operator.ObjectMeta.Namespace,
 		},
 		StringData: map[string]string{
@@ -278,4 +277,8 @@ func (p *Mysql) GetCredentialsSecret() (*corev1.Secret, error) {
 
 func (p *Mysql) SetCredentialsSecret(s string) {
 	p.Operator.Spec.SecretName = s
+}
+
+func (p *Mysql) genCredentialsSecretName() string {
+	return p.Operator.ObjectMeta.Name + "-cred"
 }
