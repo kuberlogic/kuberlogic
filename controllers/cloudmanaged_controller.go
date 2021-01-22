@@ -90,12 +90,6 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 			return ctrl.Result{}, err
 		}
 
-		log.Info("Creating new Cluster dependencies")
-		if err := r.setupClusterDependencies(op, cloudmanaged, ctx); err != nil {
-			log.Error(err, "Failed to setup dependencies", "Operator", cloudmanaged.Spec.Type)
-			return ctrl.Result{}, err
-		}
-
 		log.Info("Creating a new Cluster", "Operator", cloudmanaged.Spec.Type)
 		err = r.Create(ctx, dep)
 		if err != nil && k8serrors.IsAlreadyExists(err) {
@@ -113,6 +107,13 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	}
 
 	op.InitFrom(found)
+
+	log.Info("ensure that we have dependencies set up")
+	if err := r.ensureClusterDependencies(op, cloudmanaged, ctx); err != nil {
+		log.Error(err, "failed to ensure dependencies", "Operator", cloudmanaged.Spec.Type)
+		return ctrl.Result{}, err
+	}
+
 	if !op.IsEqual(cloudmanaged) {
 		op.Update(cloudmanaged)
 
@@ -145,7 +146,7 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	return ctrl.Result{}, nil
 }
 
-func (r *CloudManagedReconciler) setupClusterDependencies(op operator.Operator, cm *cloudlinuxv1.CloudManaged, ctx context.Context) error {
+func (r *CloudManagedReconciler) ensureClusterDependencies(op operator.Operator, cm *cloudlinuxv1.CloudManaged, ctx context.Context) error {
 	credSecret, err := op.GetCredentialsSecret()
 	if err != nil {
 		return err
@@ -154,10 +155,9 @@ func (r *CloudManagedReconciler) setupClusterDependencies(op operator.Operator, 
 		if err := ctrl.SetControllerReference(cm, credSecret, r.Scheme); err != nil {
 			return err
 		}
-		if err := r.Create(ctx, credSecret); err != nil {
+		if err := r.Create(ctx, credSecret); err != nil && !k8serrors.IsAlreadyExists(err) {
 			return err
 		}
-		op.SetCredentialsSecret(credSecret.ObjectMeta.Name)
 	}
 	return nil
 }

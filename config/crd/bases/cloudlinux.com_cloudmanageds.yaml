@@ -76,7 +76,7 @@ spec:
                   type: integer
                 start:
                   description: start hour, UTC zone is assumed
-                  maximum: 11
+                  maximum: 23
                   minimum: 0
                   type: integer
                 weekday:
@@ -122,9 +122,6 @@ spec:
                     value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                   type: object
               type: object
-            secret:
-              description: Secrets (only for type=mysql)
-              type: string
             type:
               description: Type of the cluster
               enum:

@@ -17,7 +17,6 @@ var cmPg = &cloudlinuxv1.CloudManaged{
 	Spec: cloudlinuxv1.CloudManagedSpec{
 		Type:         "postgresql",
 		Replicas:     2,
-		SecretName:   "",
 		Resources:    v1.ResourceRequirements{},
 		VolumeSize:   "1Gi",
 		Version:      "11.1",
@@ -42,7 +41,6 @@ var cmMy = &cloudlinuxv1.CloudManaged{
 	Spec: cloudlinuxv1.CloudManagedSpec{
 		Type:         "mysql",
 		Replicas:     2,
-		SecretName:   "dumb-secret",
 		Resources:    v1.ResourceRequirements{},
 		VolumeSize:   "1Gi",
 		Version:      "5.11",

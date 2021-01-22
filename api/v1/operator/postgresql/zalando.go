@@ -169,6 +169,10 @@ func (p *Postgres) setImage(cm *cloudlinuxv1.CloudManaged) {
 }
 
 func (p *Postgres) setAdvancedConf(cm *cloudlinuxv1.CloudManaged) {
+	if p.Operator.Spec.PostgresqlParam.Parameters == nil {
+		p.Operator.Spec.PostgresqlParam.Parameters = make(map[string]string)
+	}
+
 	for k, v := range cm.Spec.AdvancedConf {
 		p.Operator.Spec.PostgresqlParam.Parameters[k] = v
 	}
@@ -263,8 +267,4 @@ func (p *Postgres) GetDefaultConnectionPassword() (secret, passwordField string)
 
 func (p *Postgres) GetCredentialsSecret() (*apiv1.Secret, error) {
 	return nil, nil
-}
-
-func (p *Postgres) SetCredentialsSecret(s string) {
-
 }

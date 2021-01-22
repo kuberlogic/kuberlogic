@@ -24,7 +24,6 @@ type Operator interface {
 	GetDefaults() cloudlinuxv1.Defaults
 
 	GetCredentialsSecret() (*v1.Secret, error)
-	SetCredentialsSecret(string)
 
 	GetPodReplicaSelector() map[string]string
 	GetPodMasterSelector() map[string]string

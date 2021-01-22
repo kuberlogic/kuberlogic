@@ -179,7 +179,3 @@ func (p *Redis) GetDefaultConnectionPassword() (string, string) {
 func (p *Redis) GetCredentialsSecret() (*v1.Secret, error) {
 	return nil, nil
 }
-
-func (p *Redis) SetCredentialsSecret(s string) {
-
-}
