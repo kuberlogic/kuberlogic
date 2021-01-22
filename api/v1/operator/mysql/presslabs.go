@@ -46,7 +46,7 @@ func (p *Mysql) Init(cm *cloudlinuxv1.CloudManaged) {
 			Namespace: cm.Namespace,
 		},
 		Spec: mysqlv1.MysqlClusterSpec{
-			SecretName: p.genCredentialsSecretName(),
+			SecretName: genCredentialsSecretName(cm.Name),
 			PodSpec: mysqlv1.PodSpec{
 				Annotations: map[string]string{
 					"monitoring.cloudlinux.com/scrape": "true",
@@ -264,7 +264,7 @@ func (p *Mysql) GetCredentialsSecret() (*corev1.Secret, error) {
 
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      p.genCredentialsSecretName(),
+			Name:      genCredentialsSecretName(p.Operator.ObjectMeta.Name),
 			Namespace: p.Operator.ObjectMeta.Namespace,
 		},
 		StringData: map[string]string{
@@ -275,6 +275,6 @@ func (p *Mysql) GetCredentialsSecret() (*corev1.Secret, error) {
 	}, nil
 }
 
-func (p *Mysql) genCredentialsSecretName() string {
-	return p.Operator.ObjectMeta.Name + "-cred"
+func genCredentialsSecretName(cluster string) string {
+	return cluster + "-cred"
 }
