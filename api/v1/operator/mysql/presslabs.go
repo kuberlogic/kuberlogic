@@ -23,6 +23,8 @@ const (
 
 	mysqlPodLabelKey = "mysql.presslabs.org/cluster"
 
+	mysqlMainContainer = "mysql"
+
 	mysqlPort = 3306
 )
 
@@ -45,6 +47,7 @@ func (p *Mysql) Init(cm *cloudlinuxv1.CloudManaged) {
 			Namespace: cm.Namespace,
 		},
 		Spec: mysqlv1.MysqlClusterSpec{
+			SecretName: cm.Spec.SecretName,
 			PodSpec: mysqlv1.PodSpec{
 				Annotations: map[string]string{
 					"monitoring.cloudlinux.com/scrape": "true",
@@ -101,6 +104,7 @@ func (p *Mysql) GetDefaults() cloudlinuxv1.Defaults {
 		VolumeSize: cloudlinuxv1.DefaultVolumeSize,
 		Resources:  cloudlinuxv1.DefaultResources,
 		Version:    version,
+		User:       cloudlinuxv1.DefaultUser,
 	}
 }
 
@@ -110,6 +114,7 @@ func (p *Mysql) Update(cm *cloudlinuxv1.CloudManaged) {
 	p.setResources(cm)
 	p.setVolumeSize(cm)
 	p.setImage(cm)
+	p.setAdvancedConf(cm)
 }
 
 func (p *Mysql) setReplica(cm *cloudlinuxv1.CloudManaged) {
@@ -148,11 +153,19 @@ func (p *Mysql) setImage(cm *cloudlinuxv1.CloudManaged) {
 	p.Operator.Spec.PodSpec.ImagePullSecrets = secrets
 }
 
+func (p *Mysql) setAdvancedConf(cm *cloudlinuxv1.CloudManaged) {
+	desiredMysqlConf := util.StrToIntOrStr(cm.Spec.AdvancedConf)
+	for k, v := range desiredMysqlConf {
+		p.Operator.Spec.MysqlConf[k] = v
+	}
+}
+
 func (p *Mysql) IsEqual(cm *cloudlinuxv1.CloudManaged) bool {
 	return p.isEqualReplica(cm) &&
 		p.isEqualResources(cm) &&
 		p.isEqualVolumeSize(cm) &&
-		p.isEqualImage(cm)
+		p.isEqualImage(cm) &&
+		p.isEqualAdvancedConf(cm)
 }
 
 func (p *Mysql) isEqualReplica(cm *cloudlinuxv1.CloudManaged) bool {
@@ -181,6 +194,18 @@ func (p *Mysql) isEqualImage(cm *cloudlinuxv1.CloudManaged) bool {
 	return p.Operator.Spec.Image == util.GetImage(image, cm.Spec.Version)
 }
 
+func (p *Mysql) isEqualAdvancedConf(cm *cloudlinuxv1.CloudManaged) bool {
+	desiredMysqlConf := util.StrToIntOrStr(cm.Spec.AdvancedConf)
+	for k, v := range desiredMysqlConf {
+		if val, ok := p.Operator.Spec.MysqlConf[k]; !ok {
+			return false
+		} else if val != v {
+			return false
+		}
+	}
+	return true
+}
+
 func (p *Mysql) CurrentStatus() string {
 	status := ""
 	for _, v := range p.Operator.Status.Conditions {
@@ -199,30 +224,38 @@ func (p *Mysql) CurrentStatus() string {
 	}
 }
 
-func (p *Mysql) GetPodReplicaSelector(cluster string) map[string]string {
+func (p *Mysql) GetPodReplicaSelector() map[string]string {
 	return map[string]string{
 		mysqlRoleKey:     mysqlRoleReplica,
-		mysqlPodLabelKey: cluster,
+		mysqlPodLabelKey: p.Operator.ObjectMeta.Name,
 	}
 }
 
-func (p *Mysql) GetPodMasterSelector(cluster string) map[string]string {
+func (p *Mysql) GetPodMasterSelector() map[string]string {
 	return map[string]string{
 		mysqlRoleKey:     mysqlRoleMaster,
-		mysqlPodLabelKey: cluster,
+		mysqlPodLabelKey: p.Operator.ObjectMeta.Name,
 	}
 }
 
-func (p *Mysql) GetMasterService(cluster, namespace string) string {
-	return fmt.Sprintf("%s-mysql-master.%s", cluster, namespace)
+func (p *Mysql) GetMasterService() string {
+	return fmt.Sprintf("%s-mysql-master", p.Operator.ObjectMeta.Name)
 }
 
-func (p *Mysql) GetReplicaService(cluster, namespace string) string {
-	return fmt.Sprintf("%s-mysql-replicas.%s", cluster, namespace)
+func (p *Mysql) GetReplicaService() string {
+	return fmt.Sprintf("%s-mysql-replicas", p.Operator.ObjectMeta.Name)
 }
 
 func (p *Mysql) GetAccessPort() int {
 	return mysqlPort
+}
+
+func (p *Mysql) GetMainPodContainer() string {
+	return mysqlMainContainer
+}
+
+func (p *Mysql) GetDefaultConnectionPassword() (secret, passwordField string) {
+	return p.Operator.Spec.SecretName, "PASSWORD"
 }
 
 func (p *Mysql) GetCredentialsSecret() (*corev1.Secret, error) {

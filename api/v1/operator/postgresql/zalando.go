@@ -25,6 +25,8 @@ const (
 	postgresPodDefaultKey = "application"
 	postgresPodDefaultVal = "spilo"
 
+	postgresMainContainer = "postgres"
+
 	postgresPort = 5432
 )
 
@@ -134,6 +136,7 @@ func (p *Postgres) GetDefaults() cloudlinuxv1.Defaults {
 		VolumeSize: cloudlinuxv1.DefaultVolumeSize,
 		Resources:  cloudlinuxv1.DefaultResources,
 		Version:    version,
+		User:       cloudlinuxv1.DefaultUser,
 	}
 }
 
@@ -142,6 +145,7 @@ func (p *Postgres) Update(cm *cloudlinuxv1.CloudManaged) {
 	p.setResources(cm)
 	p.setVolumeSize(cm)
 	p.setImage(cm)
+	p.setAdvancedConf(cm)
 }
 
 func (p *Postgres) setReplica(cm *cloudlinuxv1.CloudManaged) {
@@ -164,11 +168,18 @@ func (p *Postgres) setImage(cm *cloudlinuxv1.CloudManaged) {
 	p.Operator.Spec.DockerImage = util.GetImage(image, cm.Spec.Version)
 }
 
+func (p *Postgres) setAdvancedConf(cm *cloudlinuxv1.CloudManaged) {
+	for k, v := range cm.Spec.AdvancedConf {
+		p.Operator.Spec.PostgresqlParam.Parameters[k] = v
+	}
+}
+
 func (p *Postgres) IsEqual(cm *cloudlinuxv1.CloudManaged) bool {
 	return p.isEqualReplica(cm) &&
 		p.isEqualResources(cm) &&
 		p.isEqualVolumeSize(cm) &&
-		p.isEqualImage(cm)
+		p.isEqualImage(cm) &&
+		p.isEqualAdvancedConf(cm)
 }
 
 func (p *Postgres) isEqualReplica(cm *cloudlinuxv1.CloudManaged) bool {
@@ -192,6 +203,17 @@ func (p *Postgres) isEqualImage(cm *cloudlinuxv1.CloudManaged) bool {
 	return p.Operator.Spec.DockerImage == util.GetImage(image, cm.Spec.Version)
 }
 
+func (p *Postgres) isEqualAdvancedConf(cm *cloudlinuxv1.CloudManaged) bool {
+	for k, v := range cm.Spec.AdvancedConf {
+		if val, ok := p.Operator.Spec.PostgresqlParam.Parameters[k]; !ok {
+			return false
+		} else if val != v {
+			return false
+		}
+	}
+	return true
+}
+
 func (p *Postgres) CurrentStatus() string {
 	switch p.Operator.Status.PostgresClusterStatus {
 	case postgresv1.ClusterStatusCreating, postgresv1.ClusterStatusUpdating, postgresv1.ClusterStatusUnknown:
@@ -205,30 +227,38 @@ func (p *Postgres) CurrentStatus() string {
 	}
 }
 
-func (p *Postgres) GetPodReplicaSelector(cluster string) map[string]string {
+func (p *Postgres) GetPodReplicaSelector() map[string]string {
 	return map[string]string{postgresRoleKey: postgresRoleReplica,
-		postgresPodLabelKey:   cluster,
+		postgresPodLabelKey:   p.Operator.ObjectMeta.Name,
 		postgresPodDefaultKey: postgresPodDefaultVal,
 	}
 }
 
-func (p *Postgres) GetPodMasterSelector(cluster string) map[string]string {
+func (p *Postgres) GetPodMasterSelector() map[string]string {
 	return map[string]string{postgresRoleKey: postgresRoleMaster,
-		postgresPodLabelKey:   cluster,
+		postgresPodLabelKey:   p.Operator.ObjectMeta.Name,
 		postgresPodDefaultKey: postgresPodDefaultVal,
 	}
 }
 
-func (p *Postgres) GetMasterService(cluster, namespace string) string {
-	return fmt.Sprintf("%s.%s", cluster, namespace)
+func (p *Postgres) GetMasterService() string {
+	return fmt.Sprintf("%s", p.Operator.ObjectMeta.Name)
 }
 
-func (p *Postgres) GetReplicaService(cluster, namespace string) string {
-	return fmt.Sprintf("%s-repl.%s", cluster, namespace)
+func (p *Postgres) GetReplicaService() string {
+	return fmt.Sprintf("%s-repl", p.Operator.ObjectMeta.Name)
 }
 
 func (p *Postgres) GetAccessPort() int {
 	return postgresPort
+}
+
+func (p *Postgres) GetMainPodContainer() string {
+	return postgresMainContainer
+}
+
+func (p *Postgres) GetDefaultConnectionPassword() (secret, passwordField string) {
+	return fmt.Sprintf("%s.%s.credentials", cloudlinuxv1.DefaultUser, p.Operator.ObjectMeta.Name), "password"
 }
 
 func (p *Postgres) GetCredentialsSecret() (*apiv1.Secret, error) {

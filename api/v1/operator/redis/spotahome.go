@@ -148,24 +148,32 @@ func (p *Redis) GenerateJob(backup *cloudlinuxv1.CloudManagedBackup) v1beta1.Cro
 	return v1beta1.CronJob{}
 }
 
-func (p *Redis) GetPodReplicaSelector(cluster string) map[string]string {
+func (p *Redis) GetPodReplicaSelector() map[string]string {
 	return map[string]string{redisRoleKey: redisRoleReplica}
 }
 
-func (p *Redis) GetPodMasterSelector(cluster string) map[string]string {
+func (p *Redis) GetPodMasterSelector() map[string]string {
 	return map[string]string{redisRoleKey: redisRoleMaster}
 }
 
-func (p *Redis) GetMasterService(cluster, namespace string) string {
+func (p *Redis) GetMasterService() string {
 	return ""
 }
 
-func (p *Redis) GetReplicaService(cluster, namespace string) string {
+func (p *Redis) GetReplicaService() string {
 	return ""
 }
 
 func (p *Redis) GetAccessPort() int {
 	return 0
+}
+
+func (p *Redis) GetMainPodContainer() string {
+	return ""
+}
+
+func (p *Redis) GetDefaultConnectionPassword() (string, string) {
+	return "", ""
 }
 
 func (p *Redis) GetCredentialsSecret() (*v1.Secret, error) {

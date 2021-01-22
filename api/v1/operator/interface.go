@@ -26,12 +26,15 @@ type Operator interface {
 	GetCredentialsSecret() (*v1.Secret, error)
 	SetCredentialsSecret(string)
 
-	GetPodReplicaSelector(string) map[string]string
-	GetPodMasterSelector(string) map[string]string
+	GetPodReplicaSelector() map[string]string
+	GetPodMasterSelector() map[string]string
 
-	GetMasterService(string, string) string
-	GetReplicaService(string, string) string
+	GetMasterService() string
+	GetReplicaService() string
 	GetAccessPort() int
+
+	GetDefaultConnectionPassword() (string, string)
+	GetMainPodContainer() string
 }
 
 type Backup interface {

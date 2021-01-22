@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"os"
 	"strings"
 )
@@ -36,4 +37,13 @@ func FromSecret(name, key string) *v1.EnvVarSource {
 			Key: key,
 		},
 	}
+}
+
+// converts map[string]string to map[string]intstr.IntOrStr
+func StrToIntOrStr(m map[string]string) map[string]intstr.IntOrString {
+	var r = make(map[string]intstr.IntOrString, len(m))
+	for k, v := range m {
+		r[k] = intstr.FromString(v)
+	}
+	return r
 }
