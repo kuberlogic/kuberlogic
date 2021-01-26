@@ -10,6 +10,7 @@ import (
 	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator"
 	"gitlab.com/cloudmanaged/operator/monitoring"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -106,6 +107,13 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	}
 
 	op.InitFrom(found)
+
+	log.Info("ensure that we have dependencies set up")
+	if err := r.ensureClusterDependencies(op, cloudmanaged, ctx); err != nil {
+		log.Error(err, "failed to ensure dependencies", "Operator", cloudmanaged.Spec.Type)
+		return ctrl.Result{}, err
+	}
+
 	if !op.IsEqual(cloudmanaged) {
 		op.Update(cloudmanaged)
 
@@ -138,6 +146,22 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	return ctrl.Result{}, nil
 }
 
+func (r *CloudManagedReconciler) ensureClusterDependencies(op operator.Operator, cm *cloudlinuxv1.CloudManaged, ctx context.Context) error {
+	credSecret, err := op.GetCredentialsSecret()
+	if err != nil {
+		return err
+	}
+	if credSecret != nil {
+		if err := ctrl.SetControllerReference(cm, credSecret, r.Scheme); err != nil {
+			return err
+		}
+		if err := r.Create(ctx, credSecret); err != nil && !k8serrors.IsAlreadyExists(err) {
+			return err
+		}
+	}
+	return nil
+}
+
 func (r *CloudManagedReconciler) defineCluster(op operator.Operator, cm *cloudlinuxv1.CloudManaged) (runtime.Object, error) {
 	op.Init(cm)
 	op.Update(cm)
@@ -158,5 +182,6 @@ func (r *CloudManagedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&mysqlv1.MysqlCluster{}).
 		Owns(&redisv1.RedisFailover{}).
 		Owns(&postgresv1.Postgresql{}).
+		Owns(&corev1.Secret{}).
 		Complete(r)
 }

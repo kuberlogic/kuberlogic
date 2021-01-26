@@ -14,6 +14,8 @@ const (
 	image   = "postgresql"
 	version = "12.1.5"
 
+	teamId = "cloudmanaged"
+
 	postgresRoleKey     = "spilo-role"
 	postgresRoleReplica = "replica"
 	postgresRoleMaster  = "master"
@@ -49,16 +51,16 @@ func (p *Postgres) Init(cm *cloudlinuxv1.CloudManaged) {
 
 	p.Operator = postgresv1.Postgresql{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cm.Name,
+			Name:      fmt.Sprintf("%s-%s", teamId, cm.Name),
 			Namespace: cm.Namespace,
 		},
 		Spec: postgresv1.PostgresSpec{
-			TeamID:                    "cloudmanaged",
+			TeamID:                    teamId,
 			EnableMasterLoadBalancer:  &loadBalancersEnabled,
 			EnableReplicaLoadBalancer: &loadBalancersEnabled,
 			Users: map[string]postgresv1.UserFlags{
 				// required user like teamId name with necessary credentials
-				"cloudmanaged": {"superuser", "createdb"},
+				teamId: {"superuser", "createdb"},
 			},
 			PostgresqlParam: postgresv1.PostgresqlParam{
 				PgVersion: "12",
@@ -167,6 +169,10 @@ func (p *Postgres) setImage(cm *cloudlinuxv1.CloudManaged) {
 }
 
 func (p *Postgres) setAdvancedConf(cm *cloudlinuxv1.CloudManaged) {
+	if p.Operator.Spec.PostgresqlParam.Parameters == nil {
+		p.Operator.Spec.PostgresqlParam.Parameters = make(map[string]string)
+	}
+
 	for k, v := range cm.Spec.AdvancedConf {
 		p.Operator.Spec.PostgresqlParam.Parameters[k] = v
 	}
@@ -257,4 +263,8 @@ func (p *Postgres) GetMainPodContainer() string {
 
 func (p *Postgres) GetDefaultConnectionPassword() (secret, passwordField string) {
 	return fmt.Sprintf("%s.%s.credentials", cloudlinuxv1.DefaultUser, p.Operator.ObjectMeta.Name), "password"
+}
+
+func (p *Postgres) GetCredentialsSecret() (*apiv1.Secret, error) {
+	return nil, nil
 }

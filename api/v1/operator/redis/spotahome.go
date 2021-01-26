@@ -175,3 +175,7 @@ func (p *Redis) GetMainPodContainer() string {
 func (p *Redis) GetDefaultConnectionPassword() (string, string) {
 	return "", ""
 }
+
+func (p *Redis) GetCredentialsSecret() (*v1.Secret, error) {
+	return nil, nil
+}

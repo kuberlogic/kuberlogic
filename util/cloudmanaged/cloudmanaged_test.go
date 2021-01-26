@@ -17,7 +17,6 @@ var cmPg = &cloudlinuxv1.CloudManaged{
 	Spec: cloudlinuxv1.CloudManagedSpec{
 		Type:         "postgresql",
 		Replicas:     2,
-		SecretName:   "",
 		Resources:    v1.ResourceRequirements{},
 		VolumeSize:   "1Gi",
 		Version:      "11.1",
@@ -42,7 +41,6 @@ var cmMy = &cloudlinuxv1.CloudManaged{
 	Spec: cloudlinuxv1.CloudManagedSpec{
 		Type:         "mysql",
 		Replicas:     2,
-		SecretName:   "dumb-secret",
 		Resources:    v1.ResourceRequirements{},
 		VolumeSize:   "1Gi",
 		Version:      "5.11",
@@ -59,7 +57,7 @@ var cmMy = &cloudlinuxv1.CloudManaged{
 }
 
 func TestGetClusterCredentialsInfo(t *testing.T) {
-	pgUserE, pgPasswordFieldE, pgSecretE := "cloudmanaged", "password", "cloudmanaged.test-pg.credentials"
+	pgUserE, pgPasswordFieldE, pgSecretE := "cloudmanaged", "password", "cloudmanaged.cloudmanaged-test-pg.credentials"
 	pgUserA, pgPasswordFieldA, pgSecretA, _ := GetClusterCredentialsInfo(cmPg)
 
 	if pgUserE != pgUserA || pgPasswordFieldE != pgPasswordFieldA || pgSecretE != pgSecretA {
@@ -69,7 +67,7 @@ func TestGetClusterCredentialsInfo(t *testing.T) {
 			pgUserE, pgPasswordFieldE, pgSecretE)
 	}
 
-	myUserE, myPasswordFieldE, mySecretE := "cloudmanaged", "PASSWORD", "dumb-secret"
+	myUserE, myPasswordFieldE, mySecretE := "cloudmanaged", "PASSWORD", "test-mysql-cred"
 	myUserA, myPasswordFieldA, mySecretA, _ := GetClusterCredentialsInfo(cmMy)
 
 	if myUserA != myUserE || myPasswordFieldA != myPasswordFieldE || mySecretA != mySecretE {
@@ -82,8 +80,8 @@ func TestGetClusterCredentialsInfo(t *testing.T) {
 
 func TestGetClusterPodLabels(t *testing.T) {
 	masterPgE, replicaPgE :=
-		map[string]string{"spilo-role": "master", "application": "spilo", "cluster-name": "test-pg"},
-		map[string]string{"spilo-role": "replica", "application": "spilo", "cluster-name": "test-pg"}
+		map[string]string{"spilo-role": "master", "application": "spilo", "cluster-name": "cloudmanaged-test-pg"},
+		map[string]string{"spilo-role": "replica", "application": "spilo", "cluster-name": "cloudmanaged-test-pg"}
 	masterPgA, replicaPgA, _ := GetClusterPodLabels(cmPg)
 
 	if !reflect.DeepEqual(masterPgA, masterPgE) || !reflect.DeepEqual(replicaPgA, replicaPgE) {

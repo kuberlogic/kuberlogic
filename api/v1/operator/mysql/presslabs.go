@@ -3,12 +3,14 @@ package mysql
 import (
 	"fmt"
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
+	util2 "github.com/presslabs/mysql-operator/pkg/util"
 	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -19,8 +21,7 @@ const (
 	mysqlRoleReplica = "replica"
 	mysqlRoleMaster  = "master"
 
-	mysqlPodLabelKey = "mysql.presslabs.org/cluster"
-
+	mysqlPodLabelKey   = "mysql.presslabs.org/cluster"
 	mysqlMainContainer = "mysql"
 
 	mysqlPort = 3306
@@ -45,7 +46,7 @@ func (p *Mysql) Init(cm *cloudlinuxv1.CloudManaged) {
 			Namespace: cm.Namespace,
 		},
 		Spec: mysqlv1.MysqlClusterSpec{
-			SecretName: cm.Spec.SecretName,
+			SecretName: genCredentialsSecretName(cm.Name),
 			PodSpec: mysqlv1.PodSpec{
 				Annotations: map[string]string{
 					"monitoring.cloudlinux.com/scrape": "true",
@@ -54,7 +55,7 @@ func (p *Mysql) Init(cm *cloudlinuxv1.CloudManaged) {
 				Containers: []corev1.Container{
 					{
 						Name:  "cloudmanaged-exporter",
-						Image: "gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/exporter:v1",
+						Image: "gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/exporter:v2",
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      "data",
@@ -108,7 +109,6 @@ func (p *Mysql) GetDefaults() cloudlinuxv1.Defaults {
 
 func (p *Mysql) Update(cm *cloudlinuxv1.CloudManaged) {
 	p.setReplica(cm)
-	p.setSecret(cm)
 	p.setResources(cm)
 	p.setVolumeSize(cm)
 	p.setImage(cm)
@@ -117,10 +117,6 @@ func (p *Mysql) Update(cm *cloudlinuxv1.CloudManaged) {
 
 func (p *Mysql) setReplica(cm *cloudlinuxv1.CloudManaged) {
 	p.Operator.Spec.Replicas = &cm.Spec.Replicas
-}
-
-func (p *Mysql) setSecret(cm *cloudlinuxv1.CloudManaged) {
-	p.Operator.Spec.SecretName = cm.Spec.SecretName
 }
 
 func (p *Mysql) setResources(cm *cloudlinuxv1.CloudManaged) {
@@ -153,6 +149,11 @@ func (p *Mysql) setImage(cm *cloudlinuxv1.CloudManaged) {
 
 func (p *Mysql) setAdvancedConf(cm *cloudlinuxv1.CloudManaged) {
 	desiredMysqlConf := util.StrToIntOrStr(cm.Spec.AdvancedConf)
+
+	if p.Operator.Spec.MysqlConf == nil {
+		p.Operator.Spec.MysqlConf = make(map[string]intstr.IntOrString)
+	}
+
 	for k, v := range desiredMysqlConf {
 		p.Operator.Spec.MysqlConf[k] = v
 	}
@@ -254,4 +255,26 @@ func (p *Mysql) GetMainPodContainer() string {
 
 func (p *Mysql) GetDefaultConnectionPassword() (secret, passwordField string) {
 	return p.Operator.Spec.SecretName, "PASSWORD"
+}
+
+func (p *Mysql) GetCredentialsSecret() (*corev1.Secret, error) {
+	rootPassword := util2.RandomString(15)
+	userName := "cloudmanaged"
+	userPassword := util2.RandomString(15)
+
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      genCredentialsSecretName(p.Operator.ObjectMeta.Name),
+			Namespace: p.Operator.ObjectMeta.Namespace,
+		},
+		StringData: map[string]string{
+			"ROOT_PASSWORD": rootPassword,
+			"USER":          userName,
+			"PASSWORD":      userPassword,
+		},
+	}, nil
+}
+
+func genCredentialsSecretName(cluster string) string {
+	return cluster + "-cred"
 }

@@ -12,8 +12,6 @@ type CloudManagedSpec struct {
 	// Amount of replicas
 	// +kubebuilder:validation:Maximum=5
 	Replicas int32 `json:"replicas"`
-	// Secrets (only for type=mysql)
-	SecretName string `json:"secret,omitempty"`
 	// Resources (requests/limits)
 	Resources v1.ResourceRequirements `json:"resources,omitempty"`
 	// Volume size
@@ -31,7 +29,7 @@ type CloudManagedSpec struct {
 type MaintenanceWindow struct {
 	// start hour, UTC zone is assumed
 	// +kubebuilder:validation:Minimum=0
-	// +kubebuilder:validation:Maximum=11
+	// +kubebuilder:validation:Maximum=23
 	// +kubebuilder:validation:Type=integer
 	StartHour int `json:"start,omitempty"`
 	// day of the week

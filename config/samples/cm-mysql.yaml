@@ -5,7 +5,6 @@ metadata:
 spec:
   type: mysql
   replicas: 2
-  secret: my-secret
 
 #  volumeSize: 3Gi
 #
