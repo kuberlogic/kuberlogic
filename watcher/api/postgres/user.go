@@ -10,11 +10,16 @@ type User struct {
 	session *Session
 }
 
-//var ProtectedUsers = []string{
-//	"postgres",
-//	"standby",
-//	"cloudmanaged",
-//}
+var protectedUsers = map[string]bool{
+	"postgres":     true,
+	"standby":      true,
+	"cloudmanaged": true,
+}
+
+func (usr *User) IsProtected(name string) bool {
+	_, ok := protectedUsers[name]
+	return ok
+}
 
 func (usr *User) Create(name, password string) error {
 	ctx := context.TODO()

@@ -6,8 +6,21 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+var protectedDatabases = map[string]bool{
+	"information_schema": true,
+	"mysql":              true,
+	"performance_schema": true,
+	"sys":                true,
+	"sys_operator":       true,
+}
+
 type Database struct {
 	session *Session
+}
+
+func (db *Database) IsProtected(name string) bool {
+	_, ok := protectedDatabases[name]
+	return ok
 }
 
 func (db *Database) Create(name string) error {

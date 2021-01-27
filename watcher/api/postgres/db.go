@@ -6,8 +6,18 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
+var protectedDatabases = map[string]bool{
+	"postgres":     true,
+	"cloudmanaged": true,
+}
+
 type Database struct {
 	session *Session
+}
+
+func (db *Database) IsProtected(name string) bool {
+	_, ok := protectedDatabases[name]
+	return ok
 }
 
 func (db *Database) Create(name string) error {
