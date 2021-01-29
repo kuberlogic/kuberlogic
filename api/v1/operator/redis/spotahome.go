@@ -24,6 +24,10 @@ type Redis struct {
 	Operator redisv1.RedisFailover
 }
 
+func (p *Redis) Name(cm *cloudlinuxv1.CloudManaged) string {
+	return cm.Name
+}
+
 func (p *Redis) AsRuntimeObject() runtime.Object {
 	return &p.Operator
 }

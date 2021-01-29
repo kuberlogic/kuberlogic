@@ -31,6 +31,10 @@ type Mysql struct {
 	Operator mysqlv1.MysqlCluster
 }
 
+func (p *Mysql) Name(cm *cloudlinuxv1.CloudManaged) string {
+	return cm.Name
+}
+
 func (p *Mysql) AsRuntimeObject() runtime.Object {
 	return &p.Operator
 }
@@ -42,7 +46,7 @@ func (p *Mysql) AsMetaObject() metav1.Object {
 func (p *Mysql) Init(cm *cloudlinuxv1.CloudManaged) {
 	p.Operator = mysqlv1.MysqlCluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cm.Name,
+			Name:      p.Name(cm),
 			Namespace: cm.Namespace,
 		},
 		Spec: mysqlv1.MysqlClusterSpec{

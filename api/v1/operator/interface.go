@@ -14,6 +14,7 @@ import (
 )
 
 type Operator interface {
+	Name(cm *cloudlinuxv1.CloudManaged) string
 	Init(cm *cloudlinuxv1.CloudManaged)
 	InitFrom(o runtime.Object)
 	Update(cm *cloudlinuxv1.CloudManaged)
