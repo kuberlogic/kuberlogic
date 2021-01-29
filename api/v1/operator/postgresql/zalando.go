@@ -49,6 +49,8 @@ func (p *Postgres) InitFrom(o runtime.Object) {
 func (p *Postgres) Init(cm *cloudlinuxv1.CloudManaged) {
 	loadBalancersEnabled := true
 
+	credentialsSecret, _ := p.GetDefaultConnectionPassword()
+
 	p.Operator = postgresv1.Postgresql{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", teamId, cm.Name),
@@ -107,7 +109,7 @@ func (p *Postgres) Init(cm *cloudlinuxv1.CloudManaged) {
 							ValueFrom: &apiv1.EnvVarSource{
 								SecretKeyRef: &apiv1.SecretKeySelector{
 									LocalObjectReference: apiv1.LocalObjectReference{
-										Name: fmt.Sprintf("%s.%s.credentials", "cloudmanaged", cm.Name),
+										Name: credentialsSecret,
 									},
 									Key: "username",
 								},
