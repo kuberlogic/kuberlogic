@@ -76,7 +76,7 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	err = r.Get(
 		ctx,
 		types.NamespacedName{
-			Name:      cloudmanaged.Name,
+			Name:      op.Name(cloudmanaged),
 			Namespace: cloudmanaged.Namespace,
 		},
 		found,

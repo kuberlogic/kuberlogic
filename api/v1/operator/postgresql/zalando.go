@@ -34,6 +34,10 @@ type Postgres struct {
 	Operator postgresv1.Postgresql
 }
 
+func (p *Postgres) Name(cm *cloudlinuxv1.CloudManaged) string {
+	return fmt.Sprintf("%s-%s", teamId, cm.Name)
+}
+
 func (p *Postgres) AsRuntimeObject() runtime.Object {
 	return &p.Operator
 }
@@ -49,11 +53,12 @@ func (p *Postgres) InitFrom(o runtime.Object) {
 func (p *Postgres) Init(cm *cloudlinuxv1.CloudManaged) {
 	loadBalancersEnabled := true
 
-	credentialsSecret, _ := p.GetDefaultConnectionPassword()
+	name := p.Name(cm)
+	defaultUserCredentialsSecret := genUserCredentialsSecretName(teamId, name)
 
 	p.Operator = postgresv1.Postgresql{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%s", teamId, cm.Name),
+			Name:      name,
 			Namespace: cm.Namespace,
 		},
 		Spec: postgresv1.PostgresSpec{
@@ -109,7 +114,7 @@ func (p *Postgres) Init(cm *cloudlinuxv1.CloudManaged) {
 							ValueFrom: &apiv1.EnvVarSource{
 								SecretKeyRef: &apiv1.SecretKeySelector{
 									LocalObjectReference: apiv1.LocalObjectReference{
-										Name: credentialsSecret,
+										Name: defaultUserCredentialsSecret,
 									},
 									Key: "username",
 								},
@@ -120,7 +125,7 @@ func (p *Postgres) Init(cm *cloudlinuxv1.CloudManaged) {
 							ValueFrom: &apiv1.EnvVarSource{
 								SecretKeyRef: &apiv1.SecretKeySelector{
 									LocalObjectReference: apiv1.LocalObjectReference{
-										Name: fmt.Sprintf("%s.%s.credentials", "cloudmanaged", cm.Name),
+										Name: defaultUserCredentialsSecret,
 									},
 									Key: "password",
 								},
@@ -264,9 +269,13 @@ func (p *Postgres) GetMainPodContainer() string {
 }
 
 func (p *Postgres) GetDefaultConnectionPassword() (secret, passwordField string) {
-	return fmt.Sprintf("%s.%s.credentials", cloudlinuxv1.DefaultUser, p.Operator.ObjectMeta.Name), "password"
+	return genUserCredentialsSecretName(cloudlinuxv1.DefaultUser, p.Operator.ObjectMeta.Name), "password"
 }
 
 func (p *Postgres) GetCredentialsSecret() (*apiv1.Secret, error) {
 	return nil, nil
+}
+
+func genUserCredentialsSecretName(user, cluster string) string {
+	return fmt.Sprintf("%s.%s.credentials", user, cluster)
 }
