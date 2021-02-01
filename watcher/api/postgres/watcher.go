@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/jackc/pgx/v4"
 	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	cmUtil "gitlab.com/cloudmanaged/operator/util/cloudmanaged"
 	"gitlab.com/cloudmanaged/operator/watcher/api/base"
 	"gitlab.com/cloudmanaged/operator/watcher/api/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,11 +23,23 @@ type Session struct {
 func New(cm *cloudlinuxv1.CloudManaged, client *kubernetes.Clientset, db, table string) (*Session, error) {
 	session := &Session{}
 
-	session.Cluster = cm
+	session.ClusterType = cm.Spec.Type
+	session.ClusterNamespace = cm.Namespace
 	session.Database = db
 	session.Table = table
 	session.Port = 5432
 
+	if _, _, secret, err := cmUtil.GetClusterCredentialsInfo(cm); err != nil {
+		return nil, err
+	} else {
+		session.ClusterCredentialsSecret = secret
+	}
+
+	if name, err := cmUtil.GetClusterName(cm); err != nil {
+		return nil, err
+	} else {
+		session.ClusterName = name
+	}
 	if err := session.SetMaster(client); err != nil {
 		return nil, err
 	}
@@ -50,7 +63,7 @@ func (session *Session) GetUser() common.User {
 func (session *Session) SetMaster(client *kubernetes.Clientset) error {
 	pods, err := session.GetPods(client, client2.MatchingLabels{
 		"application":  "spilo",
-		"cluster-name": session.Cluster.Name,
+		"cluster-name": session.ClusterName,
 		"spilo-role":   "master",
 	})
 	if err != nil {
@@ -71,7 +84,7 @@ func (session *Session) SetMaster(client *kubernetes.Clientset) error {
 func (session *Session) SetReplicas(client *kubernetes.Clientset) error {
 	pods, err := session.GetPods(client, client2.MatchingLabels{
 		"application":  "spilo",
-		"cluster-name": session.Cluster.Name,
+		"cluster-name": session.ClusterName,
 		"spilo-role":   "replica",
 	})
 	if err != nil {
@@ -85,18 +98,12 @@ func (session *Session) SetReplicas(client *kubernetes.Clientset) error {
 }
 
 func (session *Session) SetCredentials(client *kubernetes.Clientset) error {
-	secrets, err := client.CoreV1().Secrets("").
-		List(context.TODO(), metav1.ListOptions{})
+	secret, err := client.CoreV1().Secrets(session.ClusterNamespace).Get(context.TODO(), session.ClusterCredentialsSecret, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
-	for _, secret := range secrets.Items {
-		if secret.Name == fmt.Sprintf("postgres.%s.credentials", session.Cluster.Name) {
-			session.Password = string(secret.Data["password"])
-			session.Username = string(secret.Data["username"])
-			break
-		}
-	}
+	session.Password = string(secret.Data["password"])
+	session.Username = string(secret.Data["username"])
 	return nil
 }
 

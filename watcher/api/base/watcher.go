@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -17,7 +16,12 @@ import (
 )
 
 type BaseSession struct {
-	Cluster    *cloudlinuxv1.CloudManaged
+	ClusterName      string
+	ClusterNamespace string
+	ClusterType      string
+
+	ClusterCredentialsSecret string
+
 	MasterIP   string
 	ReplicaIPs []string
 
@@ -70,7 +74,7 @@ Password: %s
 Database: %s
 Table: %s
 Port: %d`,
-		session.Cluster.Spec.Type,
+		session.ClusterType,
 		session.MasterIP,
 		session.ReplicaIPs,
 		session.Username,
@@ -86,7 +90,7 @@ func FormatTime() string {
 }
 
 func (session *BaseSession) MakeQuery(arg Argument) {
-	dir := fmt.Sprintf("/tmp/cm/%s/", session.Cluster.Name)
+	dir := fmt.Sprintf("/tmp/cm/%s/", session.ClusterName)
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
 		log.Fatal(err)

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
-	"gitlab.com/cloudmanaged/operator/util/cloudmanaged"
+	cmUtil "gitlab.com/cloudmanaged/operator/util/cloudmanaged"
 	"gitlab.com/cloudmanaged/operator/watcher/api/base"
 	"gitlab.com/cloudmanaged/operator/watcher/api/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,11 +24,23 @@ type Session struct {
 func New(cm *cloudlinuxv1.CloudManaged, client *kubernetes.Clientset, db, table string) (*Session, error) {
 	w := &Session{}
 
-	w.Cluster = cm
+	w.ClusterType = cm.Spec.Type
+	w.ClusterNamespace = cm.Namespace
 	w.Database = db
 	w.Table = table
 	w.Port = 3306
 
+	if _, _, secret, err := cmUtil.GetClusterCredentialsInfo(cm); err != nil {
+		return nil, err
+	} else {
+		w.ClusterCredentialsSecret = secret
+	}
+
+	if name, err := cmUtil.GetClusterName(cm); err != nil {
+		return nil, err
+	} else {
+		w.ClusterName = name
+	}
 	if err := w.SetMaster(client); err != nil {
 		return nil, err
 	}
@@ -38,6 +50,7 @@ func New(cm *cloudlinuxv1.CloudManaged, client *kubernetes.Clientset, db, table 
 	if err := w.SetCredentials(client); err != nil {
 		return nil, err
 	}
+
 	return w, nil
 }
 
@@ -50,11 +63,8 @@ func (session *Session) GetUser() common.User {
 }
 
 func (session *Session) SetCredentials(client *kubernetes.Clientset) error {
-	_, _, secretName, err := cloudmanaged.GetClusterCredentialsInfo(session.Cluster)
-	if err != nil {
-		return err
-	}
-	secret, err := client.CoreV1().Secrets("").Get(context.TODO(), secretName, metav1.GetOptions{})
+	secret, err := client.CoreV1().Secrets(session.ClusterNamespace).Get(context.TODO(), session.ClusterCredentialsSecret, metav1.GetOptions{})
+
 	if err != nil {
 		return err
 	}
@@ -65,7 +75,7 @@ func (session *Session) SetCredentials(client *kubernetes.Clientset) error {
 
 func (session *Session) SetMaster(client *kubernetes.Clientset) error {
 	pods, err := session.GetPods(client, client2.MatchingLabels{
-		"mysql.presslabs.org/cluster": session.Cluster.Name,
+		"mysql.presslabs.org/cluster": session.ClusterName,
 		"role":                        "master",
 		"healthy":                     "yes",
 	})
@@ -86,7 +96,7 @@ func (session *Session) SetMaster(client *kubernetes.Clientset) error {
 
 func (session *Session) SetReplicas(client *kubernetes.Clientset) error {
 	pods, err := session.GetPods(client, client2.MatchingLabels{
-		"mysql.presslabs.org/cluster": session.Cluster.Name,
+		"mysql.presslabs.org/cluster": session.ClusterName,
 		"role":                        "replica",
 		"healthy":                     "yes",
 	})
