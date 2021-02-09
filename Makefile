@@ -1,3 +1,5 @@
+.EXPORT_ALL_VARIABLES:
+
 # Current Operator version
 VERSION ?= 0.0.16
 # Default bundle image tag
@@ -51,7 +53,7 @@ manager: generate fmt vet
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet manifests
-	IMAGE_REPO=$(IMG_REPO) IMAGE_PULL_SECRET=$(IMG_PULL_SECRET) go run ./main.go
+	go run ./main.go
 
 # Install CRDs into a cluster
 install: manifests kustomize

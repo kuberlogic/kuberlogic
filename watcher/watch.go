@@ -88,12 +88,12 @@ func main() {
 
 	client, err := k8s.GetBaseClient(config)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error when receiving base client: %s", err)
 	}
 
 	crdClient, err := k8s.GetCloudmanagedClient(config)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error when receiving rest client: %s", err)
 	}
 
 	cluster := &cloudlinuxv1.CloudManaged{}
@@ -105,12 +105,12 @@ func main() {
 		Do(context.TODO()).
 		Into(cluster)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error receiving resource: %s", err)
 	}
 
 	session, err := api.GetSession(cluster, client, params.targetDb, params.targetTable)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error when receiving session: %s", err)
 	}
 
 	log.Println(session)
