@@ -13,7 +13,11 @@ spec:
       containers:
         - name: manager
           env:
-            - name: IMAGE_REPO
+            - name: IMG_REPO
               value: gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/
-            - name: IMAGE_PULL_SECRET
+            - name: IMG_PULL_SECRET
               value: gitlab-registry
+        - name: apiserver
+          env:
+            - name: CLOUDMANAGED_AUTH_PROVIDER
+              value: none
