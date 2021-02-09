@@ -21,4 +21,5 @@ type Session interface {
 	RunQueries(delay Delay, duration Duration)
 	GetDatabase() Database
 	GetUser() User
+	CreateTable() error
 }

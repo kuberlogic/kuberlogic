@@ -8,13 +8,18 @@ import (
 	"strings"
 )
 
+const (
+	EnvImgRepo       = "IMG_REPO"
+	EnvImgPullSecret = "IMG_PULL_SECRET"
+)
+
 func GetImage(base, v string) string {
-	repo := os.Getenv("IMAGE_REPO")
+	repo := os.Getenv(EnvImgRepo)
 	return fmt.Sprintf("%s/%s:%s", strings.TrimSuffix(repo, "/"), base, v)
 }
 
 func GetImagePullSecret() string {
-	return os.Getenv("IMAGE_PULL_SECRET")
+	return os.Getenv(EnvImgPullSecret)
 }
 
 func FromConfigMap(name, key string) *v1.EnvVarSource {

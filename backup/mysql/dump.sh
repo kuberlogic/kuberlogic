@@ -50,7 +50,6 @@ function aws_upload() {
   [[ ! -z "$LOGICAL_BACKUP_S3_REGION" ]] && args+=("--region=$LOGICAL_BACKUP_S3_REGION")
   [[ ! -z "$LOGICAL_BACKUP_S3_SSE" ]] && args+=("--sse=$LOGICAL_BACKUP_S3_SSE")
 
-  cd /tmp/
   aws s3 cp $BACKUP_FILE "$PATH_TO_BACKUP" "${args[@]//\'/}"
 }
 
