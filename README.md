@@ -31,6 +31,7 @@ This step is responsible for deploy operators:
     ```shell script
    make deploy
     ```
+5. For the dev usage access to the apiserver is available via http://localhost:30007
 
 ### Create PostgreSQL cluster
 

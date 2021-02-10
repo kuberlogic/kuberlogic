@@ -22,15 +22,12 @@ IMG_PULL_SECRET = gitlab-registry
 # Image URL to use all building/pushing image targets
 OPERATOR_NAME = cloudmanaged-operator
 IMG ?= $(IMG_REPO)/$(OPERATOR_NAME):$(VERSION)
-# updater image
-UPDATER_NAME = cloudmanaged-updater
+UPDATER_NAME = cloudmanaged-updater # updater image name
 UPDATER_IMG ?= $(IMG_REPO)/$(UPDATER_NAME):$(VERSION)
-# backup image prefix
-BACKUP_PREFIX = cloudmanaged-backup
-# restore from backup image prefix
-RESTORE_PREFIX = cloudmanaged-restore
+BACKUP_PREFIX = cloudmanaged-backup # backup image prefix
+RESTORE_PREFIX = cloudmanaged-restore # restore from backup image prefix
 
-#BACKUP_IMG ?= $(IMG_REPO)/$(UPDATER_NAME):$(VERSION)
+
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
@@ -99,8 +96,11 @@ operator-push:
 	docker push ${IMG}
 	docker push ${UPDATER_IMG}
 
+mark-executable:
+	chmod +x $(shell find backup/ -iname *.sh | xargs)
+
 # Build backup images
-backup-build:
+backup-build: mark-executable
 	docker build backup/mysql/ -t $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:$(VERSION) -t $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:latest
 	docker build backup/postgres/ -t $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:$(VERSION) -t $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:latest
 
@@ -112,7 +112,7 @@ backup-push:
 	docker push $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:latest
 
 # Build backup restore images
-restore-build:
+restore-build: mark-executable
 	docker build backup/restore/mysql/ -t $(IMG_REPO)/$(RESTORE_PREFIX)-mysql:$(VERSION) -t $(IMG_REPO)/$(RESTORE_PREFIX)-mysql:latest
 	docker build backup/restore/postgres/ -t $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:$(VERSION) -t $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:latest
 

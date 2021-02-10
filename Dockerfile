@@ -12,6 +12,9 @@ RUN go mod download
 # Copy the go source
 COPY main.go main.go
 COPY api/ api/
+COPY cmd/ cmd/
+COPY util/ util/
+COPY logging/ logging/
 COPY controllers/ controllers/
 COPY monitoring/ monitoring/
 
