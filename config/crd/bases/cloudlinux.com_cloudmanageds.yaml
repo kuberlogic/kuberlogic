@@ -67,8 +67,6 @@ spec:
               additionalProperties:
                 type: string
               type: object
-            defaultUser:
-              type: string
             maintenanceWindow:
               properties:
                 duration:

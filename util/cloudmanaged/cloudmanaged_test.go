@@ -25,7 +25,6 @@ var cmPg = &cloudlinuxv1.CloudManaged{
 			StartHour: 4,
 			Weekday:   "Monday",
 		},
-		DefaultUser: "cloudmanaged",
 	},
 	Status: cloudlinuxv1.CloudManagedStatus{
 		Status: "Running",
@@ -49,7 +48,6 @@ var cmMy = &cloudlinuxv1.CloudManaged{
 			StartHour: 5,
 			Weekday:   "Sunday",
 		},
-		DefaultUser: "cloudmanaged",
 	},
 	Status: cloudlinuxv1.CloudManagedStatus{
 		Status: "Running",

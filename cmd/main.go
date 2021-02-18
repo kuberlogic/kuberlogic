@@ -62,7 +62,12 @@ func Main(args []string) {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
-	ctrl.SetLogger(logging.CreateLogger())
+	logger, err := logging.CreateLogger()
+	if err != nil {
+		setupLog.Error(err, "unable to create logger")
+		os.Exit(1)
+	}
+	ctrl.SetLogger(logger)
 	if err := checkEnv(setupLog); err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
