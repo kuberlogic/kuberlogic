@@ -123,10 +123,10 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 			return ctrl.Result{}, err
 		} else {
 			log.Info("Cluster is updated", "Operator", cloudmanaged.Spec.Type)
+			return ctrl.Result{}, nil
 		}
-	} else {
-		log.Info("No difference", "Operator", cloudmanaged.Spec.Type)
 	}
+	log.Info("No difference", "Operator", cloudmanaged.Spec.Type)
 
 	status := op.CurrentStatus()
 	if !cloudmanaged.IsEqual(status) {

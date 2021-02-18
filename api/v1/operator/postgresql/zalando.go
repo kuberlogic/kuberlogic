@@ -102,6 +102,7 @@ func (p *Postgres) Init(cm *cloudlinuxv1.CloudManaged) {
 						{
 							Name:          "metrics",
 							ContainerPort: 9187,
+							Protocol:      apiv1.ProtocolTCP,
 						},
 					},
 					Env: []apiv1.EnvVar{
@@ -143,7 +144,6 @@ func (p *Postgres) GetDefaults() cloudlinuxv1.Defaults {
 		VolumeSize: cloudlinuxv1.DefaultVolumeSize,
 		Resources:  cloudlinuxv1.DefaultResources,
 		Version:    version,
-		User:       cloudlinuxv1.DefaultUser,
 	}
 }
 

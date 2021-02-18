@@ -67,6 +67,6 @@ func GetClusterCredentialsInfo(cm *cloudlinuxv1.CloudManaged) (username, passwor
 	op.Init(cm)
 
 	secretName, passwordField = op.GetDefaultConnectionPassword()
-	username = cm.Spec.DefaultUser
+	username = cloudlinuxv1.DefaultUser
 	return
 }

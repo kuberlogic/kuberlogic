@@ -21,9 +21,6 @@ type CloudManagedSpec struct {
 	Version           string            `json:"version,omitempty"`
 	AdvancedConf      map[string]string `json:"advancedConf,omitempty"`
 	MaintenanceWindow `json:"maintenanceWindow,omitempty"`
-
-	// +kubebuilder:validation:Type=string
-	DefaultUser string `json:"defaultUser,omitempty"`
 }
 
 type MaintenanceWindow struct {
@@ -87,8 +84,12 @@ func (cm *CloudManaged) GetStatus() string {
 // for implementation default values based on webhook (https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html)
 func (cm *CloudManaged) InitDefaults(defaults Defaults) bool {
 	dirty := false
-	if cm.Spec.Resources.Limits == nil || cm.Spec.Resources.Requests == nil {
-		cm.Spec.Resources = defaults.Resources
+	if cm.Spec.Resources.Requests == nil {
+		cm.Spec.Resources.Requests = defaults.Resources.Requests
+		dirty = true
+	}
+	if cm.Spec.Resources.Limits == nil {
+		cm.Spec.Resources.Limits = defaults.Resources.Limits
 		dirty = true
 	}
 	if cm.Spec.VolumeSize == "" {
@@ -99,7 +100,7 @@ func (cm *CloudManaged) InitDefaults(defaults Defaults) bool {
 		cm.Spec.Version = defaults.Version
 		dirty = true
 	}
-	cm.Spec.DefaultUser = defaults.User
+
 	return dirty
 }
 

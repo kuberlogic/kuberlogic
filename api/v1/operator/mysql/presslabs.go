@@ -107,7 +107,6 @@ func (p *Mysql) GetDefaults() cloudlinuxv1.Defaults {
 		VolumeSize: cloudlinuxv1.DefaultVolumeSize,
 		Resources:  cloudlinuxv1.DefaultResources,
 		Version:    version,
-		User:       cloudlinuxv1.DefaultUser,
 	}
 }
 
