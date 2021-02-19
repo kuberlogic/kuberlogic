@@ -8,7 +8,7 @@ import (
 	mysql "github.com/presslabs/mysql-operator/pkg/apis"
 	redis "github.com/spotahome/redis-operator/api/redisfailover/v1"
 	postgres "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
 	"gitlab.com/cloudmanaged/operator/controllers"
 	"gitlab.com/cloudmanaged/operator/logging"
@@ -28,7 +28,7 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(cloudlinuxv1.AddToScheme(scheme))
+	utilruntime.Must(kuberlogicv1.AddToScheme(scheme))
 	utilruntime.Must(postgres.AddToScheme(scheme))
 	utilruntime.Must(mysql.AddToScheme(scheme))
 	utilruntime.Must(redis.AddToScheme(scheme))
@@ -85,41 +85,41 @@ func Main(args []string) {
 		os.Exit(1)
 	}
 
-	// create controller for CloudManaged resource
-	if err = (&controllers.CloudManagedReconciler{
+	// create controller for KuberLogicServices resource
+	if err = (&controllers.KuberLogicServiceReconciler{
 		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controller").WithName("CloudManaged"),
+		Log:    ctrl.Log.WithName("controller").WithName("KuberLogicServices"),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "CloudManaged")
+		setupLog.Error(err, "unable to create controller", "controller", "KuberLogicServices")
 		os.Exit(1)
 	}
 
-	// create controller for CloudManagedBackup resource
-	if err = (&controllers.CloudManagedBackupReconciler{
+	// create controller for KuberLogicBackupSchedule resource
+	if err = (&controllers.KuberLogicBackupScheduleReconciler{
 		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controller-backup").WithName("CloudManagedBackup"),
+		Log:    ctrl.Log.WithName("controller-backup").WithName("KuberLogicBackupSchedule"),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create backup controller",
-			"controller-backup", "CloudManagedBackup")
+			"controller-backup", "KuberLogicBackupSchedule")
 		os.Exit(1)
 	}
 
-	// create controller for CloudManagedRestore resource
-	if err = (&controllers.CloudManagedRestoreReconciler{
+	// create controller for KuberLogicBackupRestore resource
+	if err = (&controllers.KuberLogicBackupRestoreReconciler{
 		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controller-backup").WithName("CloudManagedBackup"),
+		Log:    ctrl.Log.WithName("controller-backup").WithName("KuberLogicBackupSchedule"),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create restore controller",
-			"controller-restore-backup", "CloudManagedRestore")
+			"controller-restore-backup", "KuberLogicBackupRestore")
 		os.Exit(1)
 	}
 
 	// init monitoring collector
-	cloudManagedCollector := monitoring.CloudManagedCollector{}
-	metrics.Registry.MustRegister(cloudManagedCollector)
+	klCollector := monitoring.KuberLogicCollector{}
+	metrics.Registry.MustRegister(klCollector)
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

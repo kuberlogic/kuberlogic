@@ -4,7 +4,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type CloudManagedBackupSpec struct {
+type KuberLogicBackupScheduleSpec struct {
 	// Type of the backup storage
 	// +kubebuilder:validation:Enum=s3
 	Type string `json:"type"`
@@ -20,8 +20,8 @@ type CloudManagedBackupSpec struct {
 	Database string `json:"database,omitempty"`
 }
 
-// CloudManagedBackupStatus defines the observed state of CloudManagedBackup
-type CloudManagedBackupStatus struct {
+// KuberLogicBackupScheduleStatus defines the observed state of KuberLogicBackupSchedule
+type KuberLogicBackupScheduleStatus struct {
 	Status string `json:"status"`
 }
 
@@ -30,35 +30,35 @@ type CloudManagedBackupStatus struct {
 // +kubebuilder:printcolumn:name="Cluster name",type=string,JSONPath=`.spec.name`,description="The cluster name"
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`,description="The backup type"
 // +kubebuilder:printcolumn:name="Schedule",type=string,JSONPath=`.spec.schedule`,description="The backup schedule"
-// +kubebuilder:resource:shortName=clb
-type CloudManagedBackup struct {
+// +kubebuilder:resource:shortName=klb
+type KuberLogicBackupSchedule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CloudManagedBackupSpec   `json:"spec,omitempty"`
-	Status CloudManagedBackupStatus `json:"status,omitempty"`
+	Spec   KuberLogicBackupScheduleSpec   `json:"spec,omitempty"`
+	Status KuberLogicBackupScheduleStatus `json:"status,omitempty"`
 }
 
-// CloudManagedBackupList contains a list of CloudManagedBackup
+// KuberLogicBackupScheduleList contains a list of KuberLogicBackupSchedule
 // +kubebuilder:object:root=true
-type CloudManagedBackupList struct {
+type KuberLogicBackupScheduleList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []CloudManagedBackup `json:"items"`
+	Items           []KuberLogicBackupSchedule `json:"items"`
 }
 
-func (cm *CloudManagedBackup) IsEqual(newStatus string) bool {
-	return cm.Status.Status == newStatus
+func (klb *KuberLogicBackupSchedule) IsEqual(newStatus string) bool {
+	return klb.Status.Status == newStatus
 }
 
-func (cm *CloudManagedBackup) SetStatus(newStatus string) {
-	cm.Status.Status = newStatus
+func (klb *KuberLogicBackupSchedule) SetStatus(newStatus string) {
+	klb.Status.Status = newStatus
 }
 
-func (cm *CloudManagedBackup) GetStatus() string {
-	return cm.Status.Status
+func (klb *KuberLogicBackupSchedule) GetStatus() string {
+	return klb.Status.Status
 }
 
 func init() {
-	SchemeBuilder.Register(&CloudManagedBackup{}, &CloudManagedBackupList{})
+	SchemeBuilder.Register(&KuberLogicBackupSchedule{}, &KuberLogicBackupScheduleList{})
 }

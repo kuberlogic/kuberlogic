@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/coreos/go-semver/semver"
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/json"
@@ -121,13 +121,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = cloudlinuxv1.AddToScheme(k8scheme.Scheme)
+	err = kuberlogicv1.AddToScheme(k8scheme.Scheme)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	crdConfig := *config
-	crdConfig.ContentConfig.GroupVersion = &cloudlinuxv1.GroupVersion
+	crdConfig.ContentConfig.GroupVersion = &kuberlogicv1.GroupVersion
 	crdConfig.APIPath = "/apis"
 	crdConfig.NegotiatedSerializer = serializer.NewCodecFactory(k8scheme.Scheme)
 	crdConfig.UserAgent = rest.DefaultKubernetesUserAgent()
@@ -137,16 +137,16 @@ func main() {
 		panic(err)
 	}
 
-	result := cloudlinuxv1.CloudManagedList{}
+	result := kuberlogicv1.KuberLogicServiceList{}
 	err = restClient.Get().
-		Resource("cloudmanageds").
+		Resource("kuberlogicservices").
 		Do(context.TODO()).
 		Into(&result)
 	if err != nil {
 		log.Fatal(err)
 	}
 	if len(result.Items) == 0 {
-		log.Println("Cloudmanaged resources was not found")
+		log.Println("KuberLogicService resources was not found")
 		return
 	}
 	projects := getProjects()
@@ -165,11 +165,11 @@ func main() {
 			log.Printf("Version %s of %s should be upgraded onto %s\n",
 				item.Spec.Version, item.Spec.Type, latest)
 
-			updatedResult := cloudlinuxv1.CloudManaged{}
+			updatedResult := kuberlogicv1.KuberLogicService{}
 			item.Spec.Version = latest
 			err = restClient.Put().
 				Namespace("default").
-				Resource("cloudmanageds").
+				Resource("kuberlogics").
 				Name(item.Name).
 				Body(&item).
 				Do(context.TODO()).
@@ -177,7 +177,7 @@ func main() {
 			if err != nil {
 				log.Fatal(err.Error())
 			}
-			log.Println("Cloudmanaged resource is successfully changed")
+			log.Println("KuberLogicService resource is successfully changed")
 
 		} else {
 			log.Println("No need upgrade")

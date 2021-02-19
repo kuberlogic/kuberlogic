@@ -1,7 +1,7 @@
-apiVersion: cloudlinux.com/v1
-kind: CloudManagedRestore
+apiVersion: kuberlogic.com/v1
+kind: KuberLogicBackupRestore
 metadata:
-  name: cloudmanaged-restore-backup-postgresql
+  name: klr-postgresql
 spec:
   type: s3
   name: cloudmanaged-pg

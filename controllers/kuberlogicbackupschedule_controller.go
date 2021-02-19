@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator"
 	"gitlab.com/cloudmanaged/operator/monitoring"
 	v12 "k8s.io/api/batch/v1"
@@ -17,19 +17,19 @@ import (
 	"sync"
 )
 
-// CloudManagedBackupReconciler reconciles a CloudManagedBackup object
-type CloudManagedBackupReconciler struct {
+// KuberLogicBackupScheduleReconciler reconciles a KuberLogicBackupSchedule object
+type KuberLogicBackupScheduleReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 	mu     sync.Mutex
 }
 
-// +kubebuilder:rbac:groups=cloudlinux.com,resources=cloudmanagedbackups,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cloudlinux.com,resources=cloudmanagedbackups/status,verbs=get;update;patch
-func (r *CloudManagedBackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+// +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicbackupschedules,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicbackupschedules/status,verbs=get;update;patch
+func (r *KuberLogicBackupScheduleReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	log := r.Log.WithValues("cloudmanagedbackup", req.NamespacedName)
+	log := r.Log.WithValues("kuberlogicbackupschedule", req.NamespacedName)
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -37,9 +37,9 @@ func (r *CloudManagedBackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 	// metrics key
 	monitoringKey := fmt.Sprintf("%s/%s", req.Name, req.Namespace)
 
-	// Fetch the Cloudmanaged instance
-	cloudmanagedbackup := &cloudlinuxv1.CloudManagedBackup{}
-	err := r.Get(ctx, req.NamespacedName, cloudmanagedbackup)
+	// Fetch the KuberLogicBackupSchedule instance
+	klb := &kuberlogicv1.KuberLogicBackupSchedule{}
+	err := r.Get(ctx, req.NamespacedName, klb)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -48,20 +48,20 @@ func (r *CloudManagedBackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		log.Error(err, "Failed to get CloudmanagedBackup")
-		delete(monitoring.CloudManageds, monitoringKey)
+		log.Error(err, "Failed to get KuberLogicBackupSchedule")
+		delete(monitoring.KuberLogicServices, monitoringKey)
 		return ctrl.Result{}, err
 	}
 
-	clusterName := cloudmanagedbackup.Spec.ClusterName
-	cloudmanaged := &cloudlinuxv1.CloudManaged{}
+	clusterName := klb.Spec.ClusterName
+	kl := &kuberlogicv1.KuberLogicService{}
 	err = r.Get(
 		ctx,
 		types.NamespacedName{
 			Name:      clusterName,
 			Namespace: req.Namespace,
 		},
-		cloudmanaged,
+		kl,
 	)
 	// TODO: should be of part of validation CR
 	if err != nil && k8serrors.IsNotFound(err) {
@@ -70,7 +70,7 @@ func (r *CloudManagedBackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 		return ctrl.Result{}, nil
 	}
 
-	op, err := operator.GetOperator(cloudmanaged.Spec.Type)
+	op, err := operator.GetOperator(kl.Spec.Type)
 	if err != nil {
 		log.Error(err, "Could not define the base operator")
 		return ctrl.Result{}, err
@@ -79,8 +79,8 @@ func (r *CloudManagedBackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 	err = r.Get(
 		ctx,
 		types.NamespacedName{
-			Name:      op.Name(cloudmanaged),
-			Namespace: cloudmanaged.Namespace,
+			Name:      op.Name(kl),
+			Namespace: kl.Namespace,
 		},
 		found,
 	)
@@ -96,28 +96,28 @@ func (r *CloudManagedBackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 		return ctrl.Result{}, err
 	}
 	backupOperator.SetBackupImage()
-	backupOperator.SetBackupEnv(cloudmanagedbackup)
+	backupOperator.SetBackupEnv(klb)
 
 	cronJob := backupOperator.GetCronJob()
 	err = r.Get(ctx,
 		types.NamespacedName{
-			Name:      cloudmanagedbackup.Name,
-			Namespace: cloudmanagedbackup.Namespace,
+			Name:      klb.Name,
+			Namespace: klb.Namespace,
 		},
 		cronJob)
 	if err != nil && k8serrors.IsNotFound(err) {
-		dep, err := r.cronJob(backupOperator, cloudmanagedbackup)
+		dep, err := r.cronJob(backupOperator, klb)
 		if err != nil {
-			log.Error(err, "Could not generate cron cronJob", "Name", cloudmanagedbackup.Name)
+			log.Error(err, "Could not generate cron cronJob", "Name", klb.Name)
 			return ctrl.Result{}, err
 		}
 
-		log.Info("Creating a new Backup resource", "Name", cloudmanagedbackup.Name)
+		log.Info("Creating a new Backup resource", "Name", klb.Name)
 		err = r.Create(ctx, dep)
 		if err != nil && k8serrors.IsAlreadyExists(err) {
-			log.Info("CronJob already exists", "Name", cloudmanagedbackup.Name)
+			log.Info("CronJob already exists", "Name", klb.Name)
 		} else if err != nil {
-			log.Error(err, "Failed to create new CronJob", "Name", cloudmanagedbackup.Name)
+			log.Error(err, "Failed to create new CronJob", "Name", klb.Name)
 			return ctrl.Result{}, err
 		} else {
 			// cronJob created successfully - return and requeue
@@ -126,45 +126,45 @@ func (r *CloudManagedBackupReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 	}
 
 	backupOperator.InitFrom(cronJob)
-	if !backupOperator.IsEqual(cloudmanagedbackup) {
-		backupOperator.Update(cloudmanagedbackup)
+	if !backupOperator.IsEqual(klb) {
+		backupOperator.Update(klb)
 
 		err = r.Update(ctx, backupOperator.GetCronJob())
 		if err != nil {
-			log.Error(err, "Failed to update object", "Name", cloudmanagedbackup.Name)
+			log.Error(err, "Failed to update object", "Name", klb.Name)
 			return ctrl.Result{}, err
 		} else {
-			log.Info("Backup resource is updated", "Name", cloudmanagedbackup.Name)
+			log.Info("Backup resource is updated", "Name", klb.Name)
 		}
 	} else {
-		log.Info("No difference", "Name", cloudmanagedbackup.Name)
+		log.Info("No difference", "Name", klb.Name)
 	}
 
-	jobList, err := r.getJobList(ctx, cloudmanagedbackup)
+	jobList, err := r.getJobList(ctx, klb)
 	if err != nil {
 		log.Error(err, "Failed to receive list of jobs",
-			"Name", cloudmanagedbackup.Name)
+			"Name", klb.Name)
 		return ctrl.Result{}, err
 	}
 
 	status := backupOperator.CurrentStatus(jobList)
-	if !cloudmanagedbackup.IsEqual(status) {
-		cloudmanagedbackup.SetStatus(status)
-		err = r.Update(ctx, cloudmanagedbackup)
-		//err = r.Status().Update(ctx, cloudmanaged) # FIXME: Figure out why it's failed
+	if !klb.IsEqual(status) {
+		klb.SetStatus(status)
+		err = r.Update(ctx, klb)
+		//err = r.Status().Update(ctx, kl) # FIXME: Figure out why it's failed
 		if err != nil {
-			log.Error(err, "Failed to update cloudmanaged backup object")
+			log.Error(err, "Failed to update kl backup object")
 		} else {
-			log.Info("Cloudmanaged backup status is updated", "Status", cloudmanagedbackup.GetStatus())
+			log.Info("KuberLogicBackupSchedule status is updated", "Status", klb.GetStatus())
 		}
 	}
 
-	monitoring.CloudManagedBackups[monitoringKey] = cloudmanagedbackup
+	monitoring.KuberLogicBackupSchedules[monitoringKey] = klb
 
 	return ctrl.Result{}, nil
 }
 
-func (r *CloudManagedBackupReconciler) cronJob(op operator.Backup, cmb *cloudlinuxv1.CloudManagedBackup) (*v1beta1.CronJob, error) {
+func (r *KuberLogicBackupScheduleReconciler) cronJob(op operator.Backup, cmb *kuberlogicv1.KuberLogicBackupSchedule) (*v1beta1.CronJob, error) {
 	op.Init(cmb)
 
 	// Set cloudmanage backup instance as the owner and controller
@@ -177,7 +177,7 @@ func (r *CloudManagedBackupReconciler) cronJob(op operator.Backup, cmb *cloudlin
 	return op.GetCronJob(), nil
 }
 
-func (r *CloudManagedBackupReconciler) getJobList(ctx context.Context, cmb *cloudlinuxv1.CloudManagedBackup) (v12.JobList, error) {
+func (r *KuberLogicBackupScheduleReconciler) getJobList(ctx context.Context, cmb *kuberlogicv1.KuberLogicBackupSchedule) (v12.JobList, error) {
 	jobs := v12.JobList{}
 	selector := &client.ListOptions{}
 
@@ -190,9 +190,9 @@ func (r *CloudManagedBackupReconciler) getJobList(ctx context.Context, cmb *clou
 	return jobs, err
 }
 
-func (r *CloudManagedBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *KuberLogicBackupScheduleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&cloudlinuxv1.CloudManagedBackup{}).
+		For(&kuberlogicv1.KuberLogicBackupSchedule{}).
 		Owns(&v1beta1.CronJob{}).
 		Complete(r)
 }

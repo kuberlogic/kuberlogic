@@ -2,20 +2,20 @@ apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    control-plane: controller-manager
+    control-plane: kuberlogic-operator
   name: system
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: controller-manager
+  name: kuberlogic-operator
   namespace: system
   labels:
-    control-plane: controller-manager
+    control-plane: kuberlogic-operator
 spec:
   selector:
     matchLabels:
-      control-plane: controller-manager
+      control-plane: kuberlogic-operator
   replicas: 1
   template:
     metadata:
@@ -24,14 +24,14 @@ spec:
         monitoring.cloudlinux.com/scrape: "true"
         monitoring.cloudlinux.com/scheme: "https"
       labels:
-        control-plane: controller-manager
+        control-plane: kuberlogic-operator
     spec:
       containers:
       - command:
         - /manager
         args:
         - --enable-leader-election
-        image: controller:latest
+        image: kuberlogic-operator:latest
         name: manager
         resources:
           limits:

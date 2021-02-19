@@ -97,7 +97,7 @@ func (a Alert) create() error {
 	}
 
 	if err := createAlertCR(name, "default", a.Labels.Alertname, status.Value, a.Labels.Name, status.Labels.KubernetesPodName); err != nil {
-		log.Printf("Error creating cloudmanaged alert: %s", err)
+		log.Printf("Error creating kuberlogic alert: %s", err)
 		return err
 	}
 	log.Printf("Alert %s succesfully created!", name)
@@ -109,7 +109,7 @@ func (a Alert) resolve() error {
 
 	err := deleteAlertCR(name, a.Labels.Namespace)
 	if err != nil {
-		log.Printf("Error resolving cloudmanaged alert: %s", err)
+		log.Printf("Error resolving kuberlogic alert: %s", err)
 		return err
 	}
 

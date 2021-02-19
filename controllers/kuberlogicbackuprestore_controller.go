@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator"
 	"gitlab.com/cloudmanaged/operator/monitoring"
 	v1 "k8s.io/api/batch/v1"
@@ -16,19 +16,19 @@ import (
 	"sync"
 )
 
-// CloudManagedBackupRestoreReconciler reconciles a CloudManagedRestore object
-type CloudManagedRestoreReconciler struct {
+// KuberLogicBackupRestoreReconciler reconciles a KuberLogicBackupRestore object
+type KuberLogicBackupRestoreReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 	mu     sync.Mutex
 }
 
-// +kubebuilder:rbac:groups=cloudlinux.com,resources=cloudmanagedrestores,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cloudlinux.com,resources=cloudmanagedrestores/status,verbs=get;update;patch
-func (r *CloudManagedRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+// +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicbackuprestores,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicbackuprestores/status,verbs=get;update;patch
+func (r *KuberLogicBackupRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	log := r.Log.WithValues("cloudmanagedrestore", req.NamespacedName)
+	log := r.Log.WithValues("kuberlogicbackuprestore", req.NamespacedName)
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -36,9 +36,9 @@ func (r *CloudManagedRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result
 	// metrics key
 	monitoringKey := fmt.Sprintf("%s/%s", req.Name, req.Namespace)
 
-	// Fetch the Cloudmanaged instance
-	cloudmanagedrestore := &cloudlinuxv1.CloudManagedRestore{}
-	err := r.Get(ctx, req.NamespacedName, cloudmanagedrestore)
+	// Fetch the KuberLogicBackupRestore instance
+	klr := &kuberlogicv1.KuberLogicBackupRestore{}
+	err := r.Get(ctx, req.NamespacedName, klr)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -47,20 +47,20 @@ func (r *CloudManagedRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		log.Error(err, "Failed to get CloudmanagedBackup")
-		delete(monitoring.CloudManageds, monitoringKey)
+		log.Error(err, "Failed to get KuberLogicBackupRestore")
+		delete(monitoring.KuberLogicServices, monitoringKey)
 		return ctrl.Result{}, err
 	}
 
-	clusterName := cloudmanagedrestore.Spec.ClusterName
-	cloudmanaged := &cloudlinuxv1.CloudManaged{}
+	clusterName := klr.Spec.ClusterName
+	kl := &kuberlogicv1.KuberLogicService{}
 	err = r.Get(
 		ctx,
 		types.NamespacedName{
 			Name:      clusterName,
 			Namespace: req.Namespace,
 		},
-		cloudmanaged,
+		kl,
 	)
 	// TODO: should be of part of validation CR
 	if err != nil && k8serrors.IsNotFound(err) {
@@ -69,7 +69,7 @@ func (r *CloudManagedRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result
 		return ctrl.Result{}, nil
 	}
 
-	op, err := operator.GetOperator(cloudmanaged.Spec.Type)
+	op, err := operator.GetOperator(kl.Spec.Type)
 	if err != nil {
 		log.Error(err, "Could not define the base operator")
 		return ctrl.Result{}, err
@@ -78,8 +78,8 @@ func (r *CloudManagedRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result
 	err = r.Get(
 		ctx,
 		types.NamespacedName{
-			Name:      op.Name(cloudmanaged),
-			Namespace: cloudmanaged.Namespace,
+			Name:      op.Name(kl),
+			Namespace: kl.Namespace,
 		},
 		found,
 	)
@@ -95,29 +95,29 @@ func (r *CloudManagedRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result
 		return ctrl.Result{}, err
 	}
 	restoreOperator.SetRestoreImage()
-	restoreOperator.SetRestoreEnv(cloudmanagedrestore)
+	restoreOperator.SetRestoreEnv(klr)
 
 	job := restoreOperator.GetJob()
 	err = r.Get(ctx,
 		types.NamespacedName{
-			Name:      cloudmanagedrestore.Name,
-			Namespace: cloudmanagedrestore.Namespace,
+			Name:      klr.Name,
+			Namespace: klr.Namespace,
 		},
 		job)
 	if err != nil && k8serrors.IsNotFound(err) {
-		dep, err := r.defineJob(restoreOperator, cloudmanagedrestore)
+		dep, err := r.defineJob(restoreOperator, klr)
 		if err != nil {
-			log.Error(err, "Could not generate job", "Name", cloudmanagedrestore.Name)
+			log.Error(err, "Could not generate job", "Name", klr.Name)
 			return ctrl.Result{}, err
 		}
 
-		log.Info("Creating a new Restore resource", "Name", cloudmanagedrestore.Name)
+		log.Info("Creating a new Restore resource", "Name", klr.Name)
 		err = r.Create(ctx, dep)
 		if err != nil && k8serrors.IsAlreadyExists(err) {
-			log.Info("Job already exists", "Name", cloudmanagedrestore.Name)
+			log.Info("Job already exists", "Name", klr.Name)
 		} else if err != nil {
-			log.Error(err, "Failed to create new Job", "Name", cloudmanagedrestore.Name,
-				"Namespace", cloudmanagedrestore.Namespace)
+			log.Error(err, "Failed to create new Job", "Name", klr.Name,
+				"Namespace", klr.Namespace)
 			return ctrl.Result{}, err
 		} else {
 			// job created successfully - return and requeue
@@ -126,24 +126,24 @@ func (r *CloudManagedRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result
 	}
 	restoreOperator.InitFrom(job)
 	status := restoreOperator.CurrentStatus()
-	if !cloudmanagedrestore.IsEqual(status) {
-		cloudmanagedrestore.SetStatus(status)
-		err = r.Update(ctx, cloudmanagedrestore)
-		//err = r.Status().Update(ctx, cloudmanaged) # FIXME: Figure out why it's failed
+	if !klr.IsEqual(status) {
+		klr.SetStatus(status)
+		err = r.Update(ctx, klr)
+		//err = r.Status().Update(ctx, kl) # FIXME: Figure out why it's failed
 		if err != nil {
-			log.Error(err, "Failed to update cloudmanaged restore object")
+			log.Error(err, "Failed to update kl restore object")
 		} else {
-			log.Info("Cloudmanaged restore status is updated",
-				"Status", cloudmanagedrestore.GetStatus())
+			log.Info("KuberLogicBackupRestore status is updated",
+				"Status", klr.GetStatus())
 		}
 	}
 
-	monitoring.CloudManagedRestores[monitoringKey] = cloudmanagedrestore
+	monitoring.KuberLogicBackupRestores[monitoringKey] = klr
 
 	return ctrl.Result{}, nil
 }
 
-func (r *CloudManagedRestoreReconciler) defineJob(op operator.Restore, cr *cloudlinuxv1.CloudManagedRestore) (*v1.Job, error) {
+func (r *KuberLogicBackupRestoreReconciler) defineJob(op operator.Restore, cr *kuberlogicv1.KuberLogicBackupRestore) (*v1.Job, error) {
 
 	op.Init(cr)
 
@@ -157,9 +157,9 @@ func (r *CloudManagedRestoreReconciler) defineJob(op operator.Restore, cr *cloud
 	return op.GetJob(), nil
 }
 
-func (r *CloudManagedRestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *KuberLogicBackupRestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&cloudlinuxv1.CloudManagedRestore{}).
+		For(&kuberlogicv1.KuberLogicBackupRestore{}).
 		Owns(&v1.Job{}).
 		Complete(r)
 }

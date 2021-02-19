@@ -3,7 +3,7 @@ package postgresql
 import (
 	"fmt"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,30 +11,24 @@ import (
 )
 
 const (
-	image   = "postgresql"
-	version = "12.1.5"
-
-	teamId = "cloudmanaged"
-
-	postgresRoleKey     = "spilo-role"
-	postgresRoleReplica = "replica"
-	postgresRoleMaster  = "master"
-
-	postgresPodLabelKey = "cluster-name"
-
+	image                 = "postgresql"
+	version               = "12.1.5"
+	teamId                = "kuberlogic"
+	postgresRoleKey       = "spilo-role"
+	postgresRoleReplica   = "replica"
+	postgresRoleMaster    = "master"
+	postgresPodLabelKey   = "cluster-name"
 	postgresPodDefaultKey = "application"
 	postgresPodDefaultVal = "spilo"
-
 	postgresMainContainer = "postgres"
-
-	postgresPort = 5432
+	postgresPort          = 5432
 )
 
 type Postgres struct {
 	Operator postgresv1.Postgresql
 }
 
-func (p *Postgres) Name(cm *cloudlinuxv1.CloudManaged) string {
+func (p *Postgres) Name(cm *kuberlogicv1.KuberLogicService) string {
 	return fmt.Sprintf("%s-%s", teamId, cm.Name)
 }
 
@@ -50,7 +44,7 @@ func (p *Postgres) InitFrom(o runtime.Object) {
 	p.Operator = *o.(*postgresv1.Postgresql)
 }
 
-func (p *Postgres) Init(cm *cloudlinuxv1.CloudManaged) {
+func (p *Postgres) Init(cm *kuberlogicv1.KuberLogicService) {
 	loadBalancersEnabled := true
 
 	name := p.Name(cm)
@@ -139,15 +133,15 @@ func (p *Postgres) Init(cm *cloudlinuxv1.CloudManaged) {
 	}
 }
 
-func (p *Postgres) GetDefaults() cloudlinuxv1.Defaults {
-	return cloudlinuxv1.Defaults{
-		VolumeSize: cloudlinuxv1.DefaultVolumeSize,
-		Resources:  cloudlinuxv1.DefaultResources,
+func (p *Postgres) GetDefaults() kuberlogicv1.Defaults {
+	return kuberlogicv1.Defaults{
+		VolumeSize: kuberlogicv1.DefaultVolumeSize,
+		Resources:  kuberlogicv1.DefaultResources,
 		Version:    version,
 	}
 }
 
-func (p *Postgres) Update(cm *cloudlinuxv1.CloudManaged) {
+func (p *Postgres) Update(cm *kuberlogicv1.KuberLogicService) {
 	p.setReplica(cm)
 	p.setResources(cm)
 	p.setVolumeSize(cm)
@@ -155,11 +149,11 @@ func (p *Postgres) Update(cm *cloudlinuxv1.CloudManaged) {
 	p.setAdvancedConf(cm)
 }
 
-func (p *Postgres) setReplica(cm *cloudlinuxv1.CloudManaged) {
+func (p *Postgres) setReplica(cm *kuberlogicv1.KuberLogicService) {
 	p.Operator.Spec.NumberOfInstances = cm.Spec.Replicas
 }
 
-func (p *Postgres) setResources(cm *cloudlinuxv1.CloudManaged) {
+func (p *Postgres) setResources(cm *kuberlogicv1.KuberLogicService) {
 	op := &p.Operator.Spec.Resources
 	cmr := &cm.Spec.Resources
 
@@ -167,15 +161,15 @@ func (p *Postgres) setResources(cm *cloudlinuxv1.CloudManaged) {
 	op.ResourceRequests.CPU, op.ResourceRequests.Memory = cmr.Requests.Cpu().String(), cmr.Requests.Memory().String()
 }
 
-func (p *Postgres) setVolumeSize(cm *cloudlinuxv1.CloudManaged) {
+func (p *Postgres) setVolumeSize(cm *kuberlogicv1.KuberLogicService) {
 	p.Operator.Spec.Volume.Size = cm.Spec.VolumeSize
 }
 
-func (p *Postgres) setImage(cm *cloudlinuxv1.CloudManaged) {
+func (p *Postgres) setImage(cm *kuberlogicv1.KuberLogicService) {
 	p.Operator.Spec.DockerImage = util.GetImage(image, cm.Spec.Version)
 }
 
-func (p *Postgres) setAdvancedConf(cm *cloudlinuxv1.CloudManaged) {
+func (p *Postgres) setAdvancedConf(cm *kuberlogicv1.KuberLogicService) {
 	if p.Operator.Spec.PostgresqlParam.Parameters == nil {
 		p.Operator.Spec.PostgresqlParam.Parameters = make(map[string]string)
 	}
@@ -185,7 +179,7 @@ func (p *Postgres) setAdvancedConf(cm *cloudlinuxv1.CloudManaged) {
 	}
 }
 
-func (p *Postgres) IsEqual(cm *cloudlinuxv1.CloudManaged) bool {
+func (p *Postgres) IsEqual(cm *kuberlogicv1.KuberLogicService) bool {
 	return p.isEqualReplica(cm) &&
 		p.isEqualResources(cm) &&
 		p.isEqualVolumeSize(cm) &&
@@ -193,11 +187,11 @@ func (p *Postgres) IsEqual(cm *cloudlinuxv1.CloudManaged) bool {
 		p.isEqualAdvancedConf(cm)
 }
 
-func (p *Postgres) isEqualReplica(cm *cloudlinuxv1.CloudManaged) bool {
+func (p *Postgres) isEqualReplica(cm *kuberlogicv1.KuberLogicService) bool {
 	return p.Operator.Spec.NumberOfInstances == cm.Spec.Replicas
 }
 
-func (p *Postgres) isEqualResources(cm *cloudlinuxv1.CloudManaged) bool {
+func (p *Postgres) isEqualResources(cm *kuberlogicv1.KuberLogicService) bool {
 	op := p.Operator.Spec.Resources
 	cmr := cm.Spec.Resources
 	return op.ResourceLimits.CPU == cmr.Limits.Cpu().String() &&
@@ -206,15 +200,15 @@ func (p *Postgres) isEqualResources(cm *cloudlinuxv1.CloudManaged) bool {
 		op.ResourceRequests.Memory == cmr.Requests.Memory().String()
 }
 
-func (p *Postgres) isEqualVolumeSize(cm *cloudlinuxv1.CloudManaged) bool {
+func (p *Postgres) isEqualVolumeSize(cm *kuberlogicv1.KuberLogicService) bool {
 	return p.Operator.Spec.Volume.Size == cm.Spec.VolumeSize
 }
 
-func (p *Postgres) isEqualImage(cm *cloudlinuxv1.CloudManaged) bool {
+func (p *Postgres) isEqualImage(cm *kuberlogicv1.KuberLogicService) bool {
 	return p.Operator.Spec.DockerImage == util.GetImage(image, cm.Spec.Version)
 }
 
-func (p *Postgres) isEqualAdvancedConf(cm *cloudlinuxv1.CloudManaged) bool {
+func (p *Postgres) isEqualAdvancedConf(cm *kuberlogicv1.KuberLogicService) bool {
 	for k, v := range cm.Spec.AdvancedConf {
 		if val, ok := p.Operator.Spec.PostgresqlParam.Parameters[k]; !ok {
 			return false
@@ -228,13 +222,13 @@ func (p *Postgres) isEqualAdvancedConf(cm *cloudlinuxv1.CloudManaged) bool {
 func (p *Postgres) CurrentStatus() string {
 	switch p.Operator.Status.PostgresClusterStatus {
 	case postgresv1.ClusterStatusCreating, postgresv1.ClusterStatusUpdating, postgresv1.ClusterStatusUnknown:
-		return cloudlinuxv1.ClusterNotReadyStatus
+		return kuberlogicv1.ClusterNotReadyStatus
 	case postgresv1.ClusterStatusAddFailed, postgresv1.ClusterStatusUpdateFailed, postgresv1.ClusterStatusSyncFailed, postgresv1.ClusterStatusInvalid:
-		return cloudlinuxv1.ClusterFailedStatus
+		return kuberlogicv1.ClusterFailedStatus
 	case postgresv1.ClusterStatusRunning:
-		return cloudlinuxv1.ClusterOkStatus
+		return kuberlogicv1.ClusterOkStatus
 	default:
-		return cloudlinuxv1.ClusterUnknownStatus
+		return kuberlogicv1.ClusterUnknownStatus
 	}
 }
 
@@ -269,7 +263,7 @@ func (p *Postgres) GetMainPodContainer() string {
 }
 
 func (p *Postgres) GetDefaultConnectionPassword() (secret, passwordField string) {
-	return genUserCredentialsSecretName(cloudlinuxv1.DefaultUser, p.Operator.ObjectMeta.Name), "password"
+	return genUserCredentialsSecretName(kuberlogicv1.DefaultUser, p.Operator.ObjectMeta.Name), "password"
 }
 
 func (p *Postgres) GetCredentialsSecret() (*apiv1.Secret, error) {

@@ -2,19 +2,19 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: cloudmanaged-viewer-role
+  name: kuberlogic-viewer-role
 rules:
 - apiGroups:
-  - cloudlinux.com
+  - kuberlogic.com
   resources:
-  - cloudmanageds
+  - kuberlogics
   verbs:
   - get
   - list
   - watch
 - apiGroups:
-  - cloudlinux.com
+  - kuberlogic.com
   resources:
-  - cloudmanageds/status
+  - kuberlogics/status
   verbs:
   - get

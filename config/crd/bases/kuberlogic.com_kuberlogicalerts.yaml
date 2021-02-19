@@ -6,33 +6,40 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: cloudmanagedrestores.cloudlinux.com
+  name: kuberlogicalerts.kuberlogic.com
 spec:
   additionalPrinterColumns:
   - JSONPath: .status.status
-    description: The backup status
+    description: The cluster status
     name: Status
     type: string
-  - JSONPath: .spec.name
-    description: The cluster name
-    name: Cluster name
+  - JSONPath: .spec.alertname
+    description: Alert name
+    name: AlertName
     type: string
-  - JSONPath: .spec.type
-    description: The backup type
-    name: Type
+  - JSONPath: .spec.alertvalue
+    description: Alert value
+    name: AlertValue
     type: string
-  - JSONPath: .spec.backup
-    description: The backup link
-    name: Link
+  - JSONPath: .spec.cluster
+    description: Cluster name
+    name: Cluster
     type: string
-  group: cloudlinux.com
+  - JSONPath: .spec.pod
+    description: Affected Pod Name
+    name: Pod
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: Age
+    type: date
+  group: kuberlogic.com
   names:
-    kind: CloudManagedRestore
-    listKind: CloudManagedRestoreList
-    plural: cloudmanagedrestores
+    kind: KuberLogicAlert
+    listKind: KuberLogicAlertList
+    plural: kuberlogicalerts
     shortNames:
-    - clr
-    singular: cloudmanagedrestore
+    - kla
+    singular: kuberlogicalert
   scope: Namespaced
   subresources: {}
   validation:
@@ -52,34 +59,30 @@ spec:
           type: object
         spec:
           properties:
-            backup:
-              description: link to backup on the storage
+            alertname:
+              description: Alert name
+              pattern: ^.*$
               type: string
-            database:
-              description: what database need to be restored
+            alertvalue:
+              description: Value
+              pattern: ^.*$
               type: string
-            name:
-              description: 'Cluster name TODO: need to implement validation based
-                on webhook - https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html
-                it gives the ability to check cluster name is exists or not'
+            cluster:
+              description: Cluster name
+              pattern: ^.*$
               type: string
-            secret:
-              description: credentials for storage type
-              type: string
-            type:
-              description: Type of the backup storage
-              enum:
-              - s3
+            pod:
+              description: Pod
+              pattern: ^.*$
               type: string
           required:
-          - backup
-          - database
-          - name
-          - secret
-          - type
+          - alertname
+          - alertvalue
+          - cluster
+          - pod
           type: object
         status:
-          description: CloudManagedRestoreStatus defines the observed state of CloudManagedRestore
+          description: KuberLogicAlert defines the observed state of KuberLogicAlert
           properties:
             status:
               type: string

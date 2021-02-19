@@ -1,7 +1,7 @@
 package backup
 
 import (
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -16,7 +16,7 @@ type BaseRestore struct {
 	EnvVar []corev1.EnvVar
 }
 
-func (r *BaseRestore) Init(crb *cloudlinuxv1.CloudManagedRestore) {
+func (r *BaseRestore) Init(crb *kuberlogicv1.KuberLogicBackupRestore) {
 	r.Job = r.New(crb)
 }
 
@@ -29,24 +29,24 @@ func (r *BaseRestore) CurrentStatus() string {
 		lastCondition := r.Job.Status.Conditions[len(r.Job.Status.Conditions)-1]
 		switch lastCondition.Type {
 		case batchv1.JobComplete:
-			return cloudlinuxv1.BackupSuccessStatus
+			return kuberlogicv1.BackupSuccessStatus
 		case batchv1.JobFailed:
-			return cloudlinuxv1.BackupFailedStatus
+			return kuberlogicv1.BackupFailedStatus
 		}
 	} else {
 		if r.Job.Status.Active > 0 {
-			return cloudlinuxv1.BackupRunningStatus
+			return kuberlogicv1.BackupRunningStatus
 		}
 	}
 
-	return cloudlinuxv1.BackupUnknownStatus
+	return kuberlogicv1.BackupUnknownStatus
 }
 
 func (r *BaseRestore) GetJob() *batchv1.Job {
 	return &r.Job
 }
 
-func (r *BaseRestore) New(crb *cloudlinuxv1.CloudManagedRestore) batchv1.Job {
+func (r *BaseRestore) New(crb *kuberlogicv1.KuberLogicBackupRestore) batchv1.Job {
 	return r.NewJob(crb.Name, crb.Namespace)
 }
 

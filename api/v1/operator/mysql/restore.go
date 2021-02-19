@@ -21,7 +21,7 @@ func (p *Restore) SetRestoreImage() {
 	p.Image = util.GetImage(restoreImage, restoreTag)
 }
 
-func (p *Restore) SetRestoreEnv(cm *cloudlinuxv1.CloudManagedRestore) {
+func (p *Restore) SetRestoreEnv(cm *cloudlinuxv1.KuberLogicBackupRestore) {
 	env := []v1.EnvVar{
 		{
 			Name:  "SCOPE",

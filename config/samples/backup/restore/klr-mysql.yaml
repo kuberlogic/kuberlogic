@@ -1,7 +1,7 @@
-apiVersion: cloudlinux.com/v1
-kind: CloudManagedRestore
+apiVersion: kuberlogic.com/v1
+kind: KuberLogicBackupRestore
 metadata:
-  name: cloudmanaged-restore-backup-mysql
+  name: klr-mysql
 spec:
   type: s3
   name: cloudmanaged-my

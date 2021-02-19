@@ -131,10 +131,10 @@ data:
   alert.rules: |
     ---
     groups:
-    - name: cloudmanaged-alerts
+    - name: kuberlogic-alerts
       rules:
-      - alert: cloudmanaged-memory-usage
-        expr: (sum(eagle_pod_container_resource_usage_memory_bytes{pod=~"cloudmanaged-my.*"}) by (pod)) / max(cloudmanaged_memory_limit_bytes{name="cloudmanaged-my"}) > 0.3
+      - alert: kuberlogic-memory-usage
+        expr: (sum(eagle_pod_container_resource_usage_memory_bytes{pod=~"kuberlogic-my.*"}) by (pod)) / max(kubelogic_memory_limit_bytes{name="kuberlogic-my"}) > 0.3
         for: 1m
 ---
 apiVersion: v1

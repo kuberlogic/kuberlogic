@@ -1,11 +1,11 @@
-package cloudmanaged
+package kuberlogic
 
 import (
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator"
 )
 
-func GetClusterName(cm *cloudlinuxv1.CloudManaged) (name string, err error) {
+func GetClusterName(cm *kuberlogicv1.KuberLogicService) (name string, err error) {
 	op, err := operator.GetOperator(cm.Spec.Type)
 	if err != nil {
 		return
@@ -15,7 +15,7 @@ func GetClusterName(cm *cloudlinuxv1.CloudManaged) (name string, err error) {
 	return op.Name(cm), nil
 }
 
-func GetClusterPodLabels(cm *cloudlinuxv1.CloudManaged) (master map[string]string, replica map[string]string, err error) {
+func GetClusterPodLabels(cm *kuberlogicv1.KuberLogicService) (master map[string]string, replica map[string]string, err error) {
 	op, err := operator.GetOperator(cm.Spec.Type)
 	if err != nil {
 		return
@@ -26,7 +26,7 @@ func GetClusterPodLabels(cm *cloudlinuxv1.CloudManaged) (master map[string]strin
 	return
 }
 
-func GetClusterServices(cm *cloudlinuxv1.CloudManaged) (master string, replica string, err error) {
+func GetClusterServices(cm *kuberlogicv1.KuberLogicService) (master string, replica string, err error) {
 	op, err := operator.GetOperator(cm.Spec.Type)
 	if err != nil {
 		return
@@ -37,7 +37,7 @@ func GetClusterServices(cm *cloudlinuxv1.CloudManaged) (master string, replica s
 	return
 }
 
-func GetClusterServicePort(cm *cloudlinuxv1.CloudManaged) (p int, err error) {
+func GetClusterServicePort(cm *kuberlogicv1.KuberLogicService) (p int, err error) {
 	op, err := operator.GetOperator(cm.Spec.Type)
 	if err != nil {
 		return
@@ -48,7 +48,7 @@ func GetClusterServicePort(cm *cloudlinuxv1.CloudManaged) (p int, err error) {
 	return
 }
 
-func GetClusterMainContainer(cm *cloudlinuxv1.CloudManaged) (c string, err error) {
+func GetClusterMainContainer(cm *kuberlogicv1.KuberLogicService) (c string, err error) {
 	op, err := operator.GetOperator(cm.Spec.Type)
 	if err != nil {
 		return
@@ -59,7 +59,7 @@ func GetClusterMainContainer(cm *cloudlinuxv1.CloudManaged) (c string, err error
 	return
 }
 
-func GetClusterCredentialsInfo(cm *cloudlinuxv1.CloudManaged) (username, passwordField, secretName string, err error) {
+func GetClusterCredentialsInfo(cm *kuberlogicv1.KuberLogicService) (username, passwordField, secretName string, err error) {
 	op, err := operator.GetOperator(cm.Spec.Type)
 	if err != nil {
 		return
@@ -67,6 +67,6 @@ func GetClusterCredentialsInfo(cm *cloudlinuxv1.CloudManaged) (username, passwor
 	op.Init(cm)
 
 	secretName, passwordField = op.GetDefaultConnectionPassword()
-	username = cloudlinuxv1.DefaultUser
+	username = kuberlogicv1.DefaultUser
 	return
 }

@@ -6,7 +6,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: cloudmanageds.cloudlinux.com
+  name: kuberlogicservices.kuberlogic.com
 spec:
   additionalPrinterColumns:
   - JSONPath: .status.status
@@ -36,14 +36,14 @@ spec:
   - JSONPath: .metadata.creationTimestamp
     name: Age
     type: date
-  group: cloudlinux.com
+  group: kuberlogic.com
   names:
-    kind: CloudManaged
-    listKind: CloudManagedList
-    plural: cloudmanageds
+    kind: KuberLogicService
+    listKind: KuberLogicServiceList
+    plural: kuberlogicservices
     shortNames:
-    - cl
-    singular: cloudmanaged
+    - kls
+    singular: kuberlogicservice
   scope: Namespaced
   subresources: {}
   validation:
@@ -139,7 +139,7 @@ spec:
           - type
           type: object
         status:
-          description: CloudManagedStatus defines the observed state of CloudManaged
+          description: KuberLogicServiceStatus defines the observed state of KuberLogicService
           properties:
             status:
               type: string

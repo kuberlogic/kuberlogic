@@ -2,10 +2,10 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/cloudlinux.com_cloudmanageds.yaml
-- bases/cloudlinux.com_cloudmanagedbackups.yaml
-- bases/cloudlinux.com_cloudmanagedrestores.yaml
-- bases/cloudlinux.com_cloudmanagedalerts.yaml
+- bases/kuberlogic.com_kuberlogicservices.yaml
+- bases/kuberlogic.com_kuberlogicbackupschedules.yaml
+- bases/kuberlogic.com_kuberlogicbackuprestores.yaml
+- bases/kuberlogic.com_kuberlogicalerts.yaml
 - bases/postgresql/zalando/postgresql.crd.yaml
 - bases/mysql/presslabs/mysql.crd.yaml
 - bases/mysql/presslabs/mysqlbackup.crd.yaml
@@ -14,12 +14,12 @@ resources:
 patchesStrategicMerge:
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
 # patches here are for enabling the conversion webhook for each CRD
-#- patches/webhook_in_cloudmanageds.yaml
+#- patches/webhook_in_kuberlogics.yaml
 # +kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable webhook, uncomment all the sections with [CERTMANAGER] prefix.
 # patches here are for enabling the CA injection for each CRD
-#- patches/cainjection_in_cloudmanageds.yaml
+#- patches/cainjection_in_kuberlogics.yaml
 # +kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.

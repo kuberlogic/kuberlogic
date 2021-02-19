@@ -5,7 +5,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type CloudManagedSpec struct {
+type KuberLogicServiceSpec struct {
 	// Type of the cluster
 	// +kubebuilder:validation:Enum=postgresql;mysql;redis
 	Type string `json:"type"`
@@ -38,8 +38,8 @@ type MaintenanceWindow struct {
 	DurationHours int `json:"duration,omitempty"`
 }
 
-// CloudManagedStatus defines the observed state of CloudManaged
-type CloudManagedStatus struct {
+// KuberLogicServiceStatus defines the observed state of KuberLogicService
+type KuberLogicServiceStatus struct {
 	Status string `json:"status"`
 }
 
@@ -51,53 +51,53 @@ type CloudManagedStatus struct {
 // +kubebuilder:printcolumn:name="CPU Request",type=string,JSONPath=`.spec.resources.requests.cpu`,description="CPU request"
 // +kubebuilder:printcolumn:name="Memory Request",type=string,JSONPath=`.spec.resources.requests.memory`,description="Memory request"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
-// +kubebuilder:resource:shortName=cl
-type CloudManaged struct {
+// +kubebuilder:resource:shortName=kls
+type KuberLogicService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CloudManagedSpec   `json:"spec,omitempty"`
-	Status CloudManagedStatus `json:"status,omitempty"`
+	Spec   KuberLogicServiceSpec   `json:"spec,omitempty"`
+	Status KuberLogicServiceStatus `json:"status,omitempty"`
 }
 
-// CloudManagedList contains a list of CloudManaged
+// KuberLogicServiceList contains a list of KuberLogicService
 // +kubebuilder:object:root=true
-type CloudManagedList struct {
+type KuberLogicServiceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []CloudManaged `json:"items"`
+	Items           []KuberLogicService `json:"items"`
 }
 
-func (cm *CloudManaged) IsEqual(newStatus string) bool {
-	return cm.Status.Status == newStatus
+func (kls *KuberLogicService) IsEqual(newStatus string) bool {
+	return kls.Status.Status == newStatus
 }
 
-func (cm *CloudManaged) SetStatus(newStatus string) {
-	cm.Status.Status = newStatus
+func (kls *KuberLogicService) SetStatus(newStatus string) {
+	kls.Status.Status = newStatus
 }
 
-func (cm *CloudManaged) GetStatus() string {
-	return cm.Status.Status
+func (kls *KuberLogicService) GetStatus() string {
+	return kls.Status.Status
 }
 
 // TODO: Figure out workaround in https://github.com/kubernetes-sigs/kubebuilder/issues/1501, not it's a blocker
 // for implementation default values based on webhook (https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html)
-func (cm *CloudManaged) InitDefaults(defaults Defaults) bool {
+func (kls *KuberLogicService) InitDefaults(defaults Defaults) bool {
 	dirty := false
-	if cm.Spec.Resources.Requests == nil {
-		cm.Spec.Resources.Requests = defaults.Resources.Requests
+	if kls.Spec.Resources.Requests == nil {
+		kls.Spec.Resources.Requests = defaults.Resources.Requests
 		dirty = true
 	}
-	if cm.Spec.Resources.Limits == nil {
-		cm.Spec.Resources.Limits = defaults.Resources.Limits
+	if kls.Spec.Resources.Limits == nil {
+		kls.Spec.Resources.Limits = defaults.Resources.Limits
 		dirty = true
 	}
-	if cm.Spec.VolumeSize == "" {
-		cm.Spec.VolumeSize = defaults.VolumeSize
+	if kls.Spec.VolumeSize == "" {
+		kls.Spec.VolumeSize = defaults.VolumeSize
 		dirty = true
 	}
-	if cm.Spec.Version == "" {
-		cm.Spec.Version = defaults.Version
+	if kls.Spec.Version == "" {
+		kls.Spec.Version = defaults.Version
 		dirty = true
 	}
 
@@ -105,5 +105,5 @@ func (cm *CloudManaged) InitDefaults(defaults Defaults) bool {
 }
 
 func init() {
-	SchemeBuilder.Register(&CloudManaged{}, &CloudManagedList{})
+	SchemeBuilder.Register(&KuberLogicService{}, &KuberLogicServiceList{})
 }

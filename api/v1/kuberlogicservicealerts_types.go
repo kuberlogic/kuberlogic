@@ -4,7 +4,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type CloudManagedAlertSpec struct {
+type KuberLogicAlertSpec struct {
 	// Alert name
 	// +kubebuilder:validation:Pattern=^.*$
 	AlertName string `json:"alertname"`
@@ -19,8 +19,8 @@ type CloudManagedAlertSpec struct {
 	Pod string `json:"pod"`
 }
 
-// CloudManagedAlert defines the observed state of CloudManagedAlert
-type CloudManagedAlertStatus struct {
+// KuberLogicAlert defines the observed state of KuberLogicAlert
+type KuberLogicAlertStatus struct {
 	Status string `json:"status"`
 }
 
@@ -31,35 +31,35 @@ type CloudManagedAlertStatus struct {
 // +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".spec.cluster",description="Cluster name"
 // +kubebuilder:printcolumn:name="Pod",type="string",JSONPath=".spec.pod",description="Affected Pod Name"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
-// +kubebuilder:resource:shortName=cla
-type CloudManagedAlert struct {
+// +kubebuilder:resource:shortName=kla
+type KuberLogicAlert struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CloudManagedAlertSpec   `json:"spec,omitempty"`
-	Status CloudManagedAlertStatus `json:"status,omitempty"`
+	Spec   KuberLogicAlertSpec   `json:"spec,omitempty"`
+	Status KuberLogicAlertStatus `json:"status,omitempty"`
 }
 
-// CloudManagedAlertList contains a list of CloudManagedAlert
+// KuberLogicAlertList contains a list of KuberLogicAlert
 // +kubebuilder:object:root=true
-type CloudManagedAlertList struct {
+type KuberLogicAlertList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []CloudManagedAlert `json:"items"`
+	Items           []KuberLogicAlert `json:"items"`
 }
 
-func (cla *CloudManagedAlert) IsEqual(newStatus string) bool {
-	return cla.Status.Status == newStatus
+func (kla *KuberLogicAlert) IsEqual(newStatus string) bool {
+	return kla.Status.Status == newStatus
 }
 
-func (cla *CloudManagedAlert) SetStatus(newStatus string) {
-	cla.Status.Status = newStatus
+func (kla *KuberLogicAlert) SetStatus(newStatus string) {
+	kla.Status.Status = newStatus
 }
 
-func (cla *CloudManagedAlert) GetStatus() string {
-	return cla.Status.Status
+func (kla *KuberLogicAlert) GetStatus() string {
+	return kla.Status.Status
 }
 
 func init() {
-	SchemeBuilder.Register(&CloudManagedAlert{}, &CloudManagedAlertList{})
+	SchemeBuilder.Register(&KuberLogicAlert{}, &KuberLogicAlertList{})
 }

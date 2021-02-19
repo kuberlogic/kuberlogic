@@ -1,7 +1,7 @@
-apiVersion: cloudlinux.com/v1
-kind: CloudManaged
+apiVersion: kuberlogic.com/v1
+kind: KuberLogic
 metadata:
-  name: cloudmanaged-pg
+  name: kl-pg
 spec:
   type: postgresql
   replicas: 2

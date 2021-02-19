@@ -7,9 +7,9 @@ rules:
   - apiGroups:
       - cloudlinux.com
     resources:
-      - cloudmanageds
-      - cloudmanagedbackups
-      - cloudmanagedrestores
+      - kuberlogics
+      - kuberlogicbackupschedules
+      - kuberlogicbackuprestores
       - postgresqls
       - mysqlclusters
       - redisfailovers
@@ -22,11 +22,11 @@ rules:
       - update
       - watch
   - apiGroups:
-      - cloudlinux.com
+      - kuberlogic.com
     resources:
-      - cloudmanageds/status
-      - cloudmanagedbackups/status
-      - cloudmanagedrestores/status
+      - kuberlogics/status
+      - kuberlogicbackupschedules/status
+      - kuberlogicbackuprestores/status
     verbs:
       - get
       - patch

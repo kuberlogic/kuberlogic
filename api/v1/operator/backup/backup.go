@@ -1,7 +1,7 @@
 package backup
 
 import (
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
 	v1 "k8s.io/api/batch/v1"
 	"k8s.io/api/batch/v1beta1"
@@ -31,17 +31,17 @@ func (p *BaseBackup) CurrentStatus(ev v1.JobList) string {
 			lastCondition := lastJob.Status.Conditions[len(lastJob.Status.Conditions)-1]
 			switch lastCondition.Type {
 			case v1.JobComplete:
-				return cloudlinuxv1.BackupSuccessStatus
+				return kuberlogicv1.BackupSuccessStatus
 			case v1.JobFailed:
-				return cloudlinuxv1.BackupFailedStatus
+				return kuberlogicv1.BackupFailedStatus
 			}
 		} else {
 			if lastJob.Status.Active > 0 {
-				return cloudlinuxv1.BackupRunningStatus
+				return kuberlogicv1.BackupRunningStatus
 			}
 		}
 	}
-	return cloudlinuxv1.BackupUnknownStatus
+	return kuberlogicv1.BackupUnknownStatus
 }
 
 func (p *BaseBackup) NewCronJob(name, ns, schedule string) v1beta1.CronJob {
@@ -90,7 +90,7 @@ func (p *BaseBackup) GetCronJob() *v1beta1.CronJob {
 	return &p.CronJob
 }
 
-func (p *BaseBackup) New(backup *cloudlinuxv1.CloudManagedBackup) v1beta1.CronJob {
+func (p *BaseBackup) New(backup *kuberlogicv1.KuberLogicBackupSchedule) v1beta1.CronJob {
 	return p.NewCronJob(
 		backup.Name,
 		backup.Namespace,
@@ -106,7 +106,7 @@ func (p *BaseBackup) GetBackupEnv(secret string) []corev1.EnvVar {
 	panic("not implemented error")
 }
 
-func (p *BaseBackup) Init(cm *cloudlinuxv1.CloudManagedBackup) {
+func (p *BaseBackup) Init(cm *kuberlogicv1.KuberLogicBackupSchedule) {
 	p.CronJob = p.New(cm)
 }
 
@@ -114,31 +114,31 @@ func (p *BaseBackup) InitFrom(job *v1beta1.CronJob) {
 	p.CronJob = *job
 }
 
-func (p *BaseBackup) IsEqual(cm *cloudlinuxv1.CloudManagedBackup) bool {
+func (p *BaseBackup) IsEqual(cm *kuberlogicv1.KuberLogicBackupSchedule) bool {
 	return p.IsEqualSchedule(cm) &&
 		p.IsEqualTemplate(cm)
 }
 
-func (p *BaseBackup) IsEqualSchedule(cm *cloudlinuxv1.CloudManagedBackup) bool {
+func (p *BaseBackup) IsEqualSchedule(cm *kuberlogicv1.KuberLogicBackupSchedule) bool {
 	return reflect.DeepEqual(cm.Spec.Schedule, p.CronJob.Spec.Schedule)
 }
 
-func (p *BaseBackup) IsEqualTemplate(cm *cloudlinuxv1.CloudManagedBackup) bool {
+func (p *BaseBackup) IsEqualTemplate(cm *kuberlogicv1.KuberLogicBackupSchedule) bool {
 	return reflect.DeepEqual(
 		p.New(cm).Spec.JobTemplate,
 		p.CronJob.Spec.JobTemplate,
 	)
 }
 
-func (p *BaseBackup) Update(cm *cloudlinuxv1.CloudManagedBackup) {
+func (p *BaseBackup) Update(cm *kuberlogicv1.KuberLogicBackupSchedule) {
 	p.UpdateSchedule(cm)
 	p.UpdateTemplate(cm)
 }
 
-func (p *BaseBackup) UpdateSchedule(cm *cloudlinuxv1.CloudManagedBackup) {
+func (p *BaseBackup) UpdateSchedule(cm *kuberlogicv1.KuberLogicBackupSchedule) {
 	p.CronJob.Spec.Schedule = cm.Spec.Schedule
 }
 
-func (p *BaseBackup) UpdateTemplate(cm *cloudlinuxv1.CloudManagedBackup) {
+func (p *BaseBackup) UpdateTemplate(cm *kuberlogicv1.KuberLogicBackupSchedule) {
 	p.CronJob.Spec.JobTemplate = p.New(cm).Spec.JobTemplate
 }

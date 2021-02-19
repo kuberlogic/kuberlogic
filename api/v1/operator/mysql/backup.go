@@ -1,7 +1,7 @@
 package mysql
 
 import (
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/backup"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
 	v1 "k8s.io/api/core/v1"
@@ -21,7 +21,7 @@ func (p *Backup) SetBackupImage() {
 	p.Image = util.GetImage(backupImage, backupTag)
 }
 
-func (p *Backup) SetBackupEnv(cm *cloudlinuxv1.CloudManagedBackup) {
+func (p *Backup) SetBackupEnv(cm *kuberlogicv1.KuberLogicBackupSchedule) {
 	env := []v1.EnvVar{
 		{
 			Name:  "SCOPE",
