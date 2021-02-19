@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/watcher/api"
 	"gitlab.com/cloudmanaged/operator/watcher/api/common"
 	"gitlab.com/cloudmanaged/operator/watcher/k8s"
@@ -91,15 +91,15 @@ func main() {
 		log.Fatalf("error when receiving base client: %s", err)
 	}
 
-	crdClient, err := k8s.GetCloudmanagedClient(config)
+	crdClient, err := k8s.GetKuberLogicClient(config)
 	if err != nil {
 		log.Fatalf("error when receiving rest client: %s", err)
 	}
 
-	cluster := &cloudlinuxv1.CloudManaged{}
+	cluster := &kuberlogicv1.KuberLogicService{}
 	err = crdClient.
 		Get().
-		Resource("cloudmanageds").
+		Resource("kuberlogicservices").
 		Namespace("default").
 		Name(params.targetCluster).
 		Do(context.TODO()).

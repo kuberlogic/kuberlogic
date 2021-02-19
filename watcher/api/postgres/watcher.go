@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v4"
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
-	cmUtil "gitlab.com/cloudmanaged/operator/util/cloudmanaged"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	util "gitlab.com/cloudmanaged/operator/util/kuberlogic"
 	"gitlab.com/cloudmanaged/operator/watcher/api/base"
 	"gitlab.com/cloudmanaged/operator/watcher/api/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,7 +20,7 @@ type Session struct {
 	base.BaseSession
 }
 
-func New(cm *cloudlinuxv1.CloudManaged, client *kubernetes.Clientset, db, table string) (*Session, error) {
+func New(cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db, table string) (*Session, error) {
 	session := &Session{}
 
 	session.ClusterType = cm.Spec.Type
@@ -29,13 +29,13 @@ func New(cm *cloudlinuxv1.CloudManaged, client *kubernetes.Clientset, db, table 
 	session.Table = table
 	session.Port = 5432
 
-	if _, _, secret, err := cmUtil.GetClusterCredentialsInfo(cm); err != nil {
+	if _, _, secret, err := util.GetClusterCredentialsInfo(cm); err != nil {
 		return nil, err
 	} else {
 		session.ClusterCredentialsSecret = secret
 	}
 
-	if name, err := cmUtil.GetClusterName(cm); err != nil {
+	if name, err := util.GetClusterName(cm); err != nil {
 		return nil, err
 	} else {
 		session.ClusterName = name

@@ -1,61 +1,61 @@
-package cloudmanaged
+package kuberlogic
 
 import (
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
 	"testing"
 )
 
-var cmPg = &cloudlinuxv1.CloudManaged{
+var cmPg = &kuberlogicv1.KuberLogicService{
 	TypeMeta: metav1.TypeMeta{},
 	ObjectMeta: metav1.ObjectMeta{
 		Name:      "test-pg",
 		Namespace: "default",
 	},
-	Spec: cloudlinuxv1.CloudManagedSpec{
+	Spec: kuberlogicv1.KuberLogicServiceSpec{
 		Type:         "postgresql",
 		Replicas:     2,
 		Resources:    v1.ResourceRequirements{},
 		VolumeSize:   "1Gi",
 		Version:      "11.1",
 		AdvancedConf: map[string]string{"k1": "v1"},
-		MaintenanceWindow: cloudlinuxv1.MaintenanceWindow{
+		MaintenanceWindow: kuberlogicv1.MaintenanceWindow{
 			StartHour: 4,
 			Weekday:   "Monday",
 		},
 	},
-	Status: cloudlinuxv1.CloudManagedStatus{
+	Status: kuberlogicv1.KuberLogicServiceStatus{
 		Status: "Running",
 	},
 }
 
-var cmMy = &cloudlinuxv1.CloudManaged{
+var cmMy = &kuberlogicv1.KuberLogicService{
 	TypeMeta: metav1.TypeMeta{},
 	ObjectMeta: metav1.ObjectMeta{
 		Name:      "test-mysql",
 		Namespace: "default",
 	},
-	Spec: cloudlinuxv1.CloudManagedSpec{
+	Spec: kuberlogicv1.KuberLogicServiceSpec{
 		Type:         "mysql",
 		Replicas:     2,
 		Resources:    v1.ResourceRequirements{},
 		VolumeSize:   "1Gi",
 		Version:      "5.11",
 		AdvancedConf: map[string]string{"k2": "v2", "k3": "5"},
-		MaintenanceWindow: cloudlinuxv1.MaintenanceWindow{
+		MaintenanceWindow: kuberlogicv1.MaintenanceWindow{
 			StartHour: 5,
 			Weekday:   "Sunday",
 		},
 	},
-	Status: cloudlinuxv1.CloudManagedStatus{
+	Status: kuberlogicv1.KuberLogicServiceStatus{
 		Status: "Running",
 	},
 }
 
 func TestGetClusterCredentialsInfo(t *testing.T) {
-	pgUserE, pgPasswordFieldE, pgSecretE := "cloudmanaged", "password", "cloudmanaged.cloudmanaged-test-pg.credentials"
+	pgUserE, pgPasswordFieldE, pgSecretE := "kuberlogic", "password", "kuberlogic.kuberlogic-test-pg.credentials"
 	pgUserA, pgPasswordFieldA, pgSecretA, _ := GetClusterCredentialsInfo(cmPg)
 
 	if pgUserE != pgUserA || pgPasswordFieldE != pgPasswordFieldA || pgSecretE != pgSecretA {
@@ -65,7 +65,7 @@ func TestGetClusterCredentialsInfo(t *testing.T) {
 			pgUserE, pgPasswordFieldE, pgSecretE)
 	}
 
-	myUserE, myPasswordFieldE, mySecretE := "cloudmanaged", "PASSWORD", "test-mysql-cred"
+	myUserE, myPasswordFieldE, mySecretE := "kuberlogic", "PASSWORD", "test-mysql-cred"
 	myUserA, myPasswordFieldA, mySecretA, _ := GetClusterCredentialsInfo(cmMy)
 
 	if myUserA != myUserE || myPasswordFieldA != myPasswordFieldE || mySecretA != mySecretE {
@@ -78,8 +78,8 @@ func TestGetClusterCredentialsInfo(t *testing.T) {
 
 func TestGetClusterPodLabels(t *testing.T) {
 	masterPgE, replicaPgE :=
-		map[string]string{"spilo-role": "master", "application": "spilo", "cluster-name": "cloudmanaged-test-pg"},
-		map[string]string{"spilo-role": "replica", "application": "spilo", "cluster-name": "cloudmanaged-test-pg"}
+		map[string]string{"spilo-role": "master", "application": "spilo", "cluster-name": "kuberlogic-test-pg"},
+		map[string]string{"spilo-role": "replica", "application": "spilo", "cluster-name": "kuberlogic-test-pg"}
 	masterPgA, replicaPgA, _ := GetClusterPodLabels(cmPg)
 
 	if !reflect.DeepEqual(masterPgA, masterPgE) || !reflect.DeepEqual(replicaPgA, replicaPgE) {

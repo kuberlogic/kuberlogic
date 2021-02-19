@@ -7,8 +7,8 @@ import (
 )
 
 var protectedDatabases = map[string]bool{
-	"postgres":     true,
-	"cloudmanaged": true,
+	"postgres":   true,
+	"kuberlogic": true,
 }
 
 type Database struct {

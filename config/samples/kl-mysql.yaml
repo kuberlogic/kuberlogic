@@ -1,7 +1,7 @@
-apiVersion: cloudlinux.com/v1
-kind: CloudManaged
+apiVersion: kuberlogic.com/v1
+kind: KuberLogic
 metadata:
-  name: cloudmanaged-my
+  name: kl-my
 spec:
   type: mysql
   replicas: 2

@@ -12,7 +12,7 @@ type Defaults struct {
 	Version    string
 }
 
-const DefaultUser = "cloudmanaged"
+const DefaultUser = "kuberlogic"
 
 const DefaultVolumeSize = "1Gi"
 

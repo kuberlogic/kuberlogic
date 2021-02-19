@@ -13,7 +13,7 @@ var protectedUsers = map[string]bool{
 	"sys_heartbeat":   true,
 	"mysql.sys":       true,
 	"root":            true,
-	"cloudmanaged":    true,
+	"kuberlogic":      true,
 }
 
 type User struct {

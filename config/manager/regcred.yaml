@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: controller-manager
+  name: kuberlogic-operator
   namespace: system
   labels:
-    control-plane: controller-manager
+    control-plane: kuberlogic-operator
 spec:
   template:
     spec:
@@ -19,5 +19,5 @@ spec:
               value: gitlab-registry
         - name: apiserver
           env:
-            - name: CLOUDMANAGED_AUTH_PROVIDER
+            - name: KUBERLOGIC_AUTH_PROVIDER
               value: none

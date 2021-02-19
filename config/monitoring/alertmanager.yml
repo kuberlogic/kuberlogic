@@ -42,7 +42,7 @@ spec:
               subPath: alertmanager.yml
           ports:
             - containerPort: 9093
-        - name: cloudmanaged-alerting
+        - name: kuberlogic-alerting
           image: gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/cloudmanaged-alerting:latest
       volumes:
         - name: alertmanager-config

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	util2 "github.com/presslabs/mysql-operator/pkg/util"
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -31,7 +31,7 @@ type Mysql struct {
 	Operator mysqlv1.MysqlCluster
 }
 
-func (p *Mysql) Name(cm *cloudlinuxv1.CloudManaged) string {
+func (p *Mysql) Name(cm *kuberlogicv1.KuberLogicService) string {
 	return cm.Name
 }
 
@@ -43,7 +43,7 @@ func (p *Mysql) AsMetaObject() metav1.Object {
 	return &p.Operator
 }
 
-func (p *Mysql) Init(cm *cloudlinuxv1.CloudManaged) {
+func (p *Mysql) Init(cm *kuberlogicv1.KuberLogicService) {
 	p.Operator = mysqlv1.MysqlCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      p.Name(cm),
@@ -58,7 +58,7 @@ func (p *Mysql) Init(cm *cloudlinuxv1.CloudManaged) {
 				},
 				Containers: []corev1.Container{
 					{
-						Name:  "cloudmanaged-exporter",
+						Name:  "kuberlogic-exporter",
 						Image: "gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/exporter:v2",
 						VolumeMounts: []corev1.VolumeMount{
 							{
@@ -102,15 +102,15 @@ func (p *Mysql) InitFrom(o runtime.Object) {
 	p.Operator = *o.(*mysqlv1.MysqlCluster)
 }
 
-func (p *Mysql) GetDefaults() cloudlinuxv1.Defaults {
-	return cloudlinuxv1.Defaults{
-		VolumeSize: cloudlinuxv1.DefaultVolumeSize,
-		Resources:  cloudlinuxv1.DefaultResources,
+func (p *Mysql) GetDefaults() kuberlogicv1.Defaults {
+	return kuberlogicv1.Defaults{
+		VolumeSize: kuberlogicv1.DefaultVolumeSize,
+		Resources:  kuberlogicv1.DefaultResources,
 		Version:    version,
 	}
 }
 
-func (p *Mysql) Update(cm *cloudlinuxv1.CloudManaged) {
+func (p *Mysql) Update(cm *kuberlogicv1.KuberLogicService) {
 	p.setReplica(cm)
 	p.setResources(cm)
 	p.setVolumeSize(cm)
@@ -118,15 +118,15 @@ func (p *Mysql) Update(cm *cloudlinuxv1.CloudManaged) {
 	p.setAdvancedConf(cm)
 }
 
-func (p *Mysql) setReplica(cm *cloudlinuxv1.CloudManaged) {
+func (p *Mysql) setReplica(cm *kuberlogicv1.KuberLogicService) {
 	p.Operator.Spec.Replicas = &cm.Spec.Replicas
 }
 
-func (p *Mysql) setResources(cm *cloudlinuxv1.CloudManaged) {
+func (p *Mysql) setResources(cm *kuberlogicv1.KuberLogicService) {
 	p.Operator.Spec.PodSpec.Resources = cm.Spec.Resources
 }
 
-func (p *Mysql) setVolumeSize(cm *cloudlinuxv1.CloudManaged) {
+func (p *Mysql) setVolumeSize(cm *kuberlogicv1.KuberLogicService) {
 	resources := corev1.ResourceRequirements{
 		Requests: corev1.ResourceList{
 			corev1.ResourceStorage: resource.MustParse(cm.Spec.VolumeSize),
@@ -141,7 +141,7 @@ func (p *Mysql) setVolumeSize(cm *cloudlinuxv1.CloudManaged) {
 	}
 }
 
-func (p *Mysql) setImage(cm *cloudlinuxv1.CloudManaged) {
+func (p *Mysql) setImage(cm *kuberlogicv1.KuberLogicService) {
 	p.Operator.Spec.Image = util.GetImage(image, cm.Spec.Version)
 
 	secrets := []corev1.LocalObjectReference{
@@ -150,7 +150,7 @@ func (p *Mysql) setImage(cm *cloudlinuxv1.CloudManaged) {
 	p.Operator.Spec.PodSpec.ImagePullSecrets = secrets
 }
 
-func (p *Mysql) setAdvancedConf(cm *cloudlinuxv1.CloudManaged) {
+func (p *Mysql) setAdvancedConf(cm *kuberlogicv1.KuberLogicService) {
 	desiredMysqlConf := util.StrToIntOrStr(cm.Spec.AdvancedConf)
 
 	if p.Operator.Spec.MysqlConf == nil {
@@ -162,7 +162,7 @@ func (p *Mysql) setAdvancedConf(cm *cloudlinuxv1.CloudManaged) {
 	}
 }
 
-func (p *Mysql) IsEqual(cm *cloudlinuxv1.CloudManaged) bool {
+func (p *Mysql) IsEqual(cm *kuberlogicv1.KuberLogicService) bool {
 	return p.isEqualReplica(cm) &&
 		p.isEqualResources(cm) &&
 		p.isEqualVolumeSize(cm) &&
@@ -170,11 +170,11 @@ func (p *Mysql) IsEqual(cm *cloudlinuxv1.CloudManaged) bool {
 		p.isEqualAdvancedConf(cm)
 }
 
-func (p *Mysql) isEqualReplica(cm *cloudlinuxv1.CloudManaged) bool {
+func (p *Mysql) isEqualReplica(cm *kuberlogicv1.KuberLogicService) bool {
 	return *p.Operator.Spec.Replicas == cm.Spec.Replicas
 }
 
-func (p *Mysql) isEqualResources(cm *cloudlinuxv1.CloudManaged) bool {
+func (p *Mysql) isEqualResources(cm *kuberlogicv1.KuberLogicService) bool {
 	op := p.Operator.Spec.PodSpec.Resources
 	cmr := cm.Spec.Resources
 	return op.Limits.Cpu().Cmp(*cmr.Limits.Cpu()) == 0 &&
@@ -183,7 +183,7 @@ func (p *Mysql) isEqualResources(cm *cloudlinuxv1.CloudManaged) bool {
 		op.Requests.Memory().Cmp(*cmr.Requests.Memory()) == 0
 }
 
-func (p *Mysql) isEqualVolumeSize(cm *cloudlinuxv1.CloudManaged) bool {
+func (p *Mysql) isEqualVolumeSize(cm *kuberlogicv1.KuberLogicService) bool {
 	if &p.Operator.Spec.VolumeSpec.PersistentVolumeClaim.Resources == nil {
 		return false
 	}
@@ -192,11 +192,11 @@ func (p *Mysql) isEqualVolumeSize(cm *cloudlinuxv1.CloudManaged) bool {
 	) == 0
 }
 
-func (p *Mysql) isEqualImage(cm *cloudlinuxv1.CloudManaged) bool {
+func (p *Mysql) isEqualImage(cm *kuberlogicv1.KuberLogicService) bool {
 	return p.Operator.Spec.Image == util.GetImage(image, cm.Spec.Version)
 }
 
-func (p *Mysql) isEqualAdvancedConf(cm *cloudlinuxv1.CloudManaged) bool {
+func (p *Mysql) isEqualAdvancedConf(cm *kuberlogicv1.KuberLogicService) bool {
 	desiredMysqlConf := util.StrToIntOrStr(cm.Spec.AdvancedConf)
 	for k, v := range desiredMysqlConf {
 		if val, ok := p.Operator.Spec.MysqlConf[k]; !ok {
@@ -218,11 +218,11 @@ func (p *Mysql) CurrentStatus() string {
 
 	switch status {
 	case "False":
-		return cloudlinuxv1.ClusterNotReadyStatus
+		return kuberlogicv1.ClusterNotReadyStatus
 	case "True":
-		return cloudlinuxv1.ClusterOkStatus
+		return kuberlogicv1.ClusterOkStatus
 	default:
-		return cloudlinuxv1.ClusterUnknownStatus
+		return kuberlogicv1.ClusterUnknownStatus
 	}
 }
 
@@ -262,7 +262,7 @@ func (p *Mysql) GetDefaultConnectionPassword() (secret, passwordField string) {
 
 func (p *Mysql) GetCredentialsSecret() (*corev1.Secret, error) {
 	rootPassword := util2.RandomString(15)
-	userName := "cloudmanaged"
+	userName := kuberlogicv1.DefaultUser
 	userPassword := util2.RandomString(15)
 
 	return &corev1.Secret{

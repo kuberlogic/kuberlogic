@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"
@@ -10,7 +10,7 @@ import (
 	"log"
 )
 
-var cloudmanagedAlertCR = "cloudmanagedalerts"
+var kuberLogicAlertCR = "kuberlogicalerts"
 var kubeRestClient *rest.RESTClient
 
 func initKubernetesClient() {
@@ -19,13 +19,13 @@ func initKubernetesClient() {
 		log.Fatalf("Error initializing Kubernetes client: %s", err)
 	}
 
-	err = cloudlinuxv1.AddToScheme(k8scheme.Scheme)
+	err = kuberlogicv1.AddToScheme(k8scheme.Scheme)
 	if err != nil {
 		log.Fatalf("Error adding clientset types to schema! %s", err)
 	}
 
 	crdConfig := *config
-	crdConfig.ContentConfig.GroupVersion = &cloudlinuxv1.GroupVersion
+	crdConfig.ContentConfig.GroupVersion = &kuberlogicv1.GroupVersion
 	crdConfig.APIPath = "/apis"
 	crdConfig.NegotiatedSerializer = serializer.NewCodecFactory(k8scheme.Scheme)
 	crdConfig.UserAgent = rest.DefaultKubernetesUserAgent()
@@ -37,12 +37,12 @@ func initKubernetesClient() {
 }
 
 func createAlertCR(name, namespace, alertName, alertValue, cluster, pod string) error {
-	cloudmanagedAlert := cloudlinuxv1.CloudManagedAlert{
+	klAlert := kuberlogicv1.KuberLogicAlert{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: cloudlinuxv1.CloudManagedAlertSpec{
+		Spec: kuberlogicv1.KuberLogicAlertSpec{
 			AlertName:  alertName,
 			AlertValue: alertValue,
 			Cluster:    cluster,
@@ -52,8 +52,8 @@ func createAlertCR(name, namespace, alertName, alertValue, cluster, pod string) 
 
 	res := kubeRestClient.Post().
 		Namespace(namespace).
-		Resource(cloudmanagedAlertCR).
-		Body(&cloudmanagedAlert).
+		Resource(kuberLogicAlertCR).
+		Body(&klAlert).
 		Do(context.TODO())
 	return res.Error()
 }
@@ -62,7 +62,7 @@ func deleteAlertCR(name, namespace string) error {
 	res := kubeRestClient.Delete().
 		Name(name).
 		Namespace(namespace).
-		Resource(cloudmanagedAlertCR).
+		Resource(kuberLogicAlertCR).
 		Do(context.TODO())
 	return res.Error()
 }

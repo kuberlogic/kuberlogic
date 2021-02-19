@@ -2,7 +2,7 @@ package operator
 
 import (
 	"github.com/pkg/errors"
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/mysql"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/postgresql"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/redis"
@@ -14,15 +14,15 @@ import (
 )
 
 type Operator interface {
-	Name(cm *cloudlinuxv1.CloudManaged) string
-	Init(cm *cloudlinuxv1.CloudManaged)
+	Name(cm *kuberlogicv1.KuberLogicService) string
+	Init(cm *kuberlogicv1.KuberLogicService)
 	InitFrom(o runtime.Object)
-	Update(cm *cloudlinuxv1.CloudManaged)
+	Update(cm *kuberlogicv1.KuberLogicService)
 	AsRuntimeObject() runtime.Object
 	AsMetaObject() metav1.Object
-	IsEqual(cm *cloudlinuxv1.CloudManaged) bool
+	IsEqual(cm *kuberlogicv1.KuberLogicService) bool
 	CurrentStatus() string
-	GetDefaults() cloudlinuxv1.Defaults
+	GetDefaults() kuberlogicv1.Defaults
 
 	GetCredentialsSecret() (*v1.Secret, error)
 
@@ -38,27 +38,27 @@ type Operator interface {
 }
 
 type Backup interface {
-	New(backup *cloudlinuxv1.CloudManagedBackup) v1beta1.CronJob
-	Init(*cloudlinuxv1.CloudManagedBackup)
+	New(backup *kuberlogicv1.KuberLogicBackupSchedule) v1beta1.CronJob
+	Init(*kuberlogicv1.KuberLogicBackupSchedule)
 	InitFrom(*v1beta1.CronJob)
-	IsEqual(cm *cloudlinuxv1.CloudManagedBackup) bool
-	Update(cm *cloudlinuxv1.CloudManagedBackup)
+	IsEqual(cm *kuberlogicv1.KuberLogicBackupSchedule) bool
+	Update(cm *kuberlogicv1.KuberLogicBackupSchedule)
 	GetCronJob() *v1beta1.CronJob
 	CurrentStatus(ev batchv1.JobList) string
 
 	SetBackupImage()
-	SetBackupEnv(cm *cloudlinuxv1.CloudManagedBackup)
+	SetBackupEnv(cm *kuberlogicv1.KuberLogicBackupSchedule)
 }
 
 type Restore interface {
-	New(backup *cloudlinuxv1.CloudManagedRestore) batchv1.Job
-	Init(*cloudlinuxv1.CloudManagedRestore)
+	New(backup *kuberlogicv1.KuberLogicBackupRestore) batchv1.Job
+	Init(*kuberlogicv1.KuberLogicBackupRestore)
 	InitFrom(*batchv1.Job)
 	GetJob() *batchv1.Job
 	CurrentStatus() string
 
 	SetRestoreImage()
-	SetRestoreEnv(cm *cloudlinuxv1.CloudManagedRestore)
+	SetRestoreEnv(cm *kuberlogicv1.KuberLogicBackupRestore)
 }
 
 func GetOperator(t string) (Operator, error) {

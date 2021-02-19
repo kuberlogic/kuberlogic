@@ -7,7 +7,7 @@ import (
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	redisv1 "github.com/spotahome/redis-operator/api/redisfailover/v1"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator"
 	"gitlab.com/cloudmanaged/operator/monitoring"
 	corev1 "k8s.io/api/core/v1"
@@ -19,19 +19,19 @@ import (
 	"sync"
 )
 
-// CloudManagedReconciler reconciles a CloudManaged object
-type CloudManagedReconciler struct {
+// KuberLogicServiceReconciler reconciles a KuberLogicServices object
+type KuberLogicServiceReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 	mu     sync.Mutex
 }
 
-// +kubebuilder:rbac:groups=cloudlinux.com,resources=cloudmanageds,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cloudlinux.com,resources=cloudmanageds/status,verbs=get;update;patch
-func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+// +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicservices,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicservices/status,verbs=get;update;patch
+func (r *KuberLogicServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	log := r.Log.WithValues("cloudmanaged", req.NamespacedName)
+	log := r.Log.WithValues("kuberlogicservices", req.NamespacedName)
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -39,36 +39,36 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	// metrics key
 	monitoringKey := fmt.Sprintf("%s/%s", req.Name, req.Namespace)
 
-	// Fetch the Cloudmanaged instance
-	cloudmanaged := &cloudlinuxv1.CloudManaged{}
-	err := r.Get(ctx, req.NamespacedName, cloudmanaged)
+	// Fetch the KuberLogicServices instance
+	kls := &kuberlogicv1.KuberLogicService{}
+	err := r.Get(ctx, req.NamespacedName, kls)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
 			log.Info(req.Namespace, req.Name, " has been deleted")
-			delete(monitoring.CloudManageds, monitoringKey)
+			delete(monitoring.KuberLogicServices, monitoringKey)
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		log.Error(err, "Failed to get Cloudmanaged")
+		log.Error(err, "Failed to get KuberLogicService")
 		return ctrl.Result{}, err
 	}
 
-	op, err := operator.GetOperator(cloudmanaged.Spec.Type)
+	op, err := operator.GetOperator(kls.Spec.Type)
 	if err != nil {
 		log.Error(err, "Could not define the base operator")
 		return ctrl.Result{}, err
 	}
 
-	if cloudmanaged.InitDefaults(op.GetDefaults()) {
-		err = r.Update(ctx, cloudmanaged)
+	if kls.InitDefaults(op.GetDefaults()) {
+		err = r.Update(ctx, kls)
 		if err != nil {
-			log.Error(err, "Failed to update cloudmanaged object")
+			log.Error(err, "Failed to update KuberLogicService")
 			return ctrl.Result{}, err
 		} else {
-			log.Info("Cloudmanaged defaults is updated")
+			log.Info("KuberLogicService defaults is updated")
 		}
 	}
 
@@ -76,77 +76,77 @@ func (r *CloudManagedReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	err = r.Get(
 		ctx,
 		types.NamespacedName{
-			Name:      op.Name(cloudmanaged),
-			Namespace: cloudmanaged.Namespace,
+			Name:      op.Name(kls),
+			Namespace: kls.Namespace,
 		},
 		found,
 	)
 
 	if err != nil && k8serrors.IsNotFound(err) {
 		// Define a new cluster
-		dep, err := r.defineCluster(op, cloudmanaged)
+		dep, err := r.defineCluster(op, kls)
 		if err != nil {
-			log.Error(err, "Could not generate definition struct", "Operator", cloudmanaged.Spec.Type)
+			log.Error(err, "Could not generate definition struct", "Operator", kls.Spec.Type)
 			return ctrl.Result{}, err
 		}
 
-		log.Info("Creating a new Cluster", "Operator", cloudmanaged.Spec.Type)
+		log.Info("Creating a new Cluster", "Operator", kls.Spec.Type)
 		err = r.Create(ctx, dep)
 		if err != nil && k8serrors.IsAlreadyExists(err) {
-			log.Info("Cluster already exists", "Operator", cloudmanaged.Spec.Type)
+			log.Info("Cluster already exists", "Operator", kls.Spec.Type)
 		} else if err != nil {
-			log.Error(err, "Failed to create new Cluster", "Operator", cloudmanaged.Spec.Type)
+			log.Error(err, "Failed to create new Cluster", "Operator", kls.Spec.Type)
 			return ctrl.Result{}, err
 		} else {
 			// cluster created successfully - return and requeue
 			return ctrl.Result{Requeue: true}, nil
 		}
 	} else if err != nil {
-		log.Error(err, "Failed to get object", "Operator", cloudmanaged.Spec.Type)
+		log.Error(err, "Failed to get object", "Operator", kls.Spec.Type)
 		return ctrl.Result{}, err
 	}
 
 	op.InitFrom(found)
 
 	log.Info("ensure that we have dependencies set up")
-	if err := r.ensureClusterDependencies(op, cloudmanaged, ctx); err != nil {
-		log.Error(err, "failed to ensure dependencies", "Operator", cloudmanaged.Spec.Type)
+	if err := r.ensureClusterDependencies(op, kls, ctx); err != nil {
+		log.Error(err, "failed to ensure dependencies", "Operator", kls.Spec.Type)
 		return ctrl.Result{}, err
 	}
 
-	if !op.IsEqual(cloudmanaged) {
-		op.Update(cloudmanaged)
+	if !op.IsEqual(kls) {
+		op.Update(kls)
 
 		err = r.Update(ctx, op.AsRuntimeObject())
 		if err != nil {
-			log.Error(err, "Failed to update object", "Operator", cloudmanaged.Spec.Type)
+			log.Error(err, "Failed to update object", "Operator", kls.Spec.Type)
 			return ctrl.Result{}, err
 		} else {
-			log.Info("Cluster is updated", "Operator", cloudmanaged.Spec.Type)
+			log.Info("Cluster is updated", "Operator", kls.Spec.Type)
 			return ctrl.Result{}, nil
 		}
 	}
-	log.Info("No difference", "Operator", cloudmanaged.Spec.Type)
+	log.Info("No difference", "Operator", kls.Spec.Type)
 
 	status := op.CurrentStatus()
-	if !cloudmanaged.IsEqual(status) {
-		cloudmanaged.SetStatus(status)
-		err = r.Update(ctx, cloudmanaged)
-		//err = r.Status().Update(ctx, cloudmanaged) # FIXME: Figure out why it's failed
+	if !kls.IsEqual(status) {
+		kls.SetStatus(status)
+		err = r.Update(ctx, kls)
+		//err = r.Status().Update(ctx, kls) # FIXME: Figure out why it's failed
 		if err != nil {
-			log.Error(err, "Failed to update cloudmanaged object")
+			log.Error(err, "Failed to update kls object")
 			return ctrl.Result{}, err
 		} else {
-			log.Info("Cloudmanaged status is updated", "Status", cloudmanaged.GetStatus())
+			log.Info("KuberLogicService status is updated", "Status", kls.GetStatus())
 		}
 	}
 
-	monitoring.CloudManageds[monitoringKey] = cloudmanaged
+	monitoring.KuberLogicServices[monitoringKey] = kls
 
 	return ctrl.Result{}, nil
 }
 
-func (r *CloudManagedReconciler) ensureClusterDependencies(op operator.Operator, cm *cloudlinuxv1.CloudManaged, ctx context.Context) error {
+func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op operator.Operator, cm *kuberlogicv1.KuberLogicService, ctx context.Context) error {
 	credSecret, err := op.GetCredentialsSecret()
 	if err != nil {
 		return err
@@ -162,12 +162,12 @@ func (r *CloudManagedReconciler) ensureClusterDependencies(op operator.Operator,
 	return nil
 }
 
-func (r *CloudManagedReconciler) defineCluster(op operator.Operator, cm *cloudlinuxv1.CloudManaged) (runtime.Object, error) {
+func (r *KuberLogicServiceReconciler) defineCluster(op operator.Operator, cm *kuberlogicv1.KuberLogicService) (runtime.Object, error) {
 	op.Init(cm)
 	op.Update(cm)
 
-	// Set cloudmanage instance as the owner and controller
-	// if cloudmanage will remove -> dep also should be removed automatically
+	// Set KuberLogicService instance as the owner and controller
+	// if KuberLogicService will remove -> dep also should be removed automatically
 	err := ctrl.SetControllerReference(cm, op.AsMetaObject(), r.Scheme)
 	if err != nil {
 		return nil, err
@@ -176,9 +176,9 @@ func (r *CloudManagedReconciler) defineCluster(op operator.Operator, cm *cloudli
 	return op.AsRuntimeObject(), nil
 }
 
-func (r *CloudManagedReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&cloudlinuxv1.CloudManaged{}).
+		For(&kuberlogicv1.KuberLogicService{}).
 		Owns(&mysqlv1.MysqlCluster{}).
 		Owns(&redisv1.RedisFailover{}).
 		Owns(&postgresv1.Postgresql{}).

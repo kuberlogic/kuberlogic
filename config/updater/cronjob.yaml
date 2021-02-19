@@ -8,11 +8,11 @@ spec:
     spec:
       template:
         metadata:
-          name: cloudmanaged-updater
+          name: kuberlogic-updater
           labels:
-            app: cloudmanaged-updater
+            app: kuberlogic-updater
         spec:
-          serviceAccountName: cloudmanaged-updater
+          serviceAccountName: kuberlogic-updater
           containers:
             - name: updater
               image: cloudmanaged-updater:latest

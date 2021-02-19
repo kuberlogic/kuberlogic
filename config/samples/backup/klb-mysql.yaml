@@ -1,7 +1,7 @@
-apiVersion: cloudlinux.com/v1
-kind: CloudManagedBackup
+apiVersion: kuberlogic.com/v1
+kind: KuberLogicBackupSchedule
 metadata:
-  name: cloudmanaged-backup-mysql-baz
+  name: klb-mysql
 spec:
   type: s3
   name: cloudmanaged-my

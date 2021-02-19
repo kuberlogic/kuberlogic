@@ -3,7 +3,7 @@
 # Current Operator version
 VERSION ?= 0.0.18
 # Default bundle image tag
-BUNDLE_IMG ?= controller-bundle:$(VERSION)
+BUNDLE_IMG ?= kuberlogic-operator:$(VERSION)
 # Options for 'bundle-build'
 ifneq ($(origin CHANNELS), undefined)
 BUNDLE_CHANNELS := --channels=$(CHANNELS)
@@ -15,7 +15,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # private repo for images
 IMG_REPO = gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged
-# default secrets with credetials to private repo (using for mysql/redis)
+# default secrets with credentials to private repo (using for mysql/redis)
 # for postgresql is using service account
 IMG_PULL_SECRET = gitlab-registry
 
@@ -60,9 +60,9 @@ install: manifests kustomize
 uninstall: manifests kustomize
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
-# Deploy controller in the configured Kubernetes cluster in ~/.kube/config
+# Deploy kuberlogic-operator in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests kustomize
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image kuberlogic-operator=${IMG}
 	cd config/updater && $(KUSTOMIZE) edit set image cloudmanaged-updater=$(UPDATER_IMG)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
@@ -165,7 +165,7 @@ endif
 .PHONY: bundle
 bundle: manifests
 	operator-sdk generate kustomize manifests -q
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	cd config/manager && $(KUSTOMIZE) edit set image kuberlogic-operator=$(IMG)
 	cd config/updater && $(KUSTOMIZE) edit set image cloudmanaged-updater=$(UPDATER_IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle

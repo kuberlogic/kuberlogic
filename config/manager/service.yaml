@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: cloudmanaged
+  name: kuberlogic-apiserver
 spec:
   type: NodePort
   selector:
-    control-plane: controller-manager
+    control-plane: kuberlogic-operator
   ports:
     - name: http
       protocol: TCP

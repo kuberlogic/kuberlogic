@@ -1,8 +1,8 @@
 ---
-apiVersion: cloudlinux.com/v1
-kind: CloudManagedAlert
+apiVersion: kuberlogic.com/v1
+kind: KuberLogicAlert
 metadata:
-  name: cm-sample-memory-alert
+  name: kla-sample-memory-alert
 spec:
   alertname: memory-alert
   alertvalue: "0.05"

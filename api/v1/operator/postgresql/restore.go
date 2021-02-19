@@ -2,7 +2,7 @@ package postgresql
 
 import (
 	"fmt"
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/backup"
 	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
 	v12 "k8s.io/api/core/v1"
@@ -22,7 +22,7 @@ func (p *Restore) SetRestoreImage() {
 	p.Image = util.GetImage(restoreImage, restoreTag)
 }
 
-func (p *Restore) SetRestoreEnv(cm *cloudlinuxv1.CloudManagedRestore) {
+func (p *Restore) SetRestoreEnv(cm *kuberlogicv1.KuberLogicBackupRestore) {
 	pgDataSecret := fmt.Sprintf("%s.%s.credentials", postgreSuperUser,
 		p.Cluster.Operator.Name)
 

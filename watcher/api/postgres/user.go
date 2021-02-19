@@ -11,9 +11,9 @@ type User struct {
 }
 
 var protectedUsers = map[string]bool{
-	"postgres":     true,
-	"standby":      true,
-	"cloudmanaged": true,
+	"postgres":   true,
+	"standby":    true,
+	"kuberlogic": true,
 }
 
 func (usr *User) IsProtected(name string) bool {

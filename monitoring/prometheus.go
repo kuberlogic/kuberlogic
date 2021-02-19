@@ -3,7 +3,7 @@ package monitoring
 import (
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	cloudlinuxv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 )
 
 var labels = []string{
@@ -20,59 +20,58 @@ var backupLabels = []string{
 
 var (
 	cmReady = prometheus.NewDesc(
-		"cloudmanaged_ready",
-		"CloudManaged application ready status",
+		"kuberlogic_ready",
+		"KuberLogicServices application ready status",
 		labels,
 		nil)
 	cmReplicas = prometheus.NewDesc(
-		"cloudmanaged_replicas",
-		"CloudManaged application replicas",
+		"kuberlogic_replicas",
+		"KuberLogicServices application replicas",
 		labels,
 		nil)
 	cmMemLimit = prometheus.NewDesc(
-		"cloudmanaged_memory_limit_bytes",
-		"CloudManaged application memory limit",
+		"kuberlogic_memory_limit_bytes",
+		"KuberLogicServices application memory limit",
 		labels,
 		nil)
 	cmCPULimit = prometheus.NewDesc(
-		"cloudmanaged_cpu_limit_milliseconds",
-		"CloudManaged application cpu limit",
+		"kuberlogic_cpu_limit_milliseconds",
+		"KuberLogicServices application cpu limit",
 		labels,
 		nil)
 
 	// Backup
 	cmBackupSuccess = prometheus.NewDesc(
-		"cloudmanagedbackup_success",
-		"CloudManaged backup success",
+		"kuberlogicbackupschedule_success",
+		"KuberLogicServices backup success",
 		backupLabels,
 		nil)
 	cmBackupStatus = prometheus.NewDesc(
-		"cloudmanagedbackup_status",
-		"CloudManaged backup status",
+		"kuberlogicbackupschedule_status",
+		"KuberLogicServices backup status",
 		backupLabels,
 		nil)
 	// Restore
 	cmRestoreSuccess = prometheus.NewDesc(
-		"cloudmanagedrestore_success",
-		"CloudManaged restore success",
+		"kuberlogicbackuprestore_success",
+		"KuberLogicServices restore success",
 		backupLabels,
 		nil)
 	cmRestoreStatus = prometheus.NewDesc(
-		"cloudmanagedrestore_status",
-		"CloudManaged restore status",
+		"kuberlogicbackuprestore_status",
+		"KuberLogicServices backup's restore status",
 		backupLabels,
 		nil)
 )
 
-var CloudManageds = make(map[string]*cloudlinuxv1.CloudManaged)
-var CloudManagedBackups = make(map[string]*cloudlinuxv1.CloudManagedBackup)
-var CloudManagedRestores = make(map[string]*cloudlinuxv1.CloudManagedRestore)
+var KuberLogicServices = make(map[string]*kuberlogicv1.KuberLogicService)
+var KuberLogicBackupSchedules = make(map[string]*kuberlogicv1.KuberLogicBackupSchedule)
+var KuberLogicBackupRestores = make(map[string]*kuberlogicv1.KuberLogicBackupRestore)
 
 // Implements prometheus.Collector
-type CloudManagedCollector struct {
-}
+type KuberLogicCollector struct{}
 
-func (c CloudManagedCollector) Describe(ch chan<- *prometheus.Desc) {
+func (c KuberLogicCollector) Describe(ch chan<- *prometheus.Desc) {
 	descriptors := []*prometheus.Desc{
 		cmReady,
 		cmReplicas,
@@ -88,8 +87,8 @@ func (c CloudManagedCollector) Describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c CloudManagedCollector) Collect(ch chan<- prometheus.Metric) {
-	for _, c := range CloudManageds {
+func (c KuberLogicCollector) Collect(ch chan<- prometheus.Metric) {
+	for _, c := range KuberLogicServices {
 		ch <- prometheus.MustNewConstMetric(
 			cmReady, prometheus.GaugeValue, calcStatus(c),
 			c.Name, c.Namespace, c.Spec.Type)
@@ -103,7 +102,7 @@ func (c CloudManagedCollector) Collect(ch chan<- prometheus.Metric) {
 			cmCPULimit, prometheus.GaugeValue, float64(c.Spec.Resources.Limits.Cpu().MilliValue()),
 			c.Name, c.Namespace, c.Spec.Type)
 	}
-	for _, c := range CloudManagedBackups {
+	for _, c := range KuberLogicBackupSchedules {
 		ch <- prometheus.MustNewConstMetric(
 			cmBackupSuccess, prometheus.GaugeValue, calcStatus(c),
 			c.Name, c.Namespace, c.Spec.ClusterName)
@@ -111,7 +110,7 @@ func (c CloudManagedCollector) Collect(ch chan<- prometheus.Metric) {
 			cmBackupStatus, prometheus.GaugeValue, 1,
 			c.Name, c.Namespace, c.Spec.ClusterName)
 	}
-	for _, c := range CloudManagedRestores {
+	for _, c := range KuberLogicBackupRestores {
 		ch <- prometheus.MustNewConstMetric(
 			cmRestoreSuccess, prometheus.GaugeValue, calcStatus(c),
 			c.Name, c.Namespace, c.Spec.ClusterName)
@@ -123,23 +122,23 @@ func (c CloudManagedCollector) Collect(ch chan<- prometheus.Metric) {
 
 func calcStatus(cmb interface{}) float64 {
 	switch val := cmb.(type) {
-	case *cloudlinuxv1.CloudManagedRestore:
+	case *kuberlogicv1.KuberLogicBackupRestore:
 		switch val.Status.Status {
-		case cloudlinuxv1.BackupSuccessStatus:
+		case kuberlogicv1.BackupSuccessStatus:
 			return 1
 		default:
 			return 0
 		}
-	case *cloudlinuxv1.CloudManagedBackup:
+	case *kuberlogicv1.KuberLogicBackupSchedule:
 		switch val.Status.Status {
-		case cloudlinuxv1.BackupSuccessStatus:
+		case kuberlogicv1.BackupSuccessStatus:
 			return 1
 		default:
 			return 0
 		}
-	case *cloudlinuxv1.CloudManaged:
+	case *kuberlogicv1.KuberLogicService:
 		switch val.Status.Status {
-		case cloudlinuxv1.ClusterOkStatus:
+		case kuberlogicv1.ClusterOkStatus:
 			return 1
 		default:
 			return 0

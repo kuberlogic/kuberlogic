@@ -2,12 +2,12 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: cloudmanaged-editor-role
+  name: kuberlogic-editor-role
 rules:
 - apiGroups:
-  - cloudlinux.com
+  - kuberlogic.com
   resources:
-  - cloudmanageds
+  - kuberlogics
   verbs:
   - create
   - delete
@@ -17,8 +17,8 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cloudlinux.com
+  - kuberlogic.com
   resources:
-  - cloudmanageds/status
+  - kuberlogics/status
   verbs:
   - get
