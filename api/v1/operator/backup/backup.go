@@ -1,8 +1,8 @@
 package backup
 
 import (
-	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
-	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
+	kuberlogicv1 "github.com/kuberlogic/operator/api/v1"
+	"github.com/kuberlogic/operator/api/v1/operator/util"
 	v1 "k8s.io/api/batch/v1"
 	"k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"

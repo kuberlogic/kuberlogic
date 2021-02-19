@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"flag"
-	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
-	"gitlab.com/cloudmanaged/operator/watcher/api"
-	"gitlab.com/cloudmanaged/operator/watcher/api/common"
-	"gitlab.com/cloudmanaged/operator/watcher/k8s"
+	kuberlogicv1 "github.com/kuberlogic/operator/api/v1"
+	"github.com/kuberlogic/operator/watcher/api"
+	"github.com/kuberlogic/operator/watcher/api/common"
+	"github.com/kuberlogic/operator/watcher/k8s"
 	"log"
 	"time"
 )

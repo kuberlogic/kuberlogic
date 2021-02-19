@@ -1,7 +1,7 @@
 package kuberlogic
 
 import (
-	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "github.com/kuberlogic/operator/api/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"

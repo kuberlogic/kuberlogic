@@ -1,8 +1,8 @@
 package kuberlogic
 
 import (
-	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
-	"gitlab.com/cloudmanaged/operator/api/v1/operator"
+	kuberlogicv1 "github.com/kuberlogic/operator/api/v1"
+	"github.com/kuberlogic/operator/api/v1/operator"
 )
 
 func GetClusterName(cm *kuberlogicv1.KuberLogicService) (name string, err error) {

@@ -2,8 +2,8 @@ package monitoring
 
 import (
 	"fmt"
+	kuberlogicv1 "github.com/kuberlogic/operator/api/v1"
 	"github.com/prometheus/client_golang/prometheus"
-	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
 )
 
 var labels = []string{

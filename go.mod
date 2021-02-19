@@ -1,4 +1,4 @@
-module gitlab.com/cloudmanaged/operator
+module github.com/kuberlogic/operator
 
 go 1.13
 
