@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/coreos/go-semver/semver"
-	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "github.com/kuberlogic/operator/api/v1"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/json"

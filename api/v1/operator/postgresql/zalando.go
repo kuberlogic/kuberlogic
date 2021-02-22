@@ -2,9 +2,9 @@ package postgresql
 
 import (
 	"fmt"
+	kuberlogicv1 "github.com/kuberlogic/operator/api/v1"
+	"github.com/kuberlogic/operator/api/v1/operator/util"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
-	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
-	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"

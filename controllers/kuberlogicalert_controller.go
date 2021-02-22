@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
-	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
+	kuberlogicv1 "github.com/kuberlogic/operator/api/v1"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"

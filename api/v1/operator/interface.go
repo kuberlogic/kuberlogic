@@ -1,11 +1,11 @@
 package operator
 
 import (
+	kuberlogicv1 "github.com/kuberlogic/operator/api/v1"
+	"github.com/kuberlogic/operator/api/v1/operator/mysql"
+	"github.com/kuberlogic/operator/api/v1/operator/postgresql"
+	"github.com/kuberlogic/operator/api/v1/operator/redis"
 	"github.com/pkg/errors"
-	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
-	"gitlab.com/cloudmanaged/operator/api/v1/operator/mysql"
-	"gitlab.com/cloudmanaged/operator/api/v1/operator/postgresql"
-	"gitlab.com/cloudmanaged/operator/api/v1/operator/redis"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/batch/v1beta1"
 	v1 "k8s.io/api/core/v1"

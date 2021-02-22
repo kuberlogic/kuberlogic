@@ -1,9 +1,9 @@
-module gitlab.com/cloudmanaged/operator/alert-receiver
+module github.com/kuberlogic/operator/alert-receiver
 
 go 1.13
 
 require (
-	gitlab.com/cloudmanaged/operator v0.0.19-0.20210218130521-d455734b94b6
+	github.com/kuberlogic/operator v0.0.19-0.20210219103633-842d7ac86fe2 // indirect
 	k8s.io/apimachinery v0.18.8
 	k8s.io/client-go v11.0.0+incompatible
 )

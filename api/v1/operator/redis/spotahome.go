@@ -1,9 +1,9 @@
 package redis
 
 import (
+	kuberlogicv1 "github.com/kuberlogic/operator/api/v1"
+	"github.com/kuberlogic/operator/api/v1/operator/util"
 	redisv1 "github.com/spotahome/redis-operator/api/redisfailover/v1"
-	kuberlogicv1 "gitlab.com/cloudmanaged/operator/api/v1"
-	"gitlab.com/cloudmanaged/operator/api/v1/operator/util"
 	"k8s.io/api/batch/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"

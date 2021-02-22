@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gitlab.com/cloudmanaged/operator/cmd"
+	"github.com/kuberlogic/operator/cmd"
 	"os"
 )
 
