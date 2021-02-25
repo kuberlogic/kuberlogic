@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	backupImage = "cloudmanaged-backup-postgresql"
+	backupImage = "backup-postgresql"
 	backupTag   = "latest"
 
 	operatorConfigMap = "cm-postgres-operator"

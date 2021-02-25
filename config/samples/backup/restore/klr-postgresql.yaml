@@ -4,11 +4,11 @@ metadata:
   name: klr-postgresql
 spec:
   type: s3
-  name: cloudmanaged-pg
+  name: kuberlogic-pg
   secret: do-s3
   # full
-  # https://cloudmanaged.fra1.digitaloceanspaces.com/postgresql/cloudmanaged-pg/logical_backups/1605860851.sql.gz
+  # https://kuberlogic.fra1.digitaloceanspaces.com/postgresql/cloudmanaged-pg/logical_backups/1605860851.sql.gz
   # specific db
-  # https://cloudmanaged.fra1.digitaloceanspaces.com/postgresql/cloudmanaged-pg/logical_backups/bar-1605860741.sql.gz
-  backup: s3://cloudmanaged/postgresql/cloudmanaged-pg/logical_backups/bar-1605860741.sql.gz
+  # https://kuberlogic.fra1.digitaloceanspaces.com/postgresql/cloudmanaged-pg/logical_backups/bar-1605860741.sql.gz
+  backup: s3://kuberlogic/postgresql/kuberlogic-pg/logical_backups/bar-1605860741.sql.gz
   database: "bar"

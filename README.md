@@ -3,7 +3,7 @@
 ### Deploy operators 
 
 This step is responsible for deploy operators:
-- cloudmanaged
+- kuberlogic
 - postgresql by [Zalando](https://github.com/zalando/postgres-operator)
 - mysql by [Presslabs](https://github.com/presslabs/mysql-operator)
 - redis by [spotathome.com](https://github.com/spotahome/redis-operator)
@@ -36,19 +36,19 @@ This step is responsible for deploy operators:
 ### Create PostgreSQL cluster
 
 ```
-kubectl create cloudmanaged/src/cm-operator/config/samle/cm-postgresql.yaml
+kubectl create kuberlogic/src/cm-operator/config/samle/cm-postgresql.yaml
 ```
 
 ### Create MySQL cluster
 
 ```
 kubectl apply -f https://raw.githubusercontent.com/presslabs/mysql-operator/master/examples/example-cluster-secret.yaml
-kubectl create cloudmanaged/src/cm-operator/config/samle/cm-mysql.yaml
+kubectl create kuberlogic/src/cm-operator/config/samle/cm-mysql.yaml
 ```
 
 ### Create Redis cluster
 
 ```
-kubectl create cloudmanaged/src/cm-operator/config/samle/cm-redis.yaml
+kubectl create kuberlogic/src/cm-operator/config/samle/cm-redis.yaml
 ```
 

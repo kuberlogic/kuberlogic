@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	restoreImage = "cloudmanaged-restore-postgresql"
+	restoreImage = "backup-restore-postgresql"
 	restoreTag   = "latest"
 )
 
