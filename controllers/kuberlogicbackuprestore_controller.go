@@ -147,8 +147,8 @@ func (r *KuberLogicBackupRestoreReconciler) defineJob(op operator.Restore, cr *k
 
 	op.Init(cr)
 
-	// Set cloudmanage restore instance as the owner and controller
-	// if cloudmanage restore will remove -> dep also should be removed automatically
+	// Set kuberlogic restore instance as the owner and controller
+	// if kuberlogic restore will remove -> dep also should be removed automatically
 	err := ctrl.SetControllerReference(cr, op.GetJob(), r.Scheme)
 	if err != nil {
 		return nil, err
