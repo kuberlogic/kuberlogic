@@ -59,7 +59,7 @@ func (p *Mysql) Init(cm *kuberlogicv1.KuberLogicService) {
 				Containers: []corev1.Container{
 					{
 						Name:  "kuberlogic-exporter",
-						Image: "gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/exporter:v2",
+						Image: "quay.io/kuberlogic/mysql-exporter-deprecated:v2",
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      "data",

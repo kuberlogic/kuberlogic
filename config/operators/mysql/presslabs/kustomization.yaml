@@ -2,7 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
   - name: mysql-operator
-    newName: gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/mysql-operator
+    newName: quay.io/kuberlogic/mysql-operator
     newTag: latest
 patchesStrategicMerge:
   - patches/regcred.yaml

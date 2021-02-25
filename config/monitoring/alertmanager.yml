@@ -43,13 +43,13 @@ spec:
           ports:
             - containerPort: 9093
         - name: kuberlogic-alerting
-          image: gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/cloudmanaged-alerting:latest
+          image: quay.io/kuberlogic/alert-receiver:0.0.18
       volumes:
         - name: alertmanager-config
           configMap:
             name: alertmanager-config
       imagePullSecrets:
-      - name: gitlab-registry
+      - name: kuberlogic-registry
 ---
 kind: Service
 apiVersion: v1
