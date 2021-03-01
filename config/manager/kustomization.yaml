@@ -2,13 +2,13 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/cloudmanaged-operator
+  newName: quay.io/kuberlogic/operator
   newTag: 0.0.18
 - name: apiserver
-  newName: gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/apiserver
+  newName: quay.io/kuberlogic/apiserver
   newTag: 0.0.18
 patchesStrategicMerge:
 - regcred.yaml
 resources:
-- manager.yaml
+- operator.yaml
 - service.yaml

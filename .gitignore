@@ -24,4 +24,4 @@ bin
 *~
 
 vendor/
-.gitlab.key
+.github.key

@@ -1,2 +1,2 @@
-[url "git@gitlab.corp.cloudlinux.com:"]
-	insteadOf = https://gitlab.com/
+[url "git@github.com:"]
+	insteadOf = https://github.com/

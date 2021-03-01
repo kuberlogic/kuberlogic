@@ -4,7 +4,7 @@ metadata:
   name: klb-mysql
 spec:
   type: s3
-  name: cloudmanaged-my
+  name: kuberlogic-my
   secret: do-s3
   schedule: "* 1 * * *"
   database: baz

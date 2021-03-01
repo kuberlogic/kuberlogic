@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	restoreImage = "cloudmanaged-restore-mysql"
+	restoreImage = "backup-restore-mysql"
 	restoreTag   = "latest"
 )
 

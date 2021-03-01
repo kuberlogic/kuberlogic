@@ -9,14 +9,14 @@ spec:
   template:
     spec:
       imagePullSecrets:
-        - name: gitlab-registry
+        - name: kuberlogic-registry
       containers:
         - name: manager
           env:
             - name: IMG_REPO
-              value: gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged/
+              value: quay.io/kuberlogic
             - name: IMG_PULL_SECRET
-              value: gitlab-registry
+              value: kuberlogic-registry
         - name: apiserver
           env:
             - name: KUBERLOGIC_AUTH_PROVIDER

@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	backupImage = "cloudmanaged-backup-mysql"
+	backupImage = "backup-mysql"
 	backupTag   = "latest"
 )
 

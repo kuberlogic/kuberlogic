@@ -1,5 +1,5 @@
 apiVersion: kuberlogic.com/v1
-kind: KuberLogic
+kind: KuberLogicService
 metadata:
   name: kl-my
 spec:

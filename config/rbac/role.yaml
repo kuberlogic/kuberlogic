@@ -5,11 +5,22 @@ metadata:
   name: manager-role
 rules:
   - apiGroups:
-      - cloudlinux.com
+      - kuberlogic.com
     resources:
-      - kuberlogics
+      - kuberlogicservices
       - kuberlogicbackupschedules
       - kuberlogicbackuprestores
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - cloudlinux.com
+    resources:
       - postgresqls
       - mysqlclusters
       - redisfailovers
@@ -24,7 +35,7 @@ rules:
   - apiGroups:
       - kuberlogic.com
     resources:
-      - kuberlogics/status
+      - kuberlogicservices/status
       - kuberlogicbackupschedules/status
       - kuberlogicbackuprestores/status
     verbs:

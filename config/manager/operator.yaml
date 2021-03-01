@@ -31,7 +31,7 @@ spec:
         - /manager
         args:
         - --enable-leader-election
-        image: kuberlogic-operator:latest
+        image: controller:latest
         name: manager
         resources:
           limits:

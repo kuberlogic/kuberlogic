@@ -4,7 +4,7 @@ metadata:
   name: klb-postgresql
 spec:
   type: s3
-  name: cloudmanaged-pg
+  name: kuberlogic-pg
   secret: do-s3
   schedule: "* 1 * * *"
 #  database: "bar"

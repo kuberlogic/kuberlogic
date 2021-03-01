@@ -14,18 +14,24 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # private repo for images
-IMG_REPO = gitlab.corp.cloudlinux.com:5001/cloudmanaged/cloudmanaged
+IMG_REPO = quay.io/kuberlogic
 # default secrets with credentials to private repo (using for mysql/redis)
 # for postgresql is using service account
 IMG_PULL_SECRET = gitlab-registry
 
 # Image URL to use all building/pushing image targets
-OPERATOR_NAME = cloudmanaged-operator
+OPERATOR_NAME = operator
 IMG ?= $(IMG_REPO)/$(OPERATOR_NAME):$(VERSION)
-UPDATER_NAME = cloudmanaged-updater # updater image name
+# updater image name
+UPDATER_NAME = updater
 UPDATER_IMG ?= $(IMG_REPO)/$(UPDATER_NAME):$(VERSION)
-BACKUP_PREFIX = cloudmanaged-backup # backup image prefix
-RESTORE_PREFIX = cloudmanaged-restore # restore from backup image prefix
+ # alert receiver image name
+ALERT_RECEIVER_NAME = alert-receiver
+ALERT_RECEIVER_IMG ?= $(IMG_REPO)/$(ALERT_RECEIVER_NAME):$(VERSION)
+# backup image prefix
+BACKUP_PREFIX = backup
+# restore from backup image prefix
+RESTORE_PREFIX = backup-restore
 
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
@@ -62,8 +68,8 @@ uninstall: manifests kustomize
 
 # Deploy kuberlogic-operator in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests kustomize
-	cd config/manager && $(KUSTOMIZE) edit set image kuberlogic-operator=${IMG}
-	cd config/updater && $(KUSTOMIZE) edit set image cloudmanaged-updater=$(UPDATER_IMG)
+	cd config/manager && $(KUSTOMIZE) edit set image operator=${IMG}
+	cd config/updater && $(KUSTOMIZE) edit set image updater=$(UPDATER_IMG)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 undeploy:
@@ -86,15 +92,17 @@ generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 # Build the operator images
-operator-build: test
-	echo "Building operator images"
+operator-build:
+	echo "Building images"
 	docker build . -t ${IMG}
 	docker build updater/ -t ${UPDATER_IMG}
+	docker build alert-receiver/ -t ${ALERT_RECEIVER_IMG}
 
 # Push operator images
 operator-push:
 	docker push ${IMG}
 	docker push ${UPDATER_IMG}
+	docker push ${ALERT_RECEIVER_IMG}
 
 mark-executable:
 	chmod +x $(shell find backup/ -iname *.sh | xargs)
@@ -165,8 +173,8 @@ endif
 .PHONY: bundle
 bundle: manifests
 	operator-sdk generate kustomize manifests -q
-	cd config/manager && $(KUSTOMIZE) edit set image kuberlogic-operator=$(IMG)
-	cd config/updater && $(KUSTOMIZE) edit set image cloudmanaged-updater=$(UPDATER_IMG)
+	cd config/manager && $(KUSTOMIZE) edit set image operator=$(IMG)
+	cd config/updater && $(KUSTOMIZE) edit set image updater=$(UPDATER_IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 

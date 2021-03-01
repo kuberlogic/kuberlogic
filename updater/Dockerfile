@@ -5,7 +5,7 @@ WORKDIR /workspace
 # create credetials for private repo
 ADD data/ssh-config /root/.ssh/config
 ADD data/git-config /root/.gitconfig
-ADD data/.gitlab.key /root/.ssh/id_rsa
+ADD data/.github.key /root/.ssh/id_rsa
 RUN chmod 600 /root/.ssh/id_rsa
 
 # Copy the Go Modules manifests

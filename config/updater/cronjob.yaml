@@ -15,5 +15,5 @@ spec:
           serviceAccountName: kuberlogic-updater
           containers:
             - name: updater
-              image: cloudmanaged-updater:latest
+              image: updater:latest
           restartPolicy: OnFailure

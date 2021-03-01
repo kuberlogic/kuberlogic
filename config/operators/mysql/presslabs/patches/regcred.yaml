@@ -3,4 +3,4 @@ kind: ServiceAccount
 metadata:
   name: mysql-operator
 imagePullSecrets:
-  - name: gitlab-registry
+  - name: kuberlogic-registry

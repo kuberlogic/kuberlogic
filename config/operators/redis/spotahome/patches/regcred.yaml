@@ -3,4 +3,4 @@ kind: ServiceAccount
 metadata:
   name: redis-operator
 imagePullSecrets:
-  - name: gitlab-registry
+  - name: kuberlogic-registry

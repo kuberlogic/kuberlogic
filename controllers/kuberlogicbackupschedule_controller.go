@@ -167,8 +167,8 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(req ctrl.Request) (ctrl.R
 func (r *KuberLogicBackupScheduleReconciler) cronJob(op operator.Backup, cmb *kuberlogicv1.KuberLogicBackupSchedule) (*v1beta1.CronJob, error) {
 	op.Init(cmb)
 
-	// Set cloudmanage backup instance as the owner and controller
-	// if cloudmanage backup will remove -> dep also should be removed automatically
+	// Set kuberlogic backup instance as the owner and controller
+	// if kuberlogic backup will remove -> dep also should be removed automatically
 	err := ctrl.SetControllerReference(cmb, op.GetCronJob(), r.Scheme)
 	if err != nil {
 		return nil, err

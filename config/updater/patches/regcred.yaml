@@ -3,4 +3,4 @@ kind: ServiceAccount
 metadata:
   name: kuberlogic-updater
 imagePullSecrets:
-  - name: gitlab-registry
+  - name: kuberlogic-registry
