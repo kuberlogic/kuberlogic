@@ -1,10 +1,10 @@
-module github.com/kuberlogic/operator/pkg/updater
+module github.com/kuberlogic/operator/modules/updater
 
 go 1.13
 
 require (
 	github.com/coreos/go-semver v0.3.0
-	github.com/kuberlogic/operator/pkg/operator v0.0.0-20210303102007-2a21c49dc5a8 // indirect
+	github.com/kuberlogic/operator/modules/operator v0.0.0-20210303103706-56d8769c3a5d
 	k8s.io/apimachinery v0.18.8
 	k8s.io/client-go v11.0.0+incompatible
 )

@@ -2,7 +2,7 @@ package k8s
 
 import (
 	"flag"
-	kuberlogicv1 "github.com/kuberlogic/operator/api/v1"
+	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"

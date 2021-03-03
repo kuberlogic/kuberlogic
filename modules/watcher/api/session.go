@@ -1,10 +1,10 @@
 package api
 
 import (
-	kuberlogicv1 "github.com/kuberlogic/operator/pkg/operator/api/v1"
-	"github.com/kuberlogic/operator/pkg/watcher/api/common"
-	"github.com/kuberlogic/operator/pkg/watcher/api/mysql"
-	"github.com/kuberlogic/operator/pkg/watcher/api/postgres"
+	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	"github.com/kuberlogic/operator/modules/watcher/api/common"
+	"github.com/kuberlogic/operator/modules/watcher/api/mysql"
+	"github.com/kuberlogic/operator/modules/watcher/api/postgres"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
 )

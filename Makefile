@@ -94,9 +94,9 @@ generate: controller-gen
 # Build the operator images
 operator-build:
 	echo "Building images"
-	docker build pkg/operator -t $(IMG)
-	docker build pkg/updater -t $(UPDATER_IMG)
-	docker build pkg/alert-receiver -t $(ALERT_RECEIVER_IMG)
+	docker build modules/operator -t $(IMG)
+	docker build modules/updater -t $(UPDATER_IMG)
+	docker build modules/alert-receiver -t $(ALERT_RECEIVER_IMG)
 
 # Push operator images
 operator-push:
@@ -136,6 +136,14 @@ docker-build: operator-build backup-build restore-build
 
 docker-push: operator-push backup-push restore-push
 	#
+
+refresh-go-sum:
+	for module in operator updater alert-receiver watcher; do \
+  		cd ./modules/$${module}; \
+  		go clean -modcache; \
+  		go mod tidy; \
+  		cd -; \
+	done
 
 # find or download controller-gen
 # download controller-gen if necessary
