@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      name: minio
+      labels:
+        app: minio
+    spec:
+      volumes:
+        - name: minio-volume
+          hostPath:
+            path: /mnt/minio/
+      containers:
+        - name: minio
+          image: kuberlogic/minio:latest
+          imagePullPolicy: Never
+          command: ["minio", "server"]
+          args: ["/data"]
+#          env:
+#            - name: MINIO_ROOT_USER
+#              value: minio
+#            - name: MINIO_ROOT_PASSWORD
+#              value: minio
+          volumeMounts:
+            - name: minio-volume
+              mountPath: /data/
+          ports:
+            - name: minio
+              containerPort: 9000
+          resources:
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+spec:
+  selector:
+    app: minio
+  type: NodePort
+  ports:
+    - port: 9000
+      targetPort: 9000
+      nodePort: 32009
+---
