@@ -1,0 +1,126 @@
+package cmd
+
+{{ $name := .Name }}
+{{ $operations := .Operations }}
+import (
+	"github.com/go-chi/chi"
+	"github.com/kuberlogic/apiserver/util/k8s"
+	"os"
+
+    cloudlinuxv1 "github.com/kuberlogic/operator/modules/operatorapi/v1"
+    k8scheme "k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/kuberlogic/apiserver/internal/generated/restapi"
+	"github.com/kuberlogic/apiserver/internal/generated/restapi/operations"
+	{{range $index, $op := .Operations}}
+        {{ $found := false }}
+        {{ range $i, $sop := $operations }}
+            {{ if and (gt $i $index ) (eq $op.Package $sop.Package)}}
+                {{ $found = true }}
+            {{end}}
+        {{end}}
+        {{ if not $found }}
+        api{{ pascalize $op.Package }} "{{$op.GenCommon.TargetImportPath}}/{{ $op.RootPackage }}/operations/{{ $op.Package }}"
+        {{end}}
+    {{end}}
+
+	"github.com/go-openapi/loads"
+
+	"github.com/kuberlogic/apiserver/internal/app"
+    "github.com/kuberlogic/apiserver/internal/cache"
+    "github.com/kuberlogic/apiserver/internal/security"
+	"github.com/kuberlogic/apiserver/internal/config"
+	"github.com/kuberlogic/apiserver/internal/logging"
+	"github.com/kuberlogic/apiserver/internal/net/middleware"
+)
+
+func Main(args []string) {
+    mainLog := logging.WithComponentLogger("main")
+    cfg, err := config.InitConfig("{{ snakize .Name }}", logging.WithComponentLogger("config"))
+    if err != nil {
+        mainLog.Fatalf(err.Error())
+    }
+    logging.DebugLevel(cfg.DebugLogs)
+
+	swaggerSpec, err := loads.Analyzed({{ .APIPackage }}.SwaggerJSON, "")
+	if err != nil {
+		mainLog.Fatalf(err.Error())
+	}
+
+	cache, err := cache.NewCache(logging.WithComponentLogger("cache"))
+	if err != nil {
+		mainLog.Fatalf(err.Error())
+	}
+
+	authProvider, err := security.NewAuthProvider(cfg, cache, logging.WithComponentLogger("auth"))
+    if err != nil {
+    	mainLog.Fatalf(err.Error())
+    }
+
+	k8sconf, err := k8s.GetConfig(cfg)
+	if err != nil {
+		mainLog.Fatalf(err.Error())
+	}
+
+	err = cloudlinuxv1.AddToScheme(k8scheme.Scheme)
+	if err != nil {
+		mainLog.Fatalf(err.Error())
+	}
+
+	crdClient, err := k8s.GetKuberLogicClient(k8sconf)
+	if err != nil {
+		mainLog.Fatalf(err.Error())
+	}
+
+	baseClient, err := k8s.GetBaseClient(k8sconf)
+	if err != nil {
+		mainLog.Fatalf(err.Error())
+	}
+
+    srv := app.New(baseClient, crdClient, authProvider, logging.WithComponentLogger("server"))
+	api := operations.New{{ pascalize .Name }}API(swaggerSpec)
+
+	{{range .Operations}}
+    api.{{ pascalize .Package }}{{ pascalize .Name }}Handler = api{{ pascalize .Package }}.{{ pascalize .Name }}HandlerFunc(srv.{{ pascalize .Name }}Handler)
+    {{- end}}
+   	api.BearerAuth = srv.BearerAuthentication
+   	api.Logger = logging.WithComponentLogger("api").Infof
+    api.ServerShutdown = srv.OnShutdown
+	server := {{ .APIPackage }}.NewServer(api)
+	defer server.Shutdown()
+
+	parser := flags.NewParser(server, flags.Default)
+	parser.ShortDescription = "KuberLogic API"
+	parser.LongDescription = "This is a KuberLogic API"
+	server.ConfigureFlags()
+	for _, optsGroup := range api.CommandLineOptionsGroups {
+		_, err := parser.AddGroup(optsGroup.ShortDescription, optsGroup.LongDescription, optsGroup.Options)
+		if err != nil {
+			mainLog.Fatalf(err.Error())
+		}
+	}
+
+	if _, err := parser.ParseArgs(args); err != nil {
+		code := 1
+		if fe, ok := err.(*flags.Error); ok {
+			if fe.Type == flags.ErrHelp {
+				code = 0
+			}
+		}
+		os.Exit(code)
+	}
+
+    h := api.Serve(nil)
+	r := chi.NewRouter()
+	r.Use(middleware.NewLoggingMiddleware(logging.WithComponentLogger("request-handler")))
+	r.Mount("/", h)
+
+	server.ConfigureAPI()
+	server.SetHandler(r)
+
+	server.Port = cfg.HTTPBindPort
+	server.Host = cfg.BindHost
+    if err := server.Serve(); err != nil {
+        mainLog.Fatalf(err.Error())
+    }
+}

@@ -1,0 +1,63 @@
+layout:
+  application:
+    - name: app
+      source: serverApp
+      target: "./internal/app"
+      file_name: "app.go"
+      skip_exists: true
+
+    - name: configure
+      source: "asset:serverConfigureapi"
+      target: "{{ joinFilePath .Target .ServerPackage }}"
+      file_name: "configure_{{ .Name }}.go"
+      skip_exists: false
+
+    - name: cfgPackage
+      source: serverConfig
+      target: "./internal/config/"
+      file_name: "config.go"
+      skip_exists: false
+
+    - name: main
+      source: serverMain
+      target: "./cmd/"
+      file_name: "main.go"
+      skip_exists: true
+
+    - name: embedded_spec
+      source: asset:swaggerJsonEmbed
+      target: "{{ joinFilePath .Target .ServerPackage }}"
+      file_name: "embedded_spec.go"
+    - name: server
+      source: serverServer
+      target: "{{ joinFilePath .Target .ServerPackage }}"
+      file_name: "server.go"
+    - name: builder
+      source: asset:serverBuilder
+      target: "{{ joinFilePath .Target .ServerPackage .Package }}"
+      file_name: "{{ snakize (pascalize .Name) }}_api.go"
+
+  models:
+    - name: definition
+      source: asset:model
+      target: "{{ joinFilePath .Target .ModelPackage }}"
+      file_name: "{{ (snakize (pascalize .Name)) }}.go"
+  operations:
+    - name: parameters
+      source: asset:serverParameter
+      target: "{{ if gt (len .Tags) 0 }}{{ joinFilePath .Target .ServerPackage .APIPackage .Package  }}{{ else }}{{ joinFilePath .Target .ServerPackage .Package  }}{{ end }}"
+      file_name: "{{ (snakize (pascalize .Name)) }}_parameters.go"
+    - name: responses
+      source: asset:serverResponses
+      target: "{{ if gt (len .Tags) 0 }}{{ joinFilePath .Target .ServerPackage .APIPackage .Package  }}{{ else }}{{ joinFilePath .Target .ServerPackage .Package  }}{{ end }}"
+      file_name: "{{ (snakize (pascalize .Name)) }}_responses.go"
+    - name: handler
+      source: asset:serverOperation
+      target: "{{ if gt (len .Tags) 0 }}{{ joinFilePath .Target .ServerPackage .APIPackage .Package  }}{{ else }}{{ joinFilePath .Target .ServerPackage .Package  }}{{ end }}"
+      file_name: "{{ (snakize (pascalize .Name)) }}.go"
+    - name: handlerFns
+      source: serverHandler
+      target: "./internal/app"
+      file_name: "{{ (snakize (pascalize .Name)) }}.go"
+      skip_exists: true
+  operation_groups:
