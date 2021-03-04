@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.18
+VERSION ?= 0.0.19
 # Default bundle image tag
 BUNDLE_IMG ?= kuberlogic-operator:$(VERSION)
 # Options for 'bundle-build'
@@ -17,7 +17,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 IMG_REPO = quay.io/kuberlogic
 # default secrets with credentials to private repo (using for mysql/redis)
 # for postgresql is using service account
-IMG_PULL_SECRET = gitlab-registry
+IMG_PULL_SECRET = kuberlogic-registry
 
 # Image URL to use all building/pushing image targets
 OPERATOR_NAME = operator
@@ -68,7 +68,7 @@ uninstall: manifests kustomize
 
 # Deploy kuberlogic-operator in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests kustomize
-	cd config/manager && $(KUSTOMIZE) edit set image operator=${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image operator=$(IMG)
 	cd config/updater && $(KUSTOMIZE) edit set image updater=$(UPDATER_IMG)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
@@ -94,15 +94,15 @@ generate: controller-gen
 # Build the operator images
 operator-build:
 	echo "Building images"
-	docker build . -t ${IMG}
-	docker build updater/ -t ${UPDATER_IMG}
-	docker build alert-receiver/ -t ${ALERT_RECEIVER_IMG}
+	docker build modules/operator -t $(IMG)
+	docker build modules/updater -t $(UPDATER_IMG)
+	docker build modules/alert-receiver -t $(ALERT_RECEIVER_IMG)
 
 # Push operator images
 operator-push:
-	docker push ${IMG}
-	docker push ${UPDATER_IMG}
-	docker push ${ALERT_RECEIVER_IMG}
+	docker push $(IMG)
+	docker push $(UPDATER_IMG)
+	docker push $(ALERT_RECEIVER_IMG)
 
 mark-executable:
 	chmod +x $(shell find backup/ -iname *.sh | xargs)
@@ -136,6 +136,14 @@ docker-build: operator-build backup-build restore-build
 
 docker-push: operator-push backup-push restore-push
 	#
+
+refresh-go-sum:
+	for module in operator updater alert-receiver watcher; do \
+  		cd ./modules/$${module}; \
+  		go clean -modcache; \
+  		go mod tidy; \
+  		cd -; \
+	done
 
 # find or download controller-gen
 # download controller-gen if necessary
