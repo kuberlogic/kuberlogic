@@ -90,15 +90,11 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(req ctrl.Request) (ctrl.R
 	}
 	op.InitFrom(found)
 
-	backupOperator, err := service_operator.GetBackupOperator(op)
-	if err != nil {
-		log.Error(err, "Could not define the backup operator")
-		return ctrl.Result{}, err
-	}
-	backupOperator.SetBackupImage()
-	backupOperator.SetBackupEnv(klb)
+	backupSchedule := op.GetBackupSchedule()
+	backupSchedule.SetBackupImage()
+	backupSchedule.SetBackupEnv(klb)
 
-	cronJob := backupOperator.GetCronJob()
+	cronJob := backupSchedule.GetCronJob()
 	err = r.Get(ctx,
 		types.NamespacedName{
 			Name:      klb.Name,
@@ -106,13 +102,13 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(req ctrl.Request) (ctrl.R
 		},
 		cronJob)
 	if err != nil && k8serrors.IsNotFound(err) {
-		dep, err := r.cronJob(backupOperator, klb)
+		dep, err := r.cronJob(backupSchedule, klb)
 		if err != nil {
 			log.Error(err, "Could not generate cron cronJob", "Name", klb.Name)
 			return ctrl.Result{}, err
 		}
 
-		log.Info("Creating a new Backup resource", "Name", klb.Name)
+		log.Info("Creating a new BaseBackup resource", "Name", klb.Name)
 		err = r.Create(ctx, dep)
 		if err != nil && k8serrors.IsAlreadyExists(err) {
 			log.Info("CronJob already exists", "Name", klb.Name)
@@ -125,16 +121,16 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(req ctrl.Request) (ctrl.R
 		}
 	}
 
-	backupOperator.InitFrom(cronJob)
-	if !backupOperator.IsEqual(klb) {
-		backupOperator.Update(klb)
+	backupSchedule.InitFrom(cronJob)
+	if !backupSchedule.IsEqual(klb) {
+		backupSchedule.Update(klb)
 
-		err = r.Update(ctx, backupOperator.GetCronJob())
+		err = r.Update(ctx, backupSchedule.GetCronJob())
 		if err != nil {
 			log.Error(err, "Failed to update object", "Name", klb.Name)
 			return ctrl.Result{}, err
 		} else {
-			log.Info("Backup resource is updated", "Name", klb.Name)
+			log.Info("BaseBackup resource is updated", "Name", klb.Name)
 		}
 	} else {
 		log.Info("No difference", "Name", klb.Name)
@@ -147,7 +143,7 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, err
 	}
 
-	status := backupOperator.CurrentStatus(jobList)
+	status := backupSchedule.CurrentStatus(jobList)
 	if !klb.IsEqual(status) {
 		klb.SetStatus(status)
 		err = r.Update(ctx, klb)
@@ -164,7 +160,7 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(req ctrl.Request) (ctrl.R
 	return ctrl.Result{}, nil
 }
 
-func (r *KuberLogicBackupScheduleReconciler) cronJob(op service_operator.Backup, cmb *kuberlogicv1.KuberLogicBackupSchedule) (*v1beta1.CronJob, error) {
+func (r *KuberLogicBackupScheduleReconciler) cronJob(op service_operator.BackupSchedule, cmb *kuberlogicv1.KuberLogicBackupSchedule) (*v1beta1.CronJob, error) {
 	op.Init(cmb)
 
 	// Set kuberlogic backup instance as the owner and controller

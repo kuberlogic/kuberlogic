@@ -86,23 +86,23 @@ func (r *KuberLogicServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, 
 		// Define a new cluster
 		dep, err := r.defineCluster(op, kls)
 		if err != nil {
-			log.Error(err, "Could not generate definition struct", "Operator", kls.Spec.Type)
+			log.Error(err, "Could not generate definition struct", "BaseOperator", kls.Spec.Type)
 			return ctrl.Result{}, err
 		}
 
-		log.Info("Creating a new Cluster", "Operator", kls.Spec.Type)
+		log.Info("Creating a new Cluster", "BaseOperator", kls.Spec.Type)
 		err = r.Create(ctx, dep)
 		if err != nil && k8serrors.IsAlreadyExists(err) {
-			log.Info("Cluster already exists", "Operator", kls.Spec.Type)
+			log.Info("Cluster already exists", "BaseOperator", kls.Spec.Type)
 		} else if err != nil {
-			log.Error(err, "Failed to create new Cluster", "Operator", kls.Spec.Type)
+			log.Error(err, "Failed to create new Cluster", "BaseOperator", kls.Spec.Type)
 			return ctrl.Result{}, err
 		} else {
 			// cluster created successfully - return and requeue
 			return ctrl.Result{Requeue: true}, nil
 		}
 	} else if err != nil {
-		log.Error(err, "Failed to get object", "Operator", kls.Spec.Type)
+		log.Error(err, "Failed to get object", "BaseOperator", kls.Spec.Type)
 		return ctrl.Result{}, err
 	}
 
@@ -110,7 +110,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, 
 
 	log.Info("ensure that we have dependencies set up")
 	if err := r.ensureClusterDependencies(op, kls, ctx); err != nil {
-		log.Error(err, "failed to ensure dependencies", "Operator", kls.Spec.Type)
+		log.Error(err, "failed to ensure dependencies", "BaseOperator", kls.Spec.Type)
 		return ctrl.Result{}, err
 	}
 
@@ -119,14 +119,14 @@ func (r *KuberLogicServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, 
 
 		err = r.Update(ctx, op.AsRuntimeObject())
 		if err != nil {
-			log.Error(err, "Failed to update object", "Operator", kls.Spec.Type)
+			log.Error(err, "Failed to update object", "BaseOperator", kls.Spec.Type)
 			return ctrl.Result{}, err
 		} else {
-			log.Info("Cluster is updated", "Operator", kls.Spec.Type)
+			log.Info("Cluster is updated", "BaseOperator", kls.Spec.Type)
 			return ctrl.Result{}, nil
 		}
 	}
-	log.Info("No difference", "Operator", kls.Spec.Type)
+	log.Info("No difference", "BaseOperator", kls.Spec.Type)
 
 	status := op.CurrentStatus()
 	if !kls.IsEqual(status) {
@@ -146,8 +146,8 @@ func (r *KuberLogicServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, 
 	return ctrl.Result{}, nil
 }
 
-func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op service_operator.Operator, cm *kuberlogicv1.KuberLogicService, ctx context.Context) error {
-	credSecret, err := op.GetCredentialsSecret()
+func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op service_operator.OperatorInterface, cm *kuberlogicv1.KuberLogicService, ctx context.Context) error {
+	credSecret, err := op.GetInternalDetails().GetCredentialsSecret()
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op service_opera
 	return nil
 }
 
-func (r *KuberLogicServiceReconciler) defineCluster(op service_operator.Operator, cm *kuberlogicv1.KuberLogicService) (runtime.Object, error) {
+func (r *KuberLogicServiceReconciler) defineCluster(op service_operator.OperatorInterface, cm *kuberlogicv1.KuberLogicService) (runtime.Object, error) {
 	op.Init(cm)
 	op.Update(cm)
 

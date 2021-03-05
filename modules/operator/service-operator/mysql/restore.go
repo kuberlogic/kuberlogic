@@ -14,7 +14,7 @@ const (
 
 type Restore struct {
 	base.BaseRestore
-	Cluster Mysql
+	Cluster *Mysql
 }
 
 func (p *Restore) SetRestoreImage() {

@@ -21,7 +21,7 @@ func GetClusterPodLabels(cm *kuberlogicv1.KuberLogicService) (master map[string]
 		return
 	}
 	op.Init(cm)
-	master, replica = op.GetPodMasterSelector(), op.GetPodReplicaSelector()
+	master, replica = op.GetInternalDetails().GetPodMasterSelector(), op.GetInternalDetails().GetPodReplicaSelector()
 
 	return
 }
@@ -33,7 +33,7 @@ func GetClusterServices(cm *kuberlogicv1.KuberLogicService) (master string, repl
 	}
 	op.Init(cm)
 
-	master, replica = op.GetMasterService(), op.GetReplicaService()
+	master, replica = op.GetInternalDetails().GetMasterService(), op.GetInternalDetails().GetReplicaService()
 	return
 }
 
@@ -44,7 +44,7 @@ func GetClusterServicePort(cm *kuberlogicv1.KuberLogicService) (p int, err error
 	}
 	op.Init(cm)
 
-	p = op.GetAccessPort()
+	p = op.GetInternalDetails().GetAccessPort()
 	return
 }
 
@@ -55,7 +55,7 @@ func GetClusterMainContainer(cm *kuberlogicv1.KuberLogicService) (c string, err 
 	}
 	op.Init(cm)
 
-	c = op.GetMainPodContainer()
+	c = op.GetInternalDetails().GetMainPodContainer()
 	return
 }
 
@@ -66,7 +66,7 @@ func GetClusterCredentialsInfo(cm *kuberlogicv1.KuberLogicService) (username, pa
 	}
 	op.Init(cm)
 
-	secretName, passwordField = op.GetDefaultConnectionPassword()
+	secretName, passwordField = op.GetInternalDetails().GetDefaultConnectionPassword()
 	username = kuberlogicv1.DefaultUser
 	return
 }

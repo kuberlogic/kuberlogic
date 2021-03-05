@@ -138,10 +138,18 @@ docker-push: operator-push backup-push restore-push
 	#
 
 refresh-go-sum:
-	for module in operator updater alert-receiver watcher; do \
+	for module in operator updater alert-receiver watcher apiserver; do \
   		cd ./modules/$${module}; \
   		go clean -modcache; \
   		go mod tidy; \
+  		cd -; \
+	done
+
+bump-operator-version:
+	set -o errexit; \
+	for module in updater alert-receiver watcher apiserver; do \
+  		cd ./modules/$${module}; \
+  		go get github.com/kuberlogic/operator/modules/operator@${BRANCH}; \
   		cd -; \
 	done
 

@@ -15,7 +15,7 @@ const (
 
 type Restore struct {
 	base.BaseRestore
-	Cluster Postgres
+	Cluster *Postgres
 }
 
 func (p *Restore) SetRestoreImage() {
