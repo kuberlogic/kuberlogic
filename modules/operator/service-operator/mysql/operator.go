@@ -2,7 +2,6 @@ package mysql
 
 import (
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	"github.com/kuberlogic/operator/modules/operator/service-operator/base"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	"github.com/kuberlogic/operator/modules/operator/util"
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
@@ -28,8 +27,7 @@ const (
 )
 
 type Mysql struct {
-	base.BaseOperator
-	Operator *mysqlv1.MysqlCluster
+	Operator mysqlv1.MysqlCluster
 }
 
 func (p *Mysql) GetBackupSchedule() interfaces.BackupSchedule {
@@ -50,8 +48,20 @@ func (p *Mysql) GetInternalDetails() interfaces.InternalDetails {
 	}
 }
 
+func (p *Mysql) Name(cm *kuberlogicv1.KuberLogicService) string {
+	return cm.Name
+}
+
+func (p *Mysql) AsRuntimeObject() runtime.Object {
+	return &p.Operator
+}
+
+func (p *Mysql) AsMetaObject() metav1.Object {
+	return &p.Operator
+}
+
 func (p *Mysql) Init(cm *kuberlogicv1.KuberLogicService) {
-	p.Operator = &mysqlv1.MysqlCluster{
+	p.Operator = mysqlv1.MysqlCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      p.Name(cm),
 			Namespace: cm.Namespace,
@@ -102,11 +112,11 @@ func (p *Mysql) Init(cm *kuberlogicv1.KuberLogicService) {
 			},
 		},
 	}
-	mysqlv1.SetDefaults_MysqlCluster(p.Operator)
+	mysqlv1.SetDefaults_MysqlCluster(&p.Operator)
 }
 
 func (p *Mysql) InitFrom(o runtime.Object) {
-	p.Operator = o.(*mysqlv1.MysqlCluster)
+	p.Operator = *o.(*mysqlv1.MysqlCluster)
 }
 
 func (p *Mysql) GetDefaults() kuberlogicv1.Defaults {

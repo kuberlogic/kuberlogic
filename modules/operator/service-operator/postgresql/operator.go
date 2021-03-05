@@ -3,7 +3,6 @@ package postgresql
 import (
 	"fmt"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	"github.com/kuberlogic/operator/modules/operator/service-operator/base"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	"github.com/kuberlogic/operator/modules/operator/util"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
@@ -19,8 +18,7 @@ const (
 )
 
 type Postgres struct {
-	base.BaseOperator
-	Operator *postgresv1.Postgresql
+	Operator postgresv1.Postgresql
 }
 
 func (p *Postgres) GetBackupSchedule() interfaces.BackupSchedule {
@@ -41,12 +39,20 @@ func (p *Postgres) GetInternalDetails() interfaces.InternalDetails {
 	}
 }
 
+func (p *Postgres) AsRuntimeObject() runtime.Object {
+	return &p.Operator
+}
+
+func (p *Postgres) AsMetaObject() metav1.Object {
+	return &p.Operator
+}
+
 func (p *Postgres) Name(cm *kuberlogicv1.KuberLogicService) string {
 	return fmt.Sprintf("%s-%s", teamId, cm.Name)
 }
 
 func (p *Postgres) InitFrom(o runtime.Object) {
-	p.Operator = o.(*postgresv1.Postgresql)
+	p.Operator = *o.(*postgresv1.Postgresql)
 }
 
 func (p *Postgres) Init(cm *kuberlogicv1.KuberLogicService) {
@@ -55,7 +61,7 @@ func (p *Postgres) Init(cm *kuberlogicv1.KuberLogicService) {
 	name := p.Name(cm)
 	defaultUserCredentialsSecret := genUserCredentialsSecretName(teamId, name)
 
-	p.Operator = &postgresv1.Postgresql{
+	p.Operator = postgresv1.Postgresql{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: cm.Namespace,

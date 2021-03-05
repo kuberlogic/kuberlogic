@@ -2,10 +2,10 @@ package interfaces
 
 import (
 	"github.com/kuberlogic/operator/modules/operator/api/v1"
-	v13 "k8s.io/api/batch/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/batch/v1beta1"
-	v14 "k8s.io/api/core/v1"
-	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -15,7 +15,7 @@ type OperatorInterface interface {
 	InitFrom(o runtime.Object)
 	Update(cm *v1.KuberLogicService)
 	AsRuntimeObject() runtime.Object
-	AsMetaObject() v12.Object
+	AsMetaObject() metav1.Object
 	IsEqual(cm *v1.KuberLogicService) bool
 	CurrentStatus() string
 	GetDefaults() v1.Defaults
@@ -32,17 +32,17 @@ type BackupSchedule interface {
 	IsEqual(cm *v1.KuberLogicBackupSchedule) bool
 	Update(cm *v1.KuberLogicBackupSchedule)
 	GetCronJob() *v1beta1.CronJob
-	CurrentStatus(ev v13.JobList) string
+	CurrentStatus(ev batchv1.JobList) string
 
 	SetBackupImage()
 	SetBackupEnv(cm *v1.KuberLogicBackupSchedule)
 }
 
 type BackupRestore interface {
-	New(backup *v1.KuberLogicBackupRestore) v13.Job
+	New(backup *v1.KuberLogicBackupRestore) batchv1.Job
 	Init(*v1.KuberLogicBackupRestore)
-	InitFrom(*v13.Job)
-	GetJob() *v13.Job
+	InitFrom(*batchv1.Job)
+	GetJob() *batchv1.Job
 	CurrentStatus() string
 
 	SetRestoreImage()
@@ -50,7 +50,7 @@ type BackupRestore interface {
 }
 
 type InternalDetails interface {
-	GetCredentialsSecret() (*v14.Secret, error)
+	GetCredentialsSecret() (*corev1.Secret, error)
 
 	GetPodReplicaSelector() map[string]string
 	GetPodMasterSelector() map[string]string
