@@ -7,6 +7,7 @@ import (
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
 	"github.com/kuberlogic/operator/modules/operator/service-operator"
+	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	v1 "k8s.io/api/batch/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -139,7 +140,7 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Re
 	return ctrl.Result{}, nil
 }
 
-func (r *KuberLogicBackupRestoreReconciler) defineJob(op service_operator.BackupRestore, cr *kuberlogicv1.KuberLogicBackupRestore) (*v1.Job, error) {
+func (r *KuberLogicBackupRestoreReconciler) defineJob(op interfaces.BackupRestore, cr *kuberlogicv1.KuberLogicBackupRestore) (*v1.Job, error) {
 
 	op.Init(cr)
 

@@ -3,8 +3,8 @@ package postgresql
 import (
 	"fmt"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	service_operator "github.com/kuberlogic/operator/modules/operator/service-operator"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/base"
+	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	"github.com/kuberlogic/operator/modules/operator/util"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	apiv1 "k8s.io/api/core/v1"
@@ -23,19 +23,19 @@ type Postgres struct {
 	Operator *postgresv1.Postgresql
 }
 
-func (p *Postgres) GetBackupSchedule() service_operator.BackupSchedule {
+func (p *Postgres) GetBackupSchedule() interfaces.BackupSchedule {
 	return &Backup{
 		Cluster: p,
 	}
 }
 
-func (p *Postgres) GetBackupRestore() service_operator.BackupRestore {
+func (p *Postgres) GetBackupRestore() interfaces.BackupRestore {
 	return &Restore{
 		Cluster: p,
 	}
 }
 
-func (p *Postgres) GetInternalDetails() service_operator.InternalDetails {
+func (p *Postgres) GetInternalDetails() interfaces.InternalDetails {
 	return &InternalDetails{
 		Cluster: p,
 	}

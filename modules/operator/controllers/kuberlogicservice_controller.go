@@ -7,6 +7,7 @@ import (
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
 	"github.com/kuberlogic/operator/modules/operator/service-operator"
+	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	redisv1 "github.com/spotahome/redis-operator/api/redisfailover/v1"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
@@ -146,7 +147,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, 
 	return ctrl.Result{}, nil
 }
 
-func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op service_operator.OperatorInterface, cm *kuberlogicv1.KuberLogicService, ctx context.Context) error {
+func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService, ctx context.Context) error {
 	credSecret, err := op.GetInternalDetails().GetCredentialsSecret()
 	if err != nil {
 		return err
@@ -162,7 +163,7 @@ func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op service_opera
 	return nil
 }
 
-func (r *KuberLogicServiceReconciler) defineCluster(op service_operator.OperatorInterface, cm *kuberlogicv1.KuberLogicService) (runtime.Object, error) {
+func (r *KuberLogicServiceReconciler) defineCluster(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService) (runtime.Object, error) {
 	op.Init(cm)
 	op.Update(cm)
 

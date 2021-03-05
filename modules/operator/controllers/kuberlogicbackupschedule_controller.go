@@ -7,6 +7,7 @@ import (
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
 	"github.com/kuberlogic/operator/modules/operator/service-operator"
+	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	v12 "k8s.io/api/batch/v1"
 	"k8s.io/api/batch/v1beta1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -160,7 +161,7 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(req ctrl.Request) (ctrl.R
 	return ctrl.Result{}, nil
 }
 
-func (r *KuberLogicBackupScheduleReconciler) cronJob(op service_operator.BackupSchedule, cmb *kuberlogicv1.KuberLogicBackupSchedule) (*v1beta1.CronJob, error) {
+func (r *KuberLogicBackupScheduleReconciler) cronJob(op interfaces.BackupSchedule, cmb *kuberlogicv1.KuberLogicBackupSchedule) (*v1beta1.CronJob, error) {
 	op.Init(cmb)
 
 	// Set kuberlogic backup instance as the owner and controller

@@ -2,8 +2,8 @@ package mysql
 
 import (
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	service_operator "github.com/kuberlogic/operator/modules/operator/service-operator"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/base"
+	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	"github.com/kuberlogic/operator/modules/operator/util"
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -32,19 +32,19 @@ type Mysql struct {
 	Operator *mysqlv1.MysqlCluster
 }
 
-func (p *Mysql) GetBackupSchedule() service_operator.BackupSchedule {
+func (p *Mysql) GetBackupSchedule() interfaces.BackupSchedule {
 	return &Backup{
 		Cluster: p,
 	}
 }
 
-func (p *Mysql) GetBackupRestore() service_operator.BackupRestore {
+func (p *Mysql) GetBackupRestore() interfaces.BackupRestore {
 	return &Restore{
 		Cluster: p,
 	}
 }
 
-func (p *Mysql) GetInternalDetails() service_operator.InternalDetails {
+func (p *Mysql) GetInternalDetails() interfaces.InternalDetails {
 	return &InternalDetails{
 		Cluster: p,
 	}

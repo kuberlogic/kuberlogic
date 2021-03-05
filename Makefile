@@ -148,7 +148,8 @@ refresh-go-sum:
 bump-operator-version:
 	set -o errexit; \
 	for module in updater alert-receiver watcher apiserver; do \
-  		cd ./modules/$${module}; \
+  		echo "Entering into" $${module}; \
+	  	cd ./modules/$${module}; \
   		go get github.com/kuberlogic/operator/modules/operator@${BRANCH}; \
   		cd -; \
 	done
