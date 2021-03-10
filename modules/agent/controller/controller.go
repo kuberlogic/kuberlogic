@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"log"
 	"sync"
 )
 
@@ -14,6 +13,6 @@ var runOnce sync.Once
 func Init() {
 	runOnce.Do(func() {
 		Controller = NewController(globalControllerPort)
-		go log.Fatal(Controller.Run())
+		go Controller.Run()
 	})
 }

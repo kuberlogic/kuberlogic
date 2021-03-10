@@ -82,16 +82,16 @@ func (a *AgentController) CommandExecutionResult(ctx context.Context, result *ag
 	return ret, nil
 }
 
-func (a *AgentController) Run() error {
+func (a *AgentController) Run() {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 	s := grpc.NewServer()
 	agentgrpc.RegisterCommandAPIServer(s, a)
 
 	log.Printf("starting grpc server: %v\n", s)
-	return s.Serve(lis)
+	log.Fatal(s.Serve(lis))
 }
 
 func NewController(port int) *AgentController {
