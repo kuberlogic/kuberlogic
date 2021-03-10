@@ -1,9 +1,9 @@
 package client
 
 import (
-	agentgrpc "agent/agent-grpc"
-	"agent/command"
 	"context"
+	agentgrpc "github.com/kuberlogic/operator/modules/agent/agent-grpc"
+	"github.com/kuberlogic/operator/modules/agent/command"
 	"google.golang.org/grpc"
 	"log"
 	"time"
@@ -37,9 +37,9 @@ func (a *AgentClient) GetCommand(ctx context.Context, commandType int32) (*comma
 
 func (a *AgentClient) ExecuteControllerCommand(ctx context.Context, c *command.Command, cType int32) error {
 	res := &agentgrpc.CommandResult{
-		AgentName: a.name,
-		CommandName: c.Name,
-		CommandType: cType,
+		AgentName:     a.name,
+		CommandName:   c.Name,
+		CommandType:   cType,
 		CommandResult: command.SuccessCode,
 	}
 
@@ -61,7 +61,7 @@ func (a *AgentClient) ExecInitCommand() error {
 		return nil
 	}
 
-	 return a.ExecuteControllerCommand(ctx, initCom, command.InitCommandType)
+	return a.ExecuteControllerCommand(ctx, initCom, command.InitCommandType)
 
 }
 

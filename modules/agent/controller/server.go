@@ -1,10 +1,10 @@
 package controller
 
 import (
-	agentgrpc "agent/agent-grpc"
-	"agent/command"
 	"context"
 	"fmt"
+	agentgrpc "github.com/kuberlogic/operator/modules/agent/agent-grpc"
+	"github.com/kuberlogic/operator/modules/agent/command"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -63,7 +63,7 @@ func (a *AgentController) CommandExecutionResult(ctx context.Context, result *ag
 	}
 	ret := &agentgrpc.CommandResultAck{
 		CommandName: result.CommandName,
-		Accepted: true,
+		Accepted:    true,
 	}
 
 	if result.CommandResult != command.SuccessCode {
