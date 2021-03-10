@@ -1,4 +1,4 @@
-module agent
+module github.com/kuberlogic/operator/modules/agent
 
 go 1.15
 
