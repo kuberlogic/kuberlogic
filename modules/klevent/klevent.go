@@ -33,7 +33,7 @@ func (c *Controller) HandleEvent(e *Event) (bool, error) {
 
 	h, hf := c.HandlersQ.Get(e.Name)
 	if !hf {
-		return false, fmt.Errorf("event %s not found", e.Name)
+		return false, fmt.Errorf("event %s handler not found", e.Name)
 	}
 	handleErr := h(e)
 	return true, handleErr
