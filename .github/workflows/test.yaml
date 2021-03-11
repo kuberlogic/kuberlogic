@@ -28,7 +28,7 @@ jobs:
 
       - name: Wait the pods
         run: |
-          kubectl delete cm-alertmanager-deployment cm-kuberlogic-operator || true
+          kubectl delete deploy cm-alertmanager-deployment cm-kuberlogic-operator || true
           kubectl wait --for=condition=Ready pods --all
 
       - name: Run the tests
