@@ -17,7 +17,7 @@ func GetOperator(t string) (interfaces.OperatorInterface, error) {
 
 	value, ok := operators[t]
 	if !ok {
-		return nil, errors.Errorf("BaseOperator %s is not supported", t)
+		return nil, errors.Errorf("Service Operator %s is not supported", t)
 	}
 	return value, nil
 }

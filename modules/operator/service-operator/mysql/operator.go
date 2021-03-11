@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -46,6 +47,10 @@ func (p *Mysql) GetInternalDetails() interfaces.InternalDetails {
 	return &InternalDetails{
 		Cluster: p,
 	}
+}
+
+func (p *Mysql) GetSession(cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (interfaces.Session, error) {
+	return NewSession(cm, client, db)
 }
 
 func (p *Mysql) Name(cm *kuberlogicv1.KuberLogicService) string {

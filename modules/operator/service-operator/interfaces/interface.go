@@ -7,6 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
 )
 
 type OperatorInterface interface {
@@ -23,6 +24,7 @@ type OperatorInterface interface {
 	GetBackupSchedule() BackupSchedule
 	GetBackupRestore() BackupRestore
 	GetInternalDetails() InternalDetails
+	GetSession(cm *v1.KuberLogicService, client *kubernetes.Clientset, db string) (Session, error)
 }
 
 type BackupSchedule interface {
@@ -61,4 +63,24 @@ type InternalDetails interface {
 
 	GetDefaultConnectionPassword() (string, string)
 	GetMainPodContainer() string
+}
+
+type Session interface {
+	GetDatabase() Database
+	GetUser() User
+}
+
+type Database interface {
+	List() ([]string, error)
+	Create(name string) error
+	Drop(name string) error
+	IsProtected(name string) bool
+}
+
+type User interface {
+	List() ([]string, error)
+	Create(name, password string) error
+	Delete(name string) error
+	Edit(name, password string) error
+	IsProtected(name string) bool
 }

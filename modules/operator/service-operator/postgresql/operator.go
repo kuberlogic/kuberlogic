@@ -9,6 +9,7 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -37,6 +38,10 @@ func (p *Postgres) GetInternalDetails() interfaces.InternalDetails {
 	return &InternalDetails{
 		Cluster: p,
 	}
+}
+
+func (p *Postgres) GetSession(cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (interfaces.Session, error) {
+	return NewSession(cm, client, db)
 }
 
 func (p *Postgres) AsRuntimeObject() runtime.Object {
