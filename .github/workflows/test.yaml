@@ -23,11 +23,12 @@ jobs:
           REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Some tests
-        run: |
-          kubectl get secrets
-          kubectl get secrets kuberlogic-registry -o yaml
-      - name: Sleep for 30 seconds
-        uses: jakejarvis/wait-action@master
-        with:
-          time: '30s'
+      - name: Deploy operator
+        run: make deploy
+
+      - name: Wait the pods
+        run: kubectl wait --for=condition=Ready pods --all
+
+      - name: Run the tests
+        working-directory: ./modules/apiserver/tests
+        run: make test
