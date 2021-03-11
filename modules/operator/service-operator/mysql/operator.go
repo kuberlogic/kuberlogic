@@ -50,7 +50,7 @@ func (p *Mysql) GetInternalDetails() interfaces.InternalDetails {
 }
 
 func (p *Mysql) GetSession(cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (interfaces.Session, error) {
-	return NewSession(cm, client, db)
+	return NewSession(p, cm, client, db)
 }
 
 func (p *Mysql) Name(cm *kuberlogicv1.KuberLogicService) string {

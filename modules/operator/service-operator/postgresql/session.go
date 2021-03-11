@@ -6,7 +6,6 @@ import (
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/base"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
-	util "github.com/kuberlogic/operator/modules/operator/service-operator/util/kuberlogic"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -18,24 +17,16 @@ type Session struct {
 	//Cluster *Postgres
 }
 
-func NewSession(cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (*Session, error) {
+func NewSession(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (*Session, error) {
 	session := &Session{}
 
 	session.Database = db
 	session.Port = 5432
 	session.ClusterNamespace = cm.Namespace
+	session.ClusterName = op.Name(cm)
 
-	if _, _, secret, err := util.GetClusterCredentialsInfo(cm); err != nil {
-		return nil, err
-	} else {
-		session.ClusterCredentialsSecret = secret
-	}
+	session.ClusterCredentialsSecret, _ = op.GetInternalDetails().GetDefaultConnectionPassword()
 
-	if name, err := util.GetClusterName(cm); err != nil {
-		return nil, err
-	} else {
-		session.ClusterName = name
-	}
 	if err := session.SetMaster(client); err != nil {
 		return nil, err
 	}

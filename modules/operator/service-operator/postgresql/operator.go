@@ -41,7 +41,7 @@ func (p *Postgres) GetInternalDetails() interfaces.InternalDetails {
 }
 
 func (p *Postgres) GetSession(cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (interfaces.Session, error) {
-	return NewSession(cm, client, db)
+	return NewSession(p, cm, client, db)
 }
 
 func (p *Postgres) AsRuntimeObject() runtime.Object {

@@ -8,8 +8,6 @@ import (
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	base2 "github.com/kuberlogic/operator/modules/operator/service-operator/base"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
-	util "github.com/kuberlogic/operator/modules/operator/service-operator/util/kuberlogic"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	client2 "sigs.k8s.io/controller-runtime/pkg/client"
@@ -19,24 +17,17 @@ type Session struct {
 	base2.BaseSession
 }
 
-func NewSession(cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (*Session, error) {
+func NewSession(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (*Session, error) {
 	w := &Session{}
 
+	w.ClusterName = op.Name(cm)
 	w.ClusterNamespace = cm.Namespace
+
 	w.Database = db
 	w.Port = 3306
 
-	if _, _, secret, err := util.GetClusterCredentialsInfo(cm); err != nil {
-		return nil, err
-	} else {
-		w.ClusterCredentialsSecret = secret
-	}
+	w.ClusterCredentialsSecret, _ = op.GetInternalDetails().GetDefaultConnectionPassword()
 
-	if name, err := util.GetClusterName(cm); err != nil {
-		return nil, err
-	} else {
-		w.ClusterName = name
-	}
 	if err := w.SetMaster(client); err != nil {
 		return nil, err
 	}
