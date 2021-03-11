@@ -26,7 +26,7 @@ jobs:
       - name: Some tests
         run: |
           kubectl get secrets
-          kubectl get kuberlogic-registry -o yaml
+          kubectl get secrets kuberlogic-registry -o yaml
       - name: Sleep for 30 seconds
         uses: jakejarvis/wait-action@master
         with:
