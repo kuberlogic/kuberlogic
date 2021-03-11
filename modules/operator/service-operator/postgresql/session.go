@@ -3,6 +3,7 @@ package postgresql
 import (
 	"context"
 	"fmt"
+	"github.com/jackc/pgx/v4"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/base"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
@@ -97,4 +98,33 @@ func (session *Session) SetCredentials(client *kubernetes.Clientset) error {
 func (session *Session) ConnectionString(host, db string) string {
 	return fmt.Sprintf("postgresql://%s:%s@%s:%d/%s",
 		session.Username, session.Password, host, session.Port, db)
+}
+
+func (session *Session) CreateTable(table string) error {
+	ctx := context.TODO()
+	conn, err := pgx.Connect(ctx, session.ConnectionString(session.MasterIP, session.Database))
+	if err != nil {
+		return err
+	}
+	defer conn.Close(ctx)
+
+	rows, err := conn.Query(ctx,
+		"select table_name from information_schema.tables where table_name=$1", table)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var existingTable string
+		err = rows.Scan(&existingTable)
+		if err != nil {
+			return err
+		}
+		if existingTable == table {
+			return nil
+		}
+	}
+	_, err = conn.Exec(ctx,
+		fmt.Sprintf("create table %s(id serial primary key)", table))
+	return err
 }

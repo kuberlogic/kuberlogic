@@ -68,6 +68,7 @@ type InternalDetails interface {
 type Session interface {
 	GetDatabase() Database
 	GetUser() User
+	CreateTable(table string) error
 }
 
 type Database interface {

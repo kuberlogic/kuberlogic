@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
@@ -100,4 +101,21 @@ func (session *Session) SetReplicas(client *kubernetes.Clientset) error {
 func (session *Session) ConnectionString(host, db string) string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
 		session.Username, session.Password, host, session.Port, db)
+}
+
+func (session *Session) CreateTable(table string) error {
+	db, err := sql.Open("mysql", session.ConnectionString(session.MasterIP, session.Database))
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	query := fmt.Sprintf(`
+		CREATE TABLE %s(
+		   id INT AUTO_INCREMENT PRIMARY KEY
+		);
+	`, table)
+
+	_, err = db.Exec(query)
+	return err
 }
