@@ -24,10 +24,12 @@ jobs:
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Deploy operator
-        run: make deploy
+        run: make deploy # using command for deploy without operator
 
       - name: Wait the pods
-        run: kubectl wait --for=condition=Ready pods --all
+        run: |
+          kubectl delete cm-alertmanager-deployment cm-kuberlogic-operator || true
+          kubectl wait --for=condition=Ready pods --all
 
       - name: Run the tests
         working-directory: ./modules/apiserver/tests
