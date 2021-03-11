@@ -1,3 +1,4 @@
+
 module github.com/kuberlogic/operator/modules/watcher
 
 go 1.13
