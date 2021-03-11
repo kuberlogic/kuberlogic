@@ -24,11 +24,8 @@ jobs:
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Deploy operator
-        run: make deploy # using command for deploy without operator
-
-      - name: Wait the pods
         run: |
-          kubectl delete deploy cm-alertmanager-deployment cm-kuberlogic-operator || true
+          make deploy-dependencies
           kubectl wait --for=condition=Ready pods --all
 
       - name: Run the tests
