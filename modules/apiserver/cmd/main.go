@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"github.com/kuberlogic/operator/modules/operator/util"
+	"k8s.io/client-go/kubernetes"
 	"os"
 
 	"github.com/go-chi/chi"
@@ -60,12 +62,12 @@ func Main(args []string) {
 		mainLog.Fatalf(err.Error())
 	}
 
-	crdClient, err := k8s.GetKuberLogicClient(k8sconf)
+	crdClient, err := util.GetKuberLogicClient(k8sconf)
 	if err != nil {
 		mainLog.Fatalf(err.Error())
 	}
 
-	baseClient, err := k8s.GetBaseClient(k8sconf)
+	baseClient, err := kubernetes.NewForConfig(k8sconf)
 	if err != nil {
 		mainLog.Fatalf(err.Error())
 	}

@@ -34,7 +34,7 @@ type BackupConfigEditParams struct {
 	// HTTP Request Object
 	HTTPRequest *http.Request `json:"-"`
 
-	/*Backup credential item to edit
+	/*BaseBackup credential item to edit
 	  Required: true
 	  In: body
 	*/

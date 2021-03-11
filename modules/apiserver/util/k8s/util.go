@@ -6,14 +6,11 @@ import (
 	"fmt"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/config"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
-	cloudlinuxv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"io"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes"
-	k8scheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"strings"
@@ -21,40 +18,17 @@ import (
 
 func GetConfig(cfg *config.Config) (*rest.Config, error) {
 	// check in-cluster usage
-	if config, err := rest.InClusterConfig(); err == nil {
-		return config, nil
+	if cfg, err := rest.InClusterConfig(); err == nil {
+		return cfg, nil
 	}
 
 	// use the current context in kubeconfig
-	config, err := clientcmd.BuildConfigFromFlags("",
+	conf, err := clientcmd.BuildConfigFromFlags("",
 		cfg.KubeconfigPath)
 	if err != nil {
 		return nil, err
 	}
-	return config, err
-}
-
-func GetBaseClient(config *rest.Config) (*kubernetes.Clientset, error) {
-
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-	return clientset, nil
-}
-
-func GetKuberLogicClient(config *rest.Config) (*rest.RESTClient, error) {
-	crdConfig := *config
-	crdConfig.ContentConfig.GroupVersion = &cloudlinuxv1.GroupVersion
-	crdConfig.APIPath = "/apis"
-	crdConfig.NegotiatedSerializer = serializer.NewCodecFactory(k8scheme.Scheme)
-	crdConfig.UserAgent = rest.DefaultKubernetesUserAgent()
-
-	restClient, err := rest.RESTClientFor(&crdConfig)
-	if err != nil {
-		return nil, err
-	}
-	return restClient, nil
+	return conf, err
 }
 
 func ErrNotFound(err error) (notFoundErr bool) {
