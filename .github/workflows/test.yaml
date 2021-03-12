@@ -18,7 +18,7 @@ jobs:
 
       - name: Create secret of operator
         run: kubectl create secret docker-registry kuberlogic-registry --docker-server="$env:REGISTRY_SERVER" --docker-username="$env:REGISTRY_USER" --docker-password="$env:REGISTRY_PASSWORD"
-        env: # Or as an environment variable
+        env:
           REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
           REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
@@ -29,7 +29,9 @@ jobs:
           kubectl wait --for=condition=Ready pods --all
 
       - name: Setup Git
-        run: git config --global url."https://${{ secrets.TOKEN }}:x-oauth-basic@github.com/kuberlogic".insteadOf "https://github.com/kuberlogic"
+        run: git config --global url."https://$env:GITHUB_TOKEN:x-oauth-basic@github.com/kuberlogic".insteadOf "https://github.com/kuberlogic"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run the tests
         working-directory: ./modules/apiserver/tests
