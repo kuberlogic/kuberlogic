@@ -17,11 +17,11 @@ jobs:
         env:
           PRIVATE_GITHUB_TOKEN: ${{ secrets.PRIVATE_GITHUB_TOKEN }}
 
-#      - name: Get dependencies for the apiserver
-#        working-directory: ./modules/apiserver
-#        env:
-#          GOPRIVATE: github.com/kuberlogic/*
-#        run: go mod download
+      - name: Get dependencies for the apiserver
+        working-directory: ./modules/apiserver
+        env:
+          GOPRIVATE: github.com/kuberlogic/*
+        run: go mod download
 #
 #      - name: Setup Minikube
 #        uses: manusa/actions-setup-minikube@v2.3.0
