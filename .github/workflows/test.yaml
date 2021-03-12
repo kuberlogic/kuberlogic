@@ -11,24 +11,25 @@ jobs:
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-      - name: Setup Minikube
-        uses: manusa/actions-setup-minikube@v2.3.0
-        with:
-          minikube version: 'v1.16.0'
-          kubernetes version: 'v1.19.2'
-          github token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create secret of operator
-        run: kubectl create secret docker-registry kuberlogic-registry --docker-server="$env:REGISTRY_SERVER" --docker-username="$env:REGISTRY_USER" --docker-password="$env:REGISTRY_PASSWORD"
-        env:
-          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
-          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
-          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-
-      - name: Deploy operator
-        run: |
-          make deploy-dependencies
-          kubectl wait --for=condition=Ready pods --all
+#      - name: Setup Minikube
+#        uses: manusa/actions-setup-minikube@v2.3.0
+#        with:
+#          minikube version: 'v1.16.0'
+#          kubernetes version: 'v1.19.2'
+#          github token: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Create secret of operator
+#        run: kubectl create secret docker-registry kuberlogic-registry --docker-server="$env:REGISTRY_SERVER" --docker-username="$env:REGISTRY_USER" --docker-password="$env:REGISTRY_PASSWORD"
+#        env:
+#          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
+#          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+#          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+#
+#      - name: Deploy operator
+#        run: |
+#          make deploy-dependencies
+#          kubectl wait --for=condition=Ready pods --all
 
       - name: Setup Git
         run: git config --global url."https://:$env:GITHUB_TOKEN@github.com/kuberlogic".insteadOf "https://github.com/kuberlogic"
