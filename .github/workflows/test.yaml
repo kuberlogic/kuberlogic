@@ -11,35 +11,35 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup Git
-        run: git config --global url."https://$GITHUB_TOKEN:x-oauth-basic@github.com/kuberlogic".insteadOf "https://github.com/kuberlogic"
+        run: git config --global url."https://$PRIVATE_GITHUB_TOKEN:x-oauth-basic@github.com/kuberlogic".insteadOf "https://github.com/kuberlogic"
         env:
-          $GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRIVATE_GITHUB_TOKEN: ${{ secrets.PRIVATE_GITHUB_TOKEN }}
 
       - name: Get dependencies for the apiserver
         working-directory: ./modules/apiserver
         env:
           GOPRIVATE: github.com/kuberlogic/*
         run: go mod download
-#
-#      - name: Setup Minikube
-#        uses: manusa/actions-setup-minikube@v2.3.0
-#        with:
-#          minikube version: 'v1.16.0'
-#          kubernetes version: 'v1.19.2'
-#          github token: ${{ secrets.GITHUB_TOKEN }}
-#
-#      - name: Create secret of operator
-#        run: kubectl create secret docker-registry kuberlogic-registry --docker-server=$REGISTRY_SERVER --docker-username=$REGISTRY_USER --docker-password=$REGISTRY_PASSWORD
-#        env:
-#          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
-#          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
-#          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-#
-#      - name: Deploy operator
-#        run: |
-#          make deploy-dependencies
-#          kubectl wait --for=condition=Ready pods --all
-#
-#      - name: Run the tests
-#        working-directory: ./modules/apiserver/tests
-#        run: make test
+
+      - name: Setup Minikube
+        uses: manusa/actions-setup-minikube@v2.3.0
+        with:
+          minikube version: 'v1.16.0'
+          kubernetes version: 'v1.19.2'
+          github token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create secret of operator
+        run: kubectl create secret docker-registry kuberlogic-registry --docker-server=$REGISTRY_SERVER --docker-username=$REGISTRY_USER --docker-password=$REGISTRY_PASSWORD
+        env:
+          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
+          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Deploy operator
+        run: |
+          make deploy-dependencies
+          kubectl wait --for=condition=Ready pods --all
+
+      - name: Run the tests
+        working-directory: ./modules/apiserver/tests
+        run: make test
