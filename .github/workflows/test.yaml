@@ -30,17 +30,29 @@ jobs:
           kubernetes version: 'v1.19.2'
           github token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: kubectl config view
-        run: |
-          kubectl config view
-
-      - name: ls -la ${HOME}/.kube/config
-        run: |
-          ls -la ${HOME}/.kube/config
-
-      - name: cat ${HOME}/.kube/config
-        run: |
-          cat ${HOME}/.kube/config
+#      - name: kubectl config view
+#        run: |
+#          kubectl config view
+#
+#      - name: ls -la ${HOME}/.kube/config
+#        run: |
+#          ls -la ${HOME}/.kube/config
+#
+#      - name: cat ${HOME}/.kube/config
+#        run: |
+#          cat ${HOME}/.kube/config
+#
+#      - name: ls -la /home/runner/work/_temp/.minikube/profiles/minikube/
+#        run: |
+#          ls -la /home/runner/work/_temp/.minikube/profiles/minikube/
+#
+#      - name: cat /home/runner/work/_temp/.minikube/profiles/minikube/client.crt
+#        run: |
+#          cat /home/runner/work/_temp/.minikube/profiles/minikube/client.crt
+#
+#      - name: cat /home/runner/work/_temp/.minikube/profiles/minikube/client.key
+#        run: |
+#          cat /home/runner/work/_temp/.minikube/profiles/minikube/client.key
 
       - name: Create secret of operator
         run: |
@@ -61,7 +73,7 @@ jobs:
       - name: Run the tests
         working-directory: ./modules/apiserver/tests
         run: |
-          make test
+          KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make test
 
       - name: Archive logs
         uses: actions/upload-artifact@v2
