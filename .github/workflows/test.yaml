@@ -11,9 +11,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup Git
-        run: git config --global url."https://$PRIVATE_GITHUB_TOKEN:x-oauth-basic@github.com/kuberlogic".insteadOf "https://github.com/kuberlogic"
+        run: git config --global url."https://$GITHUB_TOKEN:x-oauth-basic@github.com/kuberlogic".insteadOf "https://github.com/kuberlogic"
         env:
-          PRIVATE_GITHUB_TOKEN: ${{ secrets.PRIVATE_GITHUB_TOKEN }}
+          $GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get dependencies for the apiserver
         working-directory: ./modules/apiserver
