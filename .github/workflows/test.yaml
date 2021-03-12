@@ -30,6 +30,18 @@ jobs:
           kubernetes version: 'v1.19.2'
           github token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: kubectl config view
+        run: |
+          kubectl config view
+
+      - name: ls -la ${HOME}/.kube/config
+        run: |
+          ls -la ${HOME}/.kube/config
+
+      - name: cat ${HOME}/.kube/config
+        run: |
+          cat ${HOME}/.kube/config
+
       - name: Create secret of operator
         run: |
           kubectl create secret docker-registry kuberlogic-registry --docker-server=$REGISTRY_SERVER --docker-username=$REGISTRY_USER --docker-password=$REGISTRY_PASSWORD
