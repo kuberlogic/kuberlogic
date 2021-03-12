@@ -52,6 +52,12 @@ jobs:
         run: |
           kubectl wait --for=condition=Ready pods --all --timeout=2m
 
+      - name: Show pod status
+        run: |
+          kubectl get pods
+          k logs -l app=minio
+        if: ${{ failure() }}
+
       - name: Create test backet
         working-directory: ./modules/apiserver/tests
         run: |
