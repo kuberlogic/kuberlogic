@@ -9,8 +9,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-        with:
-          persist-credentials: false
 
       - name: Setup Git
         run: git config --global url."https://$PRIVATE_GITHUB_TOKEN:x-oauth-basic@github.com/kuberlogic".insteadOf "https://github.com/kuberlogic"
