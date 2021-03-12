@@ -34,3 +34,5 @@ jobs:
       - name: Run the tests
         working-directory: ./modules/apiserver/tests
         run: make test
+        env:
+          GOPRIVATE: "github.com/kuberlogic/*"
