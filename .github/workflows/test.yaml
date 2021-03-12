@@ -43,9 +43,8 @@ jobs:
           make deploy-dependencies
 
       - name: Waiting ready the pods
-        timeout-minutes: 2
         run: |
-          kubectl wait --for=condition=Ready pods --all
+          kubectl wait --for=condition=Ready pods --all --timeout=2m
 
       - name: Run the tests
         working-directory: ./modules/apiserver/tests
