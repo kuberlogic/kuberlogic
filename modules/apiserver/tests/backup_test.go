@@ -130,16 +130,32 @@ func (tb *TestBackup) CreateTable(ns, name, db, table string) func(t *testing.T)
 }
 
 func CreateBackup(t *testing.T, ns, name, type_ string) {
-	ip := os.Getenv("INTERNAL_MINIO_IP")
-	if ip == "" {
-		t.Error("minio ip must be defined")
+	endpoint, exists := os.LookupEnv("MINIO_ENDPOINT")
+	if !exists {
+		t.Errorf("endpoint must be exists")
+		return
+	}
+	accessKey, exists := os.LookupEnv("MINIO_ACCESS_KEY")
+	if !exists {
+		t.Errorf("accessKey must be exists")
+		return
+	}
+	secretKey, exists := os.LookupEnv("MINIO_SECRET_KEY")
+	if !exists {
+		t.Errorf("secretKey must be exists")
+		return
+	}
+	bucket, exists := os.LookupEnv("TEST_BUCKET")
+	if !exists {
+		t.Errorf("bucket must be exists")
+		return
 	}
 
 	tb := TestBackup{
-		accessKey: "minioadmin", // default credentials for the minio
-		secretKey: "minioadmin",
-		bucket:    "test", // should be created before tests
-		endpoint:  fmt.Sprintf("http://%s:9000", ip),
+		accessKey: accessKey,
+		secretKey: secretKey,
+		bucket:    bucket, // should be created before tests
+		endpoint:  endpoint,
 	}
 	ts := tService{ns: ns, name: name, type_: type_, force: false, replicas: 1}
 	tbc := TestBackupConfig{}

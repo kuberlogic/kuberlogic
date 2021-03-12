@@ -9,14 +9,20 @@ IMG_REPO = quay.io/kuberlogic
 # for postgresql is using service account
 IMG_PULL_SECRET = kuberlogic-registry
 
-KUBERLOGIC_APISERVER_LOG=kuberlogic.apiserver.log
-KUBERLOGIC_OPERATOR_LOG=kuberlogic.operator.log
+KUBERLOGIC_APISERVER_LOG = kuberlogic.apiserver.log
+KUBERLOGIC_OPERATOR_LOG = kuberlogic.operator.log
 
-DEBUG_LOGS = True
+KUBERLOGIC_DEBUGLOGS = True
 
 ARGS ?= "-short"
 
 INTERNAL_MINIO_IP=$(shell kubectl get pod -l app=minio -o go-template="{{range .items}}{{.status.podIP}}{{end}}")
+
+# access/secret also added in the deployment.yaml
+MINIO_ACCESS_KEY = BKIKJAA5BMMU2RHO6IBB
+MINIO_SECRET_KEY = V7f1CwQqAcwo80UEIJEjc5gVQUSSx5ohQ9GSrr12
+MINIO_ENDPOINT = http://$(INTERNAL_MINIO_IP):9000
+TEST_BUCKET ?= test
 
 test:
 	go test -parallel 2 -v -coverprofile=coverage.out -coverpkg="github.com/kuberlogic/..." -run "$(TEST)" -timeout 60m $(ARGS) ./...
@@ -28,7 +34,7 @@ test:
 	done
 
 build-minio:
-	docker build minio/ -t kuberlogic/minio
+	docker build minio/ -t kuberlogic/minio:v1 --build-arg MINIO_ACCESS_KEY=$(MINIO_ACCESS_KEY) --build-arg MINIO_SECRET_KEY=$(MINIO_SECRET_KEY)
 
 run-minio: build-minio
 	kubectl apply -f minio/deployment.yaml
@@ -37,4 +43,9 @@ internal-minio-ip:
 	@echo $$INTERNAL_MINIO_IP
 
 destroy-minio:
-	kubectl delete -f minio/deployment
+	kubectl delete -f minio/deployment.yaml
+
+create-bucket:
+	[ -f "./mc" ]  || wget https://dl.min.io/client/mc/release/linux-amd64/mc -O mc && chmod +x mc; \
+	./mc alias set minio $(MINIO_ENDPOINT) $(MINIO_ACCESS_KEY) $(MINIO_SECRET_KEY); \
+	./mc mb minio/$(TEST_BUCKET); \

@@ -21,7 +21,7 @@ type Config struct {
 			Url          string
 		} `envconfig:"optional"`
 	}
-	KubeconfigPath string `envconfig:"default=~/.kube/config"`
+	KubeconfigPath string `envconfig:"default=/root/.kube/config"`
 	DebugLogs      bool   `envconfig:"default=false"`
 }
 
