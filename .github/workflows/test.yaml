@@ -42,8 +42,8 @@ jobs:
         run: |
           make deploy-dependencies
 
-      - name: Waiting to Ready the pods
-        timeout-minutes: 5
+      - name: Waiting ready the pods
+        timeout-minutes: 2
         run: |
           kubectl wait --for=condition=Ready pods --all
 
