@@ -28,6 +28,9 @@ jobs:
           make deploy-dependencies
           kubectl wait --for=condition=Ready pods --all
 
+      - name: Setup Git
+        run: git config --global url."https://${{ secrets.TOKEN }}:@github.com/".insteadOf "https://github.com"
+
       - name: Run the tests
         working-directory: ./modules/apiserver/tests
         run: make test

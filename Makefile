@@ -78,7 +78,7 @@ undeploy:
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
 deploy-dependencies: manifests kustomize
-	$(KUSTOMIZE) build config/only-deps | kubectl apply -f -
+	$(KUSTOMIZE) build config/dependencies | kubectl apply -f -
 
 
 # Generate manifests e.g. CRD, RBAC etc.
