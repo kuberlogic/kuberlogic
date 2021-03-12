@@ -29,10 +29,10 @@ jobs:
           kubectl wait --for=condition=Ready pods --all
 
       - name: Setup Git
-        run: git config --global url."https://${{ secrets.TOKEN }}:@github.com/".insteadOf "https://github.com"
+        run: git config --global url."https://${{ secrets.TOKEN }}:x-oauth-basic@github.com/kuberlogic".insteadOf "https://github.com/kuberlogic"
 
       - name: Run the tests
         working-directory: ./modules/apiserver/tests
         run: make test
-        env:
-          GOPRIVATE: "github.com/kuberlogic/*"
+#        env:
+#          GOPRIVATE: "github.com/kuberlogic/*"
