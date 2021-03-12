@@ -10,7 +10,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Setup Git
+      - name: Setup Git credentials
         run: |
           git config --global url."https://$PRIVATE_GITHUB_TOKEN:x-oauth-basic@github.com/kuberlogic".insteadOf "https://github.com/kuberlogic"
         env:
@@ -50,3 +50,10 @@ jobs:
         working-directory: ./modules/apiserver/tests
         run: |
           make test
+
+      - name: Archive logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: log
+          path: |
+            ./modules/apiserver/tests/*.log
