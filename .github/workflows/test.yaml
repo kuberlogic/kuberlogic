@@ -8,7 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
       - name: Setup Minikube
         uses: manusa/actions-setup-minikube@v2.3.0
         with:
@@ -29,12 +31,12 @@ jobs:
           kubectl wait --for=condition=Ready pods --all
 
       - name: Setup Git
-        run: git config --global url."https://$env:GITHUB_TOKEN:x-oauth-basic@github.com/kuberlogic".insteadOf "https://github.com/kuberlogic"
+        run: git config --global url."https://:$env:GITHUB_TOKEN@github.com/kuberlogic".insteadOf "https://github.com/kuberlogic"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run the tests
         working-directory: ./modules/apiserver/tests
         run: make test
-#        env:
-#          GOPRIVATE: "github.com/kuberlogic/*"
+        env:
+          GOPRIVATE: "github.com/kuberlogic/*"
