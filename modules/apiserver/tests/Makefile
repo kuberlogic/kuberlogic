@@ -9,8 +9,8 @@ IMG_REPO = quay.io/kuberlogic
 # for postgresql is using service account
 IMG_PULL_SECRET = kuberlogic-registry
 
-KUBERLOGIC_APISERVER_LOG=/var/log/kuberlogic.apiserver.log
-KUBERLOGIC_OPERATOR_LOG=/var/log/kuberlogic.operator.log
+KUBERLOGIC_APISERVER_LOG=kuberlogic.apiserver.log
+KUBERLOGIC_OPERATOR_LOG=kuberlogic.operator.log
 
 DEBUG_LOGS = True
 
