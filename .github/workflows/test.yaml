@@ -34,7 +34,7 @@ jobs:
       - name: Setup Git
         run: git config --global url."https://$env:PRIVATE_GITHUB_TOKEN:x-oauth-basic@github.com/kuberlogic".insteadOf "https://github.com/kuberlogic"
         env:
-          GITHUB_TOKEN: ${{ secrets.PRIVATE_GITHUB_TOKEN }}
+          PRIVATE_GITHUB_TOKEN: ${{ secrets.PRIVATE_GITHUB_TOKEN }}
 
       - name: Get dependencies
         working-directory: ./modules/apiserver
