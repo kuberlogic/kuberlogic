@@ -46,6 +46,7 @@ jobs:
       - name: Setup minio for backup storage
         working-directory: ./modules/apiserver/tests
         run: |
+          minikube docker-env
           make run-minio
 
       - name: Waiting ready the pods
@@ -55,7 +56,7 @@ jobs:
       - name: Show pod status
         run: |
           kubectl get pods
-          k logs -l app=minio
+          kubectl logs -l app=minio
         if: ${{ failure() }}
 
       - name: Create test backet
