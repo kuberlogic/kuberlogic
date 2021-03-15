@@ -23,7 +23,7 @@ INTERNAL_MINIO_IP=$(shell kubectl get pod -l app=minio -o go-template="{{range .
 MINIO_ACCESS_KEY = BKIKJAA5BMMU2RHO6IBB
 MINIO_SECRET_KEY = V7f1CwQqAcwo80UEIJEjc5gVQUSSx5ohQ9GSrr12
 MINIO_ENDPOINT = http://$(INTERNAL_MINIO_IP):9000
-TEST_BUCKET ?= test
+BUCKET ?= test
 
 test:
 	go test -parallel 2 -v -coverprofile=coverage.out -coverpkg="github.com/kuberlogic/..." -run "$(TEST)" -timeout 60m $(ARGS) ./...
@@ -43,8 +43,8 @@ push-minio:
 deploy-minio:
 	kubectl apply -f minio/deployment.yaml
 
-internal-minio-ip:
-	@echo $$INTERNAL_MINIO_IP
+endpoint-minio:
+	@echo $(MINIO_ENDPOINT)
 
 destroy-minio:
 	kubectl delete -f minio/deployment.yaml
@@ -52,4 +52,10 @@ destroy-minio:
 create-bucket:
 	[ -f "./mc" ]  || wget https://dl.min.io/client/mc/release/linux-amd64/mc -O mc && chmod +x mc; \
 	./mc alias set minio $(MINIO_ENDPOINT) $(MINIO_ACCESS_KEY) $(MINIO_SECRET_KEY); \
-	./mc mb minio/$(TEST_BUCKET); \
+	./mc mb minio/$(BUCKET); \
+
+show-minio-credentials:
+	@echo "Endpoint:" $(MINIO_ENDPOINT)
+	@echo "Access Key:" $(MINIO_ACCESS_KEY)
+	@echo "Secret access key:" $(MINIO_SECRET_KEY)
+	@echo "Default bucket:" $(BUCKET)
