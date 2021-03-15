@@ -234,7 +234,6 @@ func getServiceInstanceLogs(c *kubernetes.Clientset, cm *kuberlogicv1.KuberLogic
 
 	for _, p := range append(instances) {
 		if p.Name == instance {
-
 			container, _ := util.GetClusterMainContainer(cm)
 			logs, err = k8s.GetPodLogs(c, log, p.Name, container, cm.Namespace, lines)
 			if err != nil {

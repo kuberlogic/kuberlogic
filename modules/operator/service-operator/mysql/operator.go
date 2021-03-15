@@ -1,16 +1,16 @@
 package mysql
 
 import (
-	"fmt"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	"github.com/kuberlogic/operator/modules/operator/util"
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
-	util2 "github.com/presslabs/mysql-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -29,6 +29,28 @@ const (
 
 type Mysql struct {
 	Operator mysqlv1.MysqlCluster
+}
+
+func (p *Mysql) GetBackupSchedule() interfaces.BackupSchedule {
+	return &Backup{
+		Cluster: p,
+	}
+}
+
+func (p *Mysql) GetBackupRestore() interfaces.BackupRestore {
+	return &Restore{
+		Cluster: p,
+	}
+}
+
+func (p *Mysql) GetInternalDetails() interfaces.InternalDetails {
+	return &InternalDetails{
+		Cluster: p,
+	}
+}
+
+func (p *Mysql) GetSession(cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (interfaces.Session, error) {
+	return NewSession(p, cm, client, db)
 }
 
 func (p *Mysql) Name(cm *kuberlogicv1.KuberLogicService) string {
@@ -224,58 +246,6 @@ func (p *Mysql) CurrentStatus() string {
 	default:
 		return kuberlogicv1.ClusterUnknownStatus
 	}
-}
-
-func (p *Mysql) GetPodReplicaSelector() map[string]string {
-	return map[string]string{
-		mysqlRoleKey:     mysqlRoleReplica,
-		mysqlPodLabelKey: p.Operator.ObjectMeta.Name,
-	}
-}
-
-func (p *Mysql) GetPodMasterSelector() map[string]string {
-	return map[string]string{
-		mysqlRoleKey:     mysqlRoleMaster,
-		mysqlPodLabelKey: p.Operator.ObjectMeta.Name,
-	}
-}
-
-func (p *Mysql) GetMasterService() string {
-	return fmt.Sprintf("%s-mysql-master", p.Operator.ObjectMeta.Name)
-}
-
-func (p *Mysql) GetReplicaService() string {
-	return fmt.Sprintf("%s-mysql-replicas", p.Operator.ObjectMeta.Name)
-}
-
-func (p *Mysql) GetAccessPort() int {
-	return mysqlPort
-}
-
-func (p *Mysql) GetMainPodContainer() string {
-	return mysqlMainContainer
-}
-
-func (p *Mysql) GetDefaultConnectionPassword() (secret, passwordField string) {
-	return p.Operator.Spec.SecretName, "PASSWORD"
-}
-
-func (p *Mysql) GetCredentialsSecret() (*corev1.Secret, error) {
-	rootPassword := util2.RandomString(15)
-	userName := kuberlogicv1.DefaultUser
-	userPassword := util2.RandomString(15)
-
-	return &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      genCredentialsSecretName(p.Operator.ObjectMeta.Name),
-			Namespace: p.Operator.ObjectMeta.Namespace,
-		},
-		StringData: map[string]string{
-			"ROOT_PASSWORD": rootPassword,
-			"USER":          userName,
-			"PASSWORD":      userPassword,
-		},
-	}, nil
 }
 
 func genCredentialsSecretName(cluster string) string {

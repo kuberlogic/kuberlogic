@@ -48,7 +48,8 @@ all: manager
 
 # Run tests
 test: generate fmt vet manifests
-	go test ./... -coverprofile cover.out
+	cd modules/operator; \
+	go test ./... -coverprofile cover.out ;\
 
 # Build manager binary
 manager: generate fmt vet
@@ -56,7 +57,8 @@ manager: generate fmt vet
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet manifests
-	go run ./main.go
+	cd modules/operator ;\
+	go run main.go ;\
 
 # Install CRDs into a cluster
 install: manifests kustomize
@@ -77,19 +79,23 @@ undeploy:
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	cd modules/operator; \
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases ;\
 
 # Run go fmt against code
 fmt:
-	go fmt ./...
+	cd modules/operator ;\
+	go fmt ./... ;\
 
 # Run go vet against code
 vet:
-	go vet ./...
+	cd modules/operator ; \
+	go vet ./... ; \
+
 
 # Generate code
 generate: controller-gen
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="modules/operator/..."
 
 # Build the operator images
 operator-build:
@@ -138,10 +144,19 @@ docker-push: operator-push backup-push restore-push
 	#
 
 refresh-go-sum:
-	for module in operator updater alert-receiver watcher; do \
+	for module in operator updater alert-receiver watcher apiserver; do \
   		cd ./modules/$${module}; \
   		go clean -modcache; \
   		go mod tidy; \
+  		cd -; \
+	done
+
+bump-operator-version:
+	set -o errexit; \
+	for module in updater alert-receiver watcher apiserver; do \
+  		echo "Entering into" $${module}; \
+	  	cd ./modules/$${module}; \
+  		go get github.com/kuberlogic/operator/modules/operator@${BRANCH}; \
   		cd -; \
 	done
 

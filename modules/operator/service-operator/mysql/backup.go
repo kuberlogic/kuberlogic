@@ -14,7 +14,7 @@ const (
 
 type Backup struct {
 	base.BaseBackup
-	Cluster Mysql
+	Cluster *Mysql
 }
 
 func (p *Backup) SetBackupImage() {

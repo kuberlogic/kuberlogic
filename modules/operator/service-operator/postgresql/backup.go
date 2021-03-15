@@ -18,7 +18,7 @@ const (
 
 type Backup struct {
 	base.BaseBackup
-	Cluster Postgres
+	Cluster *Postgres
 }
 
 func (p *Backup) SetBackupImage() {

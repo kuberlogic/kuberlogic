@@ -367,7 +367,7 @@ func init() {
             "$ref": "#/parameters/ServiceID"
           },
           {
-            "description": "Backup credential item to edit",
+            "description": "BaseBackup credential item to edit",
             "name": "BackupConfig",
             "in": "body",
             "required": true,
@@ -421,7 +421,7 @@ func init() {
             "$ref": "#/parameters/ServiceID"
           },
           {
-            "description": "Backup credential item to create",
+            "description": "BaseBackup credential item to create",
             "name": "BackupConfig",
             "in": "body",
             "required": true,
@@ -525,7 +525,7 @@ func init() {
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/Backup"
+                "$ref": "#/definitions/BaseBackup"
               }
             }
           },
@@ -1051,7 +1051,7 @@ func init() {
         "type": "string"
       }
     },
-    "Backup": {
+    "BaseBackup": {
       "type": "object",
       "required": [
         "key",
@@ -1756,7 +1756,7 @@ func init() {
             "required": true
           },
           {
-            "description": "Backup credential item to edit",
+            "description": "BaseBackup credential item to edit",
             "name": "BackupConfig",
             "in": "body",
             "required": true,
@@ -1815,7 +1815,7 @@ func init() {
             "required": true
           },
           {
-            "description": "Backup credential item to create",
+            "description": "BaseBackup credential item to create",
             "name": "BackupConfig",
             "in": "body",
             "required": true,
@@ -1929,7 +1929,7 @@ func init() {
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/Backup"
+                "$ref": "#/definitions/BaseBackup"
               }
             }
           },
@@ -2500,7 +2500,7 @@ func init() {
         "type": "string"
       }
     },
-    "Backup": {
+    "BaseBackup": {
       "type": "object",
       "required": [
         "key",

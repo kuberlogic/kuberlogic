@@ -7,6 +7,7 @@ import (
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
 	"github.com/kuberlogic/operator/modules/operator/service-operator"
+	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	v1 "k8s.io/api/batch/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -89,15 +90,11 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Re
 	}
 	op.InitFrom(found)
 
-	restoreOperator, err := service_operator.GetRestoreOperator(op)
-	if err != nil {
-		log.Error(err, "Could not define the backup operator")
-		return ctrl.Result{}, err
-	}
-	restoreOperator.SetRestoreImage()
-	restoreOperator.SetRestoreEnv(klr)
+	backupRestore := op.GetBackupRestore()
+	backupRestore.SetRestoreImage()
+	backupRestore.SetRestoreEnv(klr)
 
-	job := restoreOperator.GetJob()
+	job := backupRestore.GetJob()
 	err = r.Get(ctx,
 		types.NamespacedName{
 			Name:      klr.Name,
@@ -105,13 +102,13 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Re
 		},
 		job)
 	if err != nil && k8serrors.IsNotFound(err) {
-		dep, err := r.defineJob(restoreOperator, klr)
+		dep, err := r.defineJob(backupRestore, klr)
 		if err != nil {
 			log.Error(err, "Could not generate job", "Name", klr.Name)
 			return ctrl.Result{}, err
 		}
 
-		log.Info("Creating a new Restore resource", "Name", klr.Name)
+		log.Info("Creating a new BackupRestore resource", "Name", klr.Name)
 		err = r.Create(ctx, dep)
 		if err != nil && k8serrors.IsAlreadyExists(err) {
 			log.Info("Job already exists", "Name", klr.Name)
@@ -124,8 +121,8 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Re
 			return ctrl.Result{Requeue: true}, nil
 		}
 	}
-	restoreOperator.InitFrom(job)
-	status := restoreOperator.CurrentStatus()
+	backupRestore.InitFrom(job)
+	status := backupRestore.CurrentStatus()
 	if !klr.IsEqual(status) {
 		klr.SetStatus(status)
 		err = r.Update(ctx, klr)
@@ -143,7 +140,7 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Re
 	return ctrl.Result{}, nil
 }
 
-func (r *KuberLogicBackupRestoreReconciler) defineJob(op service_operator.Restore, cr *kuberlogicv1.KuberLogicBackupRestore) (*v1.Job, error) {
+func (r *KuberLogicBackupRestoreReconciler) defineJob(op interfaces.BackupRestore, cr *kuberlogicv1.KuberLogicBackupRestore) (*v1.Job, error) {
 
 	op.Init(cr)
 

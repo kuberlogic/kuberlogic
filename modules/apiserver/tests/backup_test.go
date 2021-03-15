@@ -3,7 +3,7 @@ package tests
 import (
 	"fmt"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
-	"github.com/kuberlogic/operator/modules/watcher/api"
+	"github.com/kuberlogic/operator/modules/operator/service-operator/util/kuberlogic"
 	"net/http"
 	"os"
 	"testing"
@@ -115,13 +115,13 @@ func (tb *TestBackup) CreateTable(ns, name, db, table string) func(t *testing.T)
 			return
 		}
 
-		session, err := api.GetSession(resource, client, db, table)
+		session, err := kuberlogic.GetSession(resource, client, db)
 		if err != nil {
 			t.Errorf("cannot get session:%s", err)
 			return
 		}
 
-		err = session.CreateTable()
+		err = session.CreateTable(table)
 		if err != nil {
 			t.Errorf("cannot create table: %s", err)
 			return

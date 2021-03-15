@@ -16,8 +16,7 @@ require (
 	github.com/go-openapi/swag v0.19.12
 	github.com/go-openapi/validate v0.19.15
 	github.com/jessevdk/go-flags v1.4.0
-	github.com/kuberlogic/operator/modules/operator v0.0.0-20210303124750-682a7786f32b
-	github.com/kuberlogic/operator/modules/watcher v0.0.0-20210303124750-682a7786f32b
+	github.com/kuberlogic/operator/modules/operator v0.0.0-20210311121602-e60ca79f5d68
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/common v0.4.1
 	github.com/vrischmann/envconfig v1.3.0
