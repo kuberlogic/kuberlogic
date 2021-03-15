@@ -4,6 +4,7 @@ KUBERLOGIC_AUTH_PROVIDER = none
 
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
+IMG = $(IMG_REPO)/minio:1.0.0
 
 # default secrets with credetials to private repo (using for mysql/redis)
 # for postgresql is using service account
@@ -34,9 +35,12 @@ test:
 	done
 
 build-minio:
-	docker build minio/ -t kuberlogic/minio:v1 --build-arg MINIO_ACCESS_KEY=$(MINIO_ACCESS_KEY) --build-arg MINIO_SECRET_KEY=$(MINIO_SECRET_KEY)
+	docker build minio/ -t $(IMG) --build-arg MINIO_ACCESS_KEY=$(MINIO_ACCESS_KEY) --build-arg MINIO_SECRET_KEY=$(MINIO_SECRET_KEY)
 
-run-minio: build-minio
+push-minio:
+	docker push $(IMG)
+
+deploy-minio:
 	kubectl apply -f minio/deployment.yaml
 
 internal-minio-ip:

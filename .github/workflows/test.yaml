@@ -29,7 +29,7 @@ jobs:
           minikube version: 'v1.16.0'
           kubernetes version: 'v1.19.2'
           github token: ${{ secrets.GITHUB_TOKEN }}
-          driver: docker
+#          driver: docker
 
       - name: Create secret of operator
         run: |
@@ -46,8 +46,7 @@ jobs:
       - name: Setup minio for backup storage
         working-directory: ./modules/apiserver/tests
         run: |
-          minikube docker-env
-          make run-minio
+          make deploy-minio
 
       - name: Waiting ready the pods
         run: |
@@ -57,6 +56,7 @@ jobs:
         run: |
           kubectl get pods
           kubectl logs -l app=minio
+          docker images
         if: ${{ failure() }}
 
       - name: Create test backet

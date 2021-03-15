@@ -19,8 +19,8 @@ spec:
             path: /mnt/minio/
       containers:
         - name: minio
-          image: kuberlogic/minio:v1
-          imagePullPolicy: Never
+          image: quay.io/kuberlogic/minio:1.0.0
+#          imagePullPolicy: Never
           command: ["minio", "server"]
           args: ["/data"]
           volumeMounts:
