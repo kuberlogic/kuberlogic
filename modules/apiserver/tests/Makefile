@@ -27,11 +27,12 @@ MINIO_ENDPOINT = http://$(INTERNAL_MINIO_IP):9000
 BUCKET ?= test
 
 test:
+	set -o pipefail; \
 	REGEX='(mysql|postgresql)$$'; \
 	if [[ "$(RUN)" =~ $$REGEX ]]; then \
 		export SERVICE_TYPE=$$BASH_REMATCH; \
 	fi; \
-	go test -v -coverprofile=coverage.out -coverpkg="github.com/kuberlogic/..." -run "$(RUN)" -timeout 60m $(ARGS) ./... ;\
+	go test -v -coverprofile=coverage.out -coverpkg="github.com/kuberlogic/..." -run "$(RUN)" -timeout 60m -failfast $(ARGS) ./... ;\
 	mkdir -p html/ ;\
 	for pkg in apiserver operator; do \
 		echo "mode: set" > $${pkg}.out; \
