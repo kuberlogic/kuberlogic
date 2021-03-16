@@ -601,7 +601,7 @@ paths:
           description: internal server error
           schema:
             $ref: "#/definitions/Error"
-  /services/{ServiceID}/restore:
+  /services/{ServiceID}/restores:
     post:
       tags:
         - service
@@ -643,21 +643,69 @@ paths:
           schema:
             $ref: "#/definitions/Error"
 
+    get:
+      tags:
+        - service
+      operationId: restoreList
+      parameters:
+        - $ref: "#/parameters/ServiceID"
+      security:
+        - Bearer: [ ]
+      responses:
+        200:
+          description: search results matching criteria
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Restore"
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        404:
+          description: item not found
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
+
 definitions:
   Backup:
     type: object
     required:
-      - key
+      - file
       - size
       - lastModified
     properties:
-      key:
+      file:
         type: string
       size:
         type: integer
       lastModified:
         type: string
         format: date-time
+
+  Restore:
+    type: object
+    required:
+      - file
+      - database
+      - time
+      - status
+    properties:
+      file:
+        type: string
+      database:
+        type: string
+      time:
+        type: string
+        format: date-time
+      status:
+        format: string
 
   Log:
     type: object
