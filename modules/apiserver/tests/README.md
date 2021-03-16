@@ -1,21 +1,39 @@
-Installation:
+## Installation
 
-```
-# needed for the backup/restore tests
-$ make run-minio 
-```
-Examples:
-* all test with the single cluster instance -- use the short-test
-```
-$ make short-test
+For the backup & restore tests you need to configure storage:
+```bash
+make deploy-minio 
+make create-bucket 
 ```
 
-* test only the Service
-```
-$ make short-test TEST=TestService
+If you need to know backup credentials you can execute
+
+```bash
+make show-minio-credentials
 ```
 
-* test only the Postgresql Service
+## Examples
+
+* all test with the single cluster instance
+
+```bash
+make test
 ```
-$ make short-test TEST=TestService/postgresql
+
+* run only the Service tests (for all services: postgresql, mysql, etc.)
+
+```bash
+make test RUN=TestService
+```
+
+* run all tests for Postgresql
+
+```bash
+make test RUN=/postgresql
+```
+
+* run only the Postgresql DB tests
+
+```bash
+make test RUN=TestDb/postgresql
 ```

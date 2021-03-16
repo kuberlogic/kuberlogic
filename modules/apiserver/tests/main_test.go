@@ -24,7 +24,7 @@ var services = []Service{
 	mysqlService,
 }
 
-func setup() {
+func setup(serviceType string) {
 	args := []string{"--scheme=http"}
 	log.Info("Starting the apiserver in the goroutine...")
 	go cmd2.Main(args) // start the api server
@@ -34,15 +34,15 @@ func setup() {
 	time.Sleep(15 * time.Second)
 
 	if testing.Short() {
-		parallelFunc(createService)
+		parallelFunc(serviceType, createService)
 	}
 
 	//wait(60 * 60)(&testing.T{}) // for the manual tests
 }
 
-func tearDown() {
+func tearDown(serviceType string) {
 	if testing.Short() {
-		parallelFunc(deleteService)
+		parallelFunc(serviceType, deleteService)
 	}
 }
 
@@ -59,22 +59,26 @@ func deleteService(service Service) {
 	ts.Delete(&testing.T{})
 }
 
-func parallelFunc(f func(service Service)) {
+func parallelFunc(serviceType string, f func(service Service)) {
 	var wg sync.WaitGroup
-	wg.Add(len(services))
 
 	for _, s := range services {
-		go func(svc Service) {
-			defer wg.Done()
-			f(svc)
-		}(s)
+		if serviceType == "" || serviceType == s.type_ {
+			wg.Add(1)
+			go func(svc Service) {
+				defer wg.Done()
+				f(svc)
+			}(s)
+		}
 	}
 	wg.Wait()
 }
 
 func TestMain(m *testing.M) {
-	setup()
+	serviceType := os.Getenv("SERVICE_TYPE")
+
+	setup(serviceType)
 	code := m.Run()
-	tearDown()
+	tearDown(serviceType)
 	os.Exit(code)
 }

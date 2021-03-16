@@ -23,6 +23,31 @@ type tService struct {
 	force       bool
 }
 
+var pgTestService = tService{
+	ns:          pgService.ns,
+	name:        pgService.name,
+	type_:       pgService.type_,
+	newReplicas: 1,
+	replicas:    0,
+	newConf:     map[string]string{"shared_buffers": "16MB", "max_connections": "50"},
+	conf:        map[string]string{"shared_buffers": "32MB", "max_connections": "10"},
+	limits:      map[string]string{"cpu": "250m", "memory": "250Mi", "volumeSize": "1Gi"},
+	newLimits:   map[string]string{"cpu": "300m", "memory": "300Mi", "volumeSize": "1Gi"},
+	force:       false, // do not create a service
+}
+var mysqlTestService = tService{
+	ns:          mysqlService.ns,
+	name:        mysqlService.name,
+	type_:       mysqlService.type_,
+	newReplicas: 1,
+	replicas:    0,
+	newConf:     map[string]string{"max_allowed_packet": "64Mb"},
+	conf:        map[string]string{"max_allowed_packet": "32Mb"},
+	limits:      map[string]string{"cpu": "250m", "memory": "250Mi", "volumeSize": "1Gi"},
+	newLimits:   map[string]string{"cpu": "300m", "memory": "300Mi", "volumeSize": "1Gi"},
+	force:       false, // do not create a service
+}
+
 func TestDoesNotAllowMethodDelete(t *testing.T) {
 	api := newApi(t)
 	api.sendRequestTo(http.MethodDelete, "/services/")
@@ -278,7 +303,7 @@ func (s *tService) EmptyListOfServices(t *testing.T) {
 	api.lengthOfResponseIs(0)
 }
 
-func CreateService(ts tService) func(t *testing.T) {
+func makeTestService(ts tService) func(t *testing.T) {
 	return func(t *testing.T) {
 		steps := []func(t *testing.T){
 			ts.Create,
@@ -321,32 +346,7 @@ func CreateService(ts tService) func(t *testing.T) {
 }
 
 func TestService(t *testing.T) {
-	t.Parallel() // TODO: figure out why it does not work
-	pgTestService := tService{
-		ns:          pgService.ns,
-		name:        pgService.name,
-		type_:       pgService.type_,
-		newReplicas: 1,
-		replicas:    0,
-		newConf:     map[string]string{"shared_buffers": "16MB", "max_connections": "50"},
-		conf:        map[string]string{"shared_buffers": "32MB", "max_connections": "10"},
-		limits:      map[string]string{"cpu": "250m", "memory": "250Mi", "volumeSize": "1Gi"},
-		newLimits:   map[string]string{"cpu": "300m", "memory": "300Mi", "volumeSize": "1Gi"},
-		force:       false, // do not create a service
-	}
-	mysqlTestService := tService{
-		ns:          mysqlService.ns,
-		name:        mysqlService.name,
-		type_:       mysqlService.type_,
-		newReplicas: 1,
-		replicas:    0,
-		newConf:     map[string]string{"max_allowed_packet": "64Mb"},
-		conf:        map[string]string{"max_allowed_packet": "32Mb"},
-		limits:      map[string]string{"cpu": "250m", "memory": "250Mi", "volumeSize": "1Gi"},
-		newLimits:   map[string]string{"cpu": "300m", "memory": "300Mi", "volumeSize": "1Gi"},
-		force:       false, // do not create a service
-	}
 	for _, svc := range []tService{pgTestService, mysqlTestService} {
-		t.Run(svc.type_, CreateService(svc))
+		t.Run(svc.type_, makeTestService(svc))
 	}
 }

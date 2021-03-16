@@ -1,4 +1,5 @@
 .EXPORT_ALL_VARIABLES:
+SHELL := /bin/bash
 
 KUBERLOGIC_AUTH_PROVIDER = none
 
@@ -15,7 +16,7 @@ KUBERLOGIC_OPERATOR_LOG = kuberlogic.operator.log
 
 KUBERLOGIC_DEBUGLOGS = True
 
-ARGS ?= "-short"
+ARGS ?= -short
 
 INTERNAL_MINIO_IP=$(shell kubectl get pod -l app=minio -o go-template="{{range .items}}{{.status.podIP}}{{end}}")
 
@@ -26,8 +27,12 @@ MINIO_ENDPOINT = http://$(INTERNAL_MINIO_IP):9000
 BUCKET ?= test
 
 test:
-	go test -parallel 2 -v -coverprofile=coverage.out -coverpkg="github.com/kuberlogic/..." -run "$(TEST)" -timeout 60m $(ARGS) ./...
-	mkdir -p html/
+	REGEX='(mysql|postgresql)$$'; \
+	if [[ "$(RUN)" =~ $$REGEX ]]; then \
+		export SERVICE_TYPE=$$BASH_REMATCH; \
+	fi; \
+	go test -v -coverprofile=coverage.out -coverpkg="github.com/kuberlogic/..." -run "$(RUN)" -timeout 60m $(ARGS) ./... ;\
+	mkdir -p html/ ;\
 	for pkg in apiserver operator; do \
 		echo "mode: set" > $${pkg}.out; \
 		cat coverage.out | grep "github.com/kuberlogic/$${pkg}" >> $${pkg}.out; \
@@ -55,7 +60,7 @@ create-bucket:
 	./mc mb minio/$(BUCKET); \
 
 show-minio-credentials:
+	@echo "AWS_ACCESS_KEY_ID:" $(MINIO_ACCESS_KEY)
+	@echo "AWS_SECRET_ACCESS_KEY:" $(MINIO_SECRET_KEY)
 	@echo "Endpoint:" $(MINIO_ENDPOINT)
-	@echo "Access Key:" $(MINIO_ACCESS_KEY)
-	@echo "Secret access key:" $(MINIO_SECRET_KEY)
 	@echo "Default bucket:" $(BUCKET)
