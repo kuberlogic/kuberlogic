@@ -35,7 +35,7 @@ func NewDatabaseRestore(ctx *middleware.Context, handler DatabaseRestoreHandler)
 	return &DatabaseRestore{Context: ctx, Handler: handler}
 }
 
-/*DatabaseRestore swagger:route POST /services/{ServiceID}/restore service databaseRestore
+/*DatabaseRestore swagger:route POST /services/{ServiceID}/restores service databaseRestore
 
 DatabaseRestore database restore API
 

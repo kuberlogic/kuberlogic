@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/kuberlogic/operator/modules/operator/util"
 	"k8s.io/client-go/kubernetes"
-	"os"
 
 	"github.com/go-chi/chi"
 	"github.com/jessevdk/go-flags"
@@ -86,6 +87,7 @@ func Main(args []string) {
 	api.ServiceDatabaseRestoreHandler = apiService.DatabaseRestoreHandlerFunc(srv.DatabaseRestoreHandler)
 	api.AuthLoginUserHandler = apiAuth.LoginUserHandlerFunc(srv.LoginUserHandler)
 	api.ServiceLogsGetHandler = apiService.LogsGetHandlerFunc(srv.LogsGetHandler)
+	api.ServiceRestoreListHandler = apiService.RestoreListHandlerFunc(srv.RestoreListHandler)
 	api.ServiceServiceAddHandler = apiService.ServiceAddHandlerFunc(srv.ServiceAddHandler)
 	api.ServiceServiceDeleteHandler = apiService.ServiceDeleteHandlerFunc(srv.ServiceDeleteHandler)
 	api.ServiceServiceEditHandler = apiService.ServiceEditHandlerFunc(srv.ServiceEditHandler)
