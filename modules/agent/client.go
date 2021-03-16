@@ -1,7 +1,7 @@
 package main
 
 import (
-	"agent/client"
+	"github.com/kuberlogic/operator/modules/agent/client"
 	"log"
 	"os"
 )
@@ -9,7 +9,7 @@ import (
 func main() {
 	c, err := client.NewClient(
 		os.Getenv("NAME"),
-		"localhost:18888",
+		os.Getenv("CONTROLLER_ADDR"),
 		os.Getenv("INIT_ONLY") != "")
 	if err != nil {
 		log.Fatal(err)
