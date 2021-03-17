@@ -79,6 +79,9 @@ func TestMain(m *testing.M) {
 
 	setup(serviceType)
 	code := m.Run()
-	tearDown(serviceType)
+	if code == 0 {
+		// no need destroy if the tests are failed
+		tearDown(serviceType)
+	}
 	os.Exit(code)
 }
