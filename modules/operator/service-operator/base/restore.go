@@ -6,6 +6,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 )
 
 type BaseRestore struct {
@@ -35,7 +36,7 @@ func (r *BaseRestore) CurrentStatus() *kuberlogicv1.KuberLogicBackupRestoreStatu
 		case batchv1.JobFailed:
 			s.Status = kuberlogicv1.BackupFailedStatus
 		}
-		s.CompletionTime = lastCondition.LastTransitionTime.String()
+		s.CompletionTime = lastCondition.LastTransitionTime.Format(time.RFC3339)
 	} else {
 		if r.Job.Status.Active > 0 {
 			s.Status = kuberlogicv1.BackupRunningStatus
