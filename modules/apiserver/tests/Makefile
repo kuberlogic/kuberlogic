@@ -1,5 +1,4 @@
 .EXPORT_ALL_VARIABLES:
-SHELL := /bin/bash
 
 KUBERLOGIC_AUTH_PROVIDER = none
 
@@ -26,12 +25,15 @@ MINIO_SECRET_KEY = V7f1CwQqAcwo80UEIJEjc5gVQUSSx5ohQ9GSrr12
 MINIO_ENDPOINT = http://$(INTERNAL_MINIO_IP):9000
 BUCKET ?= test
 
-test:
-	set -o pipefail; \
+# provides additional info about specific service what kind of tests need to run
+export_service_type: SHELL := /bin/bash
+export_service_type:
 	REGEX='(mysql|postgresql)$$'; \
 	if [[ "$(RUN)" =~ $$REGEX ]]; then \
 		export SERVICE_TYPE=$$BASH_REMATCH; \
-	fi; \
+	fi
+
+test: export_service_type
 	go test -v -coverprofile=coverage.out -coverpkg="github.com/kuberlogic/..." -run "$(RUN)" -timeout 60m -failfast $(ARGS) ./... ;\
 	mkdir -p html/ ;\
 	for pkg in apiserver operator; do \
