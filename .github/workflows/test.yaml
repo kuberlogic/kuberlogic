@@ -71,7 +71,17 @@ jobs:
       - name: Show status
         run: |
           kubectl get pod,kls,klr,klb,sts,deploy,svc
-        if: ${{ failure() }}
+#        if: ${{ failure() }}
+        if: ${{ always() }}
+
+      - name: Generating logs
+        run: |
+          kubectl logs -l name=postgres-operator --tail=-1 > postgres-operator.log
+          kubectl logs -l app=mysql-operator -c mysql-operator --tail=-1 > mysql-operator.log
+          kubectl describe pod -l name=postgres-operator > postgres-operator.describe.log
+          kubectl describe pod -l app=mysql-operator > mysql-operator.describe.log
+          kubectl get pod > pod-status.log
+        if: ${{ always() }}
 
       - name: Archive logs
         uses: actions/upload-artifact@v2

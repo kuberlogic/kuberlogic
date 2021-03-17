@@ -18,6 +18,7 @@ KUBERLOGIC_DEBUGLOGS = True
 ARGS ?= -short
 
 INTERNAL_MINIO_IP=$(shell kubectl get pod -l app=minio -o go-template="{{range .items}}{{.status.podIP}}{{end}}")
+SERVICE_TYPE = $(shell bash -c "./service-type.sh $(RUN)")
 
 # access/secret also added in the deployment.yaml
 MINIO_ACCESS_KEY = BKIKJAA5BMMU2RHO6IBB
@@ -27,8 +28,6 @@ BUCKET ?= test
 
 # provides additional info about specific service what kind of tests need to run
 test:
-	@chmod +x service-type.sh; \
-	$(eval SERVICE_TYPE=$(shell ./service-type.sh $(RUN)))
 	go test -v -coverprofile=coverage.out -coverpkg="github.com/kuberlogic/..." -run "$(RUN)" -timeout 60m -failfast $(ARGS) ./... ;\
 	mkdir -p html/ ;\
 	for pkg in apiserver operator; do \
