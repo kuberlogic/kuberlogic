@@ -26,14 +26,8 @@ MINIO_ENDPOINT = http://$(INTERNAL_MINIO_IP):9000
 BUCKET ?= test
 
 # provides additional info about specific service what kind of tests need to run
-export_service_type: SHELL := /bin/bash
-export_service_type:
-	REGEX='(mysql|postgresql)$$'; \
-	if [[ "$(RUN)" =~ $$REGEX ]]; then \
-		export SERVICE_TYPE=$$BASH_REMATCH; \
-	fi
-
-test: export_service_type
+test:
+	$(eval SERVICE_TYPE=$(shell ./service-type.sh $(RUN)))
 	go test -v -coverprofile=coverage.out -coverpkg="github.com/kuberlogic/..." -run "$(RUN)" -timeout 60m -failfast $(ARGS) ./... ;\
 	mkdir -p html/ ;\
 	for pkg in apiserver operator; do \
