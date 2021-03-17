@@ -45,7 +45,7 @@ type BackupRestore interface {
 	Init(*v1.KuberLogicBackupRestore)
 	InitFrom(*batchv1.Job)
 	GetJob() *batchv1.Job
-	CurrentStatus() string
+	CurrentStatus() *v1.KuberLogicBackupRestoreStatus
 
 	SetRestoreImage()
 	SetRestoreEnv(cm *v1.KuberLogicBackupRestore)
