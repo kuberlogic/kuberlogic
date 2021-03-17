@@ -21,6 +21,7 @@ type tService struct {
 	limits      map[string]string
 	newLimits   map[string]string
 	force       bool
+	//version     string
 }
 
 var pgTestService = tService{
@@ -34,6 +35,7 @@ var pgTestService = tService{
 	limits:      map[string]string{"cpu": "250m", "memory": "250Mi", "volumeSize": "1Gi"},
 	newLimits:   map[string]string{"cpu": "300m", "memory": "300Mi", "volumeSize": "1Gi"},
 	force:       false, // do not create a service
+	//version:     "12.1.3",
 }
 var mysqlTestService = tService{
 	ns:          mysqlService.ns,
@@ -46,6 +48,7 @@ var mysqlTestService = tService{
 	limits:      map[string]string{"cpu": "250m", "memory": "250Mi", "volumeSize": "1Gi"},
 	newLimits:   map[string]string{"cpu": "300m", "memory": "300Mi", "volumeSize": "1Gi"},
 	force:       false, // do not create a service
+	//version:     "5.7.26",
 }
 
 func TestDoesNotAllowMethodDelete(t *testing.T) {

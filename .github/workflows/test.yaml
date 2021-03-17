@@ -82,8 +82,10 @@ jobs:
           kubectl describe pod -l app=mysql-operator > mysql-operator.describe.log
           kubectl get pod > pods-status.log
           kubectl get kuberlogicservice,kuberlogicbackupschedules,kuberlogicbackuprestores > kuberlogics-services.log
-          kubectl describe pod -l app.kubernetes.io/name=mysql > mysql-cluster.log
-          kubectl describe pod -l application=spilo > pg-cluster.log
+          kubectl describe pod -l app.kubernetes.io/name=mysql > mysql-cluster.describe.log
+          kubectl describe pod -l application=spilo > pg-cluster.describe.log
+          kubectl logs -l app.kubernetes.io/name=mysql -c mysql --tail=-1 > mysql-cluster.log
+          kubectl logs -l application=spilo -c postgres --tail=-1 > pg-cluster.log
         if: ${{ always() }}
 
       - name: Archive logs
