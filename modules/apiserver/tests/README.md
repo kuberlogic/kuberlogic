@@ -23,7 +23,7 @@ make test
 * run only the Service tests (for all services: postgresql, mysql, etc.)
 
 ```bash
-make test RUN=TestService
+make test RUN=TestLogs
 ```
 
 * run all tests for Postgresql
