@@ -107,6 +107,28 @@ func (tb *TestBackup) RestoreFromBackup(ns, name, db string) func(t *testing.T) 
 	}
 }
 
+func (tb *TestBackup) CheckSuccesfulRestore(ns, name, db string) func(t *testing.T) {
+	return func(t *testing.T) {
+		api := newApi(t)
+		api.setBearerToken()
+		api.sendRequestTo(http.MethodGet, fmt.Sprintf("/services/%s:%s/restores", ns, name))
+		api.responseCodeShouldBe(200)
+
+		var restores []*models.Restore
+		api.encodeResponseTo(&restores)
+
+		var found *models.Restore
+		for _, item := range restores {
+			if *item.Database == db {
+				found = item
+			}
+		}
+		if found == nil {
+			t.Errorf("no restore found for service %s:%s database %s", ns, name, db)
+		}
+	}
+}
+
 func (tb *TestBackup) CreateTable(ns, name, db, table string) func(t *testing.T) {
 	return func(t *testing.T) {
 		client, resource, err := Connect(ns, name)
@@ -176,6 +198,7 @@ func CreateBackup(t *testing.T, ns, name, type_ string) {
 		tb.RestoreFromBackup(ns, name, db),
 		// TODO: waiting Success state of the restore resource
 		wait(2 * 60), // waiting for the restore from the backup
+		tb.CheckSuccesfulRestore(ns, name, db),
 		td.OneRecord(ns, name, db),
 		td.Delete(ns, name, db),
 		tbc.Delete(ns, name), // deletes secret, so it breaks backups link
