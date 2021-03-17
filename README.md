@@ -21,11 +21,10 @@ This step is responsible for deploy operators:
 4. Make sure you have Go installed (https://golang.org/doc/install).
 4. Create a secret in kubernetes to access gitlab registry (learn more here https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#inspecting-the-secret-regcred)
     ```shell script
-    docker login quay.io/kuberlogic
     DOCKER_REGISTRY_SERVER=https://quay.io
     DOCKER_USER=<username, the one that was given to you during the onboarding>
     DOCKER_PASSWORD=<access token or password created in step 2>
-    kubectl create secret docker-registry quay-registry --docker-server=$DOCKER_REGISTRY_SERVER --docker-username=$DOCKER_USER --docker-password=$DOCKER_PASSWORD
+    kubectl create secret docker-registry kuberlogic-registry --docker-server=$DOCKER_REGISTRY_SERVER --docker-username=$DOCKER_USER --docker-password=$DOCKER_PASSWORD
     ```
 4. Deploy operators
     ```shell script

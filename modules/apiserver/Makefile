@@ -10,6 +10,7 @@ NAME = apiserver
 # Image URL to use all building/pushing image targets
 IMG ?= $(IMG_REPO)/$(NAME):$(VERSION)
 
+KUBERLOGIC_DEBUGLOGS=True
 
 clean:
 	@rm -rf ./cmd internal/generated  internal/config

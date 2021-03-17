@@ -1,4 +1,3 @@
-
 module github.com/kuberlogic/operator/modules/watcher
 
 go 1.13
@@ -6,8 +5,8 @@ go 1.13
 require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/imdario/mergo v0.3.11 // indirect
-	github.com/jackc/pgx/v4 v4.8.1
-	github.com/kuberlogic/operator/modules/operator v0.0.0-20210305115707-d1e7df28ca4a
+	github.com/jackc/pgx/v4 v4.10.1
+	github.com/kuberlogic/operator/modules/operator v0.0.20-0.20210317122412-00275b30510c
 	github.com/pkg/errors v0.9.1
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect

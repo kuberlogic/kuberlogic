@@ -1,0 +1,97 @@
+name: Run integration tests
+
+on: [push]
+
+jobs:
+  test:
+    if: "!contains(github.event.commits[0].message, '[skip ci]')"
+    name: Run integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Git credentials
+        run: |
+          git config --global url."https://$PRIVATE_GITHUB_TOKEN:x-oauth-basic@github.com/kuberlogic".insteadOf "https://github.com/kuberlogic"
+        env:
+          PRIVATE_GITHUB_TOKEN: ${{ secrets.PRIVATE_GITHUB_TOKEN }}
+
+      - name: Get dependencies for the apiserver
+        working-directory: ./modules/apiserver
+        env:
+          GOPRIVATE: github.com/kuberlogic/*
+        run: |
+          go mod download
+
+      - name: Setup Minikube
+        uses: manusa/actions-setup-minikube@v2.3.0
+        with:
+          minikube version: 'v1.12.2'
+          kubernetes version: 'v1.18.3'
+          github token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create secret of operator
+        run: |
+          kubectl create secret docker-registry kuberlogic-registry --docker-server=$REGISTRY_SERVER --docker-username=$REGISTRY_USER --docker-password=$REGISTRY_PASSWORD
+        env:
+          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
+          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Deploy operator
+        run: |
+          make deploy-dependencies
+
+      - name: Setup minio for backup storage
+        working-directory: ./modules/apiserver/tests
+        run: |
+          make deploy-minio
+
+      - name: Waiting ready the pods
+        run: |
+          kubectl wait --for=condition=Ready pods --all --timeout=2m
+
+      - name: Show pod status
+        run: |
+          kubectl logs -l app=minio
+          docker images
+        if: ${{ failure() }}
+
+      - name: Create test backet
+        working-directory: ./modules/apiserver/tests
+        run: |
+          make create-bucket
+
+      - name: Run the tests
+        working-directory: ./modules/apiserver/tests
+        run: |
+          KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make test
+
+      - name: Show status
+        run: |
+          kubectl get pod,sts,deploy,svc
+        if: ${{ failure() }}
+
+      - name: Generating logs
+        working-directory: ./modules/apiserver/tests
+        run: |
+          kubectl logs -l name=postgres-operator --tail=-1 > postgres-operator.log
+          kubectl logs -l app=mysql-operator -c mysql-operator --tail=-1 > mysql-operator.log
+          kubectl describe pod -l name=postgres-operator > postgres-operator.describe.log
+          kubectl describe pod -l app=mysql-operator > mysql-operator.describe.log
+          kubectl get pod > pods-status.log
+          kubectl get kuberlogicservice,kuberlogicbackupschedules,kuberlogicbackuprestores > kuberlogics-services.log
+          kubectl describe pod -l app.kubernetes.io/name=mysql > mysql-cluster.describe.log
+          kubectl describe pod -l application=spilo > pg-cluster.describe.log
+          kubectl logs -l app.kubernetes.io/name=mysql -c mysql --tail=-1 > mysql-cluster.log
+          kubectl logs -l application=spilo -c postgres --tail=-1 > pg-cluster.log
+        if: ${{ always() }}
+
+      - name: Archive logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs
+          path: |
+            ./modules/apiserver/tests/*.log
+        if: ${{ always() }}
