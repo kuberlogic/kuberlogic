@@ -24,22 +24,25 @@ func (r *BaseRestore) InitFrom(job *batchv1.Job) {
 	r.Job = *job
 }
 
-func (r *BaseRestore) CurrentStatus() string {
+func (r *BaseRestore) CurrentStatus() *kuberlogicv1.KuberLogicBackupRestoreStatus {
+	s := new(kuberlogicv1.KuberLogicBackupRestoreStatus)
+
 	if len(r.Job.Status.Conditions) > 0 {
 		lastCondition := r.Job.Status.Conditions[len(r.Job.Status.Conditions)-1]
 		switch lastCondition.Type {
 		case batchv1.JobComplete:
-			return kuberlogicv1.BackupSuccessStatus
+			s.Status = kuberlogicv1.BackupSuccessStatus
 		case batchv1.JobFailed:
-			return kuberlogicv1.BackupFailedStatus
+			s.Status = kuberlogicv1.BackupFailedStatus
 		}
+		s.CompletionTime = lastCondition.LastTransitionTime.String()
 	} else {
 		if r.Job.Status.Active > 0 {
-			return kuberlogicv1.BackupRunningStatus
+			s.Status = kuberlogicv1.BackupRunningStatus
 		}
 	}
 
-	return kuberlogicv1.BackupUnknownStatus
+	return s
 }
 
 func (r *BaseRestore) GetJob() *batchv1.Job {
