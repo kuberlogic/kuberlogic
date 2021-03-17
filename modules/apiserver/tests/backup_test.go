@@ -103,7 +103,7 @@ func (tb *tBackupRestore) RestoreFromBackup(t *testing.T) {
         "key": "%s",
         "database": "%s"
      }`, *tb.backup.File, tb.db.name))
-	api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/restore", tb.service.ns, tb.service.name))
+	api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/restores", tb.service.ns, tb.service.name))
 	api.responseCodeShouldBe(200)
 }
 
