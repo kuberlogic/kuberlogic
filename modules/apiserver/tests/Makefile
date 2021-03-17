@@ -27,6 +27,7 @@ BUCKET ?= test
 
 # provides additional info about specific service what kind of tests need to run
 test:
+	@chmod +x service-type.sh; \
 	$(eval SERVICE_TYPE=$(shell ./service-type.sh $(RUN)))
 	go test -v -coverprofile=coverage.out -coverpkg="github.com/kuberlogic/..." -run "$(RUN)" -timeout 60m -failfast $(ARGS) ./... ;\
 	mkdir -p html/ ;\

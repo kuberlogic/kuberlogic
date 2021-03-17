@@ -174,6 +174,8 @@ func makeTestBackupRestore(tb tBackupRestore) func(t *testing.T) {
 }
 
 func TestBackupRestore(t *testing.T) {
+	//t.FailNow()
+
 	endpoint, exists := os.LookupEnv("MINIO_ENDPOINT")
 	if !exists {
 		t.Errorf("endpoint must be defined")
