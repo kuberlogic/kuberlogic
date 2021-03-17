@@ -29,12 +29,14 @@ BUCKET ?= test
 # provides additional info about specific service what kind of tests need to run
 test:
 	go test -v -coverprofile=coverage.out -coverpkg="github.com/kuberlogic/..." -run "$(RUN)" -timeout 60m -failfast $(ARGS) ./... ;\
+	EXIT_CODE=$$?;\
 	mkdir -p html/ ;\
 	for pkg in apiserver operator; do \
 		echo "mode: set" > $${pkg}.out; \
 		cat coverage.out | grep "github.com/kuberlogic/$${pkg}" >> $${pkg}.out; \
 		go tool cover -html=$${pkg}.out -o=html/$${pkg}.html; \
-	done
+	done; \
+	exit $$EXIT_CODE
 
 build-minio:
 	docker build minio/ -t $(IMG) --build-arg MINIO_ACCESS_KEY=$(MINIO_ACCESS_KEY) --build-arg MINIO_SECRET_KEY=$(MINIO_SECRET_KEY)
