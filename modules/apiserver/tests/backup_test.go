@@ -101,7 +101,7 @@ func (tb *TestBackup) RestoreFromBackup(ns, name, db string) func(t *testing.T) 
 		api.setRequestBody(fmt.Sprintf(`     {
         "key": "%s",
         "database": "%s"
-     }`, *tb.backup.Key, db))
+     }`, *tb.backup.File, db))
 		api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/restore", ns, name))
 		api.responseCodeShouldBe(200)
 	}
