@@ -15,7 +15,7 @@ import (
 
 const (
 	image   = "mysql"
-	version = "5.7.31"
+	version = "5.7.26"
 
 	mysqlRoleKey     = "role"
 	mysqlRoleReplica = "replica"

@@ -76,5 +76,6 @@ rules:
       - ""
     resources:
       - services
+      - pods/log
     verbs:
       - get

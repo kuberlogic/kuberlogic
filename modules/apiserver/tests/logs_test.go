@@ -10,23 +10,26 @@ import (
 	"testing"
 )
 
-type TestLogs struct{}
+type tLogs struct {
+	service  tService
+	instance string
+}
 
-func (td *TestLogs) Get(ns, name, instance string, tail int) func(t *testing.T) {
+func (tl *tLogs) Get(tail int) func(t *testing.T) {
 	return func(t *testing.T) {
 		api := newApi(t)
 		api.setBearerToken()
 		api.query = &url.Values{
-			"service_instance": []string{instance},
+			"service_instance": []string{tl.instance},
 			"tail":             []string{strconv.Itoa(tail)},
 		}
-		api.sendRequestTo(http.MethodGet, fmt.Sprintf("/services/%s:%s/logs", ns, name))
+		api.sendRequestTo(http.MethodGet, fmt.Sprintf("/services/%s:%s/logs",
+			tl.service.ns, tl.service.name))
 		api.responseCodeShouldBe(200)
 		api.encodeResponseToJson()
 		api.responseTypeOf(reflect.Map)
 
 		resp := api.jsonResponse.(map[string]interface{})
-		//t.Log(resp)
 
 		body, ok := resp["body"]
 		if !ok {
@@ -71,30 +74,33 @@ func (td *TestLogs) Get(ns, name, instance string, tail int) func(t *testing.T) 
 	}
 }
 
-func Logs(t *testing.T, ns, name, type_, instance string) {
-	logs := TestLogs{}
-	ts := tService{ns: ns, name: name, type_: type_, force: false, replicas: 1}
-	steps := []func(t *testing.T){
-		ts.Create,
-		ts.WaitForStatus("Ready", 5, 2*60),
-		//wait(10 * 60),
-		logs.Get(ns, name, instance, 10),
-		logs.Get(ns, name, instance, 50),
-		logs.Get(ns, name, instance, 100),
-		ts.Delete,
-	}
+func makeTestLogs(tlogs tLogs) func(t *testing.T) {
+	return func(t *testing.T) {
+		steps := []func(t *testing.T){
+			tlogs.service.Create,
+			tlogs.service.WaitForStatus("Ready", 5, 2*60),
 
-	for _, item := range steps {
-		t.Run(GetFunctionName(item), item)
-	}
+			tlogs.Get(10),
+			tlogs.Get(50),
+			tlogs.Get(100),
+			tlogs.service.Delete,
+		}
 
+		for _, item := range steps {
+			t.Run(GetFunctionName(item), item)
+		}
+	}
 }
 
-func TestLogsPg(t *testing.T) {
-	// TODO: rewrite it with receive service_instance
-	Logs(t, pgService.ns, pgService.name, pgService.type_, fmt.Sprintf("kuberlogic-%s-0", pgService.name))
-}
-
-func TestLogsMysql(t *testing.T) {
-	Logs(t, mysqlService.ns, mysqlService.name, mysqlService.type_, fmt.Sprintf("%s-mysql-0", mysqlService.name))
+func TestLogs(t *testing.T) {
+	for _, svc := range []tLogs{
+		{
+			service:  pgTestService,
+			instance: fmt.Sprintf("kuberlogic-%s-0", pgService.name),
+		}, {
+			service:  mysqlTestService,
+			instance: fmt.Sprintf("%s-mysql-0", mysqlService.name),
+		}} {
+		t.Run(svc.service.type_, makeTestLogs(svc))
+	}
 }
