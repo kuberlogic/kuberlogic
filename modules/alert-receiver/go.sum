@@ -270,6 +270,8 @@ github.com/kuberlogic/operator/modules/operator v0.0.0-20210305115707-d1e7df28ca
 github.com/kuberlogic/operator/modules/operator v0.0.0-20210305115707-d1e7df28ca4a/go.mod h1:UAqcvwEdMUbww5xd1ex5GD3hKbJzZcaqL8yzDeEAU1s=
 github.com/kuberlogic/operator/modules/operator v0.0.0-20210315110409-983436e5ed87 h1:+218hYy9MHNl2S1ba/fQMS8Zn0ftRDVF0iDVWVX2UhM=
 github.com/kuberlogic/operator/modules/operator v0.0.0-20210315110409-983436e5ed87/go.mod h1:1/1gyA8UXo6MDm0letPzve5rV3z9gQfMySpUt7e33PE=
+github.com/kuberlogic/operator/modules/operator v0.0.20-0.20210317122412-00275b30510c h1:Syqez4ENaZcuNoSTT/n4cq7gzMSVP1W0fThlJomBtoU=
+github.com/kuberlogic/operator/modules/operator v0.0.20-0.20210317122412-00275b30510c/go.mod h1:1/1gyA8UXo6MDm0letPzve5rV3z9gQfMySpUt7e33PE=
 github.com/lib/pq v1.0.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/lib/pq v1.1.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/lib/pq v1.2.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
