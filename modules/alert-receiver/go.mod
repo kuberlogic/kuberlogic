@@ -3,7 +3,7 @@ module github.com/kuberlogic/operator/modules/alert-receiver
 go 1.13
 
 require (
-	github.com/kuberlogic/operator/modules/operator v0.0.20
+	github.com/kuberlogic/operator/modules/operator v0.0.20-0.20210318113148-4fb6a4031746 // indirect
 	k8s.io/apimachinery v0.18.8
 	k8s.io/client-go v11.0.0+incompatible
 )

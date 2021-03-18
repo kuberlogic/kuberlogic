@@ -12,6 +12,7 @@ require (
 	github.com/prometheus/client_golang v1.0.0
 	github.com/spotahome/redis-operator v1.0.0
 	github.com/zalando/postgres-operator v1.5.1-0.20200903060246-03437b63749e
+	go.uber.org/zap v1.10.0
 	k8s.io/api v0.18.8
 	k8s.io/apimachinery v0.18.8
 	k8s.io/client-go v11.0.0+incompatible
