@@ -102,9 +102,29 @@ func (tb *tBackupRestore) RestoreFromBackup(t *testing.T) {
 	api.setRequestBody(fmt.Sprintf(`     {
         "key": "%s",
         "database": "%s"
-     }`, *tb.backup.Key, tb.db.name))
-	api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/restore", tb.service.ns, tb.service.name))
+     }`, *tb.backup.File, tb.db.name))
+	api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/restores", tb.service.ns, tb.service.name))
 	api.responseCodeShouldBe(200)
+}
+
+func (tb *tBackupRestore) CheckSuccesfulRestore(t *testing.T) {
+	api := newApi(t)
+	api.setBearerToken()
+	api.sendRequestTo(http.MethodGet, fmt.Sprintf("/services/%s:%s/restores", tb.service.ns, tb.service.name))
+	api.responseCodeShouldBe(200)
+
+	var restores []*models.Restore
+	api.encodeResponseTo(&restores)
+
+	var found *models.Restore
+	for _, item := range restores {
+		if *item.Status == "Success" {
+			found = item
+		}
+	}
+	if found == nil {
+		t.Errorf("no restore found for service %s:%s", tb.service.ns, tb.service.name)
+	}
 }
 
 func (tb *tBackupRestore) CreateTable(t *testing.T) {
@@ -161,6 +181,7 @@ func makeTestBackupRestore(tb tBackupRestore) func(t *testing.T) {
 			tb.RestoreFromBackup,
 			// TODO: waiting Success state of the restore resource
 			wait(2 * 60), // waiting for the restore from the backup
+			tb.CheckSuccesfulRestore,
 			tb.db.OneRecord,
 			tb.db.Delete,
 			tb.backupConfig.Delete, // deletes secret, so it breaks backups link

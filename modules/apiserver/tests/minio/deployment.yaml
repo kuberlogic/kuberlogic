@@ -20,7 +20,7 @@ spec:
       containers:
         - name: minio
           image: quay.io/kuberlogic/minio:1.0.0
-#          imagePullPolicy: Never
+          imagePullPolicy: IfNotPresent
           command: ["minio", "server"]
           args: ["/data"]
           volumeMounts:

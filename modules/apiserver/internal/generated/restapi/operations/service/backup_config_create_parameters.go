@@ -34,7 +34,7 @@ type BackupConfigCreateParams struct {
 	// HTTP Request Object
 	HTTPRequest *http.Request `json:"-"`
 
-	/*BaseBackup credential item to create
+	/*Backup credential item to create
 	  Required: true
 	  In: body
 	*/

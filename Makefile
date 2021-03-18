@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.19
+VERSION ?= 0.0.20
 # Default bundle image tag
 BUNDLE_IMG ?= kuberlogic-operator:$(VERSION)
 # Options for 'bundle-build'

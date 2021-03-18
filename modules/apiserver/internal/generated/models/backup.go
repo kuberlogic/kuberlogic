@@ -17,9 +17,9 @@ import (
 // swagger:model Backup
 type Backup struct {
 
-	// key
+	// file
 	// Required: true
-	Key *string `json:"key"`
+	File *string `json:"file"`
 
 	// last modified
 	// Required: true
@@ -35,7 +35,7 @@ type Backup struct {
 func (m *Backup) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateKey(formats); err != nil {
+	if err := m.validateFile(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -53,9 +53,9 @@ func (m *Backup) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Backup) validateKey(formats strfmt.Registry) error {
+func (m *Backup) validateFile(formats strfmt.Registry) error {
 
-	if err := validate.Required("key", "body", m.Key); err != nil {
+	if err := validate.Required("file", "body", m.File); err != nil {
 		return err
 	}
 

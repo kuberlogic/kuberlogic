@@ -123,17 +123,13 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Re
 	}
 	backupRestore.InitFrom(job)
 	status := backupRestore.CurrentStatus()
-	if !klr.IsEqual(status) {
-		klr.SetStatus(status)
-		err = r.Update(ctx, klr)
-		//err = r.Status().Update(ctx, kl) # FIXME: Figure out why it's failed
-		if err != nil {
-			log.Error(err, "Failed to update kl restore object")
-		} else {
-			log.Info("KuberLogicBackupRestore status is updated",
-				"Status", klr.GetStatus())
-		}
+	klr.SetStatus(status)
+	err = r.Update(ctx, klr)
+	if err != nil {
+		log.Error(err, "Failed to update kl restore object")
+		return ctrl.Result{}, err
 	}
+	log.Info("KuberLogicBackupRestore status is updated", "Status", klr.GetStatus())
 
 	monitoring.KuberLogicBackupRestores[monitoringKey] = klr
 

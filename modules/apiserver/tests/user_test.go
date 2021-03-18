@@ -9,7 +9,7 @@ import (
 
 type tUser struct {
 	service tService
-	name string
+	name    string
 }
 
 func TestUsersDoesNotAllowMethodDelete(t *testing.T) {
@@ -42,17 +42,17 @@ func (u *tUser) Create(t *testing.T) {
 }
 
 func (u *tUser) CreateTheSameName(t *testing.T) {
-		api := newApi(t)
-		api.setBearerToken()
-		api.setRequestBody(fmt.Sprintf(`     {
+	api := newApi(t)
+	api.setBearerToken()
+	api.setRequestBody(fmt.Sprintf(`     {
         "name": "%s",
         "password": "secret-password"
      }`, u.name))
-		api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/users/", u.service.ns, u.service.name))
-		api.responseCodeShouldBe(400)
-		//api.encodeResponseToJson()
-		// different response for mysql & pg
-		//api.fieldContains("message", fmt.Sprintf("role \"%s\" already exists", user))
+	api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/users/", u.service.ns, u.service.name))
+	api.responseCodeShouldBe(400)
+	//api.encodeResponseToJson()
+	// different response for mysql & pg
+	//api.fieldContains("message", fmt.Sprintf("role \"%s\" already exists", user))
 }
 
 func (u *tUser) List(t *testing.T) {
@@ -87,7 +87,7 @@ func (u *tUser) Delete(t *testing.T) {
 	api.responseCodeShouldBe(200)
 }
 
-func (u *tUser) ChangePassword(t *testing.T)  {
+func (u *tUser) ChangePassword(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
 	api.setRequestBody(fmt.Sprintf(`     {
@@ -124,10 +124,10 @@ func TestUser(t *testing.T) {
 	for _, svc := range []tUser{
 		{
 			service: pgTestService,
-			name: "foo",
+			name:    "foo",
 		}, {
 			service: mysqlTestService,
-			name: "foo",
+			name:    "foo",
 		}} {
 		t.Run(svc.service.type_, makeTestUser(svc))
 	}

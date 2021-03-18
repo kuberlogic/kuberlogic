@@ -98,7 +98,7 @@ func (srv *Service) BackupListHandler(params apiService.BackupListParams, princi
 
 		key := fmt.Sprintf("s3://%s/%s", *model.Bucket, *item.Key)
 		payload = append(payload, &models.Backup{
-			Key:          &key,
+			File:         &key,
 			Size:         item.Size,
 			LastModified: &dt,
 		})

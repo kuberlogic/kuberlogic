@@ -8,12 +8,12 @@ spec:
 
 #  volumeSize: 3Gi
 #
-#  resources:
-#    requests:
-#      memory: 100Mi
-#      cpu: 10m
-#    limits:
-#      memory: 1000Mi
-#      cpu: 100m
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 10m
+    limits:
+      memory: 512Mi
+      cpu: 100m
 #
-#  version: 5.7.30
+#  version: 5.7.26

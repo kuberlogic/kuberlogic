@@ -22,7 +22,8 @@ type KuberLogicBackupRestoreSpec struct {
 
 // KuberLogicBackupRestoreStatus defines the observed state of KuberLogicBackupRestore
 type KuberLogicBackupRestoreStatus struct {
-	Status string `json:"status"`
+	Status         string `json:"status"`
+	CompletionTime string `json:"completionTime"`
 }
 
 // +kubebuilder:object:root=true
@@ -51,8 +52,8 @@ func (klr *KuberLogicBackupRestore) IsEqual(newStatus string) bool {
 	return klr.Status.Status == newStatus
 }
 
-func (klr *KuberLogicBackupRestore) SetStatus(newStatus string) {
-	klr.Status.Status = newStatus
+func (klr *KuberLogicBackupRestore) SetStatus(s *KuberLogicBackupRestoreStatus) {
+	klr.Status = *s
 }
 
 func (klr *KuberLogicBackupRestore) GetStatus() string {

@@ -79,6 +79,9 @@ func NewKuberlogicAPI(spec *loads.Document) *KuberlogicAPI {
 		ServiceLogsGetHandler: service.LogsGetHandlerFunc(func(params service.LogsGetParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.LogsGet has not yet been implemented")
 		}),
+		ServiceRestoreListHandler: service.RestoreListHandlerFunc(func(params service.RestoreListParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation service.RestoreList has not yet been implemented")
+		}),
 		ServiceServiceAddHandler: service.ServiceAddHandlerFunc(func(params service.ServiceAddParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceAdd has not yet been implemented")
 		}),
@@ -176,6 +179,8 @@ type KuberlogicAPI struct {
 	AuthLoginUserHandler auth.LoginUserHandler
 	// ServiceLogsGetHandler sets the operation handler for the logs get operation
 	ServiceLogsGetHandler service.LogsGetHandler
+	// ServiceRestoreListHandler sets the operation handler for the restore list operation
+	ServiceRestoreListHandler service.RestoreListHandler
 	// ServiceServiceAddHandler sets the operation handler for the service add operation
 	ServiceServiceAddHandler service.ServiceAddHandler
 	// ServiceServiceDeleteHandler sets the operation handler for the service delete operation
@@ -306,6 +311,9 @@ func (o *KuberlogicAPI) Validate() error {
 	}
 	if o.ServiceLogsGetHandler == nil {
 		unregistered = append(unregistered, "service.LogsGetHandler")
+	}
+	if o.ServiceRestoreListHandler == nil {
+		unregistered = append(unregistered, "service.RestoreListHandler")
 	}
 	if o.ServiceServiceAddHandler == nil {
 		unregistered = append(unregistered, "service.ServiceAddHandler")
@@ -468,7 +476,7 @@ func (o *KuberlogicAPI) initHandlerCache() {
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
-	o.handlers["POST"]["/services/{ServiceID}/restore"] = service.NewDatabaseRestore(o.context, o.ServiceDatabaseRestoreHandler)
+	o.handlers["POST"]["/services/{ServiceID}/restores"] = service.NewDatabaseRestore(o.context, o.ServiceDatabaseRestoreHandler)
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
@@ -477,6 +485,10 @@ func (o *KuberlogicAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/services/{ServiceID}/logs"] = service.NewLogsGet(o.context, o.ServiceLogsGetHandler)
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/services/{ServiceID}/restores"] = service.NewRestoreList(o.context, o.ServiceRestoreListHandler)
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
