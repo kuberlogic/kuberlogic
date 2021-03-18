@@ -37,10 +37,10 @@ func CreateLogger() (logr.Logger, error) {
 	sentryOptions := zap.WrapCore(func(core zapcore.Core) zapcore.Core {
 		return zapcore.RegisterHooks(core, func(entry zapcore.Entry) error {
 			// sending all events to sentry above warn level
-			if entry.Level >= zap.WarnLevel {
-				fmt.Println("======>", entry.Message)
-				sentry.CaptureEvent(entryToEvent(entry))
-			}
+			//if entry.Level >= zap.WarnLevel {
+			fmt.Println("======>", entry.Level, entry.Message)
+			sentry.CaptureEvent(entryToEvent(entry))
+			//}
 			return nil
 		})
 	})
