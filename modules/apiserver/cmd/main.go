@@ -1,14 +1,14 @@
 package cmd
 
 import (
-	"os"
-
-	"github.com/kuberlogic/operator/modules/operator/util"
-	"k8s.io/client-go/kubernetes"
-
+	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi"
 	"github.com/jessevdk/go-flags"
 	"github.com/kuberlogic/operator/modules/apiserver/util/k8s"
+	"github.com/kuberlogic/operator/modules/operator/util"
+	"k8s.io/client-go/kubernetes"
+	"os"
+	"time"
 
 	cloudlinuxv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"
@@ -32,6 +32,22 @@ import (
 
 func Main(args []string) {
 	mainLog := logging.WithComponentLogger("main")
+
+	// init sentry
+	if dsn := os.Getenv("APISERVER_SENTRY_DSN"); dsn != "" {
+		err := sentry.Init(sentry.ClientOptions{
+			Dsn: dsn,
+		})
+		if err != nil {
+			mainLog.Errorf("unable to create sentry logger: %s", err)
+			os.Exit(1)
+		}
+		mainLog.Debugf("sentry was initialized")
+
+		// Flush buffered events before the program terminates.
+		defer sentry.Flush(2 * time.Second)
+	}
+
 	cfg, err := config.InitConfig("kuberlogic", logging.WithComponentLogger("config"))
 	if err != nil {
 		mainLog.Fatalf(err.Error())

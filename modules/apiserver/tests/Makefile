@@ -26,6 +26,8 @@ MINIO_SECRET_KEY = V7f1CwQqAcwo80UEIJEjc5gVQUSSx5ohQ9GSrr12
 MINIO_ENDPOINT = http://$(INTERNAL_MINIO_IP):9000
 BUCKET ?= test
 
+APISERVER_SENTRY_DSN = https://3fc53cea3e0045aab42cc8e5358d6264@kl.sentry.cloudlinux.com/4
+
 # provides additional info about specific service what kind of tests need to run
 test:
 	go test -v -coverprofile=coverage.out -coverpkg="github.com/kuberlogic/..." -run "$(RUN)" -timeout 60m -failfast $(ARGS) ./... ;\

@@ -7,6 +7,7 @@ require (
 	github.com/casbin/casbin/v2 v2.19.4
 	github.com/coreos/go-oidc v2.1.0+incompatible
 	github.com/dgraph-io/ristretto v0.0.3
+	github.com/getsentry/sentry-go v0.10.0
 	github.com/go-chi/chi v1.5.1
 	github.com/go-openapi/errors v0.19.9
 	github.com/go-openapi/loads v0.19.7

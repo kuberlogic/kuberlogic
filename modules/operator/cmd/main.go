@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/controllers"
@@ -19,6 +20,7 @@ import (
 	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	"time"
 )
 
 var (
@@ -54,6 +56,7 @@ func checkEnv(log logr.Logger) error {
 }
 
 func Main(args []string) {
+
 	var metricsAddr string
 	var enableLeaderElection bool
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -72,6 +75,21 @@ func Main(args []string) {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+
+	if os.Getenv("SENTRY_DSN") != "" {
+		err = sentry.Init(sentry.ClientOptions{})
+		if err != nil {
+			logger.Error(err, "unable to create sentry logger")
+			os.Exit(1)
+		}
+		logger.Info("sentry was initialized")
+
+		// Flush buffered events before the program terminates.
+		defer sentry.Flush(2 * time.Second)
+
+		sentry.CaptureMessage("Sentry works 4!")
+	}
+	logger.Error(errors.New("some error for sentry"), "operator")
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,

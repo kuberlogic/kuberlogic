@@ -8,7 +8,7 @@ import (
 
 var atom zap.AtomicLevel
 
-func newZapLogger() *zap.SugaredLogger {
+func newZapLogger(opts ...zap.Option) *zap.SugaredLogger {
 	cfg := zap.NewProductionConfig()
 
 	if out := os.Getenv("KUBERLOGIC_APISERVER_LOG"); out != "" {
@@ -20,7 +20,7 @@ func newZapLogger() *zap.SugaredLogger {
 	atom = zap.NewAtomicLevel()
 	cfg.Level = atom
 
-	logger, _ := cfg.Build()
+	logger, _ := cfg.Build(opts...)
 	sugar := logger.Sugar()
 
 	return sugar
