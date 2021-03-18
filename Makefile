@@ -44,7 +44,7 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-SENTRY_DSN=
+OPERATOR_SENTRY_DSN = https://369afa8d72cb4772b46936f7291218b7@kl.sentry.cloudlinux.com/2
 
 all: manager
 
@@ -78,10 +78,6 @@ deploy: manifests kustomize
 
 undeploy:
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
-
-deploy-dependencies: manifests kustomize
-	$(KUSTOMIZE) build config/dependencies | kubectl apply -f -
-
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen

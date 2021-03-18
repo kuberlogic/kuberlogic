@@ -57,6 +57,8 @@ func checkEnv(log logr.Logger) error {
 
 func Main(args []string) {
 
+	// init sentry
+
 	var metricsAddr string
 	var enableLeaderElection bool
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -71,13 +73,13 @@ func Main(args []string) {
 		os.Exit(1)
 	}
 	ctrl.SetLogger(logger)
-	if err := checkEnv(setupLog); err != nil {
-		setupLog.Error(err, "unable to start manager")
-		os.Exit(1)
-	}
 
-	if os.Getenv("SENTRY_DSN") != "" {
-		err = sentry.Init(sentry.ClientOptions{})
+	// init sentry
+	if dsn := os.Getenv("OPERATOR_SENTRY_DSN"); dsn != "" {
+		err = sentry.Init(sentry.ClientOptions{
+			Dsn:   dsn,
+			Debug: true,
+		})
 		if err != nil {
 			logger.Error(err, "unable to create sentry logger")
 			os.Exit(1)
@@ -86,10 +88,12 @@ func Main(args []string) {
 
 		// Flush buffered events before the program terminates.
 		defer sentry.Flush(2 * time.Second)
-
-		sentry.CaptureMessage("Sentry works 4!")
 	}
-	logger.Error(errors.New("some error for sentry"), "operator")
+
+	if err := checkEnv(setupLog); err != nil {
+		setupLog.Error(err, "unable to start manager")
+		os.Exit(1)
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,

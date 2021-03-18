@@ -44,9 +44,9 @@ func init() {
 	sentryOptions := zap.WrapCore(func(core zapcore.Core) zapcore.Core {
 		return zapcore.RegisterHooks(core, func(entry zapcore.Entry) error {
 			// sending all events to sentry above warn level
-			//if entry.Level >= zap.WarnLevel {
-			sentry.CaptureEvent(entryToEvent(entry))
-			//}
+			if entry.Level >= zap.WarnLevel {
+				sentry.CaptureEvent(entryToEvent(entry))
+			}
 			return nil
 		})
 	})
