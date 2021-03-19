@@ -1,4 +1,4 @@
-[![integration tests](https://github.com/kuberlogic/operator/actions/workflows/test.yaml/badge.svg)](https://github.com/kuberlogic/operator/actions/workflows/test.yaml)
+[![integration tests](https://github.com/kuberlogic/operator/actions/workflows/test.yaml/badge.svg?branch=master)](https://github.com/kuberlogic/operator/actions/workflows/test.yaml)
 
 ## Cloudmanaged operator
 
