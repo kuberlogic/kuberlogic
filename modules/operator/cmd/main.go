@@ -75,16 +75,15 @@ func Main(args []string) {
 	ctrl.SetLogger(logger)
 
 	// init sentry
-	if dsn := os.Getenv("OPERATOR_SENTRY_DSN"); dsn != "" {
+	if dsn := os.Getenv("SENTRY_DSN"); dsn != "" {
 		err = sentry.Init(sentry.ClientOptions{
-			Dsn:   dsn,
-			Debug: true,
+			Dsn: dsn,
 		})
 		if err != nil {
 			logger.Error(err, "unable to create sentry logger")
 			os.Exit(1)
 		}
-		logger.Info("sentry was initialized")
+		logger.Info("sentry for operator was initialized")
 
 		// Flush buffered events before the program terminates.
 		defer sentry.Flush(2 * time.Second)
