@@ -7,6 +7,7 @@ import (
 
 const (
 	eventNameField  = "kuberlogic.com/event-name"
+	eventTypeField  = "kuberlogic.com/event-type"
 	eventValueField = "kuberlogic.com/event-value"
 )
 
@@ -31,9 +32,9 @@ func (c *Controller) HandleEvent(e *Event) (bool, error) {
 		return false, nil
 	}
 
-	h, hf := c.HandlersQ.Get(e.Name)
+	h, hf := c.HandlersQ.Get(e.Type)
 	if !hf {
-		return false, fmt.Errorf("event %s handler not found", e.Name)
+		return false, fmt.Errorf("event %s type %s handler not found", e.Name, e.Type)
 	}
 	handleErr := h(e)
 	return true, handleErr
