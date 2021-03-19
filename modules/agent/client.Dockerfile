@@ -22,7 +22,6 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o kuberlog
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM alpine
-RUN apk update && apk add mysql
 WORKDIR /
 COPY --from=builder /workspace/kuberlogic-agent /bin/kuberlogic-agent
 
