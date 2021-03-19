@@ -6,13 +6,11 @@ import (
 
 var Controller *AgentController
 
-const globalControllerPort = 18888
-
 var runOnce sync.Once
 
-func Init() {
+func Init(port int) {
 	runOnce.Do(func() {
-		Controller = NewController(globalControllerPort)
+		Controller = NewController(port)
 		go Controller.Run()
 	})
 }
