@@ -34,7 +34,7 @@ func Main(args []string) {
 	mainLog := logging.WithComponentLogger("main")
 
 	// init sentry
-	if dsn := os.Getenv("SENTRY_DSN"); dsn != "" {
+	if dsn := os.Getenv("APISERVER_SENTRY_DSN"); dsn != "" {
 		err := sentry.Init(sentry.ClientOptions{
 			Dsn: dsn,
 		})

@@ -26,9 +26,7 @@ MINIO_SECRET_KEY = V7f1CwQqAcwo80UEIJEjc5gVQUSSx5ohQ9GSrr12
 MINIO_ENDPOINT = http://$(INTERNAL_MINIO_IP):9000
 BUCKET ?= test
 
-OPERATOR_SENTRY_DSN = https://369afa8d72cb4772b46936f7291218b7@kl.sentry.cloudlinux.com/2
-APISERVER_SENTRY_DSN = https://3fc53cea3e0045aab42cc8e5358d6264@kl.sentry.cloudlinux.com/4
-SENTRY_DSN = https://50ec3b92240a4b4d97dbee02a07fc54f@kl.sentry.cloudlinux.com/5
+TESTS_SENTRY_DSN = https://50ec3b92240a4b4d97dbee02a07fc54f@kl.sentry.cloudlinux.com/5
 
 # provides additional info about specific service what kind of tests need to run
 test:

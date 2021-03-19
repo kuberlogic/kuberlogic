@@ -56,9 +56,6 @@ func checkEnv(log logr.Logger) error {
 }
 
 func Main(args []string) {
-
-	// init sentry
-
 	var metricsAddr string
 	var enableLeaderElection bool
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -75,7 +72,7 @@ func Main(args []string) {
 	ctrl.SetLogger(logger)
 
 	// init sentry
-	if dsn := os.Getenv("SENTRY_DSN"); dsn != "" {
+	if dsn := os.Getenv("OPERATOR_SENTRY_DSN"); dsn != "" {
 		err = sentry.Init(sentry.ClientOptions{
 			Dsn: dsn,
 		})

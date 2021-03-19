@@ -44,7 +44,7 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-SENTRY_DSN = https://369afa8d72cb4772b46936f7291218b7@kl.sentry.cloudlinux.com/2
+OPERATOR_SENTRY_DSN =
 
 all: manager
 

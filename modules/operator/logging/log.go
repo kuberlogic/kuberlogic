@@ -11,11 +11,21 @@ import (
 )
 
 func entryToEvent(entry zapcore.Entry) *sentry.Event {
+	hub := sentry.CurrentHub()
+
 	event := sentry.NewEvent()
 	event.Level = sentry.Level(entry.Level.String())
 	event.Message = entry.Message
 	event.Logger = entry.LoggerName
 	event.Timestamp = entry.Time
+	if hub.Client().Options().AttachStacktrace {
+		event.Threads = []sentry.Thread{{
+			Stacktrace: sentry.NewStacktrace(),
+			Crashed:    false,
+			Current:    true,
+		}}
+	}
+
 	return event
 }
 
@@ -24,6 +34,7 @@ func CreateLogger() (logr.Logger, error) {
 		return zapcore.RegisterHooks(core, func(entry zapcore.Entry) error {
 			// sending all events to sentry above warn level
 			if entry.Level >= zap.WarnLevel {
+				fmt.Println("---->", entry.Stack)
 				fmt.Println("======>", entry.Level, entry.Message)
 				sentry.CaptureEvent(entryToEvent(entry))
 			}

@@ -77,7 +77,7 @@ func parallelFunc(serviceType string, f func(service Service)) {
 
 func TestMain(m *testing.M) {
 	// init sentry
-	if dsn := os.Getenv("SENTRY_DSN"); dsn != "" {
+	if dsn := os.Getenv("TESTS_SENTRY_DSN"); dsn != "" {
 		err := sentry.Init(sentry.ClientOptions{
 			Dsn:              dsn,
 			Debug:            true,
@@ -87,7 +87,7 @@ func TestMain(m *testing.M) {
 			log.Errorf("unable to create sentry logger: %s", err)
 			os.Exit(1)
 		}
-		log.Debugf("sentry was initialized")
+		log.Info("sentry was initialized")
 
 		// Flush buffered events before the program terminates.
 		defer sentry.Flush(2 * time.Second)
