@@ -6,7 +6,7 @@ import (
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
 	k8s2 "github.com/kuberlogic/operator/modules/apiserver/util/k8s"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	"github.com/kuberlogic/operator/modules/watcher/k8s"
+	"github.com/kuberlogic/operator/modules/operator/util"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -21,12 +21,12 @@ func Connect(ns, name string) (*kubernetes.Clientset, *kuberlogicv1.KuberLogicSe
 		return nil, nil, err
 	}
 
-	client, err := k8s.GetBaseClient(cfg)
+	client, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	crdClient, err := k8s.GetKuberLogicClient(cfg)
+	crdClient, err := util.GetKuberLogicClient(cfg)
 	if err != nil {
 		return nil, nil, err
 	}

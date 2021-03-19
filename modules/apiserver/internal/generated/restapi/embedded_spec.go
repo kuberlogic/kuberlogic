@@ -758,7 +758,55 @@ func init() {
         }
       }
     },
-    "/services/{ServiceID}/restore": {
+    "/services/{ServiceID}/restores": {
+      "get": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "tags": [
+          "service"
+        ],
+        "operationId": "restoreList",
+        "parameters": [
+          {
+            "$ref": "#/parameters/ServiceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "search results matching criteria",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Restore"
+              }
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "404": {
+            "description": "item not found"
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
       "post": {
         "security": [
           {
@@ -1054,12 +1102,12 @@ func init() {
     "Backup": {
       "type": "object",
       "required": [
-        "key",
+        "file",
         "size",
         "lastModified"
       ],
       "properties": {
-        "key": {
+        "file": {
           "type": "string"
         },
         "lastModified": {
@@ -1207,6 +1255,30 @@ func init() {
         },
         "username": {
           "type": "string"
+        }
+      }
+    },
+    "Restore": {
+      "type": "object",
+      "required": [
+        "file",
+        "database",
+        "time",
+        "status"
+      ],
+      "properties": {
+        "database": {
+          "type": "string"
+        },
+        "file": {
+          "type": "string"
+        },
+        "status": {
+          "format": "string"
+        },
+        "time": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -2182,7 +2254,60 @@ func init() {
         }
       }
     },
-    "/services/{ServiceID}/restore": {
+    "/services/{ServiceID}/restores": {
+      "get": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "tags": [
+          "service"
+        ],
+        "operationId": "restoreList",
+        "parameters": [
+          {
+            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+            "type": "string",
+            "description": "service Resource ID",
+            "name": "ServiceID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "search results matching criteria",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Restore"
+              }
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "404": {
+            "description": "item not found"
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
       "post": {
         "security": [
           {
@@ -2503,12 +2628,12 @@ func init() {
     "Backup": {
       "type": "object",
       "required": [
-        "key",
+        "file",
         "size",
         "lastModified"
       ],
       "properties": {
-        "key": {
+        "file": {
           "type": "string"
         },
         "lastModified": {
@@ -2657,6 +2782,30 @@ func init() {
         },
         "username": {
           "type": "string"
+        }
+      }
+    },
+    "Restore": {
+      "type": "object",
+      "required": [
+        "file",
+        "database",
+        "time",
+        "status"
+      ],
+      "properties": {
+        "database": {
+          "type": "string"
+        },
+        "file": {
+          "type": "string"
+        },
+        "status": {
+          "format": "string"
+        },
+        "time": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },

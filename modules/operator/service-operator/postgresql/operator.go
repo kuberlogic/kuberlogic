@@ -3,33 +3,45 @@ package postgresql
 import (
 	"fmt"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	"github.com/kuberlogic/operator/modules/operator/util"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
-	image                 = "postgresql"
-	version               = "12.1.5"
-	teamId                = "kuberlogic"
-	postgresRoleKey       = "spilo-role"
-	postgresRoleReplica   = "replica"
-	postgresRoleMaster    = "master"
-	postgresPodLabelKey   = "cluster-name"
-	postgresPodDefaultKey = "application"
-	postgresPodDefaultVal = "spilo"
-	postgresMainContainer = "postgres"
-	postgresPort          = 5432
+	image   = "postgresql"
+	version = "12.1.5"
+	teamId  = "kuberlogic"
 )
 
 type Postgres struct {
 	Operator postgresv1.Postgresql
 }
 
-func (p *Postgres) Name(cm *kuberlogicv1.KuberLogicService) string {
-	return fmt.Sprintf("%s-%s", teamId, cm.Name)
+func (p *Postgres) GetBackupSchedule() interfaces.BackupSchedule {
+	return &Backup{
+		Cluster: p,
+	}
+}
+
+func (p *Postgres) GetBackupRestore() interfaces.BackupRestore {
+	return &Restore{
+		Cluster: p,
+	}
+}
+
+func (p *Postgres) GetInternalDetails() interfaces.InternalDetails {
+	return &InternalDetails{
+		Cluster: p,
+	}
+}
+
+func (p *Postgres) GetSession(cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (interfaces.Session, error) {
+	return NewSession(p, cm, client, db)
 }
 
 func (p *Postgres) AsRuntimeObject() runtime.Object {
@@ -38,6 +50,10 @@ func (p *Postgres) AsRuntimeObject() runtime.Object {
 
 func (p *Postgres) AsMetaObject() metav1.Object {
 	return &p.Operator
+}
+
+func (p *Postgres) Name(cm *kuberlogicv1.KuberLogicService) string {
+	return fmt.Sprintf("%s-%s", teamId, cm.Name)
 }
 
 func (p *Postgres) InitFrom(o runtime.Object) {
@@ -230,44 +246,6 @@ func (p *Postgres) CurrentStatus() string {
 	default:
 		return kuberlogicv1.ClusterUnknownStatus
 	}
-}
-
-func (p *Postgres) GetPodReplicaSelector() map[string]string {
-	return map[string]string{postgresRoleKey: postgresRoleReplica,
-		postgresPodLabelKey:   p.Operator.ObjectMeta.Name,
-		postgresPodDefaultKey: postgresPodDefaultVal,
-	}
-}
-
-func (p *Postgres) GetPodMasterSelector() map[string]string {
-	return map[string]string{postgresRoleKey: postgresRoleMaster,
-		postgresPodLabelKey:   p.Operator.ObjectMeta.Name,
-		postgresPodDefaultKey: postgresPodDefaultVal,
-	}
-}
-
-func (p *Postgres) GetMasterService() string {
-	return fmt.Sprintf("%s", p.Operator.ObjectMeta.Name)
-}
-
-func (p *Postgres) GetReplicaService() string {
-	return fmt.Sprintf("%s-repl", p.Operator.ObjectMeta.Name)
-}
-
-func (p *Postgres) GetAccessPort() int {
-	return postgresPort
-}
-
-func (p *Postgres) GetMainPodContainer() string {
-	return postgresMainContainer
-}
-
-func (p *Postgres) GetDefaultConnectionPassword() (secret, passwordField string) {
-	return genUserCredentialsSecretName(kuberlogicv1.DefaultUser, p.Operator.ObjectMeta.Name), "password"
-}
-
-func (p *Postgres) GetCredentialsSecret() (*apiv1.Secret, error) {
-	return nil, nil
 }
 
 func genUserCredentialsSecretName(user, cluster string) string {

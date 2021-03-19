@@ -3,6 +3,9 @@ package cmd
 import (
 	"os"
 
+	"github.com/kuberlogic/operator/modules/operator/util"
+	"k8s.io/client-go/kubernetes"
+
 	"github.com/go-chi/chi"
 	"github.com/jessevdk/go-flags"
 	"github.com/kuberlogic/operator/modules/apiserver/util/k8s"
@@ -60,12 +63,12 @@ func Main(args []string) {
 		mainLog.Fatalf(err.Error())
 	}
 
-	crdClient, err := k8s.GetKuberLogicClient(k8sconf)
+	crdClient, err := util.GetKuberLogicClient(k8sconf)
 	if err != nil {
 		mainLog.Fatalf(err.Error())
 	}
 
-	baseClient, err := k8s.GetBaseClient(k8sconf)
+	baseClient, err := kubernetes.NewForConfig(k8sconf)
 	if err != nil {
 		mainLog.Fatalf(err.Error())
 	}
@@ -84,6 +87,7 @@ func Main(args []string) {
 	api.ServiceDatabaseRestoreHandler = apiService.DatabaseRestoreHandlerFunc(srv.DatabaseRestoreHandler)
 	api.AuthLoginUserHandler = apiAuth.LoginUserHandlerFunc(srv.LoginUserHandler)
 	api.ServiceLogsGetHandler = apiService.LogsGetHandlerFunc(srv.LogsGetHandler)
+	api.ServiceRestoreListHandler = apiService.RestoreListHandlerFunc(srv.RestoreListHandler)
 	api.ServiceServiceAddHandler = apiService.ServiceAddHandlerFunc(srv.ServiceAddHandler)
 	api.ServiceServiceDeleteHandler = apiService.ServiceDeleteHandlerFunc(srv.ServiceDeleteHandler)
 	api.ServiceServiceEditHandler = apiService.ServiceEditHandlerFunc(srv.ServiceEditHandler)

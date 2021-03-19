@@ -7,7 +7,7 @@ import (
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	"github.com/kuberlogic/operator/modules/watcher/api"
+	"github.com/kuberlogic/operator/modules/operator/service-operator/util/kuberlogic"
 	"github.com/pkg/errors"
 )
 
@@ -44,7 +44,7 @@ func (srv *Service) UserDeleteHandler(params apiService.UserDeleteParams, princi
 		return util.BadRequestFromError(err)
 	}
 
-	session, err := api.GetSession(&item, srv.clientset, "", "")
+	session, err := kuberlogic.GetSession(&item, srv.clientset, "")
 	if err != nil {
 		srv.log.Errorf("error generating session: %s", err.Error())
 		return util.BadRequestFromError(err)

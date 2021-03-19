@@ -3,15 +3,20 @@ package cmd
 {{ $name := .Name }}
 {{ $operations := .Operations }}
 import (
-	"github.com/go-chi/chi"
-	"github.com/kuberlogic/apiserver/util/k8s"
+	"github.com/kuberlogic/operator/modules/operator/util"
+	"k8s.io/client-go/kubernetes"
 	"os"
 
-    cloudlinuxv1 "github.com/kuberlogic/operator/modules/operatorapi/v1"
-    k8scheme "k8s.io/client-go/kubernetes/scheme"
+	"github.com/go-chi/chi"
+	"github.com/jessevdk/go-flags"
+	"github.com/kuberlogic/operator/modules/apiserver/util/k8s"
 
-	"github.com/kuberlogic/apiserver/internal/generated/restapi"
-	"github.com/kuberlogic/apiserver/internal/generated/restapi/operations"
+	cloudlinuxv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	k8scheme "k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations"
+
 	{{range $index, $op := .Operations}}
         {{ $found := false }}
         {{ range $i, $sop := $operations }}
@@ -26,12 +31,12 @@ import (
 
 	"github.com/go-openapi/loads"
 
-	"github.com/kuberlogic/apiserver/internal/app"
-    "github.com/kuberlogic/apiserver/internal/cache"
-    "github.com/kuberlogic/apiserver/internal/security"
-	"github.com/kuberlogic/apiserver/internal/config"
-	"github.com/kuberlogic/apiserver/internal/logging"
-	"github.com/kuberlogic/apiserver/internal/net/middleware"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/app"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/cache"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/config"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/net/middleware"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
 )
 
 func Main(args []string) {
@@ -67,12 +72,12 @@ func Main(args []string) {
 		mainLog.Fatalf(err.Error())
 	}
 
-	crdClient, err := k8s.GetKuberLogicClient(k8sconf)
+	crdClient, err := util.GetKuberLogicClient(k8sconf)
 	if err != nil {
 		mainLog.Fatalf(err.Error())
 	}
 
-	baseClient, err := k8s.GetBaseClient(k8sconf)
+	baseClient, err := kubernetes.NewForConfig(k8sconf)
 	if err != nil {
 		mainLog.Fatalf(err.Error())
 	}

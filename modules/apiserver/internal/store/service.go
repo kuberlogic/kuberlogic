@@ -15,12 +15,6 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-type ServiceStore struct {
-	cmClient  *rest.RESTClient
-	clientset *kubernetes.Clientset
-	log       logging.Logger
-}
-
 const (
 	serviceK8sResource = "kuberlogicservices"
 	readyStatus        = "Ready"

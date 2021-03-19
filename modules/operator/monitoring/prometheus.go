@@ -40,7 +40,7 @@ var (
 		labels,
 		nil)
 
-	// Backup
+	// BaseBackup
 	cmBackupSuccess = prometheus.NewDesc(
 		"kuberlogicbackupschedule_success",
 		"KuberLogicServices backup success",
