@@ -1,50 +1,33 @@
 package logging
 
 import (
-	"fmt"
-	"github.com/getsentry/sentry-go"
+	"github.com/TheZeroSlave/zapsentry"
 	"github.com/go-logr/logr"
-	"go.uber.org/zap"
+	"github.com/go-logr/zapr"
+	zap2 "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
-	zapr "sigs.k8s.io/controller-runtime/pkg/log/zap"
+	zap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
-func entryToEvent(entry zapcore.Entry) *sentry.Event {
-	hub := sentry.CurrentHub()
-
-	event := sentry.NewEvent()
-	event.Level = sentry.Level(entry.Level.String())
-	event.Message = entry.Message
-	event.Logger = entry.LoggerName
-	event.Timestamp = entry.Time
-	if hub.Client().Options().AttachStacktrace {
-		event.Threads = []sentry.Thread{{
-			Stacktrace: sentry.NewStacktrace(),
-			Crashed:    false,
-			Current:    true,
-		}}
+func modifyToSentryLogger(log *zap2.Logger, dsn string) *zap2.Logger {
+	cfg := zapsentry.Configuration{
+		Level: zapcore.WarnLevel, //when to send message to sentry
+		Tags: map[string]string{
+			"component": "operator",
+		},
 	}
-
-	return event
+	core, err := zapsentry.NewCore(cfg, zapsentry.NewSentryClientFromDSN(dsn))
+	//in case of err it will return noop core. so we can safely attach it
+	if err != nil {
+		log.Warn("failed to init zap", zap2.Error(err))
+	}
+	return zapsentry.AttachCoreToLogger(core, log)
 }
 
-func CreateLogger() (logr.Logger, error) {
-	sentryOptions := zap.WrapCore(func(core zapcore.Core) zapcore.Core {
-		return zapcore.RegisterHooks(core, func(entry zapcore.Entry) error {
-			// sending all events to sentry above warn level
-			if entry.Level >= zap.WarnLevel {
-				fmt.Println("---->", entry.Stack)
-				fmt.Println("======>", entry.Level, entry.Message)
-				sentry.CaptureEvent(entryToEvent(entry))
-			}
-			return nil
-		})
-	})
-
-	opts := []zapr.Opts{
-		zapr.UseDevMode(true),
-		zapr.RawZapOpts(sentryOptions),
+func CreateZapLogger() (*zap2.Logger, error) {
+	opts := []zap.Opts{
+		zap.UseDevMode(true),
 	}
 
 	if logName := os.Getenv("KUBERLOGIC_OPERATOR_LOG"); logName != "" {
@@ -52,8 +35,16 @@ func CreateLogger() (logr.Logger, error) {
 		if err != nil {
 			return nil, err
 		}
-		opts = append(opts, zapr.WriteTo(file))
+		opts = append(opts, zap.WriteTo(file))
 	}
 
-	return zapr.New(opts...), nil
+	return zap.NewRaw(opts...), nil
+}
+
+func GetLogger(logger *zap2.Logger) logr.Logger {
+	return zapr.NewLogger(logger)
+}
+
+func UseSentry(dsn string, logger *zap2.Logger) logr.Logger {
+	return zapr.NewLogger(modifyToSentryLogger(logger, dsn))
 }

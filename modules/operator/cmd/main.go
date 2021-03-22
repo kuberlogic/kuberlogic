@@ -49,7 +49,7 @@ func checkEnv(log logr.Logger) error {
 				"required env variable is undefined: %s", envVariable,
 			))
 		} else {
-			log.Info(fmt.Sprintf("%s: %s", envVariable, value))
+			log.Info("env", envVariable, value)
 		}
 	}
 	return nil
@@ -64,30 +64,25 @@ func Main(args []string) {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
-	logger, err := logging.CreateLogger()
+	zapl, err := logging.CreateZapLogger()
 	if err != nil {
 		setupLog.Error(err, "unable to create logger")
 		os.Exit(1)
 	}
-	ctrl.SetLogger(logger)
+	logger := logging.GetLogger(zapl)
 
 	// init sentry
 	if dsn := os.Getenv("OPERATOR_SENTRY_DSN"); dsn != "" {
-		err = sentry.Init(sentry.ClientOptions{
-			Dsn: dsn,
-		})
-		if err != nil {
-			logger.Error(err, "unable to create sentry logger")
-			os.Exit(1)
-		}
-		logger.Info("sentry for operator was initialized")
+		logger = logging.UseSentry(dsn, zapl)
+		setupLog.Info("sentry for operator was initialized")
 
 		// Flush buffered events before the program terminates.
 		defer sentry.Flush(2 * time.Second)
 	}
+	ctrl.SetLogger(logger)
 
-	if err := checkEnv(setupLog); err != nil {
-		setupLog.Error(err, "unable to start manager")
+	if err := checkEnv(logger); err != nil {
+		logger.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 

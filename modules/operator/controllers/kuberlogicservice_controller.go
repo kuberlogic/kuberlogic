@@ -109,6 +109,10 @@ func (r *KuberLogicServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, 
 
 	op.InitFrom(found)
 
+	//a, b := 0, 1
+	//_ = b / a
+
+	// log.Error(errors.New("sentry!"),"ensure that we have dependencies set up")
 	log.Info("ensure that we have dependencies set up")
 	if err := r.ensureClusterDependencies(op, kls, ctx); err != nil {
 		log.Error(err, "failed to ensure dependencies", "BaseOperator", kls.Spec.Type)
