@@ -15,7 +15,6 @@ const backupConfigGetSecGrant = "service:backup-config:get"
 
 // curl -v -H Content-Type:application/json -H "Authorization: Bearer" -X GET localhost:8001/api/v1/services/<service-id>/backup-config
 func (srv *Service) BackupConfigGetHandler(params apiService.BackupConfigGetParams, principal *models.Principal) middleware.Responder {
-
 	ns, name, err := util.SplitID(params.ServiceID)
 	if err != nil {
 		return util.BadRequestFromError(err)

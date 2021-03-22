@@ -3,7 +3,9 @@ package cmd
 import (
 	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi"
+	middleware2 "github.com/go-chi/chi/middleware"
 	"github.com/jessevdk/go-flags"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/net/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/util/k8s"
 	"github.com/kuberlogic/operator/modules/operator/util"
 	"k8s.io/client-go/kubernetes"
@@ -26,7 +28,6 @@ import (
 	"github.com/kuberlogic/operator/modules/apiserver/internal/cache"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/config"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/net/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
 )
 
@@ -143,6 +144,9 @@ func Main(args []string) {
 	h := api.Serve(nil)
 	r := chi.NewRouter()
 	r.Use(middleware.NewLoggingMiddleware(logging.WithComponentLogger("request-handler")))
+	r.Use(middleware2.Recoverer)
+	r.Use(middleware.SentryLogPanic)
+	r.Use(middleware.SetSentryRequestScope)
 	r.Mount("/", h)
 
 	server.ConfigureAPI()

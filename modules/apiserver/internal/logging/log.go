@@ -18,14 +18,13 @@ type Logger interface {
 var l *zap.SugaredLogger
 
 func entryToEvent(entry zapcore.Entry) *sentry.Event {
-	hub := sentry.CurrentHub()
-
 	event := sentry.NewEvent()
 	event.Level = sentry.Level(entry.Level.String())
 	event.Message = entry.Message
 	event.Logger = entry.LoggerName
 	event.Timestamp = entry.Time
 
+	hub := sentry.CurrentHub()
 	if hub.Client().Options().AttachStacktrace {
 		event.Threads = []sentry.Thread{{
 			Stacktrace: sentry.NewStacktrace(),
