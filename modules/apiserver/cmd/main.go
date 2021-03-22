@@ -36,13 +36,8 @@ func Main(args []string) {
 
 	// init sentry
 	if dsn := os.Getenv("APISERVER_SENTRY_DSN"); dsn != "" {
-		err := sentry.Init(sentry.ClientOptions{
-			Dsn: dsn,
-		})
-		if err != nil {
-			mainLog.Errorf("unable to create sentry logger: %s", err)
-			os.Exit(1)
-		}
+		logging.UseSentry(dsn)
+
 		mainLog.Debugf("sentry for apiserver was initialized")
 
 		// Flush buffered events before the program terminates.

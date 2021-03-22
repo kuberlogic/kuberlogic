@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"github.com/getsentry/sentry-go"
 	cmd2 "github.com/kuberlogic/operator/modules/apiserver/cmd"
 	"github.com/kuberlogic/operator/modules/operator/cmd"
 	"github.com/prometheus/common/log"
@@ -77,21 +76,21 @@ func parallelFunc(serviceType string, f func(service Service)) {
 
 func TestMain(m *testing.M) {
 	// init sentry
-	if dsn := os.Getenv("TESTS_SENTRY_DSN"); dsn != "" {
-		err := sentry.Init(sentry.ClientOptions{
-			Dsn:              dsn,
-			Debug:            true,
-			AttachStacktrace: true,
-		})
-		if err != nil {
-			log.Errorf("unable to create sentry logger: %s", err)
-			os.Exit(1)
-		}
-		log.Info("sentry was initialized")
-
-		// Flush buffered events before the program terminates.
-		defer sentry.Flush(2 * time.Second)
-	}
+	//if dsn := os.Getenv("TESTS_SENTRY_DSN"); dsn != "" {
+	//	err := sentry.Init(sentry.ClientOptions{
+	//		Dsn:              dsn,
+	//		Debug:            true,
+	//		AttachStacktrace: true,
+	//	})
+	//	if err != nil {
+	//		log.Errorf("unable to create sentry logger: %s", err)
+	//		os.Exit(1)
+	//	}
+	//	log.Info("sentry was initialized")
+	//
+	//	// Flush buffered events before the program terminates.
+	//	defer sentry.Flush(2 * time.Second)
+	//}
 
 	serviceType := os.Getenv("SERVICE_TYPE")
 

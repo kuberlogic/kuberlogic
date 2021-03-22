@@ -3,6 +3,7 @@ module github.com/kuberlogic/operator/modules/apiserver
 go 1.13
 
 require (
+	github.com/TheZeroSlave/zapsentry v1.6.0
 	github.com/aws/aws-sdk-go v1.34.28
 	github.com/casbin/casbin/v2 v2.19.4
 	github.com/coreos/go-oidc v2.1.0+incompatible

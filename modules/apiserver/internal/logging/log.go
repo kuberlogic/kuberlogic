@@ -1,7 +1,7 @@
 package logging
 
 import (
-	"github.com/getsentry/sentry-go"
+	"github.com/TheZeroSlave/zapsentry"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -17,36 +17,24 @@ type Logger interface {
 
 var l *zap.SugaredLogger
 
-func entryToEvent(entry zapcore.Entry) *sentry.Event {
-	event := sentry.NewEvent()
-	event.Level = sentry.Level(entry.Level.String())
-	event.Message = entry.Message
-	event.Logger = entry.LoggerName
-	event.Timestamp = entry.Time
-
-	hub := sentry.CurrentHub()
-	if hub.Client().Options().AttachStacktrace {
-		event.Threads = []sentry.Thread{{
-			Stacktrace: sentry.NewStacktrace(),
-			Crashed:    false,
-			Current:    true,
-		}}
-	}
-	return event
+func init() {
+	l = newZapLogger().Sugar()
 }
 
-func init() {
-	sentryOptions := zap.WrapCore(func(core zapcore.Core) zapcore.Core {
-		return zapcore.RegisterHooks(core, func(entry zapcore.Entry) error {
-			// sending all events to sentry above warn level
-			if entry.Level >= zap.WarnLevel {
-				sentry.CaptureEvent(entryToEvent(entry))
-			}
-			return nil
-		})
-	})
+func modifyToSentryLogger(log *zap.Logger, dsn string) *zap.Logger {
+	cfg := zapsentry.Configuration{
+		Level: zapcore.WarnLevel, //when to send message to sentry
+	}
+	core, err := zapsentry.NewCore(cfg, zapsentry.NewSentryClientFromDSN(dsn))
+	//in case of err it will return noop core. so we can safely attach it
+	if err != nil {
+		log.Warn("failed to init zap", zap.Error(err))
+	}
+	return zapsentry.AttachCoreToLogger(core, log)
+}
 
-	l = newZapLogger(sentryOptions)
+func UseSentry(dsn string) {
+	l = modifyToSentryLogger(newZapLogger(), dsn).Sugar()
 }
 
 func WithComponentLogger(component string) Logger {

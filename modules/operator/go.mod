@@ -3,6 +3,7 @@ module github.com/kuberlogic/operator/modules/operator
 go 1.13
 
 require (
+	github.com/TheZeroSlave/zapsentry v1.6.0 // indirect
 	github.com/getsentry/sentry-go v0.10.0
 	github.com/go-logr/logr v0.1.0
 	github.com/go-sql-driver/mysql v1.5.0
@@ -12,7 +13,7 @@ require (
 	github.com/prometheus/client_golang v1.0.0
 	github.com/spotahome/redis-operator v1.0.0
 	github.com/zalando/postgres-operator v1.5.1-0.20200903060246-03437b63749e
-	go.uber.org/zap v1.10.0
+	go.uber.org/zap v1.16.0
 	k8s.io/api v0.18.8
 	k8s.io/apimachinery v0.18.8
 	k8s.io/client-go v11.0.0+incompatible
