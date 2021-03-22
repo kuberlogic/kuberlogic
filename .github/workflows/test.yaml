@@ -2,7 +2,6 @@ name: Run integration tests
 
 on:
   pull_request:
-    branches: [ master ]
   push:
     branches: [ master ]
 

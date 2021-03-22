@@ -3,9 +3,10 @@ module github.com/kuberlogic/operator/modules/operator
 go 1.13
 
 require (
-	github.com/TheZeroSlave/zapsentry v1.6.0 // indirect
+	github.com/TheZeroSlave/zapsentry v1.6.0
 	github.com/getsentry/sentry-go v0.10.0
 	github.com/go-logr/logr v0.1.0
+	github.com/go-logr/zapr v0.1.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/jackc/pgx/v4 v4.10.1
 	github.com/pkg/errors v0.9.1
