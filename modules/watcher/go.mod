@@ -7,7 +7,7 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/jackc/pgx/v4 v4.10.1
-	github.com/kuberlogic/operator/modules/operator v0.0.20-0.20210323084319-57375ee1a984 // indirect
+	github.com/kuberlogic/operator/modules/operator v0.0.20-0.20210323085615-3c2beb638ed9 // indirect
 	github.com/pkg/errors v0.9.1
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect

@@ -11,7 +11,7 @@ NAME = apiserver
 IMG ?= $(IMG_REPO)/$(NAME):$(VERSION)
 
 KUBERLOGIC_DEBUGLOGS=True
-APISERVER_SENTRY_DSN =
+SENTRY_DSN =
 
 clean:
 	@rm -rf ./cmd internal/generated  internal/config

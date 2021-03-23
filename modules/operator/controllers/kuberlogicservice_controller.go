@@ -8,6 +8,7 @@ import (
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
 	"github.com/kuberlogic/operator/modules/operator/service-operator"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
+	"github.com/kuberlogic/operator/modules/operator/util"
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	redisv1 "github.com/spotahome/redis-operator/api/redisfailover/v1"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
@@ -33,6 +34,8 @@ type KuberLogicServiceReconciler struct {
 func (r *KuberLogicServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	log := r.Log.WithValues("kuberlogicservices", req.NamespacedName)
+
+	defer util.HandlePanic(log)
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -108,9 +111,6 @@ func (r *KuberLogicServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, 
 	}
 
 	op.InitFrom(found)
-
-	//a, b := 0, 1
-	//_ = b / a
 
 	// log.Error(errors.New("sentry!"),"ensure that we have dependencies set up")
 	log.Info("ensure that we have dependencies set up")

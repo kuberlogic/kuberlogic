@@ -4,8 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/getsentry/sentry-go"
-	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/controllers"
 	"github.com/kuberlogic/operator/modules/operator/logging"
@@ -20,7 +18,6 @@ import (
 	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
-	"time"
 )
 
 var (
@@ -42,14 +39,14 @@ var envRequired = []string{
 	util.EnvImgPullSecret,
 }
 
-func checkEnv(log logr.Logger) error {
+func checkEnv() error {
 	for _, envVariable := range envRequired {
 		if value := os.Getenv(envVariable); value == "" {
 			return errors.New(fmt.Sprintf(
 				"required env variable is undefined: %s", envVariable,
 			))
 		} else {
-			log.Info("env", envVariable, value)
+			setupLog.Info("env", envVariable, value)
 		}
 	}
 	return nil
@@ -72,16 +69,13 @@ func Main(args []string) {
 	logger := logging.GetLogger(zapl)
 
 	// init sentry
-	if dsn := os.Getenv("OPERATOR_SENTRY_DSN"); dsn != "" {
+	if dsn := os.Getenv("SENTRY_DSN"); dsn != "" {
 		logger = logging.UseSentry(dsn, zapl)
 		setupLog.Info("sentry for operator was initialized")
-
-		// Flush buffered events before the program terminates.
-		defer sentry.Flush(2 * time.Second)
 	}
 	ctrl.SetLogger(logger)
 
-	if err := checkEnv(logger); err != nil {
+	if err := checkEnv(); err != nil {
 		logger.Error(err, "unable to start manager")
 		os.Exit(1)
 	}

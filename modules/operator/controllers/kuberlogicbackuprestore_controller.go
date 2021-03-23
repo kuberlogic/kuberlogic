@@ -8,6 +8,7 @@ import (
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
 	"github.com/kuberlogic/operator/modules/operator/service-operator"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
+	"github.com/kuberlogic/operator/modules/operator/util"
 	v1 "k8s.io/api/batch/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,6 +31,8 @@ type KuberLogicBackupRestoreReconciler struct {
 func (r *KuberLogicBackupRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	log := r.Log.WithValues("kuberlogicbackuprestore", req.NamespacedName)
+
+	defer util.HandlePanic(log)
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
