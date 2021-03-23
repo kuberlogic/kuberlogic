@@ -3,7 +3,6 @@ module github.com/kuberlogic/operator/modules/apiserver
 go 1.13
 
 require (
-	github.com/TheZeroSlave/zapsentry v1.6.0
 	github.com/aws/aws-sdk-go v1.34.28
 	github.com/casbin/casbin/v2 v2.19.4
 	github.com/coreos/go-oidc v2.1.0+incompatible
@@ -18,7 +17,8 @@ require (
 	github.com/go-openapi/swag v0.19.12
 	github.com/go-openapi/validate v0.19.15
 	github.com/jessevdk/go-flags v1.4.0
-	github.com/kuberlogic/operator/modules/operator v0.0.20-0.20210319093357-e410616af316
+	github.com/kuberlogic/operator/modules/operator v0.0.20-0.20210322120901-44115b7c42c6
+	github.com/kuberlogic/zapsentry v1.6.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/common v0.4.1
 	github.com/vrischmann/envconfig v1.3.0

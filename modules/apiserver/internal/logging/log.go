@@ -1,7 +1,7 @@
 package logging
 
 import (
-	"github.com/TheZeroSlave/zapsentry"
+	"github.com/kuberlogic/zapsentry"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -24,6 +24,9 @@ func init() {
 func modifyToSentryLogger(log *zap.Logger, dsn string) *zap.Logger {
 	cfg := zapsentry.Configuration{
 		Level: zapcore.WarnLevel, //when to send message to sentry
+		Tags: map[string]string{
+			"component": "apiserver",
+		},
 	}
 	core, err := zapsentry.NewCore(cfg, zapsentry.NewSentryClientFromDSN(dsn))
 	//in case of err it will return noop core. so we can safely attach it

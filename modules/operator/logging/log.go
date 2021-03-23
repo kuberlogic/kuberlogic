@@ -1,9 +1,9 @@
 package logging
 
 import (
-	"github.com/TheZeroSlave/zapsentry"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
+	"github.com/kuberlogic/zapsentry"
 	zap2 "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
