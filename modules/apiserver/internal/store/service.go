@@ -214,7 +214,7 @@ func (s *ServiceStore) kuberLogicToService(c *kuberlogicv1.KuberLogicService, ct
 	ret.CreatedAt = strfmt.DateTime(c.CreationTimestamp.Time)
 
 	if ret.Status != readyStatus {
-		s.log.Warnf("service %s/%s status is %s. not gathering more info", ret.Ns, ret.Name, ret.Status)
+		s.log.Warnf("service %s/%s status is %s. not gathering more info", *ret.Ns, *ret.Name, ret.Status)
 		return ret, nil
 	}
 

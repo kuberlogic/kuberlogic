@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	"github.com/kuberlogic/operator/modules/operator/util"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -27,6 +28,8 @@ type KuberLogicAlertReconciler struct {
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicalerts/status,verbs=get;update;patch
 func (r *KuberLogicAlertReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("kuberlogicalert", req.NamespacedName)
+
+	defer util.HandlePanic(log)
 
 	r.mu.Lock()
 	defer r.mu.Unlock()

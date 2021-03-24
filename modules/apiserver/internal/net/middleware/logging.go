@@ -11,7 +11,6 @@ func NewLoggingMiddleware(log logging.Logger) func(next http.Handler) http.Handl
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
-
 			t1 := time.Now()
 			defer func() {
 				l := logging.With(

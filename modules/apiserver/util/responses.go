@@ -25,7 +25,6 @@ func (o *BadRequest) SetPayload(payload *models.Error) {
 
 // WriteResponse to the client
 func (o *BadRequest) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
-
 	rw.WriteHeader(BadRequestCode)
 	if o.Payload != nil {
 		payload := o.Payload

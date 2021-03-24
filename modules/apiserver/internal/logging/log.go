@@ -1,6 +1,10 @@
 package logging
 
-import "go.uber.org/zap"
+import (
+	"github.com/kuberlogic/zapsentry"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+)
 
 type Logger interface {
 	Debugf(format string, args ...interface{})
@@ -14,7 +18,26 @@ type Logger interface {
 var l *zap.SugaredLogger
 
 func init() {
-	l = newZapLogger()
+	l = newZapLogger().Sugar()
+}
+
+func modifyToSentryLogger(log *zap.Logger, dsn string) *zap.Logger {
+	cfg := zapsentry.Configuration{
+		Level: zapcore.WarnLevel, //when to send message to sentry
+		Tags: map[string]string{
+			"component": "apiserver",
+		},
+	}
+	core, err := zapsentry.NewCore(cfg, zapsentry.NewSentryClientFromDSN(dsn))
+	//in case of err it will return noop core. so we can safely attach it
+	if err != nil {
+		log.Warn("failed to init zap", zap.Error(err))
+	}
+	return zapsentry.AttachCoreToLogger(core, log)
+}
+
+func UseSentry(dsn string) {
+	l = modifyToSentryLogger(newZapLogger(), dsn).Sugar()
 }
 
 func WithComponentLogger(component string) Logger {

@@ -38,7 +38,8 @@ type BackupConfig struct {
 	Endpoint *string `json:"endpoint"`
 
 	// schedule
-	Schedule string `json:"schedule,omitempty"`
+	// Required: true
+	Schedule *string `json:"schedule"`
 }
 
 // Validate validates this backup config
@@ -62,6 +63,10 @@ func (m *BackupConfig) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateEndpoint(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateSchedule(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -110,6 +115,15 @@ func (m *BackupConfig) validateEnabled(formats strfmt.Registry) error {
 func (m *BackupConfig) validateEndpoint(formats strfmt.Registry) error {
 
 	if err := validate.Required("endpoint", "body", m.Endpoint); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *BackupConfig) validateSchedule(formats strfmt.Registry) error {
+
+	if err := validate.Required("schedule", "body", m.Schedule); err != nil {
 		return err
 	}
 

@@ -8,6 +8,7 @@ import (
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
 	"github.com/kuberlogic/operator/modules/operator/service-operator"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
+	"github.com/kuberlogic/operator/modules/operator/util"
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -31,6 +32,8 @@ type KuberLogicServiceReconciler struct {
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicservices/status,verbs=get;update;patch
 func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("kuberlogicservices", req.NamespacedName)
+
+	defer util.HandlePanic(log)
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -107,6 +110,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	op.InitFrom(found)
 
+	// log.Error(errors.New("sentry!"),"ensure that we have dependencies set up")
 	log.Info("ensure that we have dependencies set up")
 	if err := r.ensureClusterDependencies(op, kls, ctx); err != nil {
 		log.Error(err, "failed to ensure dependencies", "BaseOperator", kls.Spec.Type)

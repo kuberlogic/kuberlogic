@@ -8,6 +8,7 @@ import (
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
 	"github.com/kuberlogic/operator/modules/operator/service-operator"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
+	"github.com/kuberlogic/operator/modules/operator/util"
 	v12 "k8s.io/api/batch/v1"
 	"k8s.io/api/batch/v1beta1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,6 +31,8 @@ type KuberLogicBackupScheduleReconciler struct {
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicbackupschedules/status,verbs=get;update;patch
 func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("kuberlogicbackupschedule", req.NamespacedName)
+
+	defer util.HandlePanic(log)
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
