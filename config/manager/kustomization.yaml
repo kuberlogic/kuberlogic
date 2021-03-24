@@ -11,7 +11,7 @@ images:
   newName: quay.io/kuberlogic/operator
   newTag: 0.0.20
 patchesStrategicMerge:
-- regcred.yaml
+- env.yaml
 resources:
 - operator.yaml
 - service.yaml

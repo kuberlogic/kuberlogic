@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/getsentry/sentry-go v0.10.0
+	github.com/go-errors/errors v1.0.1
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.0
 	github.com/go-sql-driver/mysql v1.5.0

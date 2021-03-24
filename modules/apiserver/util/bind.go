@@ -26,7 +26,7 @@ func BackupConfigResourceToModel(resource *v1.Secret) *models.BackupConfig {
 		Bucket:             &bucket,
 		Endpoint:           &endpoint,
 		Enabled:            &enabled,
-		Schedule:           schedule,
+		Schedule:           &schedule,
 	}
 }
 
@@ -36,7 +36,7 @@ func BackupConfigModelToResource(model *models.BackupConfig) *v1.Secret {
 	bucket := *model.Bucket
 	endpoint := *model.Endpoint
 	enabled := *model.Enabled
-	schedule := model.Schedule
+	schedule := *model.Schedule
 
 	return &v1.Secret{
 		StringData: map[string]string{

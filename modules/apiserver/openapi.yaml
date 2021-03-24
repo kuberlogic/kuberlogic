@@ -891,6 +891,7 @@ definitions:
       - aws_secret_access_key
       - bucket
       - endpoint
+      - schedule
     properties:
       enabled:
         type: boolean

@@ -99,6 +99,7 @@ github.com/gin-gonic/gin v1.4.0/go.mod h1:OW2EZn3DO8Ln9oIKOvM++LBO+5UPHJJDH72/q/
 github.com/globalsign/mgo v0.0.0-20180905125535-1ca0a4f7cbcb/go.mod h1:xkRDCp4j0OGD1HRkm4kmhM+pmpv3AKq5SU7GMg4oO/Q=
 github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8/go.mod h1:xkRDCp4j0OGD1HRkm4kmhM+pmpv3AKq5SU7GMg4oO/Q=
 github.com/go-check/check v0.0.0-20180628173108-788fd7840127/go.mod h1:9ES+weclKsC9YodN5RgxqK/VD9HM9JsCSh7rNhMZE98=
+github.com/go-errors/errors v1.0.1 h1:LUHzmkK3GUKUrL/1gfBUxAHzcev3apQlezX/+O7ma6w=
 github.com/go-errors/errors v1.0.1/go.mod h1:f4zRHt4oKfwPJE5k8C9vpYG+aDHdBFUsgrm6/TyX73Q=
 github.com/go-kit/kit v0.8.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
 github.com/go-logfmt/logfmt v0.3.0/go.mod h1:Qt1PoO58o5twSAckw1HlFXLmHsOX5/0LbT9GBnD5lWE=
@@ -341,6 +342,8 @@ github.com/kuberlogic/operator/modules/operator v0.0.20-0.20210323084319-57375ee
 github.com/kuberlogic/operator/modules/operator v0.0.20-0.20210323084319-57375ee1a984/go.mod h1:Y7E201VWqiBhDOGak7KyaBO0rxmgxCkvMS2ztz2NFME=
 github.com/kuberlogic/operator/modules/operator v0.0.20-0.20210323085615-3c2beb638ed9 h1:uo+V6m1/WcjazNjCSQBm3uFH1geuHbhHgEbVMzdpz9M=
 github.com/kuberlogic/operator/modules/operator v0.0.20-0.20210323085615-3c2beb638ed9/go.mod h1:0L7x6v8BjovcuJA7YHFimmmTuKknSv1QmjNew+7hU2E=
+github.com/kuberlogic/operator/modules/operator v0.0.20-0.20210323131121-b2fe07e95cc4 h1:cW5cZRWvqNeJqGylx/+aXjQJwUZHS7QRB1h4FgdqU14=
+github.com/kuberlogic/operator/modules/operator v0.0.20-0.20210323131121-b2fe07e95cc4/go.mod h1:0L7x6v8BjovcuJA7YHFimmmTuKknSv1QmjNew+7hU2E=
 github.com/kuberlogic/zapsentry v1.6.1 h1:X7iVLdIPn2ubd2IQQqY+R8b7WHQim5fSmQ0MfNxLXKw=
 github.com/kuberlogic/zapsentry v1.6.1/go.mod h1:pvPfXqGhvpUQgeWfCfkrQxJ1Y65TVJtsA0hZ4eJ4sa0=
 github.com/kuberlogic/zapsentry v1.6.2 h1:aLnd1nQU2EUuFTB8z//s2sn5HRNOuqDyeQCcI/fCXw0=

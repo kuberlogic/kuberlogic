@@ -1126,7 +1126,8 @@ func init() {
         "aws_access_key_id",
         "aws_secret_access_key",
         "bucket",
-        "endpoint"
+        "endpoint",
+        "schedule"
       ],
       "properties": {
         "aws_access_key_id": {
@@ -2652,7 +2653,8 @@ func init() {
         "aws_access_key_id",
         "aws_secret_access_key",
         "bucket",
-        "endpoint"
+        "endpoint",
+        "schedule"
       ],
       "properties": {
         "aws_access_key_id": {
