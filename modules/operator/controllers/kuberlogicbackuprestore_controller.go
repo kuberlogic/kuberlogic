@@ -6,7 +6,7 @@ import (
 	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
-	"github.com/kuberlogic/operator/modules/operator/service-operator"
+	serviceOperator "github.com/kuberlogic/operator/modules/operator/service-operator"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	"github.com/kuberlogic/operator/modules/operator/util"
 	v1 "k8s.io/api/batch/v1"
@@ -72,7 +72,7 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 		return ctrl.Result{}, nil
 	}
 
-	op, err := service_operator.GetOperator(kl.Spec.Type)
+	op, err := serviceOperator.GetOperator(kl.Spec.Type)
 	if err != nil {
 		log.Error(err, "Could not define the base operator")
 		return ctrl.Result{}, err
