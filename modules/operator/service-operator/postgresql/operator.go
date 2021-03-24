@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -49,6 +50,10 @@ func (p *Postgres) AsRuntimeObject() runtime.Object {
 }
 
 func (p *Postgres) AsMetaObject() metav1.Object {
+	return &p.Operator
+}
+
+func (p *Postgres) AsClientObject() client.Object {
 	return &p.Operator
 }
 

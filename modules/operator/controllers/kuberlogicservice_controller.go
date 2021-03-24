@@ -9,7 +9,6 @@ import (
 	"github.com/kuberlogic/operator/modules/operator/service-operator"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
-	redisv1 "github.com/spotahome/redis-operator/api/redisfailover/v1"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,8 +29,7 @@ type KuberLogicServiceReconciler struct {
 
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicservices,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicservices/status,verbs=get;update;patch
-func (r *KuberLogicServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("kuberlogicservices", req.NamespacedName)
 
 	r.mu.Lock()
@@ -73,7 +71,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, 
 		}
 	}
 
-	found := op.AsRuntimeObject()
+	found := op.AsClientObject()
 	err = r.Get(
 		ctx,
 		types.NamespacedName{
@@ -118,7 +116,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, 
 	if !op.IsEqual(kls) {
 		op.Update(kls)
 
-		err = r.Update(ctx, op.AsRuntimeObject())
+		err = r.Update(ctx, op.AsClientObject())
 		if err != nil {
 			log.Error(err, "Failed to update object", "BaseOperator", kls.Spec.Type)
 			return ctrl.Result{}, err
@@ -163,7 +161,7 @@ func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op interfaces.Op
 	return nil
 }
 
-func (r *KuberLogicServiceReconciler) defineCluster(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService) (runtime.Object, error) {
+func (r *KuberLogicServiceReconciler) defineCluster(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService) (client.Object, error) {
 	op.Init(cm)
 	op.Update(cm)
 
@@ -174,14 +172,13 @@ func (r *KuberLogicServiceReconciler) defineCluster(op interfaces.OperatorInterf
 		return nil, err
 	}
 
-	return op.AsRuntimeObject(), nil
+	return op.AsClientObject(), nil
 }
 
 func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kuberlogicv1.KuberLogicService{}).
 		Owns(&mysqlv1.MysqlCluster{}).
-		Owns(&redisv1.RedisFailover{}).
 		Owns(&postgresv1.Postgresql{}).
 		Owns(&corev1.Secret{}).
 		Complete(r)

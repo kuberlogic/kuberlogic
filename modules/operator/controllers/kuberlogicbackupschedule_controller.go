@@ -28,8 +28,7 @@ type KuberLogicBackupScheduleReconciler struct {
 
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicbackupschedules,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicbackupschedules/status,verbs=get;update;patch
-func (r *KuberLogicBackupScheduleReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("kuberlogicbackupschedule", req.NamespacedName)
 
 	r.mu.Lock()
@@ -76,7 +75,7 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(req ctrl.Request) (ctrl.R
 		log.Error(err, "Could not define the base operator")
 		return ctrl.Result{}, err
 	}
-	found := op.AsRuntimeObject()
+	found := op.AsClientObject()
 	err = r.Get(
 		ctx,
 		types.NamespacedName{

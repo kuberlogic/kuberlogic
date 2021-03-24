@@ -3,7 +3,7 @@ kind: Kustomization
 images:
   - name: mysql-operator
     newName: quay.io/kuberlogic/mysql-operator
-    newTag: latest
+    newTag: v0.5.0-rc.2
 patchesStrategicMerge:
   - patches/regcred.yaml
 resources:

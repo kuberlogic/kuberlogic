@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type OperatorInterface interface {
@@ -17,6 +18,7 @@ type OperatorInterface interface {
 	Update(cm *v1.KuberLogicService)
 	AsRuntimeObject() runtime.Object
 	AsMetaObject() metav1.Object
+	AsClientObject() client.Object
 	IsEqual(cm *v1.KuberLogicService) bool
 	CurrentStatus() string
 	GetDefaults() v1.Defaults

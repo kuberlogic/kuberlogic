@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -62,6 +63,10 @@ func (p *Mysql) AsRuntimeObject() runtime.Object {
 }
 
 func (p *Mysql) AsMetaObject() metav1.Object {
+	return &p.Operator
+}
+
+func (p *Mysql) AsClientObject() client.Object {
 	return &p.Operator
 }
 
