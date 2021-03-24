@@ -21,8 +21,6 @@ func newZapLogger(opts ...zap.Option) *zap.Logger {
 	cfg.Level = atom
 
 	logger, _ := cfg.Build(opts...)
-	//sugar := logger.Sugar()
-
 	return logger
 }
 

@@ -17,7 +17,7 @@ require (
 	github.com/go-openapi/swag v0.19.12
 	github.com/go-openapi/validate v0.19.15
 	github.com/jessevdk/go-flags v1.4.0
-	github.com/kuberlogic/operator/modules/operator v0.0.20-0.20210324084532-be0d384537b1
+	github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210324085705-c670b6a252cb
 	github.com/kuberlogic/zapsentry v1.6.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/common v0.4.1
