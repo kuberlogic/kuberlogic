@@ -8,15 +8,15 @@ spec:
 
 #  volumeSize: 3Gi
 ##
-  resources:
-    requests:
-      memory: 111Mi
-      cpu: 10m
+#  resources:
+#    requests:
+#      memory: 100Mi
+#      cpu: 10m
 #    limits:
 #      memory: 1000Mi
 #      cpu: 100m
 
-  advancedConf:
-    shared_buffers: 32MB
+#  advancedConf:
+#    shared_buffers: 32MB
 
 #  version: 12.1.3
