@@ -6,7 +6,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi"
-	middleware2 "github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/middleware"
 	"github.com/go-openapi/loads"
 	"github.com/jessevdk/go-flags"
 
@@ -20,7 +20,7 @@ import (
 
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/net/middleware"
+	apiserverMiddleware "github.com/kuberlogic/operator/modules/apiserver/internal/net/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
 	"github.com/kuberlogic/operator/modules/apiserver/util/k8s"
 	cloudlinuxv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
@@ -31,8 +31,15 @@ import (
 
 func Main(args []string) {
 	mainLog := logging.WithComponentLogger("main")
+	cfg, err := config.InitConfig("kuberlogic", logging.WithComponentLogger("config"))
+	if err != nil {
+		mainLog.Fatalf(err.Error())
+		os.Exit(1)
+	}
+	logging.DebugLevel(cfg.DebugLogs)
+
 	// init sentry
-	if dsn := os.Getenv("SENTRY_DSN"); dsn != "" {
+	if dsn := cfg.Sentry.Dsn; dsn != "" {
 		logging.UseSentry(dsn)
 
 		mainLog.Debugf("sentry for apiserver was initialized")
@@ -40,12 +47,6 @@ func Main(args []string) {
 		// Flush buffered events before the program terminates.
 		defer sentry.Flush(2 * time.Second)
 	}
-
-	cfg, err := config.InitConfig("kuberlogic", logging.WithComponentLogger("config"))
-	if err != nil {
-		mainLog.Fatalf(err.Error())
-	}
-	logging.DebugLevel(cfg.DebugLogs)
 
 	swaggerSpec, err := loads.Analyzed(restapi.SwaggerJSON, "")
 	if err != nil {
@@ -135,10 +136,10 @@ func Main(args []string) {
 
 	h := api.Serve(nil)
 	r := chi.NewRouter()
-	r.Use(middleware.NewLoggingMiddleware(logging.WithComponentLogger("request-handler")))
-	r.Use(middleware2.Recoverer)
-	r.Use(middleware.SentryLogPanic)
-	r.Use(middleware.SetSentryRequestScope)
+	r.Use(apiserverMiddleware.NewLoggingMiddleware(logging.WithComponentLogger("request-handler")))
+	r.Use(middleware.Recoverer)
+	r.Use(apiserverMiddleware.SentryLogPanic)
+	r.Use(apiserverMiddleware.SetSentryRequestScope)
 	r.Mount("/", h)
 
 	server.ConfigureAPI()
