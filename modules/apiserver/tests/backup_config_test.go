@@ -18,7 +18,7 @@ func TestServiceNotFoundForTestBackupConfig(t *testing.T) {
 	api.responseCodeShouldBe(404)
 }
 
-func (u *tBackupConfig) Create(t *testing.T) {
+func (u *tBackupConfig) CreateWithoutSchedule(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
 	api.setRequestBody(`     {
@@ -27,6 +27,22 @@ func (u *tBackupConfig) Create(t *testing.T) {
 		"aws_secret_access_key": "aws_secret_access_key",
 		"bucket": "bucket",
 		"endpoint": "endpoint"
+     }`)
+	api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/backup-config",
+		u.service.ns, u.service.name))
+	api.responseCodeShouldBe(422)
+}
+
+func (u *tBackupConfig) Create(t *testing.T) {
+	api := newApi(t)
+	api.setBearerToken()
+	api.setRequestBody(`     {
+        "enabled": true,
+        "aws_access_key_id": "aws_access_key_id",
+		"aws_secret_access_key": "aws_secret_access_key",
+		"bucket": "bucket",
+		"endpoint": "endpoint",
+		"schedule": "* 1 * * *"
      }`)
 	api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/backup-config",
 		u.service.ns, u.service.name))
@@ -46,7 +62,8 @@ func (u *tBackupConfig) Get(t *testing.T) {
         "aws_access_key_id": "aws_access_key_id",
 		"aws_secret_access_key": "aws_secret_access_key",
 		"bucket": "bucket",
-		"endpoint": "endpoint"
+		"endpoint": "endpoint",
+		"schedule": "* 1 * * *"
      }`)
 }
 
@@ -66,7 +83,8 @@ func (u *tBackupConfig) ChangeConfig(t *testing.T) {
         "aws_access_key_id": "key-secret",
 		"aws_secret_access_key": "access-secret",
 		"bucket": "changed-backup",
-		"endpoint": "new-endpoint"
+		"endpoint": "new-endpoint",
+		"schedule": "* 2 * * *"
      }`)
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/backup-config",
 		u.service.ns, u.service.name))
@@ -86,7 +104,8 @@ func (u *tBackupConfig) GetChanged(t *testing.T) {
         "aws_access_key_id": "key-secret",
 		"aws_secret_access_key": "access-secret",
 		"bucket": "changed-backup",
-		"endpoint": "new-endpoint"
+		"endpoint": "new-endpoint",
+		"schedule": "* 2 * * *"
      }`)
 }
 
@@ -95,6 +114,7 @@ func makeTestBackupConfig(tbc tBackupConfig) func(t *testing.T) {
 		steps := []func(t *testing.T){
 			tbc.service.Create,
 			tbc.service.WaitForStatus("Ready", 5, 2*60),
+			tbc.CreateWithoutSchedule,
 			tbc.Create,
 			tbc.Get,
 			tbc.ChangeConfig,

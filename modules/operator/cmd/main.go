@@ -4,7 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/controllers"
 	"github.com/kuberlogic/operator/modules/operator/logging"
@@ -40,14 +39,14 @@ var envRequired = []string{
 	util.EnvImgPullSecret,
 }
 
-func checkEnv(log logr.Logger) error {
+func checkEnv() error {
 	for _, envVariable := range envRequired {
 		if value := os.Getenv(envVariable); value == "" {
 			return errors.New(fmt.Sprintf(
 				"required env variable is undefined: %s", envVariable,
 			))
 		} else {
-			log.Info(fmt.Sprintf("%s: %s", envVariable, value))
+			setupLog.Info("env", envVariable, value)
 		}
 	}
 	return nil
@@ -62,14 +61,22 @@ func Main(args []string) {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
-	logger, err := logging.CreateLogger()
+	zapl, err := logging.CreateZapLogger()
 	if err != nil {
 		setupLog.Error(err, "unable to create logger")
 		os.Exit(1)
 	}
+	logger := logging.GetLogger(zapl)
+
+	// init sentry
+	if dsn := os.Getenv("SENTRY_DSN"); dsn != "" {
+		logger = logging.UseSentry(dsn, zapl)
+		setupLog.Info("sentry for operator was initialized")
+	}
 	ctrl.SetLogger(logger)
-	if err := checkEnv(setupLog); err != nil {
-		setupLog.Error(err, "unable to start manager")
+
+	if err := checkEnv(); err != nil {
+		logger.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 

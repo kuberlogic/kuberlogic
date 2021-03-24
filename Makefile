@@ -44,6 +44,8 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+SENTRY_DSN =
+
 all: manager
 
 # Run tests
@@ -79,7 +81,6 @@ undeploy:
 
 deploy-dependencies: manifests kustomize
 	$(KUSTOMIZE) build config/dependencies | kubectl apply -f -
-
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen

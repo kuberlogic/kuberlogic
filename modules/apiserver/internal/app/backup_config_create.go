@@ -62,7 +62,7 @@ func (srv *Service) BackupConfigCreateHandler(params apiService.BackupConfigCrea
 
 	if *params.BackupConfig.Enabled {
 		srv.log.Debugf("attempting to create a backup resource %s/%s", ns, name)
-		err = util.CreateBackupResource(srv.cmClient, ns, name, params.BackupConfig.Schedule)
+		err = util.CreateBackupResource(srv.cmClient, ns, name, *params.BackupConfig.Schedule)
 		if err != nil {
 			srv.log.Errorf("error creating a backup resource %s/%s: %s", ns, name, err.Error())
 			return util.BadRequestFromError(err)

@@ -2,32 +2,31 @@ package cmd
 
 import (
 	"os"
+	"time"
 
-	"github.com/kuberlogic/operator/modules/operator/util"
-	"k8s.io/client-go/kubernetes"
-
+	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+	"github.com/go-openapi/loads"
 	"github.com/jessevdk/go-flags"
-	"github.com/kuberlogic/operator/modules/apiserver/util/k8s"
 
-	cloudlinuxv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	k8scheme "k8s.io/client-go/kubernetes/scheme"
-
+	"github.com/kuberlogic/operator/modules/apiserver/internal/app"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/cache"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/config"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations"
 
 	apiAuth "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/auth"
 
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
-
-	"github.com/go-openapi/loads"
-
-	"github.com/kuberlogic/operator/modules/apiserver/internal/app"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/cache"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/config"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/net/middleware"
+	apiserverMiddleware "github.com/kuberlogic/operator/modules/apiserver/internal/net/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
+	"github.com/kuberlogic/operator/modules/apiserver/util/k8s"
+	cloudlinuxv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	"github.com/kuberlogic/operator/modules/operator/util"
+	"k8s.io/client-go/kubernetes"
+	k8scheme "k8s.io/client-go/kubernetes/scheme"
 )
 
 func Main(args []string) {
@@ -35,20 +34,31 @@ func Main(args []string) {
 	cfg, err := config.InitConfig("kuberlogic", logging.WithComponentLogger("config"))
 	if err != nil {
 		mainLog.Fatalf(err.Error())
+		os.Exit(1)
 	}
 	logging.DebugLevel(cfg.DebugLogs)
+
+	// init sentry
+	if dsn := cfg.Sentry.Dsn; dsn != "" {
+		logging.UseSentry(dsn)
+
+		mainLog.Debugf("sentry for apiserver was initialized")
+
+		// Flush buffered events before the program terminates.
+		defer sentry.Flush(2 * time.Second)
+	}
 
 	swaggerSpec, err := loads.Analyzed(restapi.SwaggerJSON, "")
 	if err != nil {
 		mainLog.Fatalf(err.Error())
 	}
 
-	cache, err := cache.NewCache(logging.WithComponentLogger("cache"))
+	cache_, err := cache.NewCache(logging.WithComponentLogger("cache"))
 	if err != nil {
 		mainLog.Fatalf(err.Error())
 	}
 
-	authProvider, err := security.NewAuthProvider(cfg, cache, logging.WithComponentLogger("auth"))
+	authProvider, err := security.NewAuthProvider(cfg, cache_, logging.WithComponentLogger("auth"))
 	if err != nil {
 		mainLog.Fatalf(err.Error())
 	}
@@ -126,7 +136,10 @@ func Main(args []string) {
 
 	h := api.Serve(nil)
 	r := chi.NewRouter()
-	r.Use(middleware.NewLoggingMiddleware(logging.WithComponentLogger("request-handler")))
+	r.Use(apiserverMiddleware.NewLoggingMiddleware(logging.WithComponentLogger("request-handler")))
+	r.Use(middleware.Recoverer)
+	r.Use(apiserverMiddleware.SentryLogPanic)
+	r.Use(apiserverMiddleware.SetSentryRequestScope)
 	r.Mount("/", h)
 
 	server.ConfigureAPI()

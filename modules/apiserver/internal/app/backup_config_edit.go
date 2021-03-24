@@ -45,14 +45,14 @@ func (srv *Service) BackupConfigEditHandler(params apiService.BackupConfigEditPa
 
 	if *params.BackupConfig.Enabled {
 		srv.log.Debugf("attempting to create a backup resource %s/%s", ns, name)
-		err = util.CreateBackupResource(srv.cmClient, ns, name, params.BackupConfig.Schedule)
+		err = util.CreateBackupResource(srv.cmClient, ns, name, *params.BackupConfig.Schedule)
 		if err != nil {
 			srv.log.Errorf("error create a backup resource: %s", err.Error())
 			return util.BadRequestFromError(err)
 		}
 
 		srv.log.Debugf("attempting to update a backup resource %s/%s", ns, name)
-		err = util.UpdateBackupResource(srv.cmClient, ns, name, params.BackupConfig.Schedule)
+		err = util.UpdateBackupResource(srv.cmClient, ns, name, *params.BackupConfig.Schedule)
 		if err != nil {
 			srv.log.Errorf("error update a backup resource: %s", err.Error())
 			return util.BadRequestFromError(err)
