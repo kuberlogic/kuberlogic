@@ -21,7 +21,7 @@ func (srv *Service) BackupConfigEditHandler(params apiService.BackupConfigEditPa
 	}
 
 	if authorized, err := srv.authProvider.Authorize(principal.Token, backupConfigEditSecGrant, params.ServiceID); err != nil {
-		srv.log.Errorf("error checking authorization: %s ", err.Error())
+		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewBackupConfigEditBadRequest()
 		return resp
 	} else if !authorized {
@@ -35,33 +35,37 @@ func (srv *Service) BackupConfigEditHandler(params apiService.BackupConfigEditPa
 		Namespace: ns,
 	}
 
-	srv.log.Debugf("attempting to update a backup config %s/%s", ns, name)
+	srv.log.Debugw("attempting to update a backup config",
+		"namespace", ns, "name", name)
 	updatedResource, err := srv.clientset.CoreV1().Secrets(ns).
 		Update(context.TODO(), secretResource, v1.UpdateOptions{})
 	if err != nil {
-		srv.log.Errorf("error updating a backup config: %s", err.Error())
+		srv.log.Errorw("error updating a backup config", "error", err)
 		return util.BadRequestFromError(err)
 	}
 
 	if *params.BackupConfig.Enabled {
-		srv.log.Debugf("attempting to create a backup resource %s/%s", ns, name)
+		srv.log.Debugw("attempting to create a backup resource",
+			"namespace", ns, "name", name)
 		err = util.CreateBackupResource(srv.cmClient, ns, name, *params.BackupConfig.Schedule)
 		if err != nil {
-			srv.log.Errorf("error create a backup resource: %s", err.Error())
+			srv.log.Errorw("error create a backup resource", "error", err)
 			return util.BadRequestFromError(err)
 		}
 
-		srv.log.Debugf("attempting to update a backup resource %s/%s", ns, name)
+		srv.log.Debugw("attempting to update a backup resource",
+			"namespace", ns, "name", name)
 		err = util.UpdateBackupResource(srv.cmClient, ns, name, *params.BackupConfig.Schedule)
 		if err != nil {
-			srv.log.Errorf("error update a backup resource: %s", err.Error())
+			srv.log.Errorw("error update a backup resource", "error", err)
 			return util.BadRequestFromError(err)
 		}
 	} else {
-		srv.log.Debugf("attempting to delete a backup resource %s/%s", ns, name)
+		srv.log.Debugw("attempting to delete a backup resource",
+			"namespace", ns, "name", name)
 		err = util.DeleteBackupResource(srv.cmClient, ns, name)
 		if err != nil {
-			srv.log.Errorf("error deleting backup resource: %s", err.Error())
+			srv.log.Errorw("error deleting backup resource", "error", err)
 			return util.BadRequestFromError(err)
 		}
 	}

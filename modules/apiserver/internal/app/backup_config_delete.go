@@ -21,7 +21,7 @@ func (srv *Service) BackupConfigDeleteHandler(params apiService.BackupConfigDele
 	}
 
 	if authorized, err := srv.authProvider.Authorize(principal.Token, backupConfigDeleteSecGrant, params.ServiceID); err != nil {
-		srv.log.Errorf("error checking authorization " + err.Error())
+		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewBackupConfigDeleteBadRequest()
 		return resp
 	} else if !authorized {
@@ -29,22 +29,25 @@ func (srv *Service) BackupConfigDeleteHandler(params apiService.BackupConfigDele
 		return resp
 	}
 
-	srv.log.Debugf("attempting to delete a backup config %s/%s", ns, name)
+	srv.log.Debugw("attempting to delete a backup config",
+		"namespace", ns, "name", name)
 	err = srv.clientset.CoreV1().Secrets(ns).
 		Delete(context.TODO(), name, v1.DeleteOptions{})
 	if errors.IsNotFound(err) {
-		srv.log.Errorf("backup config %s/%s does not exist: %s", ns, name, err.Error())
+		srv.log.Errorw("backup config does not exist",
+			"namespace", ns, "name", name, "error", err)
 		return &apiService.BackupConfigDeleteNotFound{}
 	}
 	if err != nil {
-		srv.log.Errorf("error deleting backup config: %s", err.Error())
+		srv.log.Errorw("error deleting backup config", "error", err)
 		return util.BadRequestFromError(err)
 	}
 
-	srv.log.Debugf("attempting to delete a backup resource %s/%s", ns, name)
+	srv.log.Debugw("attempting to delete a backup resource",
+		"namespace", ns, "name", name)
 	err = util.DeleteBackupResource(srv.cmClient, ns, name)
 	if err != nil {
-		srv.log.Errorf("error deleting backup resource: %s", err.Error())
+		srv.log.Errorw("error deleting backup resource", "error", err)
 		return util.BadRequestFromError(err)
 	}
 

@@ -33,7 +33,7 @@ func Main(args []string) {
 	mainLog := logging.WithComponentLogger("main")
 	cfg, err := config.InitConfig("kuberlogic", logging.WithComponentLogger("config"))
 	if err != nil {
-		mainLog.Fatalf(err.Error())
+		mainLog.Fatalw("", "error", err)
 		os.Exit(1)
 	}
 	logging.DebugLevel(cfg.DebugLogs)
@@ -42,7 +42,7 @@ func Main(args []string) {
 	if dsn := cfg.Sentry.Dsn; dsn != "" {
 		logging.UseSentry(dsn)
 
-		mainLog.Debugf("sentry for apiserver was initialized")
+		mainLog.Debugw("sentry for apiserver was initialized")
 
 		// Flush buffered events before the program terminates.
 		defer sentry.Flush(2 * time.Second)
@@ -50,37 +50,37 @@ func Main(args []string) {
 
 	swaggerSpec, err := loads.Analyzed(restapi.SwaggerJSON, "")
 	if err != nil {
-		mainLog.Fatalf(err.Error())
+		mainLog.Fatalw("swagger does not loaded", "error", err)
 	}
 
 	cache_, err := cache.NewCache(logging.WithComponentLogger("cache"))
 	if err != nil {
-		mainLog.Fatalf(err.Error())
+		mainLog.Fatalw("not initialized cache", "error", err)
 	}
 
 	authProvider, err := security.NewAuthProvider(cfg, cache_, logging.WithComponentLogger("auth"))
 	if err != nil {
-		mainLog.Fatalf(err.Error())
+		mainLog.Fatalw("not initialized auth provider", "error", err)
 	}
 
 	k8sconf, err := k8s.GetConfig(cfg)
 	if err != nil {
-		mainLog.Fatalf(err.Error())
+		mainLog.Fatalw("could not get config", "error", err)
 	}
 
 	err = cloudlinuxv1.AddToScheme(k8scheme.Scheme)
 	if err != nil {
-		mainLog.Fatalf(err.Error())
+		mainLog.Fatalw("could not add to scheme", "error", err)
 	}
 
 	crdClient, err := util.GetKuberLogicClient(k8sconf)
 	if err != nil {
-		mainLog.Fatalf(err.Error())
+		mainLog.Fatalw("could not generate rest client", "error", err)
 	}
 
 	baseClient, err := kubernetes.NewForConfig(k8sconf)
 	if err != nil {
-		mainLog.Fatalf(err.Error())
+		mainLog.Fatalw("could not get base client", "error", err)
 	}
 
 	srv := app.New(baseClient, crdClient, authProvider, logging.WithComponentLogger("server"))
@@ -108,7 +108,7 @@ func Main(args []string) {
 	api.ServiceUserEditHandler = apiService.UserEditHandlerFunc(srv.UserEditHandler)
 	api.ServiceUserListHandler = apiService.UserListHandlerFunc(srv.UserListHandler)
 	api.BearerAuth = srv.BearerAuthentication
-	api.Logger = logging.WithComponentLogger("api").Infof
+	api.Logger = logging.WithComponentLogger("api").Infow
 	api.ServerShutdown = srv.OnShutdown
 	server := restapi.NewServer(api)
 	defer server.Shutdown()
@@ -120,7 +120,7 @@ func Main(args []string) {
 	for _, optsGroup := range api.CommandLineOptionsGroups {
 		_, err := parser.AddGroup(optsGroup.ShortDescription, optsGroup.LongDescription, optsGroup.Options)
 		if err != nil {
-			mainLog.Fatalf(err.Error())
+			mainLog.Fatalw("could not add group", "error", err)
 		}
 	}
 
@@ -148,6 +148,6 @@ func Main(args []string) {
 	server.Port = cfg.HTTPBindPort
 	server.Host = cfg.BindHost
 	if err := server.Serve(); err != nil {
-		mainLog.Fatalf(err.Error())
+		mainLog.Fatalw("problem with serve server", "error", err)
 	}
 }

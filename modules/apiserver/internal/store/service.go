@@ -30,7 +30,8 @@ func (s *ServiceStore) GetService(name, namespace string, ctx context.Context) (
 		Do(ctx).
 		Into(r)
 	if err != nil && k8s.ErrNotFound(err) {
-		s.log.Warnf("kuberlogic %s/%s not found: %s", namespace, name, err.Error())
+		s.log.Warnw("kuberlogic service not found",
+			"namespace", namespace, "name", name, "error", err)
 		return nil, false, NewServiceError("service not found", true, fmt.Errorf("service not found"))
 	} else if err != nil {
 		return nil, true, NewServiceError("error getting service", false, err)
@@ -54,7 +55,7 @@ func (s *ServiceStore) ListServices(ctx context.Context) ([]*models.Service, *Se
 	if err != nil {
 		return nil, NewServiceError("error listing service", false, err)
 	}
-	s.log.Debugf("found %d kuberlogicservice objects: %v", len(res.Items), res)
+	s.log.Debugw("found kuberlogicservice objects", "length", len(res.Items), "objects", res)
 
 	services := make([]*models.Service, len(res.Items))
 	for i, r := range res.Items {
@@ -108,7 +109,7 @@ func (s *ServiceStore) UpdateService(m *models.Service, ctx context.Context) (*m
 		Into(currentC); err != nil && k8s.ErrNotFound(err) {
 		return nil, NewServiceError("service not found", true, fmt.Errorf("service not found"))
 	} else if err != nil {
-		s.log.Errorf("service get error: %s", err.Error())
+		s.log.Errorw("service get error", "error", err)
 		return nil, NewServiceError("error getting service", false, err)
 	}
 
@@ -127,7 +128,7 @@ func (s *ServiceStore) UpdateService(m *models.Service, ctx context.Context) (*m
 	}
 	c.ResourceVersion = currentC.ResourceVersion
 
-	s.log.Debugf("kuberlogic object result: %v", c)
+	s.log.Debugw("kuberlogic object result", "body", c)
 	if err := s.cmClient.Put().
 		Resource(serviceK8sResource).
 		Name(c.Name).
@@ -202,7 +203,7 @@ func (s *ServiceStore) NewServiceObject(name, namespace string) *models.Service 
 func (s *ServiceStore) kuberLogicToService(c *kuberlogicv1.KuberLogicService, ctx context.Context) (*models.Service, error) {
 	ret := new(models.Service)
 
-	s.log.Debugf("converting kuberlogic %v to service", c)
+	s.log.Debugw("converting kuberlogic to service", "kuberlogic service", c)
 	ret.Name = &c.Name
 	ret.Ns = &c.Namespace
 	ret.Type = &c.Spec.Type
@@ -214,7 +215,8 @@ func (s *ServiceStore) kuberLogicToService(c *kuberlogicv1.KuberLogicService, ct
 	ret.CreatedAt = strfmt.DateTime(c.CreationTimestamp.Time)
 
 	if ret.Status != readyStatus {
-		s.log.Warnf("service %s/%s status is %s. not gathering more info", *ret.Ns, *ret.Name, ret.Status)
+		s.log.Warnw(fmt.Sprintf("service status is not equal %s. not gathering more info", readyStatus),
+			"namespace", *ret.Ns, "name", *ret.Name, "status", ret.Status)
 		return ret, nil
 	}
 

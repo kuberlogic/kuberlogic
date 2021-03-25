@@ -18,7 +18,7 @@ func NewLoggingMiddleware(log logging.Logger) func(next http.Handler) http.Handl
 					"proto", r.Proto,
 					"took", time.Since(t1),
 					"status", ww.Status())
-				l.Infof("request processed")
+				l.Infow("request processed")
 			}()
 
 			next.ServeHTTP(ww, r)

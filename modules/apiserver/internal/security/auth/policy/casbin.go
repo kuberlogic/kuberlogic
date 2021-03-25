@@ -33,12 +33,12 @@ type CasbinEnforcer struct {
 func newCasbinEnforcer(cache cache.Cache, log logging.Logger) *CasbinEnforcer {
 	m, err := model.NewModelFromString(casbinModel)
 	if err != nil {
-		log.Fatalf("error loading casbin model: %s", err.Error())
+		log.Fatalw("error loading casbin model", "error", err)
 	}
 
 	e, err := casbin.NewSyncedEnforcer(m)
 	if err != nil {
-		log.Fatalf("error creating casbin enforcer: %s", err.Error())
+		log.Fatalw("error creating casbin enforcer", "error", err)
 	}
 
 	return &CasbinEnforcer{

@@ -12,7 +12,7 @@ const serviceListSecGrant = "service:list"
 func (srv *Service) ServiceListHandler(params apiService.ServiceListParams, principal *models.Principal) middleware.Responder {
 
 	if authorized, err := srv.authProvider.Authorize(principal.Token, serviceListSecGrant, "*"); err != nil {
-		srv.log.Errorf("error checking authorization " + err.Error())
+		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewServiceListServiceUnavailable().WithPayload(&models.Error{Message: "error checking authorization"})
 		return resp
 	} else if !authorized {
@@ -22,7 +22,7 @@ func (srv *Service) ServiceListHandler(params apiService.ServiceListParams, prin
 
 	services, errList := srv.serviceStore.ListServices(params.HTTPRequest.Context())
 	if errList != nil {
-		srv.log.Errorf("list services error: %s", errList.Err.Error())
+		srv.log.Errorw("list services error", "error", errList.Err)
 		return apiService.NewServiceListServiceUnavailable().WithPayload(&models.Error{Message: errList.ClientMsg})
 	}
 

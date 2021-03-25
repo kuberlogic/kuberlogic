@@ -17,12 +17,12 @@ func (srv *Service) DatabaseRestoreHandler(params apiService.DatabaseRestorePara
 	// validate path parameter
 	ns, name, err := util.SplitID(params.ServiceID)
 	if err != nil {
-		srv.log.Errorf("incorrect service id: %s", err.Error())
+		srv.log.Errorw("incorrect service id", "error", err)
 		return util.BadRequestFromError(err)
 	}
 
 	if authorized, err := srv.authProvider.Authorize(principal.Token, databaseRestoreSecGrant, params.ServiceID); err != nil {
-		srv.log.Errorf("error checking authorization: %s", err.Error())
+		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewDatabaseDeleteBadRequest()
 		return resp
 	} else if !authorized {
@@ -39,14 +39,15 @@ func (srv *Service) DatabaseRestoreHandler(params apiService.DatabaseRestorePara
 		Do(context.TODO()).
 		Into(&item)
 	if err != nil {
-		srv.log.Errorf("couldn't find KuberLogicService resource in cluster: %s", err.Error())
+		srv.log.Errorw("couldn't find KuberLogicService resource in cluster", "error", err)
 		return util.BadRequestFromError(err)
 	}
 
-	srv.log.Debugf("attempting to create a restore backup resource %s/%s", ns, name)
+	srv.log.Debugw("attempting to create a restore backup resource", "namespace", ns, "name", name)
 	err = util.CreateBackupRestoreResource(srv.cmClient, ns, name, *params.RestoreItem.Key, *params.RestoreItem.Database)
 	if err != nil {
-		srv.log.Errorf("error creating a backup restore resource %s/%s: %s", ns, name, err.Error())
+		srv.log.Errorw("error creating a backup restore resource",
+			"namespace", ns, "name", name, "error", err)
 		return util.BadRequestFromError(err)
 	}
 

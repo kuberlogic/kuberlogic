@@ -17,7 +17,7 @@ func (srv *Service) LogsGetHandler(params apiService.LogsGetParams, principal *m
 	}
 
 	if authorized, err := srv.authProvider.Authorize(principal.Token, logsGetSecGrant, params.ServiceID); err != nil {
-		srv.log.Errorf("error checking authorization " + err.Error())
+		srv.log.Errorw("error checking authorization", "error", err)
 		return apiService.NewLogsGetForbidden()
 	} else if !authorized {
 		return apiService.NewLogsGetForbidden()
@@ -26,7 +26,7 @@ func (srv *Service) LogsGetHandler(params apiService.LogsGetParams, principal *m
 	m := srv.serviceStore.NewServiceObject(name, ns)
 	logs, errLogs := srv.serviceStore.GetServiceLogs(m, params.ServiceInstance, *params.Tail, params.HTTPRequest.Context())
 	if errLogs != nil {
-		srv.log.Errorf("error getting service logs: %s", errLogs.Err.Error())
+		srv.log.Errorw("error getting service logs", "error", errLogs.Err)
 		return apiService.NewLogsGetServiceUnavailable().WithPayload(&models.Error{Message: errLogs.ClientMsg})
 	}
 

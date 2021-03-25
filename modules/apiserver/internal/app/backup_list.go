@@ -29,7 +29,7 @@ func (srv *Service) BackupListHandler(params apiService.BackupListParams, princi
 	}
 
 	if authorized, err := srv.authProvider.Authorize(principal.Token, backupListSecGrant, params.ServiceID); err != nil {
-		srv.log.Errorf("error checking authorization: %s ", err.Error())
+		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewBackupListBadRequest()
 		return resp
 	} else if !authorized {
@@ -37,15 +37,18 @@ func (srv *Service) BackupListHandler(params apiService.BackupListParams, princi
 		return resp
 	}
 
-	srv.log.Debugf("attempting to get a backup config %s/%s", ns, name)
+	srv.log.Debugw("attempting to get a backup config",
+		"namespace", ns, "name", name)
 	secret, err := srv.clientset.CoreV1().
 		Secrets(ns).
 		Get(context.TODO(), name, v1.GetOptions{})
 	if errors.IsNotFound(err) {
-		srv.log.Errorf("backup config %s/%s does not exist: %s", ns, name, err.Error())
+		srv.log.Errorw("backup config does not exist",
+			"namespace", ns, "name", name, "error", err)
 		return util.BadRequestFromError(err)
 	} else if err != nil {
-		srv.log.Errorf("failed to get a backup config %s/%s: %s", ns, name, err.Error())
+		srv.log.Errorw("failed to get a backup config",
+			"namespace", ns, "name", name, "error", err)
 		return util.BadRequestFromError(err)
 	}
 
@@ -58,12 +61,12 @@ func (srv *Service) BackupListHandler(params apiService.BackupListParams, princi
 		Do(context.TODO()).
 		Into(item)
 	if err != nil {
-		srv.log.Errorf("couldn't find KuberLogicService resource in cluster: %s", err.Error())
+		srv.log.Errorw("couldn't find KuberLogicService resource in cluster", "error", err)
 		return util.BadRequestFromError(err)
 	}
 	op, err := operator.GetOperator(item.Spec.Type)
 	if err != nil {
-		srv.log.Errorf("Could not define the base operator: %s", err)
+		srv.log.Errorw("Could not define the base operator", "error", err)
 		return util.BadRequestFromError(err)
 	}
 
@@ -87,7 +90,8 @@ func (srv *Service) BackupListHandler(params apiService.BackupListParams, princi
 		Prefix: &prefix,
 	})
 	if err != nil {
-		srv.log.Errorf("failed to get a backups %s/%s: %s", ns, name, err.Error())
+		srv.log.Errorw("failed to get a backups",
+			"namespace", ns, "name", name, "error", err)
 		return apiService.NewBackupListServiceUnavailable().WithPayload(&models.Error{
 			Message: err.Error(),
 		})

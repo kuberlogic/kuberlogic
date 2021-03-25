@@ -22,16 +22,16 @@ type rstCache struct {
 func (c *rstCache) Set(key, value interface{}, ttlSeconds int) bool {
 	cost := valueCost(value)
 
-	c.log.Debugf("setting cache entry with key %s cost %d ttl %d", key, cost, ttlSeconds)
+	c.log.Debugw("setting cache entry", "key", key, "cost", cost, "ttl", ttlSeconds)
 	added := c.cache.SetWithTTL(key, value, cost, time.Duration(ttlSeconds)*time.Second)
-	c.log.Debugf("cache entry with key %s is set: %v", key, added)
+	c.log.Debugw("cache entry with key is set up", "key", key, "entry", added)
 
 	return added
 }
 
 func (c *rstCache) Get(key interface{}) (interface{}, bool) {
 	value, found := c.cache.Get(key)
-	c.log.Debugf("found cache entry %s : %v", key, found)
+	c.log.Debugw("found cache entry", "key", key, "entry", found)
 	return value, found
 }
 

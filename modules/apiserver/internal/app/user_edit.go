@@ -18,12 +18,12 @@ func (srv *Service) UserEditHandler(params apiService.UserEditParams, principal 
 	// validate path parameter
 	ns, name, err := util.SplitID(params.ServiceID)
 	if err != nil {
-		srv.log.Errorf("incorrect service id: %s", err.Error())
+		srv.log.Errorw("incorrect service id", "error", err)
 		return util.BadRequestFromError(err)
 	}
 
 	if authorized, err := srv.authProvider.Authorize(principal.Token, userEditSecGrant, params.ServiceID); err != nil {
-		srv.log.Errorf("error checking authorization: %s", err.Error())
+		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewUserEditBadRequest()
 		return resp
 	} else if !authorized {
@@ -40,25 +40,25 @@ func (srv *Service) UserEditHandler(params apiService.UserEditParams, principal 
 		Do(context.TODO()).
 		Into(&item)
 	if err != nil {
-		srv.log.Errorf("couldn't find KuberLogicService resource in cluster: %s", err.Error())
+		srv.log.Errorw("couldn't find KuberLogicService resource in cluster", "error", err)
 		return util.BadRequestFromError(err)
 	}
 
 	session, err := kuberlogic.GetSession(&item, srv.clientset, "")
 	if err != nil {
-		srv.log.Errorf("error generating session: %s", err.Error())
+		srv.log.Errorw("error generating session", "error", err)
 		return util.BadRequestFromError(err)
 	}
 
 	if protected := session.GetUser().IsProtected(*params.User.Name); protected {
 		e := errors.Errorf("User '%s' is protected", *params.User.Name)
-		srv.log.Errorf("error creating user: %s", e.Error())
+		srv.log.Errorw("error creating user", "error", e)
 		return util.BadRequestFromError(e)
 	}
 
 	err = session.GetUser().Edit(*params.User.Name, params.User.Password)
 	if err != nil {
-		srv.log.Errorf("error editing user: %s", err.Error())
+		srv.log.Errorw("error editing user", "error", err)
 		return util.BadRequestFromError(err)
 	}
 
