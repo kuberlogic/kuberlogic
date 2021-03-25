@@ -1,10 +1,7 @@
 name: Run integration tests
 
 on:
-  pull_request:
-    branches: [ master ]
   push:
-    branches: [ master ]
 
 jobs:
   test:
@@ -70,7 +67,13 @@ jobs:
       - name: Run the tests
         working-directory: ./modules/apiserver/tests
         run: |
-          KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make test
+          KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make test RUN=TestBackupConfig/postgresql
+
+      - name: Upload coverage
+        run: |
+          bash <(curl -s https://codecov.io/bash)
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Show status
         run: |
