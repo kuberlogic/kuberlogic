@@ -8,13 +8,11 @@ coverage:
 
   status:
     project:
-      default: off
-      apiserver:
+      default:
         flags:
           - apiserver
-      operator:
-        flags:
           - operator
+
 parsers:
   gcov:
     branch_detection:
