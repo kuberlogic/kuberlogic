@@ -74,8 +74,8 @@ jobs:
 
       - name: Upload coverage
         run: |
-          bash <(curl -s https://codecov.io/bash) -F operator -f modules/apiserver/tests/coverage-operator.out
-          bash <(curl -s https://codecov.io/bash) -F apiserver -f modules/apiserver/tests/coverage-apiserver.out
+          bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-operator.out -F operator
+          bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-apiserver.out -F apiserver
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
