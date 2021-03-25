@@ -70,7 +70,7 @@ jobs:
       - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
         run: |
-          KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=TestBackupConfig/postgresql
+          KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report
 
       - name: Upload coverage
         run: |
