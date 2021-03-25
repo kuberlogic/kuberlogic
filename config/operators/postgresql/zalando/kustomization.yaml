@@ -3,7 +3,7 @@ kind: Kustomization
 images:
   - name: postgres-operator
     newName: quay.io/kuberlogic/postgres-operator
-    newTag: v1.6.1
+    newTag: v1.6.1-6-gc9acd527-dirty
 patchesStrategicMerge:
   - patches/regcred.yaml
 resources:
