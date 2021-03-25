@@ -1,12 +1,15 @@
-name: Run integration tests
+name: Integration tests
 
 on:
+  pull_request:
+    branches: [ master ]
   push:
+    branches: [ master ]
 
 jobs:
   test:
     if: "!contains(github.event.commits[0].message, '[skip ci]')"
-    name: Run integration tests
+    name: Integration tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -64,14 +67,15 @@ jobs:
         run: |
           make create-bucket
 
-      - name: Run the tests
+      - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
         run: |
-          KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make test RUN=TestBackupConfig/postgresql
+          KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=TestBackupConfig/postgresql
 
       - name: Upload coverage
         run: |
-          bash <(curl -s https://codecov.io/bash)
+          bash <(curl -s https://codecov.io/bash) -F operator -f modules/apiserver/tests/coverage-operator.out
+          bash <(curl -s https://codecov.io/bash) -F apiserver -f modules/apiserver/tests/coverage-apiserver.out
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
