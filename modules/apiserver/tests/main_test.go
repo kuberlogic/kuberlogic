@@ -53,7 +53,7 @@ func createService(service Service) {
 		type_:    service.type_,
 		force:    true,
 		replicas: 0,
-		limits:   map[string]string{"cpu": "250m", "memory": "250Mi", "volumeSize": "1Gi"},
+		limits:   map[string]string{"cpu": "250m", "memory": "512Mi", "volumeSize": "1Gi"},
 	}
 	log.Infof("Creating a single %s:%s (%s) service", service.ns, service.name, service.type_)
 	ts.Create(&testing.T{})

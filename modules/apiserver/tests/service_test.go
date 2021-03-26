@@ -32,8 +32,8 @@ var pgTestService = tService{
 	replicas:    0,
 	newConf:     map[string]string{"shared_buffers": "16MB", "max_connections": "50"},
 	conf:        map[string]string{"shared_buffers": "32MB", "max_connections": "10"},
-	limits:      map[string]string{"cpu": "250m", "memory": "256Mi", "volumeSize": "1Gi"},
-	newLimits:   map[string]string{"cpu": "300m", "memory": "300Mi", "volumeSize": "1Gi"},
+	limits:      map[string]string{"cpu": "250m", "memory": "512Mi", "volumeSize": "1Gi"},
+	newLimits:   map[string]string{"cpu": "300m", "memory": "500Mi", "volumeSize": "1Gi"},
 	force:       false, // do not create a service
 	//version:     "12.1.3",
 }
@@ -45,8 +45,8 @@ var mysqlTestService = tService{
 	replicas:    0,
 	newConf:     map[string]string{"max_allowed_packet": "64Mb"},
 	conf:        map[string]string{"max_allowed_packet": "32Mb"},
-	limits:      map[string]string{"cpu": "250m", "memory": "256Mi", "volumeSize": "1Gi"},
-	newLimits:   map[string]string{"cpu": "300m", "memory": "300Mi", "volumeSize": "1Gi"},
+	limits:      map[string]string{"cpu": "250m", "memory": "512Mi", "volumeSize": "1Gi"},
+	newLimits:   map[string]string{"cpu": "300m", "memory": "500Mi", "volumeSize": "1Gi"},
 	force:       false, // do not create a service
 	//version:     "5.7.26",
 }
