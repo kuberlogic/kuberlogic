@@ -11,8 +11,6 @@ func GetOperator(t string) (interfaces.OperatorInterface, error) {
 	var operators = map[string]interfaces.OperatorInterface{
 		"postgresql": &postgresql.Postgres{},
 		"mysql":      &mysql.Mysql{},
-		//"redis":      &redis.Redis{},
-
 	}
 
 	value, ok := operators[t]

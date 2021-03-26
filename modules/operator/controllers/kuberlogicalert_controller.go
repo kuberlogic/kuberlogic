@@ -26,8 +26,7 @@ type KuberLogicAlertReconciler struct {
 
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicalerts,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicalerts/status,verbs=get;update;patch
-func (r *KuberLogicAlertReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *KuberLogicAlertReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("kuberlogicalert", req.NamespacedName)
 
 	defer util.HandlePanic(log)

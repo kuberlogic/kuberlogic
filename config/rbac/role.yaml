@@ -19,11 +19,21 @@ rules:
       - update
       - watch
   - apiGroups:
-      - cloudlinux.com
+      - acid.zalan.do
     resources:
       - postgresqls
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - mysql.presslabs.org
+    resources:
       - mysqlclusters
-      - redisfailovers
     verbs:
       - create
       - delete
@@ -79,3 +89,15 @@ rules:
       - pods/log
     verbs:
       - get
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch

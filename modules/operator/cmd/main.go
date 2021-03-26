@@ -10,7 +10,6 @@ import (
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
 	"github.com/kuberlogic/operator/modules/operator/util"
 	mysql "github.com/presslabs/mysql-operator/pkg/apis"
-	redis "github.com/spotahome/redis-operator/api/redisfailover/v1"
 	postgres "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -30,7 +29,6 @@ func init() {
 	utilruntime.Must(kuberlogicv1.AddToScheme(scheme))
 	utilruntime.Must(postgres.AddToScheme(scheme))
 	utilruntime.Must(mysql.AddToScheme(scheme))
-	utilruntime.Must(redis.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 

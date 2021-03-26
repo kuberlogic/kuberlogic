@@ -6,11 +6,10 @@ import (
 	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
-	"github.com/kuberlogic/operator/modules/operator/service-operator"
+	serviceOperator "github.com/kuberlogic/operator/modules/operator/service-operator"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	"github.com/kuberlogic/operator/modules/operator/util"
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
-	redisv1 "github.com/spotahome/redis-operator/api/redisfailover/v1"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -18,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sync"
 )
 
@@ -31,8 +31,7 @@ type KuberLogicServiceReconciler struct {
 
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicservices,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicservices/status,verbs=get;update;patch
-func (r *KuberLogicServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("kuberlogicservices", req.NamespacedName)
 
 	defer util.HandlePanic(log)
@@ -60,95 +59,32 @@ func (r *KuberLogicServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, 
 		return ctrl.Result{}, err
 	}
 
-	op, err := service_operator.GetOperator(kls.Spec.Type)
+	op, err := serviceOperator.GetOperator(kls.Spec.Type)
 	if err != nil {
 		log.Error(err, "Could not define the base operator")
 		return ctrl.Result{}, err
 	}
 
-	if kls.InitDefaults(op.GetDefaults()) {
-		err = r.Update(ctx, kls)
-		if err != nil {
-			log.Error(err, "Failed to update KuberLogicService")
-			return ctrl.Result{}, err
-		} else {
-			log.Info("KuberLogicService defaults is updated")
-		}
-	}
-
-	found := op.AsRuntimeObject()
+	serviceObj := op.AsClientObject()
 	err = r.Get(
 		ctx,
 		types.NamespacedName{
 			Name:      op.Name(kls),
 			Namespace: kls.Namespace,
 		},
-		found,
+		serviceObj,
 	)
 
 	if err != nil && k8serrors.IsNotFound(err) {
-		// Define a new cluster
-		dep, err := r.defineCluster(op, kls)
-		if err != nil {
-			log.Error(err, "Could not generate definition struct", "BaseOperator", kls.Spec.Type)
-			return ctrl.Result{}, err
-		}
-
-		log.Info("Creating a new Cluster", "BaseOperator", kls.Spec.Type)
-		err = r.Create(ctx, dep)
-		if err != nil && k8serrors.IsAlreadyExists(err) {
-			log.Info("Cluster already exists", "BaseOperator", kls.Spec.Type)
-		} else if err != nil {
-			log.Error(err, "Failed to create new Cluster", "BaseOperator", kls.Spec.Type)
-			return ctrl.Result{}, err
-		} else {
-			// cluster created successfully - return and requeue
-			return ctrl.Result{Requeue: true}, nil
-		}
+		return r.create(ctx, kls, op, log)
 	} else if err != nil {
 		log.Error(err, "Failed to get object", "BaseOperator", kls.Spec.Type)
 		return ctrl.Result{}, err
 	}
 
-	op.InitFrom(found)
-
-	// log.Error(errors.New("sentry!"),"ensure that we have dependencies set up")
-	log.Info("ensure that we have dependencies set up")
-	if err := r.ensureClusterDependencies(op, kls, ctx); err != nil {
-		log.Error(err, "failed to ensure dependencies", "BaseOperator", kls.Spec.Type)
-		return ctrl.Result{}, err
-	}
-
-	if !op.IsEqual(kls) {
-		op.Update(kls)
-
-		err = r.Update(ctx, op.AsRuntimeObject())
-		if err != nil {
-			log.Error(err, "Failed to update object", "BaseOperator", kls.Spec.Type)
-			return ctrl.Result{}, err
-		} else {
-			log.Info("Cluster is updated", "BaseOperator", kls.Spec.Type)
-			return ctrl.Result{}, nil
-		}
-	}
-	log.Info("No difference", "BaseOperator", kls.Spec.Type)
-
-	status := op.CurrentStatus()
-	if !kls.IsEqual(status) {
-		kls.SetStatus(status)
-		err = r.Update(ctx, kls)
-		//err = r.Status().Update(ctx, kls) # FIXME: Figure out why it's failed
-		if err != nil {
-			log.Error(err, "Failed to update kls object")
-			return ctrl.Result{}, err
-		} else {
-			log.Info("KuberLogicService status is updated", "Status", kls.GetStatus())
-		}
-	}
-
 	monitoring.KuberLogicServices[monitoringKey] = kls
-
-	return ctrl.Result{}, nil
+	op.InitFrom(serviceObj)
+	return r.update(ctx, kls, op, log)
 }
 
 func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService, ctx context.Context) error {
@@ -167,7 +103,7 @@ func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op interfaces.Op
 	return nil
 }
 
-func (r *KuberLogicServiceReconciler) defineCluster(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService) (runtime.Object, error) {
+func (r *KuberLogicServiceReconciler) defineCluster(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService) (client.Object, error) {
 	op.Init(cm)
 	op.Update(cm)
 
@@ -178,15 +114,80 @@ func (r *KuberLogicServiceReconciler) defineCluster(op interfaces.OperatorInterf
 		return nil, err
 	}
 
-	return op.AsRuntimeObject(), nil
+	return op.AsClientObject(), nil
+}
+
+func (r *KuberLogicServiceReconciler) create(ctx context.Context, kls *kuberlogicv1.KuberLogicService, op interfaces.OperatorInterface, log logr.Logger) (reconcile.Result, error) {
+	// init defaults first
+	if kls.InitDefaults(op.GetDefaults()) {
+		err := r.Update(ctx, kls)
+		if err != nil {
+			log.Error(err, "Failed to update KuberLogicService")
+			return ctrl.Result{}, err
+		} else {
+			log.Info("KuberLogicService defaults is updated")
+			return ctrl.Result{}, nil
+		}
+	}
+
+	dep, err := r.defineCluster(op, kls)
+	if err != nil {
+		log.Error(err, "Could not generate definition struct", "BaseOperator", kls.Spec.Type)
+		return ctrl.Result{}, err
+	}
+
+	log.Info("ensure that we have dependencies set up")
+	if err := r.ensureClusterDependencies(op, kls, ctx); err != nil {
+		log.Error(err, "failed to ensure dependencies", "BaseOperator", kls.Spec.Type)
+		return ctrl.Result{}, err
+	}
+
+	log.Info("Creating a new Cluster", "BaseOperator", kls.Spec.Type)
+	if err := r.Create(ctx, dep); err != nil && k8serrors.IsAlreadyExists(err) {
+		log.Info("Cluster already exists", "BaseOperator", kls.Spec.Type)
+	} else if err != nil {
+		log.Error(err, "Failed to create new Cluster", "BaseOperator", kls.Spec.Type)
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *KuberLogicServiceReconciler) update(ctx context.Context, kls *kuberlogicv1.KuberLogicService, op interfaces.OperatorInterface, log logr.Logger) (reconcile.Result, error) {
+	// sync status first
+	needsUpdate := syncStatus(kls, op)
+	if needsUpdate {
+		log.Info("status needs to be updated")
+		return ctrl.Result{}, r.Update(ctx, kls)
+	}
+	log = log.WithValues("status", kls.GetStatus())
+	if !kls.UpdatesAllowed() {
+		err := fmt.Errorf("updates are not allowed in current service state")
+		log.Error(err, "updates are not allowed")
+		return ctrl.Result{}, err
+	}
+
+	op.Update(kls)
+	if err := r.Update(ctx, op.AsClientObject()); err != nil {
+		log.Error(err, "Failed to update object", "BaseOperator", kls.Spec.Type)
+		return ctrl.Result{}, err
+	}
+	log.Info("Cluster is updated", "BaseOperator", kls.Spec.Type)
+	return ctrl.Result{}, nil
 }
 
 func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kuberlogicv1.KuberLogicService{}).
 		Owns(&mysqlv1.MysqlCluster{}).
-		Owns(&redisv1.RedisFailover{}).
 		Owns(&postgresv1.Postgresql{}).
 		Owns(&corev1.Secret{}).
 		Complete(r)
+}
+
+func syncStatus(kls *kuberlogicv1.KuberLogicService, op interfaces.OperatorInterface) bool {
+	status := op.CurrentStatus()
+	needsUpdate := !kls.IsEqual(status)
+	kls.SetStatus(status)
+	return needsUpdate
 }

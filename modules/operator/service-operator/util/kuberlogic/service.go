@@ -2,13 +2,13 @@ package kuberlogic
 
 import (
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	"github.com/kuberlogic/operator/modules/operator/service-operator"
+	serviceOperator "github.com/kuberlogic/operator/modules/operator/service-operator"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	"k8s.io/client-go/kubernetes"
 )
 
 func GetCluster(cm *kuberlogicv1.KuberLogicService) (op interfaces.OperatorInterface, err error) {
-	op, err = service_operator.GetOperator(cm.Spec.Type)
+	op, err = serviceOperator.GetOperator(cm.Spec.Type)
 	if err != nil {
 		return
 	}

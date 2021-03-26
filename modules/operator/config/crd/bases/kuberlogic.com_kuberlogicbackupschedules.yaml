@@ -1,0 +1,100 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: kuberlogicbackupschedules.kuberlogic.com
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.status
+    description: The backup status
+    name: Status
+    type: string
+  - JSONPath: .spec.name
+    description: The cluster name
+    name: Cluster name
+    type: string
+  - JSONPath: .spec.type
+    description: The backup type
+    name: Type
+    type: string
+  - JSONPath: .spec.schedule
+    description: The backup schedule
+    name: Schedule
+    type: string
+  group: kuberlogic.com
+  names:
+    kind: KuberLogicBackupSchedule
+    listKind: KuberLogicBackupScheduleList
+    plural: kuberlogicbackupschedules
+    shortNames:
+    - klb
+    singular: kuberlogicbackupschedule
+  scope: Namespaced
+  subresources: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            database:
+              description: what database need to backup
+              type: string
+            name:
+              description: 'Cluster name TODO: need to implement validation based
+                on webhook - https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html
+                it gives the ability to check cluster name is exists or not'
+              type: string
+            schedule:
+              description: schedule for the backup
+              type: string
+            secret:
+              description: credentials for storage type
+              type: string
+            type:
+              description: Type of the backup storage
+              enum:
+              - s3
+              type: string
+          required:
+          - name
+          - schedule
+          - secret
+          - type
+          type: object
+        status:
+          description: KuberLogicBackupScheduleStatus defines the observed state of
+            KuberLogicBackupSchedule
+          properties:
+            status:
+              type: string
+          required:
+          - status
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

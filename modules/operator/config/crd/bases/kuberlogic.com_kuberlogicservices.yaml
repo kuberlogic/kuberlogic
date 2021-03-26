@@ -1,0 +1,160 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: kuberlogicservices.kuberlogic.com
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.status
+    description: The cluster status
+    name: Status
+    type: string
+  - JSONPath: .spec.type
+    description: The cluster type
+    name: Type
+    type: string
+  - JSONPath: .spec.replicas
+    description: The number of desired replicas
+    name: Replicas
+    type: integer
+  - JSONPath: .spec.volumeSize
+    description: Volume size for the cluster
+    name: Volume
+    type: string
+  - JSONPath: .spec.resources.requests.cpu
+    description: CPU request
+    name: CPU Request
+    type: string
+  - JSONPath: .spec.resources.requests.memory
+    description: Memory request
+    name: Memory Request
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: Age
+    type: date
+  group: kuberlogic.com
+  names:
+    kind: KuberLogicService
+    listKind: KuberLogicServiceList
+    plural: kuberlogicservices
+    shortNames:
+    - kls
+    singular: kuberlogicservice
+  scope: Namespaced
+  subresources: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            advancedConf:
+              additionalProperties:
+                type: string
+              type: object
+            maintenanceWindow:
+              properties:
+                duration:
+                  description: window duration in hours
+                  type: integer
+                start:
+                  description: start hour, UTC zone is assumed
+                  maximum: 23
+                  minimum: 0
+                  type: integer
+                weekday:
+                  description: day of the week
+                  enum:
+                  - Monday
+                  - Tuesday
+                  - Wednesday
+                  - Thursday
+                  - Friday
+                  - Saturday
+                  - Sunday
+                  type: string
+              type: object
+            replicas:
+              description: Amount of replicas
+              format: int32
+              maximum: 5
+              type: integer
+            resources:
+              description: Resources (requests/limits)
+              properties:
+                limits:
+                  additionalProperties:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                    x-kubernetes-int-or-string: true
+                  description: 'Limits describes the maximum amount of compute resources
+                    allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                  type: object
+                requests:
+                  additionalProperties:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                    x-kubernetes-int-or-string: true
+                  description: 'Requests describes the minimum amount of compute resources
+                    required. If Requests is omitted for a container, it defaults
+                    to Limits if that is explicitly specified, otherwise to an implementation-defined
+                    value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                  type: object
+              type: object
+            type:
+              description: Type of the cluster
+              enum:
+              - postgresql
+              - mysql
+              - redis
+              type: string
+            version:
+              description: '2 or 3 digits: 5.7 or 5.7.31'
+              pattern: ^\d+\.\d+[\.\d+]*$
+              type: string
+            volumeSize:
+              description: Volume size
+              type: string
+          required:
+          - replicas
+          - type
+          type: object
+        status:
+          description: KuberLogicServiceStatus defines the observed state of KuberLogicService
+          properties:
+            status:
+              type: string
+          required:
+          - status
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

@@ -6,7 +6,7 @@ import (
 	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
-	"github.com/kuberlogic/operator/modules/operator/service-operator"
+	serviceOperator "github.com/kuberlogic/operator/modules/operator/service-operator"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	"github.com/kuberlogic/operator/modules/operator/util"
 	v1 "k8s.io/api/batch/v1"
@@ -28,8 +28,7 @@ type KuberLogicBackupRestoreReconciler struct {
 
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicbackuprestores,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicbackuprestores/status,verbs=get;update;patch
-func (r *KuberLogicBackupRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("kuberlogicbackuprestore", req.NamespacedName)
 
 	defer util.HandlePanic(log)
@@ -73,12 +72,12 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(req ctrl.Request) (ctrl.Re
 		return ctrl.Result{}, nil
 	}
 
-	op, err := service_operator.GetOperator(kl.Spec.Type)
+	op, err := serviceOperator.GetOperator(kl.Spec.Type)
 	if err != nil {
 		log.Error(err, "Could not define the base operator")
 		return ctrl.Result{}, err
 	}
-	found := op.AsRuntimeObject()
+	found := op.AsClientObject()
 	err = r.Get(
 		ctx,
 		types.NamespacedName{

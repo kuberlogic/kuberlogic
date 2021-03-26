@@ -6,9 +6,13 @@ resources:
 - bases/kuberlogic.com_kuberlogicbackupschedules.yaml
 - bases/kuberlogic.com_kuberlogicbackuprestores.yaml
 - bases/kuberlogic.com_kuberlogicalerts.yaml
+- bases/postgresql/zalando/operatorconfiguration.crd.yaml
 - bases/postgresql/zalando/postgresql.crd.yaml
-- bases/mysql/presslabs/mysql.crd.yaml
-- bases/mysql/presslabs/mysqlbackup.crd.yaml
+- bases/postgresql/zalando/postgresteam.crd.yaml
+- bases/mysql/presslabs/mysql.presslabs.org_mysqlbackups.yaml
+- bases/mysql/presslabs/mysql.presslabs.org_mysqlclusters.yaml
+- bases/mysql/presslabs/mysql.presslabs.org_mysqldatabases.yaml
+- bases/mysql/presslabs/mysql.presslabs.org_mysqlusers.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
