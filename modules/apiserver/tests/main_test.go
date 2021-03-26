@@ -47,7 +47,14 @@ func tearDown(serviceType string) {
 }
 
 func createService(service Service) {
-	ts := tService{ns: service.ns, name: service.name, type_: service.type_, force: true, replicas: 0}
+	ts := tService{
+		ns:       service.ns,
+		name:     service.name,
+		type_:    service.type_,
+		force:    true,
+		replicas: 0,
+		limits:   map[string]string{"cpu": "250m", "memory": "250Mi", "volumeSize": "1Gi"},
+	}
 	log.Infof("Creating a single %s:%s (%s) service", service.ns, service.name, service.type_)
 	ts.Create(&testing.T{})
 	ts.WaitForStatus("Ready", 5, 5*60)(&testing.T{})

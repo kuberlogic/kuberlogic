@@ -23,7 +23,7 @@ const (
 func (s *ServiceStore) GetService(name, namespace string, ctx context.Context) (*models.Service, bool, *ServiceError) {
 	r := new(kuberlogicv1.KuberLogicService)
 
-	err := s.cmClient.Get().
+	err := s.restClient.Get().
 		Resource(serviceK8sResource).
 		Namespace(namespace).
 		Name(name).
@@ -48,7 +48,7 @@ func (s *ServiceStore) GetService(name, namespace string, ctx context.Context) (
 func (s *ServiceStore) ListServices(ctx context.Context) ([]*models.Service, *ServiceError) {
 	res := new(kuberlogicv1.KuberLogicServiceList)
 
-	err := s.cmClient.Get().
+	err := s.restClient.Get().
 		Resource(serviceK8sResource).
 		Do(context.TODO()).
 		Into(res)
@@ -57,13 +57,13 @@ func (s *ServiceStore) ListServices(ctx context.Context) ([]*models.Service, *Se
 	}
 	s.log.Debugw("found kuberlogicservice objects", "length", len(res.Items), "objects", res)
 
-	services := make([]*models.Service, len(res.Items))
-	for i, r := range res.Items {
+	var services []*models.Service
+	for _, r := range res.Items {
 		service, err := s.kuberLogicToService(&r, ctx)
 		if err != nil {
 			return nil, NewServiceError("error converting service object", false, err)
 		}
-		services[i] = service
+		services = append(services, service)
 	}
 	return services, nil
 }
@@ -80,7 +80,7 @@ func (s *ServiceStore) CreateService(m *models.Service, ctx context.Context) (*m
 	}
 
 	result := new(kuberlogicv1.KuberLogicService)
-	err = s.cmClient.Post().
+	err = s.restClient.Post().
 		Resource(serviceK8sResource).
 		Namespace(c.Namespace).
 		Name(c.Name).
@@ -101,7 +101,7 @@ func (s *ServiceStore) CreateService(m *models.Service, ctx context.Context) (*m
 func (s *ServiceStore) UpdateService(m *models.Service, ctx context.Context) (*models.Service, *ServiceError) {
 	// 1. see if exists
 	currentC := new(kuberlogicv1.KuberLogicService)
-	if err := s.cmClient.Get().
+	if err := s.restClient.Get().
 		Resource(serviceK8sResource).
 		Namespace(*m.Ns).
 		Name(*m.Name).
@@ -129,7 +129,7 @@ func (s *ServiceStore) UpdateService(m *models.Service, ctx context.Context) (*m
 	c.ResourceVersion = currentC.ResourceVersion
 
 	s.log.Debugw("kuberlogic object result", "body", c)
-	if err := s.cmClient.Put().
+	if err := s.restClient.Put().
 		Resource(serviceK8sResource).
 		Name(c.Name).
 		Namespace(c.Namespace).
@@ -151,7 +151,7 @@ func (s *ServiceStore) DeleteService(m *models.Service, ctx context.Context) *Se
 		return getErr
 	}
 
-	err := s.cmClient.Delete().
+	err := s.restClient.Delete().
 		Resource(serviceK8sResource).
 		Namespace(*m.Ns).
 		Name(*m.Name).
@@ -188,11 +188,11 @@ func (s *ServiceStore) GetServiceLogs(m *models.Service, instance string, lines 
 	return logs, nil
 }
 
-func NewServiceStore(clientset *kubernetes.Clientset, cmClient *rest.RESTClient, logger logging.Logger) *ServiceStore {
+func NewServiceStore(clientset *kubernetes.Clientset, restClient *rest.RESTClient, logger logging.Logger) *ServiceStore {
 	return &ServiceStore{
-		cmClient:  cmClient,
-		clientset: clientset,
-		log:       logger,
+		restClient: restClient,
+		clientset:  clientset,
+		log:        logger,
 	}
 }
 
@@ -200,61 +200,63 @@ func (s *ServiceStore) NewServiceObject(name, namespace string) *models.Service 
 	return &models.Service{Name: &name, Ns: &namespace}
 }
 
-func (s *ServiceStore) kuberLogicToService(c *kuberlogicv1.KuberLogicService, ctx context.Context) (*models.Service, error) {
+func copyStr(s string) *string {
+	return &s
+}
+
+func (s *ServiceStore) kuberLogicToService(kls *kuberlogicv1.KuberLogicService, ctx context.Context) (*models.Service, error) {
 	ret := new(models.Service)
+	s.log.Debugw("converting kuberlogic to service", "kuberlogic service", kls)
+	ret.Name = strAsPointer(kls.Name)
+	ret.Ns = strAsPointer(kls.Namespace)
+	ret.Type = strAsPointer(kls.Spec.Type)
+	ret.Replicas = int64AsPointer(int64(kls.Spec.Replicas - 1)) // 1 - master
+	ret.Masters = 1                                             // always equals 1
 
-	s.log.Debugw("converting kuberlogic to service", "kuberlogic service", c)
-	ret.Name = &c.Name
-	ret.Ns = &c.Namespace
-	ret.Type = &c.Spec.Type
-	replicas := int64(c.Spec.Replicas - 1) // 1 - master
-	ret.Replicas = &replicas
-	ret.Masters = 1 // always equals 1
-
-	ret.Status = c.Status.Status
-	ret.CreatedAt = strfmt.DateTime(c.CreationTimestamp.Time)
+	ret.Status = kls.Status.Status
+	ret.CreatedAt = strfmt.DateTime(kls.CreationTimestamp.Time)
 
 	if ret.Status != readyStatus {
 		s.log.Warnw(fmt.Sprintf("service status is not equal %s. not gathering more info", readyStatus),
-			"namespace", *ret.Ns, "name", *ret.Name, "status", ret.Status)
+			"namespace", ret.Ns, "name", ret.Name, "status", ret.Status)
 		return ret, nil
 	}
 
 	ret.Limits = new(models.Limits)
-	if !c.Spec.Resources.Limits.Cpu().IsZero() {
-		v, ok := c.Spec.Resources.Limits[v12.ResourceCPU]
+	if !kls.Spec.Resources.Limits.Cpu().IsZero() {
+		v, ok := kls.Spec.Resources.Limits[v12.ResourceCPU]
 		if ok {
 			ret.Limits.CPU = strAsPointer(v.String())
 		}
 	}
-	if !c.Spec.Resources.Limits.Memory().IsZero() {
-		v, ok := c.Spec.Resources.Limits[v12.ResourceMemory]
+	if !kls.Spec.Resources.Limits.Memory().IsZero() {
+		v, ok := kls.Spec.Resources.Limits[v12.ResourceMemory]
 		if ok {
 			ret.Limits.Memory = strAsPointer(v.String())
 		}
 	}
 
-	ret.Limits.VolumeSize = &c.Spec.VolumeSize
+	ret.Limits.VolumeSize = &kls.Spec.VolumeSize
 
-	ret.AdvancedConf = c.Spec.AdvancedConf
+	ret.AdvancedConf = kls.Spec.AdvancedConf
 
 	ret.MaintenanceWindow = new(models.MaintenanceWindow)
-	ret.MaintenanceWindow.Day = &c.Spec.MaintenanceWindow.Weekday
-	ret.MaintenanceWindow.StartHour = int64AsPointer(int64(c.Spec.MaintenanceWindow.StartHour))
+	ret.MaintenanceWindow.Day = strAsPointer(kls.Spec.MaintenanceWindow.Weekday)
+	ret.MaintenanceWindow.StartHour = int64AsPointer(int64(kls.Spec.MaintenanceWindow.StartHour))
 
-	instances, err := getServiceInstances(s.clientset, s.log, c, ctx)
+	instances, err := getServiceInstances(s.clientset, s.log, kls, ctx)
 	if err != nil {
 		return ret, err
 	}
 	ret.Instances = instances
 
-	intCon, err := getServiceInternalConnection(s.clientset, s.log, c)
+	intCon, err := getServiceInternalConnection(s.clientset, s.log, kls)
 	if err != nil {
 		return ret, err
 	}
 	ret.InternalConnection = intCon
 
-	extCon, err := getServiceExternalConnection(s.clientset, s.log, c)
+	extCon, err := getServiceExternalConnection(s.clientset, s.log, kls)
 	if err != nil {
 		return ret, err
 	}

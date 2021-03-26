@@ -13,7 +13,7 @@ IMG_PULL_SECRET = kuberlogic-registry
 KUBERLOGIC_APISERVER_LOG = kuberlogic.apiserver.log
 KUBERLOGIC_OPERATOR_LOG = kuberlogic.operator.log
 
-KUBERLOGIC_DEBUGLOGS = True
+KUBERLOGIC_DEBUG_LOGS = True
 
 ARGS ?= -short
 

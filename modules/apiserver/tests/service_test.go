@@ -32,7 +32,7 @@ var pgTestService = tService{
 	replicas:    0,
 	newConf:     map[string]string{"shared_buffers": "16MB", "max_connections": "50"},
 	conf:        map[string]string{"shared_buffers": "32MB", "max_connections": "10"},
-	limits:      map[string]string{"cpu": "250m", "memory": "250Mi", "volumeSize": "1Gi"},
+	limits:      map[string]string{"cpu": "250m", "memory": "256Mi", "volumeSize": "1Gi"},
 	newLimits:   map[string]string{"cpu": "300m", "memory": "300Mi", "volumeSize": "1Gi"},
 	force:       false, // do not create a service
 	//version:     "12.1.3",
@@ -45,7 +45,7 @@ var mysqlTestService = tService{
 	replicas:    0,
 	newConf:     map[string]string{"max_allowed_packet": "64Mb"},
 	conf:        map[string]string{"max_allowed_packet": "32Mb"},
-	limits:      map[string]string{"cpu": "250m", "memory": "250Mi", "volumeSize": "1Gi"},
+	limits:      map[string]string{"cpu": "250m", "memory": "256Mi", "volumeSize": "1Gi"},
 	newLimits:   map[string]string{"cpu": "300m", "memory": "300Mi", "volumeSize": "1Gi"},
 	force:       false, // do not create a service
 	//version:     "5.7.26",
@@ -113,8 +113,9 @@ func (s *tService) Create(t *testing.T) {
         "name": "%s",
         "ns": "%s",
         "type": "%s",
-		"replicas": %d
-     }`, s.name, s.ns, s.type_, s.replicas))
+		"replicas": %d,
+		"limits": %s
+     }`, s.name, s.ns, s.type_, s.replicas, toJson(s.limits)))
 	api.sendRequestTo(http.MethodPost, "/services/")
 	api.responseCodeShouldBe(201)
 
@@ -210,7 +211,7 @@ func (s *tService) DowngradeReplicasAndIncreaseAdvancedConf(t *testing.T) {
 	api.fieldIs("advancedConf", s.newConf)
 }
 
-func (s *tService) CreateSecondOne(t *testing.T) {
+func (s *tService) CreateSecondOneWithSameName(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
 	api.setRequestBody(fmt.Sprintf(`     {
@@ -223,27 +224,41 @@ func (s *tService) CreateSecondOne(t *testing.T) {
 
 }
 
-func (s *tService) CheckOneRecord(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping. Using -short flag")
-		return
+func (s *tService) CheckRecordCount(number int) func(t *testing.T) {
+	return func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("Skipping. Using -short flag")
+			return
+		}
+		api := newApi(t)
+		api.setBearerToken()
+		api.sendRequestTo(http.MethodGet, "/services/")
+		api.responseCodeShouldBe(http.StatusOK)
+		api.encodeResponseToJson()
+		api.responseTypeOf(reflect.Slice)
+		api.lengthOfResponseIs(number)
 	}
+}
+
+func (s *tService) IncorrectName(t *testing.T) {
+	api := newApi(t)
+	api.setBearerToken()
+	api.sendRequestTo(http.MethodGet, fmt.Sprintf("/services/%s:%s-incorrect", s.ns, s.name))
+	api.responseCodeShouldBe(503)
+}
+
+func (s *tService) CheckServiceName(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
 	api.sendRequestTo(http.MethodGet, "/services/")
 	api.responseCodeShouldBe(http.StatusOK)
 	api.encodeResponseToJson()
 	api.responseTypeOf(reflect.Slice)
-	api.lengthOfResponseIs(1)
-}
 
-func (s *tService) IncorrectName(t *testing.T) {
-
-	api := newApi(t)
-	api.setBearerToken()
-	api.sendRequestTo(http.MethodGet, fmt.Sprintf("/services/%s:%s-incorrect", s.ns, s.name))
-	api.responseCodeShouldBe(503)
-
+	t.Log("checking...", s.name)
+	if !api.responseHasInSlice("name", s.name) {
+		t.Errorf("Service %s is not found, in %v", s.name, api.jsonResponse)
+	}
 }
 
 func (s *tService) WaitForStatus(status string, delay, timeout int64) func(t *testing.T) {
@@ -267,7 +282,7 @@ func (s *tService) WaitForStatus(status string, delay, timeout int64) func(t *te
 			api.responseCodeShouldBe(200)
 			api.encodeResponseToJson()
 			api.responseTypeOf(reflect.Map)
-			if api.isResponseHas("status", status) {
+			if api.responseHas("status", status) {
 				log.Infof("Service %s:%s is reached %s state", s.ns, s.name, status)
 				return
 			}
@@ -291,27 +306,12 @@ func (s *tService) Delete(t *testing.T) {
 	api.responseCodeShouldBe(http.StatusOK)
 }
 
-func (s *tService) EmptyListOfServices(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping. Using -short flag")
-		return
-	}
-
-	api := newApi(t)
-	api.setBearerToken()
-	api.sendRequestTo(http.MethodGet, "/services/")
-	api.responseCodeShouldBe(http.StatusOK)
-	api.encodeResponseToJson()
-	api.responseTypeOf(reflect.Slice)
-	api.lengthOfResponseIs(0)
-}
-
 func makeTestService(ts tService) func(t *testing.T) {
 	return func(t *testing.T) {
 		steps := []func(t *testing.T){
 			ts.Create,
-			ts.CreateSecondOne,
-			ts.CheckOneRecord,
+			ts.CreateSecondOneWithSameName,
+			ts.CheckRecordCount(1),
 			ts.IncorrectName,
 			ts.WaitForStatus("Ready", 5, 2*60),
 
@@ -339,7 +339,7 @@ func makeTestService(ts tService) func(t *testing.T) {
 			ts.WaitForStatus("Ready", 5, 5*60),
 
 			ts.Delete,
-			ts.EmptyListOfServices,
+			ts.CheckRecordCount(0),
 		}
 
 		for _, item := range steps {
@@ -351,5 +351,41 @@ func makeTestService(ts tService) func(t *testing.T) {
 func TestService(t *testing.T) {
 	for _, svc := range []tService{pgTestService, mysqlTestService} {
 		t.Run(svc.type_, makeTestService(svc))
+	}
+}
+
+func makeTestSecondService(tsFirst, tsSecond tService) func(t *testing.T) {
+	return func(t *testing.T) {
+		steps := []func(t *testing.T){
+			tsFirst.Create,
+			tsSecond.Create,
+			// check immediately and after waiting ready state
+			tsFirst.CheckServiceName,
+			tsSecond.CheckServiceName,
+			tsSecond.WaitForStatus("Ready", 5, 5*60),
+			tsFirst.CheckServiceName,
+			tsSecond.CheckServiceName,
+			tsSecond.Delete,
+			tsFirst.Delete,
+		}
+
+		for _, item := range steps {
+			t.Run(GetFunctionName(item), item)
+		}
+	}
+}
+
+func TestSecondService(t *testing.T) {
+	pg := pgTestService
+	pg.name = "pg-second"
+	pg.force = true
+
+	mysql := mysqlTestService
+	mysql.name = "mysql-second"
+	mysql.force = true
+
+	for _, svc := range [][]tService{{pg, pgTestService}, {mysqlTestService, mysql}} {
+		first, second := svc[0], svc[1]
+		t.Run(first.type_, makeTestSecondService(first, second))
 	}
 }

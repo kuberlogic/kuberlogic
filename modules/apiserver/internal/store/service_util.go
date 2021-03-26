@@ -61,30 +61,30 @@ func mergeServices(m1 *models.Service, m2 *models.Service) (*models.Service, err
 	return m1, nil
 }
 
-func getServiceExternalConnection(c *kubernetes.Clientset, log logging.Logger, cm *kuberlogicv1.KuberLogicService) (*models.ServiceExternalConnection, error) {
+func getServiceExternalConnection(c *kubernetes.Clientset, log logging.Logger, kls *kuberlogicv1.KuberLogicService) (*models.ServiceExternalConnection, error) {
 	svc := new(models.ServiceExternalConnection)
 
-	masterSvc, replicaSvc, err := util.GetClusterServices(cm)
+	masterSvc, replicaSvc, err := util.GetClusterServices(kls)
 	if err != nil {
 		return svc, err
 	}
 	log.Debugw("services", "master", masterSvc, "replica", replicaSvc)
 
-	port, err := util.GetClusterServicePort(cm)
+	port, err := util.GetClusterServicePort(kls)
 	if err != nil {
 		return svc, err
 	}
 
-	masterExt, _, err := k8s.GetServiceExternalIP(c, log, masterSvc, cm.Namespace)
+	masterExt, _, err := k8s.GetServiceExternalIP(c, log, masterSvc, kls.Namespace)
 	if err != nil {
 		return svc, err
 	}
-	replicaExt, _, err := k8s.GetServiceExternalIP(c, log, replicaSvc, cm.Namespace)
+	replicaExt, _, err := k8s.GetServiceExternalIP(c, log, replicaSvc, kls.Namespace)
 	if err != nil {
 		return svc, err
 	}
 
-	user, password, err := getServiceCredentials(c, log, cm)
+	user, password, err := getServiceCredentials(c, log, kls)
 	if err != nil {
 		return nil, err
 	}
@@ -108,20 +108,20 @@ func getServiceExternalConnection(c *kubernetes.Clientset, log logging.Logger, c
 	return svc, nil
 }
 
-func getServiceInternalConnection(c *kubernetes.Clientset, log logging.Logger, cm *kuberlogicv1.KuberLogicService) (*models.ServiceInternalConnection, error) {
+func getServiceInternalConnection(c *kubernetes.Clientset, log logging.Logger, kls *kuberlogicv1.KuberLogicService) (*models.ServiceInternalConnection, error) {
 	svc := new(models.ServiceInternalConnection)
 
-	masterSvc, replicaSvc, err := util.GetClusterServices(cm)
+	masterSvc, replicaSvc, err := util.GetClusterServices(kls)
 	if err != nil {
 		return svc, err
 	}
 
-	port, err := util.GetClusterServicePort(cm)
+	port, err := util.GetClusterServicePort(kls)
 	if err != nil {
 		return svc, err
 	}
 
-	user, password, err := getServiceCredentials(c, log, cm)
+	user, password, err := getServiceCredentials(c, log, kls)
 	if err != nil {
 		return nil, err
 	}
@@ -145,8 +145,8 @@ func getServiceInternalConnection(c *kubernetes.Clientset, log logging.Logger, c
 	return svc, nil
 }
 
-func getServiceCredentials(c *kubernetes.Clientset, log logging.Logger, cm *kuberlogicv1.KuberLogicService) (user, password string, err error) {
-	user, passwordField, secretName, err := util.GetClusterCredentialsInfo(cm)
+func getServiceCredentials(c *kubernetes.Clientset, log logging.Logger, kls *kuberlogicv1.KuberLogicService) (user, password string, err error) {
+	user, passwordField, secretName, err := util.GetClusterCredentialsInfo(kls)
 	if err != nil {
 		err = fmt.Errorf("Error getting connecion credentials: %s", err.Error())
 		return
@@ -155,15 +155,15 @@ func getServiceCredentials(c *kubernetes.Clientset, log logging.Logger, cm *kube
 	user = kuberlogicv1.DefaultUser
 	log.Debugw("trying to get credentials for username",
 		"user", user, "secret", user, "password", passwordField)
-	password, err = k8s.GetSecretFieldDecoded(c, log, secretName, cm.Namespace, passwordField)
+	password, err = k8s.GetSecretFieldDecoded(c, log, secretName, kls.Namespace, passwordField)
 	if err != nil {
 		return user, password, err
 	}
 	return
 }
 
-func getServiceInstances(c *kubernetes.Clientset, log logging.Logger, cm *kuberlogicv1.KuberLogicService, ctx context.Context) ([]*models.ServiceInstance, error) {
-	masterPods, replicaPods, err := getServicePods(c, log, cm, ctx)
+func getServiceInstances(c *kubernetes.Clientset, log logging.Logger, kls *kuberlogicv1.KuberLogicService, ctx context.Context) ([]*models.ServiceInstance, error) {
+	masterPods, replicaPods, err := getServicePods(c, log, kls, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -201,8 +201,8 @@ func podStatusToServiceInstanceStatus(p corev1.Pod) *models.ServiceInstanceStatu
 	return s
 }
 
-func getServicePods(c *kubernetes.Clientset, log logging.Logger, cm *kuberlogicv1.KuberLogicService, ctx context.Context) (masterPods *corev1.PodList, replicaPods *corev1.PodList, err error) {
-	masterPodSelector, replicaPodSelector, err := util.GetClusterPodLabels(cm)
+func getServicePods(c *kubernetes.Clientset, log logging.Logger, kls *kuberlogicv1.KuberLogicService, ctx context.Context) (masterPods *corev1.PodList, replicaPods *corev1.PodList, err error) {
+	masterPodSelector, replicaPodSelector, err := util.GetClusterPodLabels(kls)
 	if err != nil {
 		return
 	}
@@ -210,7 +210,7 @@ func getServicePods(c *kubernetes.Clientset, log logging.Logger, cm *kuberlogicv
 	podListOpts := metav1.ListOptions{
 		LabelSelector: k8s.MapToStrSelector(masterPodSelector),
 	}
-	masterPods, err = c.CoreV1().Pods(cm.Namespace).List(ctx, podListOpts)
+	masterPods, err = c.CoreV1().Pods(kls.Namespace).List(ctx, podListOpts)
 	log.Debugw("master pods details",
 		"master pods", &masterPods, "pod list options", podListOpts)
 	if err != nil {
@@ -218,7 +218,7 @@ func getServicePods(c *kubernetes.Clientset, log logging.Logger, cm *kuberlogicv
 	}
 
 	podListOpts.LabelSelector = k8s.MapToStrSelector(replicaPodSelector)
-	replicaPods, err = c.CoreV1().Pods(cm.Namespace).List(ctx, podListOpts)
+	replicaPods, err = c.CoreV1().Pods(kls.Namespace).List(ctx, podListOpts)
 	if err != nil {
 		return
 	}
@@ -226,18 +226,18 @@ func getServicePods(c *kubernetes.Clientset, log logging.Logger, cm *kuberlogicv
 	return
 }
 
-func getServiceInstanceLogs(c *kubernetes.Clientset, cm *kuberlogicv1.KuberLogicService, log logging.Logger, ctx context.Context, instance string, lines int64) (logs string, found bool, err error) {
+func getServiceInstanceLogs(c *kubernetes.Clientset, kls *kuberlogicv1.KuberLogicService, log logging.Logger, ctx context.Context, instance string, lines int64) (logs string, found bool, err error) {
 	found = true
 
-	instances, err := getServiceInstances(c, log, cm, ctx)
+	instances, err := getServiceInstances(c, log, kls, ctx)
 	if err != nil {
 		return logs, false, fmt.Errorf("error getting service instances: %s", err.Error())
 	}
 
 	for _, p := range append(instances) {
 		if p.Name == instance {
-			container, _ := util.GetClusterMainContainer(cm)
-			logs, err = k8s.GetPodLogs(c, log, p.Name, container, cm.Namespace, lines)
+			container, _ := util.GetClusterMainContainer(kls)
+			logs, err = k8s.GetPodLogs(c, log, p.Name, container, kls.Namespace, lines)
 			if err != nil {
 				return
 			}
