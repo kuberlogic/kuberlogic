@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/jackc/pgx/v4 v4.10.1
-	github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210324093055-bea012f0d7d5
+	github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210326104939-6afc6b99e02f
 	github.com/pkg/errors v0.9.1
 	k8s.io/api v0.20.4
 	k8s.io/apimachinery v0.20.4
