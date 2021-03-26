@@ -65,6 +65,18 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
+	// init defaults first
+	if kls.InitDefaults(op.GetDefaults()) {
+		err := r.Update(ctx, kls)
+		if err != nil {
+			log.Error(err, "Failed to update KuberLogicService")
+			return ctrl.Result{}, err
+		} else {
+			log.Info("KuberLogicService defaults is updated")
+			return ctrl.Result{}, nil
+		}
+	}
+
 	serviceObj := op.AsClientObject()
 	err = r.Get(
 		ctx,
@@ -118,18 +130,6 @@ func (r *KuberLogicServiceReconciler) defineCluster(op interfaces.OperatorInterf
 }
 
 func (r *KuberLogicServiceReconciler) create(ctx context.Context, kls *kuberlogicv1.KuberLogicService, op interfaces.OperatorInterface, log logr.Logger) (reconcile.Result, error) {
-	// init defaults first
-	if kls.InitDefaults(op.GetDefaults()) {
-		err := r.Update(ctx, kls)
-		if err != nil {
-			log.Error(err, "Failed to update KuberLogicService")
-			return ctrl.Result{}, err
-		} else {
-			log.Info("KuberLogicService defaults is updated")
-			return ctrl.Result{}, nil
-		}
-	}
-
 	dep, err := r.defineCluster(op, kls)
 	if err != nil {
 		log.Error(err, "Could not generate definition struct", "BaseOperator", kls.Spec.Type)
