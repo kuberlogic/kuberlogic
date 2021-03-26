@@ -17,7 +17,7 @@ func (s *ServiceStore) GetServiceRestores(ns, serviceName string, ctx context.Co
 	restores := make([]*models.Restore, 0)
 
 	// todo: add field selector here
-	err := s.cmClient.Get().Resource(kuberlogicRestoreK8sResource).
+	err := s.restClient.Get().Resource(kuberlogicRestoreK8sResource).
 		Namespace(ns).
 		Do(ctx).
 		Into(k8srestores)

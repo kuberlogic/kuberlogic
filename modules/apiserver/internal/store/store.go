@@ -7,7 +7,7 @@ import (
 )
 
 type ServiceStore struct {
-	cmClient  *rest.RESTClient
-	clientset *kubernetes.Clientset
-	log       logging.Logger
+	restClient *rest.RESTClient
+	clientset  *kubernetes.Clientset
+	log        logging.Logger
 }

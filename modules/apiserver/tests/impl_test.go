@@ -97,17 +97,31 @@ func (a *API) responseShouldMatchJson(body string) {
 }
 
 func (a *API) responseShouldHas(field, value interface{}) {
-	if !a.isResponseHas(field, value) {
+	if !a.responseHas(field, value) {
 		a.t.Errorf("expected field (value) does not match actual, %v (%v) vs. %v", field, value, a.jsonResponse)
 	}
 }
 
-func (a *API) isResponseHas(field, value interface{}) bool {
+func (a *API) responseHas(field, value interface{}) bool {
 	iter := reflect.ValueOf(a.jsonResponse).MapRange()
 	for iter.Next() {
 		k, v := iter.Key().Interface(), iter.Value().Interface()
 		if reflect.DeepEqual(k, field) && reflect.DeepEqual(v, value) {
 			return true
+		}
+	}
+	return false
+}
+
+func (a *API) responseHasInSlice(field, value interface{}) bool {
+	array := a.jsonResponse.([]interface{})
+	for _, item := range array {
+		iter := reflect.ValueOf(item).MapRange()
+		for iter.Next() {
+			k, v := iter.Key().Interface(), iter.Value().Interface()
+			if reflect.DeepEqual(k, field) && reflect.DeepEqual(v, value) {
+				return true
+			}
 		}
 	}
 	return false
