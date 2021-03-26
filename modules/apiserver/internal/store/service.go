@@ -200,10 +200,6 @@ func (s *ServiceStore) NewServiceObject(name, namespace string) *models.Service 
 	return &models.Service{Name: &name, Ns: &namespace}
 }
 
-func copyStr(s string) *string {
-	return &s
-}
-
 func (s *ServiceStore) kuberLogicToService(kls *kuberlogicv1.KuberLogicService, ctx context.Context) (*models.Service, error) {
 	ret := new(models.Service)
 	s.log.Debugw("converting kuberlogic to service", "kuberlogic service", kls)
