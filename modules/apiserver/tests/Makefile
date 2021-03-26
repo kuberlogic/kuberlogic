@@ -28,17 +28,29 @@ BUCKET ?= test
 
 SENTRY_DSN = https://50ec3b92240a4b4d97dbee02a07fc54f@kl.sentry.cloudlinux.com/5
 
-# provides additional info about specific service what kind of tests need to run
 test:
-	go test -v -coverprofile=coverage.out -coverpkg="github.com/kuberlogic/..." -run "$(RUN)" -timeout 60m -failfast $(ARGS) ./... ;\
-	EXIT_CODE=$$?;\
+	go test -v \
+		-coverprofile=coverage.out \
+		-coverpkg="github.com/kuberlogic/..." \
+		-covermode=atomic \
+		-run "$(RUN)" \
+		-timeout 60m \
+		-failfast \
+		$(ARGS) ./...
+
+coverage-report: test
+	for pkg in apiserver operator; do \
+	  	covfile=coverage-$${pkg}.out; \
+		echo "mode: atomic" > $$covfile; \
+		cat coverage.out | grep "github.com/kuberlogic/operator/modules/$${pkg}" >> $$covfile; \
+	done; \
+
+html-report: coverage-report
 	mkdir -p html/ ;\
 	for pkg in apiserver operator; do \
-		echo "mode: set" > $${pkg}.out; \
-		cat coverage.out | grep "github.com/kuberlogic/$${pkg}" >> $${pkg}.out; \
-		go tool cover -html=$${pkg}.out -o=html/$${pkg}.html; \
-	done; \
-	exit $$EXIT_CODE
+	  	covfile=coverage-$${pkg}.out; \
+		go tool cover -html=$$covfile -o=html/$${pkg}.html; \
+	done;
 
 build-minio:
 	docker build minio/ -t $(IMG) --build-arg MINIO_ACCESS_KEY=$(MINIO_ACCESS_KEY) --build-arg MINIO_SECRET_KEY=$(MINIO_SECRET_KEY)
