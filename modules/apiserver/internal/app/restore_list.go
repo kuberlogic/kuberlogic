@@ -19,7 +19,7 @@ func (srv *Service) RestoreListHandler(params apiService.RestoreListParams, prin
 	}
 
 	if authorized, err := srv.authProvider.Authorize(principal.Token, restoreListSecGrant, params.ServiceID); err != nil {
-		srv.log.Errorf("error checking authorization: %s ", err.Error())
+		srv.log.Errorw("error checking authorization ", "error", err)
 		resp := apiService.NewBackupListBadRequest()
 		return resp
 	} else if !authorized {
@@ -27,15 +27,15 @@ func (srv *Service) RestoreListHandler(params apiService.RestoreListParams, prin
 		return resp
 	}
 
-	srv.log.Debugf("searching for service %s/%s", ns, name)
+	srv.log.Debugw("searching for service", "namespace", ns, "name", name)
 	if _, found, errGet := srv.serviceStore.GetService(name, ns, params.HTTPRequest.Context()); errGet != nil {
-		srv.log.Errorf("service get error: %s", errGet.Err.Error())
+		srv.log.Errorw("service get error", "error", errGet.Err)
 		return apiService.NewRestoreListServiceUnavailable().WithPayload(&models.Error{Message: errGet.ClientMsg})
 	} else if !found {
 		return util.BadRequestFromError(fmt.Errorf("%s/%s service not found", ns, name))
 	}
-	srv.log.Debugf("service %s/%s exists")
 
+	srv.log.Debugw("service exists", "namespace", ns, "name", name)
 	restores, errRestores := srv.serviceStore.GetServiceRestores(ns, name, params.HTTPRequest.Context())
 	if errRestores != nil {
 		return apiService.NewRestoreListServiceUnavailable().WithPayload(&models.Error{Message: errRestores.ClientMsg})

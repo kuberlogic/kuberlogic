@@ -35,7 +35,7 @@ func InitConfig(prefix string, log logging.Logger) (*Config, error) {
 		return nil, errors.Wrap(err, "init config failed")
 	}
 
-	log.Debugf("config is %v", config)
+	log.Debugw("config is", "config", config)
 
 	return config, nil
 }

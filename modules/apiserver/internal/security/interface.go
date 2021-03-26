@@ -19,7 +19,7 @@ func NewAuthProvider(c *config.Config, cache cache.Cache, log logging.Logger) (A
 	var p AuthProvider
 	var e error
 
-	log.Infof("auth provider is set to %s", c.Auth.Provider)
+	log.Infow("auth provider", "provider", c.Auth.Provider)
 	switch c.Auth.Provider {
 	case "keycloak":
 		p, e = keycloak.NewKeycloakAuthProvider(

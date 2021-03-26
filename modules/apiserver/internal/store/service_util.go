@@ -68,7 +68,7 @@ func getServiceExternalConnection(c *kubernetes.Clientset, log logging.Logger, c
 	if err != nil {
 		return svc, err
 	}
-	log.Debugf("master service: %s, replica service: %s", masterSvc, replicaSvc)
+	log.Debugw("services", "master", masterSvc, "replica", replicaSvc)
 
 	port, err := util.GetClusterServicePort(cm)
 	if err != nil {
@@ -153,7 +153,8 @@ func getServiceCredentials(c *kubernetes.Clientset, log logging.Logger, cm *kube
 	}
 
 	user = kuberlogicv1.DefaultUser
-	log.Debugf("trying to get credentials for username %s secret %s field %s", user, secretName, passwordField)
+	log.Debugw("trying to get credentials for username",
+		"user", user, "secret", user, "password", passwordField)
 	password, err = k8s.GetSecretFieldDecoded(c, log, secretName, cm.Namespace, passwordField)
 	if err != nil {
 		return user, password, err
@@ -210,7 +211,8 @@ func getServicePods(c *kubernetes.Clientset, log logging.Logger, cm *kuberlogicv
 		LabelSelector: k8s.MapToStrSelector(masterPodSelector),
 	}
 	masterPods, err = c.CoreV1().Pods(cm.Namespace).List(ctx, podListOpts)
-	log.Debugf("master pods %v, pod list options: %v", &masterPods, podListOpts)
+	log.Debugw("master pods details",
+		"master pods", &masterPods, "pod list options", podListOpts)
 	if err != nil {
 		return
 	}
@@ -220,7 +222,7 @@ func getServicePods(c *kubernetes.Clientset, log logging.Logger, cm *kuberlogicv
 	if err != nil {
 		return
 	}
-	log.Debugf("replica pods %v, pod list options: %v", &replicaPods, podListOpts)
+	log.Debugw("replica pods details", "replica pods", &replicaPods, "pod list options", podListOpts)
 	return
 }
 

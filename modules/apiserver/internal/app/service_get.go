@@ -17,7 +17,7 @@ func (srv *Service) ServiceGetHandler(params apiService.ServiceGetParams, princi
 	}
 
 	if authorized, err := srv.authProvider.Authorize(principal.Token, serviceGetSecGrant, params.ServiceID); err != nil {
-		srv.log.Errorf("error checking authorization " + err.Error())
+		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewServiceGetServiceUnavailable().WithPayload(&models.Error{Message: "eror checking authorization"})
 		return resp
 	} else if !authorized {
@@ -27,7 +27,7 @@ func (srv *Service) ServiceGetHandler(params apiService.ServiceGetParams, princi
 
 	service, found, errGet := srv.serviceStore.GetService(name, ns, params.HTTPRequest.Context())
 	if errGet != nil {
-		srv.log.Errorf("service get error: %s", errGet.Err.Error())
+		srv.log.Errorw("service get error", "error", errGet.Err)
 		return apiService.NewServiceGetServiceUnavailable().WithPayload(&models.Error{Message: errGet.ClientMsg})
 	}
 	if !found {

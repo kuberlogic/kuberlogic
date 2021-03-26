@@ -9,7 +9,8 @@ import (
 func (srv *Service) LoginUserHandler(params apiAuth.LoginUserParams) middleware.Responder {
 	data, err := srv.authProvider.GetAuthenticationSecret(*params.UserCredentials.Username, *params.UserCredentials.Password)
 	if err != nil {
-		srv.log.Errorf("error getting authentication secret for %s: %s", *params.UserCredentials.Username, err.Error())
+		srv.log.Errorw("error getting authentication secret for",
+			"name", *params.UserCredentials.Username, "error", err)
 		return apiAuth.NewLoginUserUnauthorized()
 	} else {
 		a := apiAuth.NewLoginUserOK()

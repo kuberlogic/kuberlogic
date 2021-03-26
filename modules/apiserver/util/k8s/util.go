@@ -55,7 +55,7 @@ func GetPodLogs(c *kubernetes.Clientset, log logging.Logger, name, container, ns
 		Container: container,
 	}
 	r := c.CoreV1().Pods(ns).GetLogs(name, &podLogOptions)
-	log.Debugf("log request: %v", r)
+	log.Debugw("log request", "request", r)
 
 	l, err := r.Stream(context.TODO())
 	if err != nil {
@@ -72,7 +72,7 @@ func GetPodLogs(c *kubernetes.Clientset, log logging.Logger, name, container, ns
 
 func GetServiceExternalIP(c *kubernetes.Clientset, log logging.Logger, name, ns string) (ip string, found bool, err error) {
 	s, err := c.CoreV1().Services(ns).Get(context.TODO(), name, metav1.GetOptions{})
-	log.Debugf("response for get service %s/%s request: %v", ns, name, s)
+	log.Debugw("response for get service", "namespace", ns, "name", name, "response", s)
 	if err != nil {
 		return
 	}
@@ -88,12 +88,12 @@ func GetServiceExternalIP(c *kubernetes.Clientset, log logging.Logger, name, ns 
 }
 
 func GetSecretFieldDecoded(c *kubernetes.Clientset, log logging.Logger, secret, ns, field string) (string, error) {
-	log.Debugf("getting secret %s/%s", ns, secret)
+	log.Debugw("getting secret", "namespace", ns, "secret", secret)
 	s, err := c.CoreV1().Secrets(ns).Get(context.TODO(), secret, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
-	log.Debugf("got secret %s/%s data %v", ns, secret, s.Data)
+	log.Debugw("got secret data", "namespace", ns, "secret", secret, "data", s.Data)
 
 	fieldData, ok := s.Data[field]
 	if !ok {

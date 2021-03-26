@@ -17,7 +17,7 @@ func (srv *Service) ServiceDeleteHandler(params apiService.ServiceDeleteParams, 
 	}
 
 	if authorized, err := srv.authProvider.Authorize(principal.Token, serviceDeleteSecGrant, params.ServiceID); err != nil {
-		srv.log.Errorf("error checking authorization: %s", err.Error())
+		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewServiceDeleteBadRequest().WithPayload(&models.Error{Message: "error checking authorization"})
 		return resp
 	} else if !authorized {
@@ -28,7 +28,7 @@ func (srv *Service) ServiceDeleteHandler(params apiService.ServiceDeleteParams, 
 	s := srv.serviceStore.NewServiceObject(name, ns)
 	errDelete := srv.serviceStore.DeleteService(s, params.HTTPRequest.Context())
 	if errDelete != nil {
-		srv.log.Errorf("service %s/%s delete error: %s", ns, name, err.Error())
+		srv.log.Errorw("service delete error", "namespace", ns, "name", name, "error", err)
 		return apiService.NewServiceDeleteServiceUnavailable().WithPayload(&models.Error{Message: errDelete.ClientMsg})
 	}
 

@@ -18,12 +18,12 @@ func (srv *Service) DatabaseDeleteHandler(params apiService.DatabaseDeleteParams
 	// validate path parameter
 	ns, name, err := util.SplitID(params.ServiceID)
 	if err != nil {
-		srv.log.Errorf("incorrect service id: %s", err.Error())
+		srv.log.Errorw("incorrect service id", "error", err)
 		return util.BadRequestFromError(err)
 	}
 
 	if authorized, err := srv.authProvider.Authorize(principal.Token, databaseDeleteSecGrant, params.ServiceID); err != nil {
-		srv.log.Errorf("error checking authorization: %s", err.Error())
+		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewDatabaseDeleteBadRequest()
 		return resp
 	} else if !authorized {
@@ -40,25 +40,25 @@ func (srv *Service) DatabaseDeleteHandler(params apiService.DatabaseDeleteParams
 		Do(context.TODO()).
 		Into(&item)
 	if err != nil {
-		srv.log.Errorf("couldn't find KuberLogicService resource in cluster: %s", err.Error())
+		srv.log.Errorw("couldn't find KuberLogicService resource in cluster", "error", err)
 		return util.BadRequestFromError(err)
 	}
 
 	session, err := kuberlogic.GetSession(&item, srv.clientset, "")
 	if err != nil {
-		srv.log.Errorf("error generating session: %s", err.Error())
+		srv.log.Errorw("error generating session: %s", "error", err)
 		return util.BadRequestFromError(err)
 	}
 
 	if protected := session.GetDatabase().IsProtected(params.Database); protected {
 		e := errors.Errorf("Database '%s' is protected", params.Database)
-		srv.log.Errorf("error creating db: %s", e.Error())
+		srv.log.Errorw("error creating db", "error", e)
 		return util.BadRequestFromError(e)
 	}
 
 	err = session.GetDatabase().Drop(params.Database)
 	if err != nil {
-		srv.log.Errorf("error deleting db: %s", err.Error())
+		srv.log.Errorw("error deleting db", "error", err.Error())
 		return util.BadRequestFromError(err)
 	}
 

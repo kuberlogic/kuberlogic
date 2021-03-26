@@ -21,7 +21,7 @@ func (srv *Service) BackupConfigGetHandler(params apiService.BackupConfigGetPara
 	}
 
 	if authorized, err := srv.authProvider.Authorize(principal.Token, backupConfigGetSecGrant, params.ServiceID); err != nil {
-		srv.log.Errorf("error checking authorization: %s ", err.Error())
+		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewBackupConfigEditBadRequest()
 		return resp
 	} else if !authorized {
@@ -29,20 +29,21 @@ func (srv *Service) BackupConfigGetHandler(params apiService.BackupConfigGetPara
 		return resp
 	}
 
-	srv.log.Debugf("attempting to get a backup config %s/%s", ns, name)
+	srv.log.Debugw("attempting to get a backup config",
+		"namespace", ns, "name", name)
 	secret, err := srv.clientset.CoreV1().
 		Secrets(ns).
 		Get(context.TODO(), name, v1.GetOptions{})
 	if errors.IsNotFound(err) {
-		srv.log.Errorf("backup config %s/%s does not exist: %s", ns, name, err.Error())
+		srv.log.Errorw("backup config does not exist",
+			"namespace", ns, "name", name, "error", err)
 		return &apiService.BackupConfigGetNotFound{}
 	} else if err != nil {
-		srv.log.Errorf("failed to get a backup config %s/%s: %s", ns, name, err.Error())
+		srv.log.Errorw("failed to get a backup config",
+			"namespace", ns, "name", name, "error", err)
 		return util.BadRequestFromError(err)
 	}
 
-	//srv.log.Infof("aws-secret-key: %s", secret.Data["aws-access-key-id"])
-	//srv.log.Infof("bucket: %s", secret.Data["bucket"])
 	return &apiService.BackupConfigGetOK{
 		Payload: util.BackupConfigResourceToModel(secret),
 	}

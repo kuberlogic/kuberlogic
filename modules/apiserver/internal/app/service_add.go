@@ -20,7 +20,7 @@ func (srv *Service) ServiceAddHandler(params apiService.ServiceAddParams, princi
 	}
 
 	if authorized, err := srv.authProvider.Authorize(principal.Token, serviceAddSecGrant, id); err != nil {
-		srv.log.Errorf("error checking authorization " + err.Error())
+		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewServiceAddServiceUnavailable().WithPayload(&models.Error{Message: "error checking authorization"})
 		return resp
 	} else if !authorized {
@@ -30,7 +30,7 @@ func (srv *Service) ServiceAddHandler(params apiService.ServiceAddParams, princi
 
 	svc, errCreate := srv.serviceStore.CreateService(params.ServiceItem, params.HTTPRequest.Context())
 	if errCreate != nil {
-		srv.log.Errorf("service create error: %s", errCreate.Err.Error())
+		srv.log.Errorw("service create error", errCreate.Err)
 		if errCreate.Client {
 			return apiService.NewServiceAddBadRequest().WithPayload(&models.Error{Message: errCreate.ClientMsg})
 		} else {

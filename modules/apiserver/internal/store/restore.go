@@ -21,9 +21,9 @@ func (s *ServiceStore) GetServiceRestores(ns, serviceName string, ctx context.Co
 		Namespace(ns).
 		Do(ctx).
 		Into(k8srestores)
-	s.log.Debugf("got restores from cluster: %v", k8srestores)
+	s.log.Debugw("got restores from cluster", "object", k8srestores)
 	if err != nil {
-		s.log.Errorf("error getting restores: %v", err)
+		s.log.Errorw("error getting restores", "error", err)
 		return restores, &ServiceError{Err: err, ClientMsg: "error getting restores for the service"}
 	}
 
@@ -33,7 +33,7 @@ func (s *ServiceStore) GetServiceRestores(ns, serviceName string, ctx context.Co
 		}
 		converted, err := kuberlogicRestoreToRestore(&r)
 		if err != nil {
-			s.log.Errorf("error converting kubernetes restore to models: %v", err)
+			s.log.Errorw("error converting kubernetes restore to models", "error", err)
 			continue
 		}
 		restores = append(restores, converted)

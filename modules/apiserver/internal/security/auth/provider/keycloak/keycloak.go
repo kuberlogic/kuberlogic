@@ -37,21 +37,21 @@ const (
 )
 
 func (k *keycloakAuthProvider) GetAuthenticationSecret(username, password string) (string, error) {
-	k.log.Debugf("getting authentication secret for user %s", username)
+	k.log.Debugw("getting authentication secret", "user", username)
 
 	oauth2token, err := k.oauthConfig.PasswordCredentialsToken(k.ctx, username, password)
 	if err != nil {
-		k.log.Errorf("error getting token for username %s: %s", username, err.Error())
+		k.log.Errorw("error getting token", "username", username, "error", err)
 		return "", fmt.Errorf("Failed to get token" + err.Error())
 	}
 	rawIDToken, ok := oauth2token.Extra("id_token").(string)
 	if !ok {
-		k.log.Debugf("no id_token found in oauth2 token: %v", oauth2token)
+		k.log.Debugw("no id_token found in oauth2 token", "oauth2 token", oauth2token)
 		return "", fmt.Errorf("No id_token found in oauth2 token")
 	}
 	idToken, err := k.oidcVerifier.Verify(k.ctx, rawIDToken)
 	if err != nil {
-		k.log.Errorf("failed to verify ID token: %s", err.Error())
+		k.log.Errorw("failed to verify ID token", "error", err.Error())
 		return "", fmt.Errorf("failed to verify ID token")
 	}
 
@@ -61,24 +61,25 @@ func (k *keycloakAuthProvider) GetAuthenticationSecret(username, password string
 	}{oauth2token, new(json.RawMessage)}
 
 	if err := idToken.Claims(&resp.IDTokenClaims); err != nil {
-		k.log.Errorf("error extracting id_token claims from id_token %v: %s", err.Error(), idToken)
+		k.log.Errorw("error extracting id_token claims from id_token",
+			"id_token", idToken, "error", err)
 		return "", fmt.Errorf("error extracting id_token claims")
 	}
 	return resp.Oauth2token.AccessToken, nil
 }
 
 func (k *keycloakAuthProvider) Authenticate(token string) (string, string, error) {
-	k.log.Debugf("authenticating new user with token")
+	k.log.Debugw("authenticating new user with token")
 
 	p := strings.Split(token, " ")
 	if len(p) != 2 {
-		k.log.Errorf("error extracting authentication token from %s", token)
+		k.log.Errorw("error extracting authentication token", "token", token)
 		return "", "", fmt.Errorf("error extracting authentication token")
 	}
 
 	idToken, err := k.oidcVerifier.Verify(k.ctx, p[1])
 	if err != nil {
-		k.log.Errorf("error veryfying authentication token %s", err.Error())
+		k.log.Errorw("error veryfying authentication token", "error", err)
 		return "", "", fmt.Errorf("error veryfying authentication token")
 	}
 
@@ -86,7 +87,7 @@ func (k *keycloakAuthProvider) Authenticate(token string) (string, string, error
 		Username string `json:"preferred_username"`
 	}
 	if err := idToken.Claims(&userInfo); err != nil {
-		k.log.Errorf("error getting username from authentication token: %s", err.Error())
+		k.log.Errorw("error getting username from authentication token", "error", err)
 		return "", "", fmt.Errorf("error getting username from authentication token")
 	}
 
@@ -100,7 +101,8 @@ func (k *keycloakAuthProvider) Authenticate(token string) (string, string, error
 func (k *keycloakAuthProvider) Authorize(token, action, object string) (bool, error) {
 	// check cache first
 	if permissions, found := k.cache.Get(token); found {
-		k.log.Debugf("permissions for action %s on object %s found in cache", action, object)
+		k.log.Debugw("permissions for action on object found in cache",
+			"action", action, "object", object)
 		authorized, err := k.permissionEnforcer.IsAuthorized(permissions.(policy.Permissions), token, object, action)
 		return authorized, err
 	}
@@ -108,7 +110,7 @@ func (k *keycloakAuthProvider) Authorize(token, action, object string) (bool, er
 	// get permissions from keycloak
 	kPermissions, err := k.getUserPermissions(token)
 	if err != nil {
-		k.log.Errorf("error getting permissions from keycloak: %s", err.Error())
+		k.log.Errorw("error getting permissions from keycloak", "error", err)
 		return false, err
 	}
 
@@ -137,7 +139,7 @@ func (k *keycloakAuthProvider) getUserPermissions(token string) (*userPermission
 
 	req, err := http.NewRequest("POST", k.oauthConfig.Endpoint.TokenURL, strings.NewReader(data.Encode()))
 	if err != nil {
-		k.log.Errorf("error building a client for Keycloak authorization services: %s", err.Error())
+		k.log.Errorw("error building a client for Keycloak authorization services", "error", err)
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -145,12 +147,12 @@ func (k *keycloakAuthProvider) getUserPermissions(token string) (*userPermission
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		k.log.Errorf("error requesting Keycloak permissions: %s", err.Error())
+		k.log.Errorw("error requesting Keycloak permissions", "error", err)
 	}
 	defer res.Body.Close()
 
 	bodyBytes, err := ioutil.ReadAll(res.Body)
-	k.log.Debugf("Keycloak authorization services response: %s", string(bodyBytes))
+	k.log.Debugw("Keycloak authorization services response", "response", string(bodyBytes))
 
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("error getting user permissions, status code is %v message is %s", res.StatusCode, string(bodyBytes))
@@ -167,13 +169,13 @@ func NewKeycloakAuthProvider(clientId, clientSecret, realmName, keycloakUrl stri
 	configUrl := fmt.Sprintf("%s/auth/realms/%s", keycloakUrl, realmName)
 	ctx := context.Background()
 
-	log.Debugf("initializing oidc provider with url %s", configUrl)
+	log.Debugw("initializing oidc provider with url", "url", configUrl)
 	provider, err := oidc.NewProvider(ctx, configUrl)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing keycloak oidc config: " + err.Error())
 	}
 
-	log.Debugf("initializing oauth2 config with client_id %s", clientId)
+	log.Debugw("initializing oauth2 config with client_id", "client_id", clientId)
 	oauth2Config := oauth2.Config{
 		ClientID:     clientId,
 		ClientSecret: clientSecret,
@@ -187,7 +189,7 @@ func NewKeycloakAuthProvider(clientId, clientSecret, realmName, keycloakUrl stri
 	}
 
 	// we use external rule enforcer because of limited Ketcloak enforcer
-	log.Debugf("initializing permission policy enforcer")
+	log.Debugw("initializing permission policy enforcer")
 	enforcer := policy.NewEnforcer(cache, log)
 
 	return &keycloakAuthProvider{
