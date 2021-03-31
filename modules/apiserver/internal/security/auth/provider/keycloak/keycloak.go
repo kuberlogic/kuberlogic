@@ -1,7 +1,9 @@
 package keycloak
 
 import (
+	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"github.com/coreos/go-oidc"
@@ -13,9 +15,11 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type keycloakAuthProvider struct {
+	realmUrl     string
 	oidcVerifier *oidc.IDTokenVerifier
 	oauthConfig  oauth2.Config
 
@@ -23,7 +27,28 @@ type keycloakAuthProvider struct {
 	cache              cache.Cache
 	permissionEnforcer policy.Enforcer
 
-	log logging.Logger
+	patToken       *patToken
+	securityGrants []string
+
+	httpClient *http.Client
+	log        logging.Logger
+}
+
+type patToken struct {
+	AccessToken      string `json:"access_token"`
+	ExpiresIn        int    `json:"expires_in"`
+	RefreshExpiresIn int    `json:"refresh_expires_in"`
+	TokenType        string `json:"token_type"`
+	NotBeforePolicy  int    `json:"not_before_policy"`
+	Scope            string `json:"scope"`
+
+	ReceivedTime time.Time `json:"-"`
+}
+
+type protectionApiResourceSet struct {
+	Name           string   `json:"name"`
+	Type           string   `json:"type"`
+	ResourceScopes []string `json:"resource_scopes"`
 }
 
 type userPermissions []struct {
@@ -33,7 +58,8 @@ type userPermissions []struct {
 }
 
 const (
-	umaGrantType = "urn:ietf:params:oauth:grant-type:uma-ticket"
+	umaGrantType              = "urn:ietf:params:oauth:grant-type:uma-ticket"
+	protectionResourceSetType = "kuberlogicservice"
 )
 
 func (k *keycloakAuthProvider) GetAuthenticationSecret(username, password string) (string, error) {
@@ -47,7 +73,7 @@ func (k *keycloakAuthProvider) GetAuthenticationSecret(username, password string
 	rawIDToken, ok := oauth2token.Extra("id_token").(string)
 	if !ok {
 		k.log.Debugw("no id_token found in oauth2 token", "oauth2 token", oauth2token)
-		return "", fmt.Errorf("No id_token found in oauth2 token")
+		return "", fmt.Errorf("no id_token found in oauth2 token")
 	}
 	idToken, err := k.oidcVerifier.Verify(k.ctx, rawIDToken)
 	if err != nil {
@@ -79,7 +105,7 @@ func (k *keycloakAuthProvider) Authenticate(token string) (string, string, error
 
 	idToken, err := k.oidcVerifier.Verify(k.ctx, p[1])
 	if err != nil {
-		k.log.Errorw("error veryfying authentication token", "error", err)
+		k.log.Errorw("error verifying authentication token", "error", err)
 		return "", "", fmt.Errorf("error veryfying authentication token")
 	}
 
@@ -130,6 +156,40 @@ func (k *keycloakAuthProvider) Authorize(token, action, object string) (bool, er
 	return authorized, err
 }
 
+func (k *keycloakAuthProvider) CreatePermissionResource(obj string) error {
+	if err := k.patTokenRefresh(false); err != nil {
+		k.log.Errorw("error refreshing pat token", "error", err)
+		return err
+	}
+	if err := k.createResourceSet(obj); err != nil {
+		k.log.Errorw("error creating permissions resource", "error", err)
+		return err
+	}
+	return nil
+}
+
+func (k *keycloakAuthProvider) DeletePermissionResource(obj string) error {
+	if err := k.patTokenRefresh(false); err != nil {
+		k.log.Errorw("error refreshing pat token", "error", err)
+		return err
+	}
+	id, found, err := k.getResourceSetID(obj)
+	if err != nil {
+		k.log.Errorw("error getting permission resource id", "error", err)
+		return err
+	}
+	if !found {
+		return nil
+	}
+
+	err = k.deleteResourceSetByID(id)
+	if err != nil {
+		k.log.Errorw("error deleting permissions resource", "error", err)
+		return err
+	}
+	return nil
+}
+
 func (k *keycloakAuthProvider) getUserPermissions(token string) (*userPermissions, error) {
 	data := url.Values{}
 
@@ -145,9 +205,10 @@ func (k *keycloakAuthProvider) getUserPermissions(token string) (*userPermission
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Authorization", "Bearer "+token)
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := k.httpClient.Do(req)
 	if err != nil {
 		k.log.Errorw("error requesting Keycloak permissions", "error", err)
+		return nil, err
 	}
 	defer res.Body.Close()
 
@@ -165,9 +226,174 @@ func (k *keycloakAuthProvider) getUserPermissions(token string) (*userPermission
 	return permissions, nil
 }
 
-func NewKeycloakAuthProvider(clientId, clientSecret, realmName, keycloakUrl string, cache cache.Cache, log logging.Logger) (*keycloakAuthProvider, error) {
+func (k *keycloakAuthProvider) patTokenRefresh(force bool) error {
+	if !force {
+		if time.Now().Sub(k.patToken.ReceivedTime).Seconds() < float64(k.patToken.ExpiresIn) {
+			return nil
+		}
+	}
+	endpoint := k.realmUrl + "/protocol/openid-connect/token"
+	data := url.Values{}
+	data.Set("client_id", k.oauthConfig.ClientID)
+	data.Set("client_secret", k.oauthConfig.ClientSecret)
+	data.Set("grant_type", "client_credentials")
+
+	r, err := http.NewRequest("POST", endpoint, strings.NewReader(data.Encode()))
+	if err != nil {
+		k.log.Errorw("error creating pat token request", "error", err)
+		return err
+	}
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	// r.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
+	k.log.Debugw("created pat token request", "url", endpoint)
+
+	res, err := k.httpClient.Do(r)
+	if err != nil {
+		k.log.Errorw("error making pat token request", "error", err)
+		return err
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		k.log.Errorw("error reading pat response body", "error", err)
+		return err
+	}
+
+	k.log.Debugw("done pat token request", "status", res.StatusCode, "response", string(body))
+	if res.StatusCode != 200 {
+		err := fmt.Errorf("wrong status code: %d", res.StatusCode)
+		k.log.Errorw("pat token request error", "error", err, "response", string(body))
+		return err
+	}
+
+	pat := new(patToken)
+	if err := json.Unmarshal(body, pat); err != nil {
+		k.log.Errorw("error extracting pat token from keycloak response", "error", err)
+		return err
+	}
+	pat.ReceivedTime = time.Now()
+	k.patToken = pat
+	k.log.Infow("pat token successfully refreshed")
+	return nil
+}
+
+func (k *keycloakAuthProvider) getResourceSetID(name string) (string, bool, error) {
+	// get id first
+	type rsIds []string
+	id := rsIds{}
+
+	r, err := http.NewRequest("GET", fmt.Sprintf("%s/authz/protection/resource_set", k.realmUrl), nil)
+	if err != nil {
+		return "", false, err
+	}
+	r.Header.Set("Authorization", "Bearer "+k.patToken.AccessToken)
+
+	q := r.URL.Query()
+	q.Add("name", name)
+	r.URL.RawQuery = q.Encode()
+	k.log.Debugw("getting resource_set id for service", "url", r.URL.String())
+
+	res, err := k.httpClient.Do(r)
+	if err != nil {
+		return "", false, err
+	}
+	defer res.Body.Close()
+	b, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return "", false, err
+	}
+
+	k.log.Debugw("get resource set by id", "response_code", res.StatusCode, "response_body", string(b))
+
+	if res.StatusCode == 404 {
+		return "", false, nil
+	}
+	if res.StatusCode != 200 {
+		return "", false, fmt.Errorf("incorrect response code %d response %s", res.StatusCode, string(b))
+	}
+
+	if err := json.Unmarshal(b, &id); err != nil {
+		return "", false, err
+	}
+
+	if len(id) == 0 {
+		return "", false, nil
+	}
+	if len(id) != 1 {
+		return "", false, fmt.Errorf("unknown response %v", id)
+	}
+	return id[0], false, nil
+}
+
+func (k *keycloakAuthProvider) deleteResourceSetByID(id string) error {
+	r, err := http.NewRequest("DELETE", k.realmUrl+"/authz/protection/resource_set/"+id, nil)
+	if err != nil {
+		return err
+	}
+	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", k.patToken.AccessToken))
+
+	res, err := k.httpClient.Do(r)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	b, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != 204 {
+		return fmt.Errorf("incorrect status code %d response %s", res.StatusCode, string(b))
+	}
+	return nil
+}
+
+func (k *keycloakAuthProvider) createResourceSet(name string) error {
+	p := new(protectionApiResourceSet)
+	p.Name = name
+	p.Type = protectionResourceSetType
+	p.ResourceScopes = k.securityGrants
+	jsonData, err := json.Marshal(p)
+	if err != nil {
+		return err
+	}
+
+	r, err := http.NewRequest("POST", k.realmUrl+"/authz/protection/resource_set", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
+	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", k.patToken.AccessToken))
+	r.Header.Set("Content-Type", "application/json")
+
+	res, err := k.httpClient.Do(r)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != 201 {
+		err := fmt.Errorf("incorrect status code %d response %s", res.StatusCode, string(b))
+		return err
+	}
+
+	k.log.Debugw("permission resource successfully created")
+	return nil
+}
+
+func NewKeycloakAuthProvider(clientId, clientSecret, realmName, keycloakUrl string, cache cache.Cache, log logging.Logger, securityGrants []string) (*keycloakAuthProvider, error) {
 	configUrl := fmt.Sprintf("%s/auth/realms/%s", keycloakUrl, realmName)
-	ctx := context.Background()
+
+	tr := http.DefaultTransport.(*http.Transport).Clone()
+	tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	httpClient := &http.Client{Transport: tr}
+
+	ctx := oidc.ClientContext(context.TODO(), httpClient)
 
 	log.Debugw("initializing oidc provider with url", "url", configUrl)
 	provider, err := oidc.NewProvider(ctx, configUrl)
@@ -192,14 +418,24 @@ func NewKeycloakAuthProvider(clientId, clientSecret, realmName, keycloakUrl stri
 	log.Debugw("initializing permission policy enforcer")
 	enforcer := policy.NewEnforcer(cache, log)
 
-	return &keycloakAuthProvider{
+	kc := &keycloakAuthProvider{
+		realmUrl:     configUrl,
 		oidcVerifier: provider.Verifier(oidcConfig),
 		oauthConfig:  oauth2Config,
 
 		permissionEnforcer: enforcer,
 
+		securityGrants: securityGrants,
+
+		httpClient: httpClient,
+
 		ctx:   ctx,
 		cache: cache,
 		log:   log,
-	}, nil
+	}
+
+	if err := kc.patTokenRefresh(true); err != nil {
+		return nil, err
+	}
+	return kc, nil
 }
