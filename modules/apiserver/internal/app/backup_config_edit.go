@@ -5,12 +5,10 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-// set this string to a required security grant for this action
-const backupConfigEditSecGrant = "service:backup-config:edit"
 
 // curl -v -H Content-Type:application/json -H "Authorization: Bearer" -X PUT localhost:8001/api/v1/services/<service-id>/backup-config -d '{"aws_access_key_id":"","aws_secret_access_key":"","bucket":"cloudmanaged","endpoint":"https://fra1.digitaloceanspaces.com","schedule":"* 1 * * *","type":"s3","enabled":false}'
 func (srv *Service) BackupConfigEditHandler(params apiService.BackupConfigEditParams, principal *models.Principal) middleware.Responder {
@@ -20,7 +18,7 @@ func (srv *Service) BackupConfigEditHandler(params apiService.BackupConfigEditPa
 		return util.BadRequestFromError(err)
 	}
 
-	if authorized, err := srv.authProvider.Authorize(principal.Token, backupConfigEditSecGrant, params.ServiceID); err != nil {
+	if authorized, err := srv.authProvider.Authorize(principal.Token, security.BackupConfigEditSecGrant, params.ServiceID); err != nil {
 		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewBackupConfigEditBadRequest()
 		return resp

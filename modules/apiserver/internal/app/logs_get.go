@@ -4,11 +4,9 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 )
-
-// set this string to a required security grant for this action
-const logsGetSecGrant = "service:logs"
 
 func (srv *Service) LogsGetHandler(params apiService.LogsGetParams, principal *models.Principal) middleware.Responder {
 	ns, name, err := util.SplitID(params.ServiceID)
@@ -16,7 +14,7 @@ func (srv *Service) LogsGetHandler(params apiService.LogsGetParams, principal *m
 		return util.BadRequestFromError(err)
 	}
 
-	if authorized, err := srv.authProvider.Authorize(principal.Token, logsGetSecGrant, params.ServiceID); err != nil {
+	if authorized, err := srv.authProvider.Authorize(principal.Token, security.LogsGetSecGrant, params.ServiceID); err != nil {
 		srv.log.Errorw("error checking authorization", "error", err)
 		return apiService.NewLogsGetForbidden()
 	} else if !authorized {

@@ -11,15 +11,13 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	operator "github.com/kuberlogic/operator/modules/operator/service-operator"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-// set this string to a required security grant for this action
-const backupListSecGrant = "service:backup:list"
 
 func (srv *Service) BackupListHandler(params apiService.BackupListParams, principal *models.Principal) middleware.Responder {
 
@@ -28,7 +26,7 @@ func (srv *Service) BackupListHandler(params apiService.BackupListParams, princi
 		return util.BadRequestFromError(err)
 	}
 
-	if authorized, err := srv.authProvider.Authorize(principal.Token, backupListSecGrant, params.ServiceID); err != nil {
+	if authorized, err := srv.authProvider.Authorize(principal.Token, security.BackupListSecGrant, params.ServiceID); err != nil {
 		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewBackupListBadRequest()
 		return resp

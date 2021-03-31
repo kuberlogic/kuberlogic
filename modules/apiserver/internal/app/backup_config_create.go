@@ -5,13 +5,11 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-// set this string to a required security grant for this action
-const backupConfigCreateSecGrant = "service:backup-config:add"
 
 // curl -v -H Content-Type:application/json -H "Authorization: Bearer" -X POST localhost:8001/api/v1/services/<service-id>/backup-config -d '{"aws_access_key_id":"SJ3MEX4WE7G2A5JLHJQC","aws_secret_access_key":"hTXfI4Gbv0SPSWGhnWQrINg6TPcWCCvLcB2DRFmp+Ok","bucket":"cloudmanaged","endpoint":"https://fra1.digitaloceanspaces.com","schedule":"* 1 * * *","type":"s3","enabled":false}'
 func (srv *Service) BackupConfigCreateHandler(params apiService.BackupConfigCreateParams, principal *models.Principal) middleware.Responder {
@@ -23,7 +21,7 @@ func (srv *Service) BackupConfigCreateHandler(params apiService.BackupConfigCrea
 		return util.BadRequestFromError(err)
 	}
 
-	if authorized, err := srv.authProvider.Authorize(principal.Token, backupConfigCreateSecGrant, params.ServiceID); err != nil {
+	if authorized, err := srv.authProvider.Authorize(principal.Token, security.BackupConfigCreateSecGrant, params.ServiceID); err != nil {
 		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewBackupConfigCreateBadRequest()
 		return resp

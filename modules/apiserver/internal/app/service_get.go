@@ -4,11 +4,9 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 )
-
-// set this string to a required security grant for this action
-const serviceGetSecGrant = "service:get"
 
 func (srv *Service) ServiceGetHandler(params apiService.ServiceGetParams, principal *models.Principal) middleware.Responder {
 	ns, name, err := util.SplitID(params.ServiceID)
@@ -16,7 +14,7 @@ func (srv *Service) ServiceGetHandler(params apiService.ServiceGetParams, princi
 		util.BadRequestFromError(err)
 	}
 
-	if authorized, err := srv.authProvider.Authorize(principal.Token, serviceGetSecGrant, params.ServiceID); err != nil {
+	if authorized, err := srv.authProvider.Authorize(principal.Token, security.ServiceGetSecGrant, params.ServiceID); err != nil {
 		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewServiceGetServiceUnavailable().WithPayload(&models.Error{Message: "eror checking authorization"})
 		return resp

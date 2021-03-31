@@ -5,11 +5,9 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 )
-
-// set this string to a required security grant for this action
-const restoreListSecGrant = "service:restore:list"
 
 func (srv *Service) RestoreListHandler(params apiService.RestoreListParams, principal *models.Principal) middleware.Responder {
 
@@ -18,7 +16,7 @@ func (srv *Service) RestoreListHandler(params apiService.RestoreListParams, prin
 		return util.BadRequestFromError(err)
 	}
 
-	if authorized, err := srv.authProvider.Authorize(principal.Token, restoreListSecGrant, params.ServiceID); err != nil {
+	if authorized, err := srv.authProvider.Authorize(principal.Token, security.RestoreListSecGrant, params.ServiceID); err != nil {
 		srv.log.Errorw("error checking authorization ", "error", err)
 		resp := apiService.NewBackupListBadRequest()
 		return resp

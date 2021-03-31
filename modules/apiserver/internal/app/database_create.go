@@ -5,14 +5,12 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/util/kuberlogic"
 	"github.com/pkg/errors"
 )
-
-// set this string to a required security grant for this action
-const databaseCreateSecGrant = "service:database:add"
 
 func (srv *Service) DatabaseCreateHandler(params apiService.DatabaseCreateParams, principal *models.Principal) middleware.Responder {
 	// validate path parameter
@@ -22,7 +20,7 @@ func (srv *Service) DatabaseCreateHandler(params apiService.DatabaseCreateParams
 		return util.BadRequestFromError(err)
 	}
 
-	if authorized, err := srv.authProvider.Authorize(principal.Token, databaseCreateSecGrant, params.ServiceID); err != nil {
+	if authorized, err := srv.authProvider.Authorize(principal.Token, security.DatabaseCreateSecGrant, params.ServiceID); err != nil {
 		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewDatabaseCreateBadRequest()
 		return resp
