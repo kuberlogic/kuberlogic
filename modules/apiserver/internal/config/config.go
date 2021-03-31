@@ -24,7 +24,7 @@ type Config struct {
 	KubeconfigPath string `envconfig:"default=/root/.kube/config"`
 	DebugLogs      bool   `envconfig:"default=false"`
 	Sentry         struct {
-		Dsn string `envconfig:"SENTRY_DSN"`
+		Dsn string `envconfig:"SENTRY_DSN,optional"`
 	}
 }
 
