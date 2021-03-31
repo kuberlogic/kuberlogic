@@ -19,6 +19,14 @@ func (n *noneAuthProvider) Authorize(username, action, object string) (bool, err
 	return true, nil
 }
 
+func (n *noneAuthProvider) CreatePermissionResource(obj string) error {
+	return nil
+}
+
+func (n *noneAuthProvider) DeletePermissionResource(obj string) error {
+	return nil
+}
+
 func NewNoneProvider() (*noneAuthProvider, error) {
 	return &noneAuthProvider{}, nil
 }

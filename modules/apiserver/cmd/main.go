@@ -36,7 +36,6 @@ func Main(args []string) {
 		mainLog.Fatalw("", "error", err)
 		os.Exit(1)
 	}
-	logging.DebugLevel(cfg.DebugLogs)
 
 	// init sentry
 	if dsn := cfg.Sentry.Dsn; dsn != "" {
@@ -47,6 +46,8 @@ func Main(args []string) {
 		// Flush buffered events before the program terminates.
 		defer sentry.Flush(2 * time.Second)
 	}
+
+	logging.DebugLevel(cfg.DebugLogs)
 
 	swaggerSpec, err := loads.Analyzed(restapi.SwaggerJSON, "")
 	if err != nil {

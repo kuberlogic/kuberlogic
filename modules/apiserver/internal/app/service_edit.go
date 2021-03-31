@@ -4,13 +4,11 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
 )
 
-// set this string to a required security grant for this action
-const serviceEditSecGrant = "service:edit"
-
 func (srv *Service) ServiceEditHandler(params apiService.ServiceEditParams, principal *models.Principal) middleware.Responder {
-	if authorized, err := srv.authProvider.Authorize(principal.Token, serviceEditSecGrant, params.ServiceID); err != nil {
+	if authorized, err := srv.authProvider.Authorize(principal.Token, security.ServiceEditSecGrant, params.ServiceID); err != nil {
 		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewServiceEditServiceUnavailable().WithPayload(&models.Error{Message: "error checking authorization"})
 		return resp

@@ -5,13 +5,11 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-// set this string to a required security grant for this action
-const backupConfigDeleteSecGrant = "service:backup-config:delete"
 
 func (srv *Service) BackupConfigDeleteHandler(params apiService.BackupConfigDeleteParams, principal *models.Principal) middleware.Responder {
 	// validate path parameter
@@ -20,7 +18,7 @@ func (srv *Service) BackupConfigDeleteHandler(params apiService.BackupConfigDele
 		return util.BadRequestFromError(err)
 	}
 
-	if authorized, err := srv.authProvider.Authorize(principal.Token, backupConfigDeleteSecGrant, params.ServiceID); err != nil {
+	if authorized, err := srv.authProvider.Authorize(principal.Token, security.BackupConfigDeleteSecGrant, params.ServiceID); err != nil {
 		srv.log.Errorw("error checking authorization", "error", err)
 		resp := apiService.NewBackupConfigDeleteBadRequest()
 		return resp
