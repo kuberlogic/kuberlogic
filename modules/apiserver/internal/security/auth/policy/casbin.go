@@ -20,7 +20,7 @@ p = sub, obj, act
 e = some(where (p.eft == allow))
 
 [matchers]
-m = r.sub == p.sub && globMatch(r.act, p.act) && globMatch(r.act, p.act)`
+m = r.sub == p.sub && globMatch(r.obj, p.obj) && globMatch(r.act, p.act)`
 )
 
 type CasbinEnforcer struct {
