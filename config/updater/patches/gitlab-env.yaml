@@ -8,10 +8,7 @@ spec:
       template:
         spec:
           containers:
-            - name: updater # (1)
+            - name: updater
               env:
                 - name: REGISTRY_API
-                  # TODO: Need to test it
-                  value: https://gitlab.corp.cloudlinux.com/api/v4/groups/cloudmanaged/registry/repositories?tags=1&tags_count=true
-                - name: REGISTRY_TOKEN
-                  value: D7xUfvCsodyRKGFHeh9e
+                  value: https://quay.io/v2/
