@@ -11,50 +11,49 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	"log"
 	"net/http"
 	"os"
 	"sort"
+	"strings"
 	"time"
 )
 
-type RegistryProject struct {
-	ID        int       `json:"id"`
-	Name      string    `json:"name"`
-	Path      string    `json:"path"`
-	ProjectID int       `json:"project_id"`
-	Location  string    `json:"location"`
-	CreatedAt time.Time `json:"created_at"`
-	Tags      []struct {
-		Name     string `json:"name"`
-		Path     string `json:"path"`
-		Location string `json:"location"`
-	} `json:"tags"`
-}
-
-type RegistryProjects []RegistryProject
-
-func (rp RegistryProjects) get(name string) (*RegistryProject, error) {
-	for _, project := range rp {
-		if project.Name == name {
-			return &project, nil
-		}
-	}
-	return nil, errors.New(fmt.Sprintf("Project with %s is not found", name))
-}
-
-func (p *RegistryProject) getLatestTag() string {
-	tags := p.Tags
-	sort.SliceStable(tags, func(i, j int) bool {
-		vA, vB := semver.New(tags[i].Name), semver.New(tags[j].Name)
-		return vB.LessThan(*vA)
-	})
-	return tags[0].Name
+type TagList struct {
+	Name string   `json:"name"`
+	Tags []string `json:"tags"`
 }
 
 var envRequired = []string{
 	"REGISTRY_API",
-	"REGISTRY_TOKEN",
+}
+
+var daysOfWeek = map[string]time.Weekday{
+	"Sunday":    time.Sunday,
+	"Monday":    time.Monday,
+	"Tuesday":   time.Tuesday,
+	"Wednesday": time.Wednesday,
+	"Thursday":  time.Thursday,
+	"Friday":    time.Friday,
+	"Saturday":  time.Saturday,
+}
+
+func parseWeek(weekday string) (time.Weekday, error) {
+	value, ok := daysOfWeek[weekday]
+	if !ok {
+		return time.Sunday, fmt.Errorf("unknown weekday %s", weekday)
+	}
+	return value, nil
+}
+
+func (p *TagList) getLatestTag() string {
+	tags := p.Tags
+	sort.SliceStable(tags, func(i, j int) bool {
+		vA, vB := semver.New(tags[i]), semver.New(tags[j])
+		return vB.LessThan(*vA)
+	})
+	return tags[0]
 }
 
 func checkEnv() error {
@@ -68,46 +67,60 @@ func checkEnv() error {
 	return nil
 }
 
-func getProjects() RegistryProjects {
-	url := os.Getenv("REGISTRY_API")
+func fetchTags(name string) (*TagList, error) {
+	baseUrl := os.Getenv("REGISTRY_API")
 
 	spaceClient := http.Client{
 		Timeout: time.Second * 2, // Timeout after 2 seconds
 	}
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	baseUrl = strings.TrimSuffix(baseUrl, "/")
+	endpoint := fmt.Sprintf("%s/kuberlogic/%s/tags/list", baseUrl, name)
+	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	req.Header.Set("PRIVATE-TOKEN", os.Getenv("REGISTRY_TOKEN"))
-
-	res, getErr := spaceClient.Do(req)
-	if getErr != nil {
-		log.Fatal(getErr)
+	res, err := spaceClient.Do(req)
+	if err != nil {
+		return nil, err
 	}
 
 	if res.Body != nil {
 		defer res.Body.Close()
 	}
 
-	body, readErr := ioutil.ReadAll(res.Body)
-	if readErr != nil {
-		log.Fatal(readErr)
-	}
-
-	projects := RegistryProjects{}
-	err = json.Unmarshal(body, &projects)
+	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return projects
+	tagList := &TagList{}
+	err = json.Unmarshal(body, tagList)
+	if err != nil {
+		return nil, err
+	}
+
+	return tagList, nil
 }
 
 func needUpgrade(a, b string) bool {
 	vA, vB := semver.New(a), semver.New(b)
 	return vA.Major == vB.Major && vA.Minor == vB.Minor && vB.Patch > vA.Patch
+}
+
+func GetConfig() (*rest.Config, error) {
+	// check in-cluster usage
+	if cfg, err := rest.InClusterConfig(); err == nil {
+		return cfg, nil
+	}
+
+	// use the current context in kubeconfig
+	conf, err := clientcmd.BuildConfigFromFlags("", "/root/.kube/config")
+	if err != nil {
+		return nil, err
+	}
+	return conf, err
 }
 
 func main() {
@@ -116,7 +129,7 @@ func main() {
 	}
 
 	// creates the in-cluster config
-	config, err := rest.InClusterConfig()
+	config, err := GetConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -149,17 +162,30 @@ func main() {
 		log.Println("KuberLogicService resources was not found")
 		return
 	}
-	projects := getProjects()
-	for _, item := range result.Items {
-		log.Printf("Found %s with version %s\n",
-			item.Spec.Type, item.Spec.Version)
 
-		project, err := projects.get(item.Spec.Type)
+	for _, item := range result.Items {
+		// TBD: check maintenance window before
+		now := time.Now()
+		weekday, err := parseWeek(item.Spec.MaintenanceWindow.Weekday)
 		if err != nil {
 			log.Fatal(err)
 		}
-		latest := project.getLatestTag()
-		log.Printf("Latest tag was found %s", latest)
+		startHour := item.Spec.MaintenanceWindow.StartHour
+		duration := item.Spec.MaintenanceWindow.DurationHours
+		if weekday != now.Weekday() || !(startHour <= now.Hour() && startHour+duration > now.Hour()) {
+			log.Println("Not time to upgrade")
+			break
+		}
+
+		log.Printf("Found %s with version %s\n",
+			item.Spec.Type, item.Spec.Version)
+
+		tags, err := fetchTags(item.Spec.Type)
+		if err != nil {
+			log.Fatal(err)
+		}
+		latest := tags.getLatestTag()
+		log.Printf("Latest tag was found %s\n", latest)
 
 		if needUpgrade(item.Spec.Version, latest) {
 			log.Printf("Version %s of %s should be upgraded onto %s\n",
@@ -169,13 +195,13 @@ func main() {
 			item.Spec.Version = latest
 			err = restClient.Put().
 				Namespace("default").
-				Resource("kuberlogics").
+				Resource("kuberlogicservices").
 				Name(item.Name).
 				Body(&item).
 				Do(context.TODO()).
 				Into(&updatedResult)
 			if err != nil {
-				log.Fatal(err.Error())
+				log.Fatal(err)
 			}
 			log.Println("KuberLogicService resource is successfully changed")
 
