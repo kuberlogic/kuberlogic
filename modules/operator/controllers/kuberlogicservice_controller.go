@@ -163,7 +163,7 @@ func (r *KuberLogicServiceReconciler) update(ctx context.Context, kls *kuberlogi
 	needsUpdate := syncStatus(kls, op)
 	if needsUpdate {
 		log.Info("status needs to be updated")
-		return ctrl.Result{}, r.Update(ctx, kls)
+		return ctrl.Result{}, r.Status().Update(ctx, kls)
 	}
 	log = log.WithValues("status", kls.GetStatus())
 	if !kls.UpdatesAllowed() {
