@@ -19,6 +19,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sync"
+	"time"
+)
+
+const (
+	klsServiceNotReadyDelaySec = 300
 )
 
 // KuberLogicServiceReconciler reconciles a KuberLogicServices object
@@ -164,7 +169,9 @@ func (r *KuberLogicServiceReconciler) update(ctx context.Context, kls *kuberlogi
 	if !kls.UpdatesAllowed() {
 		err := fmt.Errorf("updates are not allowed in current service state")
 		log.Error(err, "updates are not allowed")
-		return ctrl.Result{}, err
+		return ctrl.Result{
+			RequeueAfter: time.Second * klsServiceNotReadyDelaySec,
+		}, nil
 	}
 
 	op.Update(kls)
