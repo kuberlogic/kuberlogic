@@ -57,6 +57,50 @@ func (o *ServiceGetOK) WriteResponse(rw http.ResponseWriter, producer runtime.Pr
 	}
 }
 
+// ServiceGetBadRequestCode is the HTTP code returned for type ServiceGetBadRequest
+const ServiceGetBadRequestCode int = 400
+
+/*ServiceGetBadRequest invalid input, object invalid
+
+swagger:response serviceGetBadRequest
+*/
+type ServiceGetBadRequest struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *models.Error `json:"body,omitempty"`
+}
+
+// NewServiceGetBadRequest creates ServiceGetBadRequest with default headers values
+func NewServiceGetBadRequest() *ServiceGetBadRequest {
+
+	return &ServiceGetBadRequest{}
+}
+
+// WithPayload adds the payload to the service get bad request response
+func (o *ServiceGetBadRequest) WithPayload(payload *models.Error) *ServiceGetBadRequest {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the service get bad request response
+func (o *ServiceGetBadRequest) SetPayload(payload *models.Error) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *ServiceGetBadRequest) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(400)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
+}
+
 // ServiceGetUnauthorizedCode is the HTTP code returned for type ServiceGetUnauthorized
 const ServiceGetUnauthorizedCode int = 401
 

@@ -68,6 +68,11 @@ const ServiceListBadRequestCode int = 400
 swagger:response serviceListBadRequest
 */
 type ServiceListBadRequest struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *models.Error `json:"body,omitempty"`
 }
 
 // NewServiceListBadRequest creates ServiceListBadRequest with default headers values
@@ -76,12 +81,27 @@ func NewServiceListBadRequest() *ServiceListBadRequest {
 	return &ServiceListBadRequest{}
 }
 
+// WithPayload adds the payload to the service list bad request response
+func (o *ServiceListBadRequest) WithPayload(payload *models.Error) *ServiceListBadRequest {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the service list bad request response
+func (o *ServiceListBadRequest) SetPayload(payload *models.Error) {
+	o.Payload = payload
+}
+
 // WriteResponse to the client
 func (o *ServiceListBadRequest) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
-	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
-
 	rw.WriteHeader(400)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
 }
 
 // ServiceListUnauthorizedCode is the HTTP code returned for type ServiceListUnauthorized

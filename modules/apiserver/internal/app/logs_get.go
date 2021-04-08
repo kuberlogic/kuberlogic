@@ -4,22 +4,10 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
-	"github.com/kuberlogic/operator/modules/apiserver/util"
 )
 
 func (srv *Service) LogsGetHandler(params apiService.LogsGetParams, principal *models.Principal) middleware.Responder {
-	ns, name, err := util.SplitID(params.ServiceID)
-	if err != nil {
-		return util.BadRequestFromError(err)
-	}
-
-	if authorized, err := srv.authProvider.Authorize(principal.Token, security.LogsGetSecGrant, params.ServiceID); err != nil {
-		srv.log.Errorw("error checking authorization", "error", err)
-		return apiService.NewLogsGetForbidden()
-	} else if !authorized {
-		return apiService.NewLogsGetForbidden()
-	}
+	ns, name := srv.existingService.Namespace, srv.existingService.Name
 
 	m := srv.serviceStore.NewServiceObject(name, ns)
 	logs, errLogs := srv.serviceStore.GetServiceLogs(m, params.ServiceInstance, *params.Tail, params.HTTPRequest.Context())

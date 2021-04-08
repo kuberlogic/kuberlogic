@@ -60,4 +60,13 @@ layout:
       target: "./internal/app"
       file_name: "{{ (snakize (pascalize .Name)) }}.go"
       skip_exists: true
+
+    - name: interface
+      source: serverServiceInterface
+      target: "{{ if gt (len .Tags) 0 }}{{ joinFilePath .Target .ServerPackage .APIPackage .Package  }}{{ else }}{{ joinFilePath .Target .ServerPackage .Package  }}{{ end }}"
+      file_name: "service_interface.go"
+    - name: wrappers
+      source: serverWrapperHandler
+      target: "{{ if gt (len .Tags) 0 }}{{ joinFilePath .Target .ServerPackage .APIPackage .Package  }}{{ else }}{{ joinFilePath .Target .ServerPackage .Package  }}{{ end }}"
+      file_name: "{{ (snakize (pascalize .Name)) }}_wrapper.go"
   operation_groups:

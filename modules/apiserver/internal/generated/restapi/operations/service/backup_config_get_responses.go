@@ -57,6 +57,50 @@ func (o *BackupConfigGetOK) WriteResponse(rw http.ResponseWriter, producer runti
 	}
 }
 
+// BackupConfigGetBadRequestCode is the HTTP code returned for type BackupConfigGetBadRequest
+const BackupConfigGetBadRequestCode int = 400
+
+/*BackupConfigGetBadRequest invalid input, object invalid
+
+swagger:response backupConfigGetBadRequest
+*/
+type BackupConfigGetBadRequest struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *models.Error `json:"body,omitempty"`
+}
+
+// NewBackupConfigGetBadRequest creates BackupConfigGetBadRequest with default headers values
+func NewBackupConfigGetBadRequest() *BackupConfigGetBadRequest {
+
+	return &BackupConfigGetBadRequest{}
+}
+
+// WithPayload adds the payload to the backup config get bad request response
+func (o *BackupConfigGetBadRequest) WithPayload(payload *models.Error) *BackupConfigGetBadRequest {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the backup config get bad request response
+func (o *BackupConfigGetBadRequest) SetPayload(payload *models.Error) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *BackupConfigGetBadRequest) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(400)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
+}
+
 // BackupConfigGetUnauthorizedCode is the HTTP code returned for type BackupConfigGetUnauthorized
 const BackupConfigGetUnauthorizedCode int = 401
 

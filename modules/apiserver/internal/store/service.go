@@ -90,7 +90,6 @@ func (s *ServiceStore) CreateService(m *models.Service, ctx context.Context) (*m
 	if err != nil {
 		return nil, NewServiceError("error creating service", false, err)
 	}
-
 	svc, err := s.kuberLogicToService(result, ctx)
 	if err != nil {
 		return nil, NewServiceError("error getting newly created service", false, err)
@@ -159,9 +158,9 @@ func (s *ServiceStore) DeleteService(m *models.Service, ctx context.Context) *Se
 		Error()
 	if err != nil {
 		return NewServiceError("error deleting service", false, err)
-	} else {
-		return nil
 	}
+
+	return nil
 }
 
 func (s *ServiceStore) GetServiceLogs(m *models.Service, instance string, lines int64, ctx context.Context) (string, *ServiceError) {

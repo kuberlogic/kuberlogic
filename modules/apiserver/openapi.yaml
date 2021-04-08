@@ -49,6 +49,8 @@ paths:
           description: internal server error
   /services/:
     get:
+      x-permission: services:list
+      x-posthog: { }
       tags:
         - service
       summary: searches service
@@ -64,6 +66,8 @@ paths:
             $ref: "#/definitions/Services"
         400:
           description: bad input parameter
+          schema:
+            $ref: "#/definitions/Error"
         401:
           description: bad authentication
         403:
@@ -73,6 +77,26 @@ paths:
           schema:
             $ref: "#/definitions/Error"
     post:
+      x-permission: services:get
+      x-posthog:
+        - key: name
+          value: ServiceItem.Name
+        - key: namespace
+          value: ServiceItem.Ns
+        - key: type
+          value: ServiceItem.Type
+        - key: replicas
+          value: ServiceItem.Replicas
+          condition: params.ServiceItem.Replicas != nil
+        - key: cpu-limit
+          value: ServiceItem.Limits.CPU
+          condition: params.ServiceItem.Limits != nil && params.ServiceItem.Limits.CPU != nil
+        - key: memory-limit
+          value: ServiceItem.Limits.Memory
+          condition: params.ServiceItem.Limits != nil && params.ServiceItem.Limits.Memory != nil
+        - key: volume-limit
+          value: ServiceItem.Limits.VolumeSize
+          condition: params.ServiceItem.Limits != nil && params.ServiceItem.Limits.VolumeSize != nil
       tags:
         - service
       summary: adds a service item
@@ -80,12 +104,7 @@ paths:
       description: |
         Adds service object
       parameters:
-        - in: body
-          name: serviceItem
-          required: true
-          description: service item to add
-          schema:
-            $ref: "#/definitions/Service"
+        - $ref: "#/parameters/ServiceItem"
       security:
         - Bearer: [ ]
       responses:
@@ -109,6 +128,10 @@ paths:
             $ref: "#/definitions/Error"
   /services/{ServiceID}/:
     get:
+      x-permission: service:get
+      x-posthog:
+        - key: service-id
+          value: ServiceID
       tags:
         - service
       summary: get service by ID
@@ -124,6 +147,10 @@ paths:
           description: search results matching criteria
           schema:
             $ref: "#/definitions/Service"
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: "#/definitions/Error"
         401:
           description: bad authentication
         403:
@@ -135,6 +162,24 @@ paths:
           schema:
             $ref: "#/definitions/Error"
     put:
+      x-permission: services:edit
+      x-posthog:
+        - key: service-id
+          value: ServiceID
+        - key: type
+          value: ServiceItem.Type
+        - key: replicas
+          value: ServiceItem.Replicas
+          condition: params.ServiceItem.Replicas != nil
+        - key: cpu-limit
+          value: ServiceItem.Limits.CPU
+          condition: params.ServiceItem.Limits != nil && params.ServiceItem.Limits.CPU != nil
+        - key: memory-limit
+          value: ServiceItem.Limits.Memory
+          condition: params.ServiceItem.Limits != nil && params.ServiceItem.Limits.Memory != nil
+        - key: volume-limit
+          value: ServiceItem.Limits.VolumeSize
+          condition: params.ServiceItem.Limits != nil && params.ServiceItem.Limits.VolumeSize != nil
       tags:
         - service
       summary: edit a service item
@@ -143,12 +188,7 @@ paths:
         Edit service object
       parameters:
         - $ref: "#/parameters/ServiceID"
-        - in: body
-          name: serviceItem
-          required: true
-          description: service item to edit
-          schema:
-            $ref: "#/definitions/Service"
+        - $ref: "#/parameters/ServiceItem"
       security:
         - Bearer: [ ]
       responses:
@@ -171,6 +211,10 @@ paths:
           schema:
             $ref: "#/definitions/Error"
     delete:
+      x-permission: services:delete
+      x-posthog:
+        - key: service-id
+          value: ServiceID
       tags:
         - service
       summary: deletes a service item
@@ -201,6 +245,10 @@ paths:
 
   /services/{ServiceID}/backup-config:
     get:
+      x-permission: service:backup-config:get
+      x-posthog:
+        - key: service-id
+          value: ServiceID
       tags:
         - service
       summary: show backup config
@@ -214,6 +262,10 @@ paths:
           description: return backup config
           schema:
             $ref: "#/definitions/BackupConfig"
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: "#/definitions/Error"
         401:
           description: bad authentication
         403:
@@ -225,6 +277,18 @@ paths:
           schema:
             $ref: "#/definitions/Error"
     post:
+      x-permission: service:backup-config:add
+      x-posthog:
+        - key: service-id
+          value: ServiceID
+        - key: enabled
+          value: BackupConfig.Enabled
+        - key: schedule
+          value: BackupConfig.Schedule
+        - key: bucket
+          value: BackupConfig.Bucket
+        - key: endpoint
+          value: BackupConfig.Endpoint
       tags:
         - service
       operationId: backupConfigCreate
@@ -259,6 +323,18 @@ paths:
             $ref: "#/definitions/Error"
 
     put:
+      x-permission: service:backup-config:edit
+      x-posthog:
+        - key: service-id
+          value: ServiceID
+        - key: enabled
+          value: BackupConfig.Enabled
+        - key: schedule
+          value: BackupConfig.Schedule
+        - key: bucket
+          value: BackupConfig.Bucket
+        - key: endpoint
+          value: BackupConfig.Endpoint
       tags:
         - service
       operationId: backupConfigEdit
@@ -293,6 +369,10 @@ paths:
             $ref: "#/definitions/Error"
 
     delete:
+      x-permission: service:backup-config:delete
+      x-posthog:
+        - key: service-id
+          value: ServiceID
       tags:
         - service
       operationId: backupConfigDelete
@@ -320,6 +400,10 @@ paths:
 
   /services/{ServiceID}/backups/:
     get:
+      x-permission: service:backup:list
+      x-posthog:
+        - key: service-id
+          value: ServiceID
       tags:
         - service
       operationId: backupList
@@ -351,6 +435,14 @@ paths:
 
   /services/{ServiceID}/logs:
     get:
+      x-permission: service:logs
+      x-posthog:
+        - key: service-id
+          value: ServiceID
+        - key: service-instance
+          value: ServiceInstance
+        - key: tail
+          value: Tail
       tags:
         - service
       operationId: logsGet
@@ -375,6 +467,10 @@ paths:
           description: service node logs
           schema:
             $ref: "#/definitions/Log"
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: "#/definitions/Error"
         401:
           description: bad authentication
         403:
@@ -386,6 +482,10 @@ paths:
 
   /services/{ServiceID}/users/:
     get:
+      x-permission: service:user:list
+      x-posthog:
+        - key: service-id
+          value: ServiceID
       tags:
         - service
       operationId: userList
@@ -413,6 +513,12 @@ paths:
           schema:
             $ref: "#/definitions/Error"
     post:
+      x-permission: service:user:add
+      x-posthog:
+        - key: service-id
+          value: ServiceID
+        - key: user
+          value: User.Name
       tags:
         - service
       operationId: userCreate
@@ -444,6 +550,12 @@ paths:
 
   /services/{ServiceID}/users/{Username}/:
     put:
+      x-permission: service:user:edit
+      x-posthog:
+        - key: service-id
+          value: ServiceID
+        - key: user
+          value: User.Name
       tags:
         - service
       operationId: userEdit
@@ -480,6 +592,12 @@ paths:
           schema:
             $ref: "#/definitions/Error"
     delete:
+      x-permission: service:user:delete
+      x-posthog:
+        - key: service-id
+          value: ServiceID
+        - key: user
+          value: Username
       tags:
         - service
       operationId: userDelete
@@ -511,6 +629,10 @@ paths:
             $ref: "#/definitions/Error"
   /services/{ServiceID}/databases/:
     get:
+      x-permission: service:database:list
+      x-posthog:
+        - key: service-id
+          value: ServiceID
       tags:
         - service
       operationId: databaseList
@@ -538,6 +660,12 @@ paths:
           schema:
             $ref: "#/definitions/Error"
     post:
+      x-permission: service:database:add
+      x-posthog:
+        - key: service-id
+          value: ServiceID
+        - key: database
+          value: Database.Name
       tags:
         - service
       operationId: databaseCreate
@@ -572,6 +700,12 @@ paths:
             $ref: "#/definitions/Error"
   /services/{ServiceID}/databases/{Database}/:
     delete:
+      x-permission: service:database:delete
+      x-posthog:
+        - key: service-id
+          value: ServiceID
+        - key: database
+          value: Database
       tags:
         - service
       operationId: databaseDelete
@@ -603,6 +737,14 @@ paths:
             $ref: "#/definitions/Error"
   /services/{ServiceID}/restores:
     post:
+      x-permission: service:backup-restore:create
+      x-posthog:
+        - key: service-id
+          value: ServiceID
+        - key: key
+          value: RestoreItem.Key
+        - key: database
+          value: RestoreItem.Database
       tags:
         - service
       operationId: databaseRestore
@@ -644,6 +786,10 @@ paths:
             $ref: "#/definitions/Error"
 
     get:
+      x-permission: service:restore:list
+      x-posthog:
+        - key: service-id
+          value: ServiceID
       tags:
         - service
       operationId: restoreList
@@ -943,12 +1089,20 @@ definitions:
 
 parameters:
   ServiceID:
-    name: "ServiceID"
-    in: "path"
+    name: ServiceID
+    in: path
     description: service Resource ID
     required: true
     type: "string"
     pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+
+  ServiceItem:
+    in: body
+    name: serviceItem
+    required: true
+    description: service item
+    schema:
+      $ref: "#/definitions/Service"
 
 securityDefinitions:
   Bearer:

@@ -40,7 +40,7 @@ type ServiceEditParams struct {
 	  In: path
 	*/
 	ServiceID string
-	/*service item to edit
+	/*service item
 	  Required: true
 	  In: body
 	*/

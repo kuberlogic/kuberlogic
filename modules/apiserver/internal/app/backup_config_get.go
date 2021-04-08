@@ -5,7 +5,6 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,19 +12,7 @@ import (
 
 // curl -v -H Content-Type:application/json -H "Authorization: Bearer" -X GET localhost:8001/api/v1/services/<service-id>/backup-config
 func (srv *Service) BackupConfigGetHandler(params apiService.BackupConfigGetParams, principal *models.Principal) middleware.Responder {
-	ns, name, err := util.SplitID(params.ServiceID)
-	if err != nil {
-		return util.BadRequestFromError(err)
-	}
-
-	if authorized, err := srv.authProvider.Authorize(principal.Token, security.BackupConfigGetSecGrant, params.ServiceID); err != nil {
-		srv.log.Errorw("error checking authorization", "error", err)
-		resp := apiService.NewBackupConfigEditBadRequest()
-		return resp
-	} else if !authorized {
-		resp := apiService.NewBackupConfigEditForbidden()
-		return resp
-	}
+	ns, name := srv.existingService.Namespace, srv.existingService.Name
 
 	srv.log.Debugw("attempting to get a backup config",
 		"namespace", ns, "name", name)

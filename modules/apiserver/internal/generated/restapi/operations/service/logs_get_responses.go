@@ -57,6 +57,50 @@ func (o *LogsGetOK) WriteResponse(rw http.ResponseWriter, producer runtime.Produ
 	}
 }
 
+// LogsGetBadRequestCode is the HTTP code returned for type LogsGetBadRequest
+const LogsGetBadRequestCode int = 400
+
+/*LogsGetBadRequest invalid input, object invalid
+
+swagger:response logsGetBadRequest
+*/
+type LogsGetBadRequest struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *models.Error `json:"body,omitempty"`
+}
+
+// NewLogsGetBadRequest creates LogsGetBadRequest with default headers values
+func NewLogsGetBadRequest() *LogsGetBadRequest {
+
+	return &LogsGetBadRequest{}
+}
+
+// WithPayload adds the payload to the logs get bad request response
+func (o *LogsGetBadRequest) WithPayload(payload *models.Error) *LogsGetBadRequest {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the logs get bad request response
+func (o *LogsGetBadRequest) SetPayload(payload *models.Error) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *LogsGetBadRequest) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(400)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
+}
+
 // LogsGetUnauthorizedCode is the HTTP code returned for type LogsGetUnauthorized
 const LogsGetUnauthorizedCode int = 401
 
