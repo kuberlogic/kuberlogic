@@ -4,14 +4,12 @@ package service
 import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging/posthog"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 )
 
-// set this string to a required permission for this action
-const backupConfigGetPermission = "service:backup-config:get"
-
-func BackupConfigGetWrapper(srv Service, next BackupConfigGetHandlerFunc) (fn BackupConfigGetHandlerFunc) {
+func BackupConfigGetWrapper(srv operations.Service, next BackupConfigGetHandlerFunc) (fn BackupConfigGetHandlerFunc) {
 	return func(params BackupConfigGetParams, principal *models.Principal) middleware.Responder {
 
 		log := srv.GetLogger()
@@ -28,14 +26,14 @@ func BackupConfigGetWrapper(srv Service, next BackupConfigGetHandlerFunc) (fn Ba
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, backupConfigGetPermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal.Token, operations.BackupConfigGetPermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
-			log.Errorw(msg, "permission", backupConfigGetPermission, "serviceId", params.ServiceID, "error", err)
+			log.Errorw(msg, "permission", operations.BackupConfigGetPermission, "serviceId", params.ServiceID, "error", err)
 			return NewBackupConfigGetBadRequest().WithPayload(&models.Error{
 				Message: msg,
 			})
 		} else if !authorized {
-			log.Errorw("auth forbidden", "permission", backupConfigGetPermission, "serviceId", params.ServiceID)
+			log.Errorw("auth forbidden", "permission", operations.BackupConfigGetPermission, "serviceId", params.ServiceID)
 			return NewBackupConfigGetForbidden()
 		}
 

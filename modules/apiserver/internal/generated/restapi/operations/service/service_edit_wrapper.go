@@ -4,14 +4,12 @@ package service
 import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging/posthog"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 )
 
-// set this string to a required permission for this action
-const serviceEditPermission = "services:edit"
-
-func ServiceEditWrapper(srv Service, next ServiceEditHandlerFunc) (fn ServiceEditHandlerFunc) {
+func ServiceEditWrapper(srv operations.Service, next ServiceEditHandlerFunc) (fn ServiceEditHandlerFunc) {
 	return func(params ServiceEditParams, principal *models.Principal) middleware.Responder {
 
 		log := srv.GetLogger()
@@ -28,14 +26,14 @@ func ServiceEditWrapper(srv Service, next ServiceEditHandlerFunc) (fn ServiceEdi
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, serviceEditPermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal.Token, operations.ServiceEditPermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
-			log.Errorw(msg, "permission", serviceEditPermission, "serviceId", params.ServiceID, "error", err)
+			log.Errorw(msg, "permission", operations.ServiceEditPermission, "serviceId", params.ServiceID, "error", err)
 			return NewServiceEditBadRequest().WithPayload(&models.Error{
 				Message: msg,
 			})
 		} else if !authorized {
-			log.Errorw("auth forbidden", "permission", serviceEditPermission, "serviceId", params.ServiceID)
+			log.Errorw("auth forbidden", "permission", operations.ServiceEditPermission, "serviceId", params.ServiceID)
 			return NewServiceEditForbidden()
 		}
 

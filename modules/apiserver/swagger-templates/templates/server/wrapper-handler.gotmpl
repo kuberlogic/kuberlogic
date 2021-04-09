@@ -2,17 +2,14 @@
 package {{ .Package }}
 
 import (
-	"{{.GenCommon.TargetImportPath}}/models"
-	"github.com/go-openapi/runtime/middleware"
+    "github.com/go-openapi/runtime/middleware"
+    "{{ .GenCommon.TargetImportPath }}/models"
+    "{{ .GenCommon.TargetImportPath }}/restapi/operations"
+    "github.com/kuberlogic/operator/modules/apiserver/internal/logging/posthog"
     "github.com/kuberlogic/operator/modules/apiserver/util"
 )
 
-{{ if index .Extensions "x-permission" }}
-// set this string to a required permission for this action
-const {{ camelize .Name }}Permission = "{{index .Extensions "x-permission" }}"
-{{ end }}
-
-func {{ pascalize .Name }}Wrapper(srv Service, next {{ pascalize .Name }}HandlerFunc) (fn {{ pascalize .Name }}HandlerFunc) {
+func {{ pascalize .Name }}Wrapper(srv operations.Service, next {{ pascalize .Name }}HandlerFunc) (fn {{ pascalize .Name }}HandlerFunc) {
 	return func(params {{ pascalize .Name }}Params{{ if .Authorized }}, principal {{ if not ( eq .Principal "interface{}" ) }}*{{ end }}{{ .Principal }}{{ end }}) middleware.Responder {
         {{ if .Authorized }}
         log := srv.GetLogger()
@@ -56,14 +53,14 @@ func {{ pascalize .Name }}Wrapper(srv Service, next {{ pascalize .Name }}Handler
         {{ if .Authorized}}
         // check auth
         authProvider := srv.GetAuthProvider()
-        if authorized, err := authProvider.Authorize(principal.Token, {{ camelize .Name }}Permission, {{ $serviceId }}); err != nil {
+        if authorized, err := authProvider.Authorize(principal.Token, operations.{{ pascalize .Name }}Permission, {{ $serviceId }}); err != nil {
             msg := "auth bad request"
-            log.Errorw(msg, "permission", {{ camelize .Name }}Permission, "serviceId", {{ $serviceId }}, "error", err)
+            log.Errorw(msg, "permission", operations.{{ pascalize .Name }}Permission, "serviceId", {{ $serviceId }}, "error", err)
             return New{{ pascalize .Name }}BadRequest().WithPayload(&models.Error{
                Message: msg,
             })
         } else if !authorized {
-            log.Errorw("auth forbidden", "permission", {{ camelize .Name }}Permission, "serviceId", {{ $serviceId }})
+            log.Errorw("auth forbidden", "permission", operations.{{ pascalize .Name }}Permission, "serviceId", {{ $serviceId }})
             return New{{ pascalize .Name }}Forbidden()
         }
         {{ end }}

@@ -4,14 +4,12 @@ package service
 import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging/posthog"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 )
 
-// set this string to a required permission for this action
-const backupConfigEditPermission = "service:backup-config:edit"
-
-func BackupConfigEditWrapper(srv Service, next BackupConfigEditHandlerFunc) (fn BackupConfigEditHandlerFunc) {
+func BackupConfigEditWrapper(srv operations.Service, next BackupConfigEditHandlerFunc) (fn BackupConfigEditHandlerFunc) {
 	return func(params BackupConfigEditParams, principal *models.Principal) middleware.Responder {
 
 		log := srv.GetLogger()
@@ -28,14 +26,14 @@ func BackupConfigEditWrapper(srv Service, next BackupConfigEditHandlerFunc) (fn 
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, backupConfigEditPermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal.Token, operations.BackupConfigEditPermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
-			log.Errorw(msg, "permission", backupConfigEditPermission, "serviceId", params.ServiceID, "error", err)
+			log.Errorw(msg, "permission", operations.BackupConfigEditPermission, "serviceId", params.ServiceID, "error", err)
 			return NewBackupConfigEditBadRequest().WithPayload(&models.Error{
 				Message: msg,
 			})
 		} else if !authorized {
-			log.Errorw("auth forbidden", "permission", backupConfigEditPermission, "serviceId", params.ServiceID)
+			log.Errorw("auth forbidden", "permission", operations.BackupConfigEditPermission, "serviceId", params.ServiceID)
 			return NewBackupConfigEditForbidden()
 		}
 

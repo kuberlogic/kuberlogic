@@ -6,23 +6,15 @@ layout:
       file_name: "app.go"
       skip_exists: true
 
-    - name: configure
-      source: "asset:serverConfigureapi"
-      target: "{{ joinFilePath .Target .ServerPackage }}"
-      file_name: "configure_{{ .Name }}.go"
-      skip_exists: false
-
     - name: cfgPackage
       source: serverConfig
       target: "./internal/config/"
       file_name: "config.go"
-      skip_exists: false
 
     - name: main
       source: serverMain
       target: "./cmd/"
       file_name: "main.go"
-      skip_exists: true
 
     - name: embedded_spec
       source: asset:swaggerJsonEmbed
@@ -36,7 +28,18 @@ layout:
       source: asset:serverBuilder
       target: "{{ joinFilePath .Target .ServerPackage .Package }}"
       file_name: "{{ snakize (pascalize .Name) }}_api.go"
-
+    - name: configure
+      source: "asset:serverConfigureapi"
+      target: "{{ joinFilePath .Target .ServerPackage }}"
+      file_name: "configure_{{ .Name }}.go"
+    - name: interface
+      source: serverServiceInterface
+      target: "{{ joinFilePath .Target .ServerPackage .Package }}"
+      file_name: "service_interface.go"
+    - name: permissions
+      source: serverPermissions
+      target: "{{ joinFilePath .Target .ServerPackage .Package }}"
+      file_name: "permissions.go"
   models:
     - name: definition
       source: asset:model
@@ -60,11 +63,6 @@ layout:
       target: "./internal/app"
       file_name: "{{ (snakize (pascalize .Name)) }}.go"
       skip_exists: true
-
-    - name: interface
-      source: serverServiceInterface
-      target: "{{ if gt (len .Tags) 0 }}{{ joinFilePath .Target .ServerPackage .APIPackage .Package  }}{{ else }}{{ joinFilePath .Target .ServerPackage .Package  }}{{ end }}"
-      file_name: "service_interface.go"
     - name: wrappers
       source: serverWrapperHandler
       target: "{{ if gt (len .Tags) 0 }}{{ joinFilePath .Target .ServerPackage .APIPackage .Package  }}{{ else }}{{ joinFilePath .Target .ServerPackage .Package  }}{{ end }}"
