@@ -4,12 +4,12 @@ package service
 import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/security"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging/posthog"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 )
 
-func BackupConfigDeleteWrapper(srv operations.Service, next BackupConfigDeleteHandlerFunc) (fn BackupConfigDeleteHandlerFunc) {
+func BackupConfigDeleteWrapper(srv Service, next BackupConfigDeleteHandlerFunc) (fn BackupConfigDeleteHandlerFunc) {
 	return func(params BackupConfigDeleteParams, principal *models.Principal) middleware.Responder {
 
 		log := srv.GetLogger()
@@ -26,14 +26,14 @@ func BackupConfigDeleteWrapper(srv operations.Service, next BackupConfigDeleteHa
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, operations.BackupConfigDeletePermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal.Token, security.BackupConfigDeletePermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
-			log.Errorw(msg, "permission", operations.BackupConfigDeletePermission, "serviceId", params.ServiceID, "error", err)
+			log.Errorw(msg, "permission", security.BackupConfigDeletePermission, "serviceId", params.ServiceID, "error", err)
 			return NewBackupConfigDeleteBadRequest().WithPayload(&models.Error{
 				Message: msg,
 			})
 		} else if !authorized {
-			log.Errorw("auth forbidden", "permission", operations.BackupConfigDeletePermission, "serviceId", params.ServiceID)
+			log.Errorw("auth forbidden", "permission", security.BackupConfigDeletePermission, "serviceId", params.ServiceID)
 			return NewBackupConfigDeleteForbidden()
 		}
 

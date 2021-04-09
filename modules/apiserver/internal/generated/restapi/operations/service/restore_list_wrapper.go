@@ -4,12 +4,12 @@ package service
 import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/security"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging/posthog"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 )
 
-func RestoreListWrapper(srv operations.Service, next RestoreListHandlerFunc) (fn RestoreListHandlerFunc) {
+func RestoreListWrapper(srv Service, next RestoreListHandlerFunc) (fn RestoreListHandlerFunc) {
 	return func(params RestoreListParams, principal *models.Principal) middleware.Responder {
 
 		log := srv.GetLogger()
@@ -26,14 +26,14 @@ func RestoreListWrapper(srv operations.Service, next RestoreListHandlerFunc) (fn
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, operations.RestoreListPermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal.Token, security.RestoreListPermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
-			log.Errorw(msg, "permission", operations.RestoreListPermission, "serviceId", params.ServiceID, "error", err)
+			log.Errorw(msg, "permission", security.RestoreListPermission, "serviceId", params.ServiceID, "error", err)
 			return NewRestoreListBadRequest().WithPayload(&models.Error{
 				Message: msg,
 			})
 		} else if !authorized {
-			log.Errorw("auth forbidden", "permission", operations.RestoreListPermission, "serviceId", params.ServiceID)
+			log.Errorw("auth forbidden", "permission", security.RestoreListPermission, "serviceId", params.ServiceID)
 			return NewRestoreListForbidden()
 		}
 

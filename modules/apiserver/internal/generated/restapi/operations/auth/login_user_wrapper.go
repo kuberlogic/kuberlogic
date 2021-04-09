@@ -3,10 +3,9 @@ package auth
 
 import (
 	"github.com/go-openapi/runtime/middleware"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations"
 )
 
-func LoginUserWrapper(srv operations.Service, next LoginUserHandlerFunc) (fn LoginUserHandlerFunc) {
+func LoginUserWrapper(srv Service, next LoginUserHandlerFunc) (fn LoginUserHandlerFunc) {
 	return func(params LoginUserParams) middleware.Responder {
 
 		return next(params)

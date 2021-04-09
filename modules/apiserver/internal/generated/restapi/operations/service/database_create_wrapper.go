@@ -4,12 +4,12 @@ package service
 import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/security"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging/posthog"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 )
 
-func DatabaseCreateWrapper(srv operations.Service, next DatabaseCreateHandlerFunc) (fn DatabaseCreateHandlerFunc) {
+func DatabaseCreateWrapper(srv Service, next DatabaseCreateHandlerFunc) (fn DatabaseCreateHandlerFunc) {
 	return func(params DatabaseCreateParams, principal *models.Principal) middleware.Responder {
 
 		log := srv.GetLogger()
@@ -26,14 +26,14 @@ func DatabaseCreateWrapper(srv operations.Service, next DatabaseCreateHandlerFun
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, operations.DatabaseCreatePermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal.Token, security.DatabaseCreatePermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
-			log.Errorw(msg, "permission", operations.DatabaseCreatePermission, "serviceId", params.ServiceID, "error", err)
+			log.Errorw(msg, "permission", security.DatabaseCreatePermission, "serviceId", params.ServiceID, "error", err)
 			return NewDatabaseCreateBadRequest().WithPayload(&models.Error{
 				Message: msg,
 			})
 		} else if !authorized {
-			log.Errorw("auth forbidden", "permission", operations.DatabaseCreatePermission, "serviceId", params.ServiceID)
+			log.Errorw("auth forbidden", "permission", security.DatabaseCreatePermission, "serviceId", params.ServiceID)
 			return NewDatabaseCreateForbidden()
 		}
 

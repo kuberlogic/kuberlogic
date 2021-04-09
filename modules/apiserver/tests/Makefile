@@ -28,7 +28,7 @@ BUCKET ?= test
 
 SENTRY_DSN = https://50ec3b92240a4b4d97dbee02a07fc54f@kl.sentry.cloudlinux.com/5
 
-POSTHOG_API_KEY = 6Bm3Nxr5AKHJLjcp1FYfBwc9gsAukyQyE-yf8V-79O8
+POSTHOG_API_KEY =
 
 test:
 	go test -v \

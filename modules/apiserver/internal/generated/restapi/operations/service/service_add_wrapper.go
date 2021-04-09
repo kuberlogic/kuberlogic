@@ -4,12 +4,12 @@ package service
 import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/security"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging/posthog"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 )
 
-func ServiceAddWrapper(srv operations.Service, next ServiceAddHandlerFunc) (fn ServiceAddHandlerFunc) {
+func ServiceAddWrapper(srv Service, next ServiceAddHandlerFunc) (fn ServiceAddHandlerFunc) {
 	return func(params ServiceAddParams, principal *models.Principal) middleware.Responder {
 
 		log := srv.GetLogger()
@@ -28,14 +28,14 @@ func ServiceAddWrapper(srv operations.Service, next ServiceAddHandlerFunc) (fn S
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, operations.ServiceAddPermission, serviceId); err != nil {
+		if authorized, err := authProvider.Authorize(principal.Token, security.ServiceAddPermission, serviceId); err != nil {
 			msg := "auth bad request"
-			log.Errorw(msg, "permission", operations.ServiceAddPermission, "serviceId", serviceId, "error", err)
+			log.Errorw(msg, "permission", security.ServiceAddPermission, "serviceId", serviceId, "error", err)
 			return NewServiceAddBadRequest().WithPayload(&models.Error{
 				Message: msg,
 			})
 		} else if !authorized {
-			log.Errorw("auth forbidden", "permission", operations.ServiceAddPermission, "serviceId", serviceId)
+			log.Errorw("auth forbidden", "permission", security.ServiceAddPermission, "serviceId", serviceId)
 			return NewServiceAddForbidden()
 		}
 

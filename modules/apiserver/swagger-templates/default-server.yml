@@ -32,13 +32,9 @@ layout:
       source: "asset:serverConfigureapi"
       target: "{{ joinFilePath .Target .ServerPackage }}"
       file_name: "configure_{{ .Name }}.go"
-    - name: interface
-      source: serverServiceInterface
-      target: "{{ joinFilePath .Target .ServerPackage .Package }}"
-      file_name: "service_interface.go"
     - name: permissions
       source: serverPermissions
-      target: "{{ joinFilePath .Target .ServerPackage .Package }}"
+      target: "{{ joinFilePath .Target `security` }}"
       file_name: "permissions.go"
   models:
     - name: definition
@@ -67,4 +63,8 @@ layout:
       source: serverWrapperHandler
       target: "{{ if gt (len .Tags) 0 }}{{ joinFilePath .Target .ServerPackage .APIPackage .Package  }}{{ else }}{{ joinFilePath .Target .ServerPackage .Package  }}{{ end }}"
       file_name: "{{ (snakize (pascalize .Name)) }}_wrapper.go"
+    - name: interface
+      source: serverServiceInterface
+      target: "{{ if gt (len .Tags) 0 }}{{ joinFilePath .Target .ServerPackage .APIPackage .Package  }}{{ else }}{{ joinFilePath .Target .ServerPackage .Package  }}{{ end }}"
+      file_name: "service_interface.go"
   operation_groups:

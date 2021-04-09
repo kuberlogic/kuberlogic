@@ -4,12 +4,12 @@ package service
 import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/security"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging/posthog"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 )
 
-func UserDeleteWrapper(srv operations.Service, next UserDeleteHandlerFunc) (fn UserDeleteHandlerFunc) {
+func UserDeleteWrapper(srv Service, next UserDeleteHandlerFunc) (fn UserDeleteHandlerFunc) {
 	return func(params UserDeleteParams, principal *models.Principal) middleware.Responder {
 
 		log := srv.GetLogger()
@@ -26,14 +26,14 @@ func UserDeleteWrapper(srv operations.Service, next UserDeleteHandlerFunc) (fn U
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, operations.UserDeletePermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal.Token, security.UserDeletePermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
-			log.Errorw(msg, "permission", operations.UserDeletePermission, "serviceId", params.ServiceID, "error", err)
+			log.Errorw(msg, "permission", security.UserDeletePermission, "serviceId", params.ServiceID, "error", err)
 			return NewUserDeleteBadRequest().WithPayload(&models.Error{
 				Message: msg,
 			})
 		} else if !authorized {
-			log.Errorw("auth forbidden", "permission", operations.UserDeletePermission, "serviceId", params.ServiceID)
+			log.Errorw("auth forbidden", "permission", security.UserDeletePermission, "serviceId", params.ServiceID)
 			return NewUserDeleteForbidden()
 		}
 
