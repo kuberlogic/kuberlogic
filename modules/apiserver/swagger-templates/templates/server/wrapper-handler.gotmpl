@@ -2,9 +2,10 @@
 package {{ .Package }}
 
 import (
+    "context"
     "github.com/go-openapi/runtime/middleware"
     "{{ .GenCommon.TargetImportPath }}/models"
-    "github.com/kuberlogic/operator/modules/apiserver/internal/generated/security"
+    "{{ .GenCommon.TargetImportPath }}/security"
     "github.com/kuberlogic/operator/modules/apiserver/internal/logging/posthog"
     "github.com/kuberlogic/operator/modules/apiserver/util"
 )
@@ -67,14 +68,24 @@ func {{ pascalize .Name }}Wrapper(srv Service, next {{ pascalize .Name }}Handler
 
         {{ if eq $serviceId "params.ServiceID" }}
         // cluster should exists
-        err = srv.LookupService(ns, name)
-        if err != nil {
-            msg := "service does not exist"
+        service, found, err := srv.LookupService(ns, name)
+        if !found {
+            msg := "service not found"
             log.Errorw(msg, "error", err)
             return New{{ pascalize $.Name }}BadRequest().WithPayload(&models.Error{
                 Message: msg,
             })
+        } else if err != nil {
+            msg := "error getting service"
+            log.Errorw(msg, "error", err)
+            return New{{ pascalize $.Name }}ServiceUnavailable().WithPayload(&models.Error{
+                Message: msg,
+            })
         }
+
+        params.HTTPRequest = params.HTTPRequest.WithContext(
+            context.WithValue(params.HTTPRequest.Context(), "service", service))
+
         {{ end }}
 
         {{ if not (eq "<nil>" (printf "%T" (index .Extensions "x-posthog")))}}

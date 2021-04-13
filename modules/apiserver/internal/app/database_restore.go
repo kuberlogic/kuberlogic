@@ -5,10 +5,12 @@ import (
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
+	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 )
 
 func (srv *Service) DatabaseRestoreHandler(params apiService.DatabaseRestoreParams, principal *models.Principal) middleware.Responder {
-	ns, name := srv.existingService.Namespace, srv.existingService.Name
+	service := params.HTTPRequest.Context().Value("service").(*kuberlogicv1.KuberLogicService)
+	ns, name := service.Namespace, service.Name
 
 	srv.log.Debugw("attempting to create a restore backup resource", "namespace", ns, "name", name)
 	err := util.CreateBackupRestoreResource(srv.kuberlogicClient, ns, name, *params.RestoreItem.Key, *params.RestoreItem.Database)

@@ -12,13 +12,15 @@ import (
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
+	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	operator "github.com/kuberlogic/operator/modules/operator/service-operator"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (srv *Service) BackupListHandler(params apiService.BackupListParams, principal *models.Principal) middleware.Responder {
-	ns, name := srv.existingService.Namespace, srv.existingService.Name
+	service := params.HTTPRequest.Context().Value("service").(*kuberlogicv1.KuberLogicService)
+	ns, name := service.Namespace, service.Name
 
 	srv.log.Debugw("attempting to get a backup config",
 		"namespace", ns, "name", name)
@@ -35,7 +37,7 @@ func (srv *Service) BackupListHandler(params apiService.BackupListParams, princi
 		return util.BadRequestFromError(err)
 	}
 
-	op, err := operator.GetOperator(srv.existingService.Spec.Type)
+	op, err := operator.GetOperator(service.Spec.Type)
 	if err != nil {
 		srv.log.Errorw("Could not define the base operator", "error", err)
 		return util.BadRequestFromError(err)
@@ -55,7 +57,7 @@ func (srv *Service) BackupListHandler(params apiService.BackupListParams, princi
 		},
 	))
 
-	prefix := fmt.Sprintf("%s/%s/logical_backups/", srv.existingService.Spec.Type, op.Name(srv.existingService))
+	prefix := fmt.Sprintf("%s/%s/logical_backups/", service.Spec.Type, op.Name(service))
 	out, err := s3.New(mySession).ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: model.Bucket,
 		Prefix: &prefix,

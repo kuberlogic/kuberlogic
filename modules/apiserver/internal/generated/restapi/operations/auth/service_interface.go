@@ -4,10 +4,11 @@ package auth
 import (
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
+	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 )
 
 type Service interface {
-	LookupService(ns, name string) error
+	LookupService(ns, name string) (*kuberlogicv1.KuberLogicService, bool, error)
 	GetLogger() logging.Logger
 	GetAuthProvider() security.AuthProvider
 }

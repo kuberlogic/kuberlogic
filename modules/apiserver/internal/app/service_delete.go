@@ -4,10 +4,12 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
+	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 )
 
 func (srv *Service) ServiceDeleteHandler(params apiService.ServiceDeleteParams, principal *models.Principal) middleware.Responder {
-	ns, name := srv.existingService.Namespace, srv.existingService.Name
+	service := params.HTTPRequest.Context().Value("service").(*kuberlogicv1.KuberLogicService)
+	ns, name := service.Namespace, service.Name
 
 	s := srv.serviceStore.NewServiceObject(name, ns)
 	errDelete := srv.serviceStore.DeleteService(s, params.HTTPRequest.Context())

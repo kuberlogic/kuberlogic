@@ -2,6 +2,8 @@
 package service
 
 import (
+	"context"
+
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/security"
@@ -38,14 +40,23 @@ func ServiceGetWrapper(srv Service, next ServiceGetHandlerFunc) (fn ServiceGetHa
 		}
 
 		// cluster should exists
-		err = srv.LookupService(ns, name)
-		if err != nil {
-			msg := "service does not exist"
+		service, found, err := srv.LookupService(ns, name)
+		if !found {
+			msg := "service not found"
 			log.Errorw(msg, "error", err)
 			return NewServiceGetBadRequest().WithPayload(&models.Error{
 				Message: msg,
 			})
+		} else if err != nil {
+			msg := "error getting service"
+			log.Errorw(msg, "error", err)
+			return NewServiceGetServiceUnavailable().WithPayload(&models.Error{
+				Message: msg,
+			})
 		}
+
+		params.HTTPRequest = params.HTTPRequest.WithContext(
+			context.WithValue(params.HTTPRequest.Context(), "service", service))
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("service-get")

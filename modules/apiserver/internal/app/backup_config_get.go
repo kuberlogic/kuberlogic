@@ -6,13 +6,15 @@ import (
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
+	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // curl -v -H Content-Type:application/json -H "Authorization: Bearer" -X GET localhost:8001/api/v1/services/<service-id>/backup-config
 func (srv *Service) BackupConfigGetHandler(params apiService.BackupConfigGetParams, principal *models.Principal) middleware.Responder {
-	ns, name := srv.existingService.Namespace, srv.existingService.Name
+	service := params.HTTPRequest.Context().Value("service").(*kuberlogicv1.KuberLogicService)
+	ns, name := service.Namespace, service.Name
 
 	srv.log.Debugw("attempting to get a backup config",
 		"namespace", ns, "name", name)

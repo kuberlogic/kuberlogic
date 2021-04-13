@@ -6,10 +6,12 @@ import (
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
+	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 )
 
 func (srv *Service) RestoreListHandler(params apiService.RestoreListParams, principal *models.Principal) middleware.Responder {
-	ns, name := srv.existingService.Namespace, srv.existingService.Name
+	service := params.HTTPRequest.Context().Value("service").(*kuberlogicv1.KuberLogicService)
+	ns, name := service.Namespace, service.Name
 
 	srv.log.Debugw("searching for service", "namespace", ns, "name", name)
 	if _, found, errGet := srv.serviceStore.GetService(name, ns, params.HTTPRequest.Context()); errGet != nil {

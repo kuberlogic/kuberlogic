@@ -5,11 +5,13 @@ import (
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
+	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/util/kuberlogic"
 )
 
 func (srv *Service) UserListHandler(params apiService.UserListParams, principal *models.Principal) middleware.Responder {
-	session, err := kuberlogic.GetSession(srv.existingService, srv.clientset, "")
+	service := params.HTTPRequest.Context().Value("service").(*kuberlogicv1.KuberLogicService)
+	session, err := kuberlogic.GetSession(service, srv.clientset, "")
 	if err != nil {
 		srv.log.Errorw("error generating session", "error", err)
 		return util.BadRequestFromError(err)

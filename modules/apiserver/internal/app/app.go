@@ -5,6 +5,7 @@ import (
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/store"
+	"github.com/kuberlogic/operator/modules/apiserver/util/k8s"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -16,10 +17,9 @@ type Service struct {
 	authProvider     security.AuthProvider
 	log              logging.Logger
 	serviceStore     *store.ServiceStore
-	existingService  *kuberlogicv1.KuberLogicService
 }
 
-func (srv *Service) LookupService(ns, name string) error {
+func (srv *Service) LookupService(ns, name string) (*kuberlogicv1.KuberLogicService, bool, error) {
 	item := new(kuberlogicv1.KuberLogicService)
 	err := srv.kuberlogicClient.Get().
 		Namespace(ns).
@@ -28,8 +28,12 @@ func (srv *Service) LookupService(ns, name string) error {
 		Do(context.TODO()).
 		Into(item)
 
-	srv.existingService = item
-	return err
+	if k8s.ErrNotFound(err) {
+		return nil, false, err
+	} else if err != nil {
+		return nil, true, err
+	}
+	return item, true, nil
 }
 
 func (srv *Service) GetLogger() logging.Logger {
