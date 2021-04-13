@@ -69,7 +69,7 @@ func (tl *tLogs) Get(tail int) func(t *testing.T) {
 			}
 		}
 		if emptyLines == lines {
-			t.Errorf("Log is empty")
+			t.Errorf("log is empty")
 		}
 	}
 }

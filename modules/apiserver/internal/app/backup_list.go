@@ -11,7 +11,6 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	operator "github.com/kuberlogic/operator/modules/operator/service-operator"
@@ -20,20 +19,8 @@ import (
 )
 
 func (srv *Service) BackupListHandler(params apiService.BackupListParams, principal *models.Principal) middleware.Responder {
-
-	ns, name, err := util.SplitID(params.ServiceID)
-	if err != nil {
-		return util.BadRequestFromError(err)
-	}
-
-	if authorized, err := srv.authProvider.Authorize(principal.Token, security.BackupListSecGrant, params.ServiceID); err != nil {
-		srv.log.Errorw("error checking authorization", "error", err)
-		resp := apiService.NewBackupListBadRequest()
-		return resp
-	} else if !authorized {
-		resp := apiService.NewBackupListForbidden()
-		return resp
-	}
+	service := params.HTTPRequest.Context().Value("service").(*kuberlogicv1.KuberLogicService)
+	ns, name := service.Namespace, service.Name
 
 	srv.log.Debugw("attempting to get a backup config",
 		"namespace", ns, "name", name)
@@ -50,19 +37,7 @@ func (srv *Service) BackupListHandler(params apiService.BackupListParams, princi
 		return util.BadRequestFromError(err)
 	}
 
-	// check cluster is exists
-	item := &kuberlogicv1.KuberLogicService{}
-	err = srv.cmClient.Get().
-		Namespace(ns).
-		Resource("kuberlogicservices").
-		Name(name).
-		Do(context.TODO()).
-		Into(item)
-	if err != nil {
-		srv.log.Errorw("couldn't find KuberLogicService resource in cluster", "error", err)
-		return util.BadRequestFromError(err)
-	}
-	op, err := operator.GetOperator(item.Spec.Type)
+	op, err := operator.GetOperator(service.Spec.Type)
 	if err != nil {
 		srv.log.Errorw("Could not define the base operator", "error", err)
 		return util.BadRequestFromError(err)
@@ -82,7 +57,7 @@ func (srv *Service) BackupListHandler(params apiService.BackupListParams, princi
 		},
 	))
 
-	prefix := fmt.Sprintf("%s/%s/logical_backups/", item.Spec.Type, op.Name(item))
+	prefix := fmt.Sprintf("%s/%s/logical_backups/", service.Spec.Type, op.Name(service))
 	out, err := s3.New(mySession).ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: model.Bucket,
 		Prefix: &prefix,

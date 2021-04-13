@@ -27,7 +27,7 @@ func TestServiceNotFoundForDb(t *testing.T) {
 	api.responseCodeShouldBe(400)
 	api.encodeResponseToJson()
 	api.responseTypeOf(reflect.Map)
-	api.responseShouldMatchJson(`{"message":"kuberlogicservices.kuberlogic.com \"cloudmanaged-pg\" not found"}`)
+	api.responseShouldMatchJson(`{"message":"service not found"}`)
 }
 
 func (td *tDb) Create(t *testing.T) {

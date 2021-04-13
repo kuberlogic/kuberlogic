@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/cache"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/config"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/security"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/security/auth/provider/keycloak"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/security/auth/provider/none"
@@ -31,7 +32,7 @@ func NewAuthProvider(c *config.Config, cache cache.Cache, log logging.Logger) (A
 			c.Auth.Keycloak.Url,
 			cache,
 			log,
-			ServiceGrants)
+			security.ServiceGrants)
 	case "none":
 		p, e = none.NewNoneProvider()
 	default:
