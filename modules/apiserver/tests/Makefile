@@ -55,7 +55,10 @@ html-report: coverage-report
 	done;
 
 build-minio:
-	docker build minio/ -t $(IMG) --build-arg MINIO_ACCESS_KEY=$(MINIO_ACCESS_KEY) --build-arg MINIO_SECRET_KEY=$(MINIO_SECRET_KEY)
+	docker build minio/ \
+		-t $(IMG) \
+		--build-arg MINIO_ACCESS_KEY=$(MINIO_ACCESS_KEY) \
+		--build-arg MINIO_SECRET_KEY=$(MINIO_SECRET_KEY)
 
 push-minio:
 	docker push $(IMG)

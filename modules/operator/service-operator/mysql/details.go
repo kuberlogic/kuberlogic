@@ -8,6 +8,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	mysqlRoleKey     = "role"
+	mysqlRoleReplica = "replica"
+	mysqlRoleMaster  = "master"
+
+	mysqlPodLabelKey   = "mysql.presslabs.org/cluster"
+	mysqlMainContainer = "mysql"
+
+	mysqlPort = 3306
+)
+
 type InternalDetails struct {
 	Cluster *Mysql
 }

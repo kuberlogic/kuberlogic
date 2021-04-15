@@ -275,8 +275,9 @@ func (s *ServiceStore) serviceToKuberLogic(svc *models.Service) (*kuberlogicv1.K
 	}
 
 	c.Spec.Type = *svc.Type
-	// AP TODO: implememt version
-	// c.Spec.Version = ""
+	if svc.Version != "" {
+		c.Spec.Version = svc.Version
+	}
 
 	if svc.Limits != nil {
 		c.Spec.Resources.Limits = make(v12.ResourceList)

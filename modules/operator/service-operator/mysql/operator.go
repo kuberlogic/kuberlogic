@@ -17,15 +17,6 @@ import (
 const (
 	image   = "mysql"
 	version = "5.7.26"
-
-	mysqlRoleKey     = "role"
-	mysqlRoleReplica = "replica"
-	mysqlRoleMaster  = "master"
-
-	mysqlPodLabelKey   = "mysql.presslabs.org/cluster"
-	mysqlMainContainer = "mysql"
-
-	mysqlPort = 3306
 )
 
 type Mysql struct {
@@ -50,12 +41,12 @@ func (p *Mysql) GetInternalDetails() interfaces.InternalDetails {
 	}
 }
 
-func (p *Mysql) GetSession(cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (interfaces.Session, error) {
-	return NewSession(p, cm, client, db)
+func (p *Mysql) GetSession(kls *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (interfaces.Session, error) {
+	return NewSession(p, kls, client, db)
 }
 
-func (p *Mysql) Name(cm *kuberlogicv1.KuberLogicService) string {
-	return cm.Name
+func (p *Mysql) Name(kls *kuberlogicv1.KuberLogicService) string {
+	return kls.Name
 }
 
 func (p *Mysql) AsRuntimeObject() runtime.Object {
@@ -70,14 +61,14 @@ func (p *Mysql) AsClientObject() client.Object {
 	return &p.Operator
 }
 
-func (p *Mysql) Init(cm *kuberlogicv1.KuberLogicService) {
+func (p *Mysql) Init(kls *kuberlogicv1.KuberLogicService) {
 	p.Operator = mysqlv1.MysqlCluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      p.Name(cm),
-			Namespace: cm.Namespace,
+			Name:      p.Name(kls),
+			Namespace: kls.Namespace,
 		},
 		Spec: mysqlv1.MysqlClusterSpec{
-			SecretName: genCredentialsSecretName(cm.Name),
+			SecretName: genCredentialsSecretName(kls.Name),
 			PodSpec: mysqlv1.PodSpec{
 				Annotations: map[string]string{
 					"monitoring.cloudlinux.com/scrape": "true",
@@ -105,7 +96,7 @@ func (p *Mysql) Init(cm *kuberlogicv1.KuberLogicService) {
 				InitContainers: []corev1.Container{
 					{
 						Name:  "myisam-repair",
-						Image: util.GetImage(image, cm.Spec.Version),
+						Image: util.GetImage(image, kls.Spec.Version),
 						Command: []string{
 							"/bin/sh",
 							"-c",
@@ -145,18 +136,18 @@ func (p *Mysql) Update(cm *kuberlogicv1.KuberLogicService) {
 	p.setAdvancedConf(cm)
 }
 
-func (p *Mysql) setReplica(cm *kuberlogicv1.KuberLogicService) {
-	p.Operator.Spec.Replicas = &cm.Spec.Replicas
+func (p *Mysql) setReplica(kls *kuberlogicv1.KuberLogicService) {
+	p.Operator.Spec.Replicas = &kls.Spec.Replicas
 }
 
-func (p *Mysql) setResources(cm *kuberlogicv1.KuberLogicService) {
-	p.Operator.Spec.PodSpec.Resources = cm.Spec.Resources
+func (p *Mysql) setResources(kls *kuberlogicv1.KuberLogicService) {
+	p.Operator.Spec.PodSpec.Resources = kls.Spec.Resources
 }
 
-func (p *Mysql) setVolumeSize(cm *kuberlogicv1.KuberLogicService) {
+func (p *Mysql) setVolumeSize(kls *kuberlogicv1.KuberLogicService) {
 	resources := corev1.ResourceRequirements{
 		Requests: corev1.ResourceList{
-			corev1.ResourceStorage: resource.MustParse(cm.Spec.VolumeSize),
+			corev1.ResourceStorage: resource.MustParse(kls.Spec.VolumeSize),
 		},
 	}
 	if p.Operator.Spec.VolumeSpec.PersistentVolumeClaim == nil {
@@ -168,8 +159,8 @@ func (p *Mysql) setVolumeSize(cm *kuberlogicv1.KuberLogicService) {
 	}
 }
 
-func (p *Mysql) setImage(cm *kuberlogicv1.KuberLogicService) {
-	p.Operator.Spec.Image = util.GetImage(image, cm.Spec.Version)
+func (p *Mysql) setImage(kls *kuberlogicv1.KuberLogicService) {
+	p.Operator.Spec.Image = util.GetImage(image, kls.Spec.Version)
 
 	secrets := []corev1.LocalObjectReference{
 		{Name: util.GetImagePullSecret()},
@@ -177,8 +168,8 @@ func (p *Mysql) setImage(cm *kuberlogicv1.KuberLogicService) {
 	p.Operator.Spec.PodSpec.ImagePullSecrets = secrets
 }
 
-func (p *Mysql) setAdvancedConf(cm *kuberlogicv1.KuberLogicService) {
-	desiredMysqlConf := util.StrToIntOrStr(cm.Spec.AdvancedConf)
+func (p *Mysql) setAdvancedConf(kls *kuberlogicv1.KuberLogicService) {
+	desiredMysqlConf := util.StrToIntOrStr(kls.Spec.AdvancedConf)
 
 	if p.Operator.Spec.MysqlConf == nil {
 		p.Operator.Spec.MysqlConf = make(map[string]intstr.IntOrString)
@@ -189,42 +180,42 @@ func (p *Mysql) setAdvancedConf(cm *kuberlogicv1.KuberLogicService) {
 	}
 }
 
-func (p *Mysql) IsEqual(cm *kuberlogicv1.KuberLogicService) bool {
-	return p.isEqualReplica(cm) &&
-		p.isEqualResources(cm) &&
-		p.isEqualVolumeSize(cm) &&
-		p.isEqualImage(cm) &&
-		p.isEqualAdvancedConf(cm)
+func (p *Mysql) IsEqual(kls *kuberlogicv1.KuberLogicService) bool {
+	return p.isEqualReplica(kls) &&
+		p.isEqualResources(kls) &&
+		p.isEqualVolumeSize(kls) &&
+		p.isEqualImage(kls) &&
+		p.isEqualAdvancedConf(kls)
 }
 
-func (p *Mysql) isEqualReplica(cm *kuberlogicv1.KuberLogicService) bool {
-	return *p.Operator.Spec.Replicas == cm.Spec.Replicas
+func (p *Mysql) isEqualReplica(kls *kuberlogicv1.KuberLogicService) bool {
+	return *p.Operator.Spec.Replicas == kls.Spec.Replicas
 }
 
-func (p *Mysql) isEqualResources(cm *kuberlogicv1.KuberLogicService) bool {
+func (p *Mysql) isEqualResources(kls *kuberlogicv1.KuberLogicService) bool {
 	op := p.Operator.Spec.PodSpec.Resources
-	cmr := cm.Spec.Resources
+	cmr := kls.Spec.Resources
 	return op.Limits.Cpu().Cmp(*cmr.Limits.Cpu()) == 0 &&
 		op.Limits.Memory().Cmp(*cmr.Limits.Memory()) == 0 &&
 		op.Requests.Cpu().Cmp(*cmr.Requests.Cpu()) == 0 &&
 		op.Requests.Memory().Cmp(*cmr.Requests.Memory()) == 0
 }
 
-func (p *Mysql) isEqualVolumeSize(cm *kuberlogicv1.KuberLogicService) bool {
+func (p *Mysql) isEqualVolumeSize(kls *kuberlogicv1.KuberLogicService) bool {
 	if &p.Operator.Spec.VolumeSpec.PersistentVolumeClaim.Resources == nil {
 		return false
 	}
 	return p.Operator.Spec.VolumeSpec.PersistentVolumeClaim.Resources.Requests.Storage().Cmp(
-		resource.MustParse(cm.Spec.VolumeSize),
+		resource.MustParse(kls.Spec.VolumeSize),
 	) == 0
 }
 
-func (p *Mysql) isEqualImage(cm *kuberlogicv1.KuberLogicService) bool {
-	return p.Operator.Spec.Image == util.GetImage(image, cm.Spec.Version)
+func (p *Mysql) isEqualImage(kls *kuberlogicv1.KuberLogicService) bool {
+	return p.Operator.Spec.Image == util.GetImage(image, kls.Spec.Version)
 }
 
-func (p *Mysql) isEqualAdvancedConf(cm *kuberlogicv1.KuberLogicService) bool {
-	desiredMysqlConf := util.StrToIntOrStr(cm.Spec.AdvancedConf)
+func (p *Mysql) isEqualAdvancedConf(kls *kuberlogicv1.KuberLogicService) bool {
+	desiredMysqlConf := util.StrToIntOrStr(kls.Spec.AdvancedConf)
 	for k, v := range desiredMysqlConf {
 		if val, ok := p.Operator.Spec.MysqlConf[k]; !ok {
 			return false

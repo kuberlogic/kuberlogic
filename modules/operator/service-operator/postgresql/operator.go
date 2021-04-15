@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 )
 
 const (
@@ -41,8 +42,8 @@ func (p *Postgres) GetInternalDetails() interfaces.InternalDetails {
 	}
 }
 
-func (p *Postgres) GetSession(cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (interfaces.Session, error) {
-	return NewSession(p, cm, client, db)
+func (p *Postgres) GetSession(kls *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (interfaces.Session, error) {
+	return NewSession(p, kls, client, db)
 }
 
 func (p *Postgres) AsRuntimeObject() runtime.Object {
@@ -57,24 +58,28 @@ func (p *Postgres) AsClientObject() client.Object {
 	return &p.Operator
 }
 
-func (p *Postgres) Name(cm *kuberlogicv1.KuberLogicService) string {
-	return fmt.Sprintf("%s-%s", teamId, cm.Name)
+func (p *Postgres) Name(kls *kuberlogicv1.KuberLogicService) string {
+	return fmt.Sprintf("%s-%s", teamId, kls.Name)
 }
 
 func (p *Postgres) InitFrom(o runtime.Object) {
 	p.Operator = *o.(*postgresv1.Postgresql)
 }
 
-func (p *Postgres) Init(cm *kuberlogicv1.KuberLogicService) {
+func MajorVersion(version string) string {
+	return strings.Split(version, ".")[0]
+}
+
+func (p *Postgres) Init(kls *kuberlogicv1.KuberLogicService) {
 	loadBalancersEnabled := true
 
-	name := p.Name(cm)
+	name := p.Name(kls)
 	defaultUserCredentialsSecret := genUserCredentialsSecretName(teamId, name)
 
 	p.Operator = postgresv1.Postgresql{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: cm.Namespace,
+			Namespace: kls.Namespace,
 		},
 		Spec: postgresv1.PostgresSpec{
 			TeamID:                    teamId,
@@ -85,7 +90,7 @@ func (p *Postgres) Init(cm *kuberlogicv1.KuberLogicService) {
 				teamId: {"superuser", "createdb"},
 			},
 			PostgresqlParam: postgresv1.PostgresqlParam{
-				PgVersion: "12",
+				PgVersion: MajorVersion(kls.Spec.Version),
 				Parameters: map[string]string{
 					"shared_buffers":  "32MB",
 					"max_connections": "10",
@@ -162,75 +167,75 @@ func (p *Postgres) GetDefaults() kuberlogicv1.Defaults {
 	}
 }
 
-func (p *Postgres) Update(cm *kuberlogicv1.KuberLogicService) {
-	p.setReplica(cm)
-	p.setResources(cm)
-	p.setVolumeSize(cm)
-	p.setImage(cm)
-	p.setAdvancedConf(cm)
+func (p *Postgres) Update(kls *kuberlogicv1.KuberLogicService) {
+	p.setReplica(kls)
+	p.setResources(kls)
+	p.setVolumeSize(kls)
+	p.setImage(kls)
+	p.setAdvancedConf(kls)
 }
 
-func (p *Postgres) setReplica(cm *kuberlogicv1.KuberLogicService) {
-	p.Operator.Spec.NumberOfInstances = cm.Spec.Replicas
+func (p *Postgres) setReplica(kls *kuberlogicv1.KuberLogicService) {
+	p.Operator.Spec.NumberOfInstances = kls.Spec.Replicas
 }
 
-func (p *Postgres) setResources(cm *kuberlogicv1.KuberLogicService) {
+func (p *Postgres) setResources(kls *kuberlogicv1.KuberLogicService) {
 	op := &p.Operator.Spec.Resources
-	cmr := &cm.Spec.Resources
+	klsr := &kls.Spec.Resources
 
-	op.ResourceLimits.CPU, op.ResourceLimits.Memory = cmr.Limits.Cpu().String(), cmr.Limits.Memory().String()
-	op.ResourceRequests.CPU, op.ResourceRequests.Memory = cmr.Requests.Cpu().String(), cmr.Requests.Memory().String()
+	op.ResourceLimits.CPU, op.ResourceLimits.Memory = klsr.Limits.Cpu().String(), klsr.Limits.Memory().String()
+	op.ResourceRequests.CPU, op.ResourceRequests.Memory = klsr.Requests.Cpu().String(), klsr.Requests.Memory().String()
 }
 
-func (p *Postgres) setVolumeSize(cm *kuberlogicv1.KuberLogicService) {
-	p.Operator.Spec.Volume.Size = cm.Spec.VolumeSize
+func (p *Postgres) setVolumeSize(kls *kuberlogicv1.KuberLogicService) {
+	p.Operator.Spec.Volume.Size = kls.Spec.VolumeSize
 }
 
-func (p *Postgres) setImage(cm *kuberlogicv1.KuberLogicService) {
-	p.Operator.Spec.DockerImage = util.GetImage(image, cm.Spec.Version)
+func (p *Postgres) setImage(kls *kuberlogicv1.KuberLogicService) {
+	p.Operator.Spec.DockerImage = util.GetImage(image, kls.Spec.Version)
 }
 
-func (p *Postgres) setAdvancedConf(cm *kuberlogicv1.KuberLogicService) {
+func (p *Postgres) setAdvancedConf(kls *kuberlogicv1.KuberLogicService) {
 	if p.Operator.Spec.PostgresqlParam.Parameters == nil {
 		p.Operator.Spec.PostgresqlParam.Parameters = make(map[string]string)
 	}
 
-	for k, v := range cm.Spec.AdvancedConf {
+	for k, v := range kls.Spec.AdvancedConf {
 		p.Operator.Spec.PostgresqlParam.Parameters[k] = v
 	}
 }
 
-func (p *Postgres) IsEqual(cm *kuberlogicv1.KuberLogicService) bool {
-	return p.isEqualReplica(cm) &&
-		p.isEqualResources(cm) &&
-		p.isEqualVolumeSize(cm) &&
-		p.isEqualImage(cm) &&
-		p.isEqualAdvancedConf(cm)
+func (p *Postgres) IsEqual(kls *kuberlogicv1.KuberLogicService) bool {
+	return p.isEqualReplica(kls) &&
+		p.isEqualResources(kls) &&
+		p.isEqualVolumeSize(kls) &&
+		p.isEqualImage(kls) &&
+		p.isEqualAdvancedConf(kls)
 }
 
-func (p *Postgres) isEqualReplica(cm *kuberlogicv1.KuberLogicService) bool {
-	return p.Operator.Spec.NumberOfInstances == cm.Spec.Replicas
+func (p *Postgres) isEqualReplica(kls *kuberlogicv1.KuberLogicService) bool {
+	return p.Operator.Spec.NumberOfInstances == kls.Spec.Replicas
 }
 
-func (p *Postgres) isEqualResources(cm *kuberlogicv1.KuberLogicService) bool {
+func (p *Postgres) isEqualResources(kls *kuberlogicv1.KuberLogicService) bool {
 	op := p.Operator.Spec.Resources
-	cmr := cm.Spec.Resources
-	return op.ResourceLimits.CPU == cmr.Limits.Cpu().String() &&
-		op.ResourceLimits.Memory == cmr.Limits.Memory().String() &&
-		op.ResourceRequests.CPU == cmr.Requests.Cpu().String() &&
-		op.ResourceRequests.Memory == cmr.Requests.Memory().String()
+	klsr := kls.Spec.Resources
+	return op.ResourceLimits.CPU == klsr.Limits.Cpu().String() &&
+		op.ResourceLimits.Memory == klsr.Limits.Memory().String() &&
+		op.ResourceRequests.CPU == klsr.Requests.Cpu().String() &&
+		op.ResourceRequests.Memory == klsr.Requests.Memory().String()
 }
 
-func (p *Postgres) isEqualVolumeSize(cm *kuberlogicv1.KuberLogicService) bool {
-	return p.Operator.Spec.Volume.Size == cm.Spec.VolumeSize
+func (p *Postgres) isEqualVolumeSize(kls *kuberlogicv1.KuberLogicService) bool {
+	return p.Operator.Spec.Volume.Size == kls.Spec.VolumeSize
 }
 
-func (p *Postgres) isEqualImage(cm *kuberlogicv1.KuberLogicService) bool {
-	return p.Operator.Spec.DockerImage == util.GetImage(image, cm.Spec.Version)
+func (p *Postgres) isEqualImage(kls *kuberlogicv1.KuberLogicService) bool {
+	return p.Operator.Spec.DockerImage == util.GetImage(image, kls.Spec.Version)
 }
 
-func (p *Postgres) isEqualAdvancedConf(cm *kuberlogicv1.KuberLogicService) bool {
-	for k, v := range cm.Spec.AdvancedConf {
+func (p *Postgres) isEqualAdvancedConf(kls *kuberlogicv1.KuberLogicService) bool {
+	for k, v := range kls.Spec.AdvancedConf {
 		if val, ok := p.Operator.Spec.PostgresqlParam.Parameters[k]; !ok {
 			return false
 		} else if val != v {

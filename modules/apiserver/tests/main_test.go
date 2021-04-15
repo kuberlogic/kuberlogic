@@ -11,13 +11,22 @@ import (
 )
 
 type Service struct {
-	ns    string
-	name  string
-	type_ string
+	ns      string
+	name    string
+	type_   string
+	version string
 }
 
-var pgService = Service{"default", "pgsql", "postgresql"}
-var mysqlService = Service{"default", "my", "mysql"}
+var pgService = Service{
+	ns:    "default",
+	name:  "pgsql",
+	type_: "postgresql",
+}
+var mysqlService = Service{
+	ns:    "default",
+	name:  "my",
+	type_: "mysql",
+}
 
 var services = []Service{
 	pgService,
@@ -51,6 +60,7 @@ func createService(service Service) {
 		ns:       service.ns,
 		name:     service.name,
 		type_:    service.type_,
+		version:  service.version,
 		force:    true,
 		replicas: 0,
 		limits:   map[string]string{"cpu": "250m", "memory": "512Mi", "volumeSize": "1Gi"},
@@ -70,6 +80,7 @@ func parallelFunc(serviceType string, f func(service Service)) {
 	var wg sync.WaitGroup
 
 	for _, s := range services {
+		usingVersion(&s)
 		if serviceType == "" || serviceType == s.type_ {
 			wg.Add(1)
 			go func(svc Service) {
@@ -79,6 +90,21 @@ func parallelFunc(serviceType string, f func(service Service)) {
 		}
 	}
 	wg.Wait()
+}
+
+func usingVersion(service *Service) {
+	var env string
+	if service.type_ == "postgresql" {
+		env = "PG_VERSION"
+
+	} else if service.type_ == "mysql" {
+		env = "MY_VERSION"
+	}
+
+	if version := os.Getenv(env); version != "" {
+		log.Infof("Using version %s for %s", version, service.type_)
+		service.version = version
+	}
 }
 
 func TestMain(m *testing.M) {
