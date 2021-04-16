@@ -17,7 +17,7 @@ type KuberLogicServiceSpec struct {
 	// Volume size
 	VolumeSize string `json:"volumeSize,omitempty"`
 	// 2 or 3 digits: 5.7 or 5.7.31
-	// +kubebuilder:validation:Pattern=^\d+\.\d+[\.\d+]*$
+	// +kubebuilder:validation:Pattern=^\d+[\.\d+]*$
 	Version           string            `json:"version,omitempty"`
 	AdvancedConf      map[string]string `json:"advancedConf,omitempty"`
 	MaintenanceWindow `json:"maintenanceWindow,omitempty"`

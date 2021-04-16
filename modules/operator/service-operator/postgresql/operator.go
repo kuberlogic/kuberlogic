@@ -4,19 +4,17 @@ import (
 	"fmt"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
-	"github.com/kuberlogic/operator/modules/operator/util"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 const (
 	image   = "postgresql"
-	version = "12.1.5"
+	version = "spilo-13-2.0-p6"
 	teamId  = "kuberlogic"
 )
 
@@ -66,9 +64,9 @@ func (p *Postgres) InitFrom(o runtime.Object) {
 	p.Operator = *o.(*postgresv1.Postgresql)
 }
 
-func MajorVersion(version string) string {
-	return strings.Split(version, ".")[0]
-}
+//func MajorVersion(version string) string {
+//	return strings.Split(version, ".")[0]
+//}
 
 func (p *Postgres) Init(kls *kuberlogicv1.KuberLogicService) {
 	loadBalancersEnabled := true
@@ -90,7 +88,7 @@ func (p *Postgres) Init(kls *kuberlogicv1.KuberLogicService) {
 				teamId: {"superuser", "createdb"},
 			},
 			PostgresqlParam: postgresv1.PostgresqlParam{
-				PgVersion: MajorVersion(kls.Spec.Version),
+				PgVersion: kls.Spec.Version,
 				Parameters: map[string]string{
 					"shared_buffers":  "32MB",
 					"max_connections": "10",
@@ -171,7 +169,7 @@ func (p *Postgres) Update(kls *kuberlogicv1.KuberLogicService) {
 	p.setReplica(kls)
 	p.setResources(kls)
 	p.setVolumeSize(kls)
-	p.setImage(kls)
+	p.setVersion(kls)
 	p.setAdvancedConf(kls)
 }
 
@@ -191,8 +189,8 @@ func (p *Postgres) setVolumeSize(kls *kuberlogicv1.KuberLogicService) {
 	p.Operator.Spec.Volume.Size = kls.Spec.VolumeSize
 }
 
-func (p *Postgres) setImage(kls *kuberlogicv1.KuberLogicService) {
-	p.Operator.Spec.DockerImage = util.GetImage(image, kls.Spec.Version)
+func (p *Postgres) setVersion(kls *kuberlogicv1.KuberLogicService) {
+	p.Operator.Spec.PostgresqlParam.PgVersion = kls.Spec.Version
 }
 
 func (p *Postgres) setAdvancedConf(kls *kuberlogicv1.KuberLogicService) {
@@ -209,7 +207,7 @@ func (p *Postgres) IsEqual(kls *kuberlogicv1.KuberLogicService) bool {
 	return p.isEqualReplica(kls) &&
 		p.isEqualResources(kls) &&
 		p.isEqualVolumeSize(kls) &&
-		p.isEqualImage(kls) &&
+		p.isEqualVersion(kls) &&
 		p.isEqualAdvancedConf(kls)
 }
 
@@ -230,8 +228,8 @@ func (p *Postgres) isEqualVolumeSize(kls *kuberlogicv1.KuberLogicService) bool {
 	return p.Operator.Spec.Volume.Size == kls.Spec.VolumeSize
 }
 
-func (p *Postgres) isEqualImage(kls *kuberlogicv1.KuberLogicService) bool {
-	return p.Operator.Spec.DockerImage == util.GetImage(image, kls.Spec.Version)
+func (p *Postgres) isEqualVersion(kls *kuberlogicv1.KuberLogicService) bool {
+	return p.Operator.Spec.PostgresqlParam.PgVersion == kls.Spec.Version
 }
 
 func (p *Postgres) isEqualAdvancedConf(kls *kuberlogicv1.KuberLogicService) bool {

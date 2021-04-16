@@ -19,4 +19,4 @@ spec:
 #  advancedConf:
 #    shared_buffers: 32MB
 
-#  version: 12.1.3
+  version: "9.3"
