@@ -5,6 +5,7 @@ import (
 	"github.com/kuberlogic/operator/modules/operator/cmd"
 	"github.com/prometheus/common/log"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -33,7 +34,7 @@ var services = []Service{
 	mysqlService,
 }
 
-func setup(serviceType string) {
+func setup() {
 	args := []string{"--scheme=http"}
 	log.Info("Starting the apiserver in the goroutine...")
 	go cmd2.Main(args) // start the api server
@@ -43,15 +44,15 @@ func setup(serviceType string) {
 	time.Sleep(15 * time.Second)
 
 	if testing.Short() {
-		parallelFunc(serviceType, createService)
+		parallelFunc(createService)
 	}
 
 	//wait(60 * 60)(&testing.T{}) // for the manual tests
 }
 
-func tearDown(serviceType string) {
+func tearDown() {
 	if testing.Short() {
-		parallelFunc(serviceType, deleteService)
+		parallelFunc(deleteService)
 	}
 }
 
@@ -76,12 +77,13 @@ func deleteService(service Service) {
 	ts.Delete(&testing.T{})
 }
 
-func parallelFunc(serviceType string, f func(service Service)) {
+func parallelFunc(f func(service Service)) {
 	var wg sync.WaitGroup
 
+	type_ := serviceType()
 	for _, s := range services {
 		usingVersion(&s)
-		if serviceType == "" || serviceType == s.type_ {
+		if type_ == "" || type_ == s.type_ {
 			wg.Add(1)
 			go func(svc Service) {
 				defer wg.Done()
@@ -107,14 +109,21 @@ func usingVersion(service *Service) {
 	}
 }
 
-func TestMain(m *testing.M) {
-	serviceType := os.Getenv("SERVICE_TYPE")
+func serviceType() string {
+	// RUN - TestService/postgresql, TestService, /postgresql
+	s := strings.Split(os.Getenv("RUN"), "/")
+	if len(s) == 2 {
+		return s[1]
+	}
+	return ""
+}
 
-	setup(serviceType)
+func TestMain(m *testing.M) {
+	setup()
 	code := m.Run()
 	if code == 0 {
 		// no need destroy if the tests are failed
-		tearDown(serviceType)
+		tearDown()
 	}
 	os.Exit(code)
 }

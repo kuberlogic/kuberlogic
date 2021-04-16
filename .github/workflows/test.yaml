@@ -14,11 +14,21 @@ jobs:
     strategy:
       matrix:
         include:
-          - type: postgresql
-            pg_version: 12.1.5
+#          - type: postgresql
+#            pg_version: 12.1.5
 
           - type: mysql
             my_version: 5.7.31
+
+          - type: mysql
+            my_version: 5.7.29
+
+          - type: mysql
+            my_version: 5.7.26
+
+          - type: mysql
+            my_version: 5.7.24
+
 
 #          - type: mysql
 #            version: 5.7.29
