@@ -50,8 +50,8 @@ func (p *BaseBackup) NewCronJob(name, ns, schedule string) v1beta1.CronJob {
 	}
 	var backOffLimit int32 = 2
 
-	var successfulJobsHistoryLimit int32 = 2
-	var failedJobsHistoryLimit int32 = 1
+	//var successfulJobsHistoryLimit int32 = 2
+	//var failedJobsHistoryLimit int32 = 1
 
 	return v1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
@@ -59,10 +59,10 @@ func (p *BaseBackup) NewCronJob(name, ns, schedule string) v1beta1.CronJob {
 			Namespace: ns,
 		},
 		Spec: v1beta1.CronJobSpec{
-			Schedule:                   schedule,
-			ConcurrencyPolicy:          v1beta1.ForbidConcurrent,
-			SuccessfulJobsHistoryLimit: &successfulJobsHistoryLimit,
-			FailedJobsHistoryLimit:     &failedJobsHistoryLimit,
+			Schedule:          schedule,
+			ConcurrencyPolicy: v1beta1.ForbidConcurrent,
+			//SuccessfulJobsHistoryLimit: &successfulJobsHistoryLimit,
+			//FailedJobsHistoryLimit:     &failedJobsHistoryLimit,
 			JobTemplate: v1beta1.JobTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels,

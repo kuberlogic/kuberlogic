@@ -4,6 +4,7 @@ import (
 	"fmt"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
+	"github.com/kuberlogic/operator/modules/operator/util"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,7 +15,8 @@ import (
 
 const (
 	image   = "postgresql"
-	version = "spilo-13-2.0-p6"
+	tag     = "spilo-13-2.0-p6"
+	version = "12"
 	teamId  = "kuberlogic"
 )
 
@@ -87,6 +89,7 @@ func (p *Postgres) Init(kls *kuberlogicv1.KuberLogicService) {
 				// required user like teamId name with necessary credentials
 				teamId: {"superuser", "createdb"},
 			},
+			DockerImage: util.GetImage(image, tag),
 			PostgresqlParam: postgresv1.PostgresqlParam{
 				PgVersion: kls.Spec.Version,
 				Parameters: map[string]string{
