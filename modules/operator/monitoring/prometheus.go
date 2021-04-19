@@ -137,8 +137,9 @@ func calcStatus(cmb interface{}) float64 {
 			return 0
 		}
 	case *kuberlogicv1.KuberLogicService:
-		switch val.Status.Status {
-		case kuberlogicv1.ClusterOkStatus:
+		status, _ := val.IsReady()
+		switch status {
+		case true:
 			return 1
 		default:
 			return 0

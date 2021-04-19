@@ -92,6 +92,15 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		serviceObj,
 	)
 
+	kls.ReconciliationStarted()
+	if err := r.Status().Update(ctx, kls); err != nil {
+		return ctrl.Result{}, err
+	}
+	defer func() {
+		kls.ReconciliationFinished()
+		r.Status().Update(ctx, kls)
+	}()
+
 	if err != nil && k8serrors.IsNotFound(err) {
 		return r.create(ctx, kls, op, log)
 	} else if err != nil {
@@ -160,15 +169,12 @@ func (r *KuberLogicServiceReconciler) create(ctx context.Context, kls *kuberlogi
 
 func (r *KuberLogicServiceReconciler) update(ctx context.Context, kls *kuberlogicv1.KuberLogicService, op interfaces.OperatorInterface, log logr.Logger) (reconcile.Result, error) {
 	// sync status first
-	needsUpdate := syncStatus(kls, op)
-	if needsUpdate {
-		log.Info("status needs to be updated")
-		return ctrl.Result{}, r.Status().Update(ctx, kls)
+	syncStatus(kls, op)
+	if err := r.Status().Update(ctx, kls); err != nil {
+		return ctrl.Result{}, err
 	}
-	log = log.WithValues("status", kls.GetStatus())
-	if !kls.UpdatesAllowed() {
-		err := fmt.Errorf("updates are not allowed in current service state")
-		log.Error(err, "updates are not allowed")
+	if !kls.ReconciliationAllowed() {
+		log.Info("updates are not allowed in current service state")
 		return ctrl.Result{
 			RequeueAfter: time.Second * klsServiceNotReadyDelaySec,
 		}, nil
@@ -192,9 +198,10 @@ func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func syncStatus(kls *kuberlogicv1.KuberLogicService, op interfaces.OperatorInterface) bool {
-	status := op.CurrentStatus()
-	needsUpdate := !kls.IsEqual(status)
-	kls.SetStatus(status)
-	return needsUpdate
+func syncStatus(kls *kuberlogicv1.KuberLogicService, op interfaces.OperatorInterface) {
+	if ready, desc := op.IsReady(); ready {
+		kls.MarkReady(desc)
+	} else {
+		kls.MarkNotReady(desc)
+	}
 }

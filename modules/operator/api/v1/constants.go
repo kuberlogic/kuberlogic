@@ -5,7 +5,7 @@ const (
 	ClusterOkStatus       = "Ready"
 	ClusterNotReadyStatus = "NotReady"
 	ClusterFailedStatus   = "Failed"
-	ClusterUnknownStatus  = ""
+	ClusterUnknownStatus  = "Unknown"
 
 	// backup status
 	BackupRunningStatus = "Running"

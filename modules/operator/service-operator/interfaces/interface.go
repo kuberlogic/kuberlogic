@@ -20,7 +20,7 @@ type OperatorInterface interface {
 	AsMetaObject() metav1.Object
 	AsClientObject() client.Object
 	IsEqual(cm *v1.KuberLogicService) bool
-	CurrentStatus() string
+	IsReady() (bool, string)
 	GetDefaults() v1.Defaults
 
 	GetBackupSchedule() BackupSchedule
