@@ -32,7 +32,7 @@ func (p *Backup) SetBackupEnv(cm *kuberlogicv1.KuberLogicBackupSchedule) {
 	env := []v1.EnvVar{
 		{
 			Name:  "SCOPE",
-			Value: cm.Name,
+			Value: p.Cluster.Operator.Name,
 		},
 		{
 			Name:      "CLUSTER_NAME_LABEL",
