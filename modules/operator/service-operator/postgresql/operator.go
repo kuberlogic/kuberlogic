@@ -15,7 +15,7 @@ import (
 
 const (
 	image   = "postgresql"
-	tag     = "spilo-13-2.0-p4"
+	tag     = "spilo-12-1.6-p5"
 	version = "12"
 	teamId  = "kuberlogic"
 )
