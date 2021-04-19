@@ -4,7 +4,7 @@ metadata:
   name: kl-pg
 spec:
   type: postgresql
-  replicas: 2
+  replicas: 1
 
 #  volumeSize: 3Gi
 ##
