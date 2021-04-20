@@ -41,8 +41,9 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	defer util.HandlePanic(log)
 
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	mu := getMutex(req.NamespacedName)
+	mu.Lock()
+	defer mu.Unlock()
 
 	// metrics key
 	monitoringKey := fmt.Sprintf("%s/%s", req.Name, req.Namespace)
@@ -91,15 +92,6 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		},
 		serviceObj,
 	)
-
-	kls.ReconciliationStarted()
-	if err := r.Status().Update(ctx, kls); err != nil {
-		return ctrl.Result{}, err
-	}
-	defer func() {
-		kls.ReconciliationFinished()
-		r.Status().Update(ctx, kls)
-	}()
 
 	if err != nil && k8serrors.IsNotFound(err) {
 		return r.create(ctx, kls, op, log)
@@ -171,6 +163,7 @@ func (r *KuberLogicServiceReconciler) update(ctx context.Context, kls *kuberlogi
 	// sync status first
 	syncStatus(kls, op)
 	if err := r.Status().Update(ctx, kls); err != nil {
+		log.Error(err, "error updating status")
 		return ctrl.Result{}, err
 	}
 	if !kls.ReconciliationAllowed() {
