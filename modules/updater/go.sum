@@ -452,6 +452,10 @@ github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210419132810-af6bc43
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210419132810-af6bc439d708/go.mod h1:2cyUHMHaurG84hq+Xti0icYvoMoeSv1XNykKC/v0MQ4=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210419133612-84898b0e138c h1:MBx15ltcJkwkQqy5KXbZjOE2HvULYJFeDEewlaKcU58=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210419133612-84898b0e138c/go.mod h1:2cyUHMHaurG84hq+Xti0icYvoMoeSv1XNykKC/v0MQ4=
+github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210420082820-050e5d19aac5 h1:e59fdxSTaZmnuQS9WA311D2JvLBAiSK+BrG9e+g/aPU=
+github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210420082820-050e5d19aac5/go.mod h1:iuiR/qHc7f18J1ONkeZF/tMKdYwECi0wCkAgeSFTqdY=
+github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210420111721-5488fc0ac6a5 h1:LwjPouxfrv9gkusKL3IIYMtjkUJjesUiURAR3mJth4U=
+github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210420111721-5488fc0ac6a5/go.mod h1:iuiR/qHc7f18J1ONkeZF/tMKdYwECi0wCkAgeSFTqdY=
 github.com/kuberlogic/zapsentry v1.6.2 h1:aLnd1nQU2EUuFTB8z//s2sn5HRNOuqDyeQCcI/fCXw0=
 github.com/kuberlogic/zapsentry v1.6.2/go.mod h1:pvPfXqGhvpUQgeWfCfkrQxJ1Y65TVJtsA0hZ4eJ4sa0=
 github.com/labstack/echo/v4 v4.1.11/go.mod h1:i541M3Fj6f76NZtHSj7TXnyM8n2gaodfvfxNnFqi74g=
@@ -667,6 +671,8 @@ github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9de
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/zalando/postgres-operator v1.6.1 h1:e6QCoi1EIzKnkdukkAEf9Y05myxBUmW+sttfy+9XsI0=
 github.com/zalando/postgres-operator v1.6.1/go.mod h1:n4JW8ceoi21pqR+eCtWUrnpJ3oM8iWg+EImx3l0HjgM=
+github.com/zalando/postgres-operator v1.6.2 h1:qKvG0Rqt/VjereFslwi1YbIenqMUS4GTdP2wFPmj240=
+github.com/zalando/postgres-operator v1.6.2/go.mod h1:n4JW8ceoi21pqR+eCtWUrnpJ3oM8iWg+EImx3l0HjgM=
 github.com/zenazn/goji v0.9.0/go.mod h1:7S9M489iMyHBNxwZnk9/EHS098H4/F6TATF2mIxtB1Q=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
