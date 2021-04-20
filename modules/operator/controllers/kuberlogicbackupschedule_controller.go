@@ -196,7 +196,7 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 		if err := r.Status().Update(ctx, kl); err != nil {
 			return ctrl.Result{}, err
 		}
-		klb.MarkRunning(job.Name)
+		klb.MarkNotRunning()
 	}
 
 	if successful := backupSchedule.IsSuccessful(job); successful {
