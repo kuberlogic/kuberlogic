@@ -100,7 +100,7 @@ func (p *Postgres) Init(kls *kuberlogicv1.KuberLogicService) {
 					"locale":         "en_US.UTF-8",
 					"data-checksums": "true",
 				},
-				PgHba:                []string{"hostssl all all 0.0.0.0/0 md5", "host    all all 0.0.0.0/0 md5"},
+				//PgHba:                []string{"hostssl all all 0.0.0.0/0 md5", "host    all all 0.0.0.0/0 md5"},
 				TTL:                  30,
 				LoopWait:             10,
 				RetryTimeout:         10,

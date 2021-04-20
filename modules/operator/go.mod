@@ -13,7 +13,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/presslabs/mysql-operator v0.5.0-rc.2
 	github.com/prometheus/client_golang v1.7.1
-	github.com/zalando/postgres-operator v1.6.1
+	github.com/zalando/postgres-operator v1.6.2
 	go.uber.org/zap v1.16.0
 	k8s.io/api v0.20.4
 	k8s.io/apimachinery v0.20.4
