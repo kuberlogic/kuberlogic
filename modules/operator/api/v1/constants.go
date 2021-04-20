@@ -11,7 +11,7 @@ const (
 	BackupRunningStatus = "Running"
 	BackupSuccessStatus = "Success"
 	BackupFailedStatus  = "Failed"
-	BackupUnknownStatus = ""
+	BackupUnknownStatus = "Unknown"
 
 	// alert status
 	AlertCreatedStatus  = "Created"

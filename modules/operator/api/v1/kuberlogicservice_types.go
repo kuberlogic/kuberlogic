@@ -75,23 +75,14 @@ const (
 	readyCondType             = "Ready"
 	backupInProgressCondType  = "BackupInProgress"
 	restoreInProgressCondType = "RestoreInProgress"
-	reconciledCondType        = "Reconciled"
 )
 
 func (kls *KuberLogicService) MarkReady(msg string) {
-	kls.setConditionStatus(readyCondType, true, msg)
+	kls.setConditionStatus(readyCondType, true, msg, msg)
 }
 
 func (kls *KuberLogicService) MarkNotReady(msg string) {
-	kls.setConditionStatus(readyCondType, false, msg)
-}
-
-func (kls *KuberLogicService) ReconciliationStarted() {
-	kls.setConditionStatus(reconciledCondType, false, "Reconciliation loop started")
-}
-
-func (kls *KuberLogicService) ReconciliationFinished() {
-	kls.setConditionStatus(reconciledCondType, true, "Reconciliation loop finished")
+	kls.setConditionStatus(readyCondType, false, msg, msg)
 }
 
 func (kls *KuberLogicService) ReconciliationAllowed() bool {
@@ -105,20 +96,20 @@ func (kls *KuberLogicService) IsReady() (bool, string) {
 	return c.Status == metav1.ConditionTrue, c.Reason
 }
 
-func (kls *KuberLogicService) BackupStarted(name string) {
-	kls.setConditionStatus(backupInProgressCondType, true, "name")
+func (kls *KuberLogicService) BackupRunning(name string) {
+	kls.setConditionStatus(backupInProgressCondType, true, name+" backup job is running", "BackupRunning")
 }
 
 func (kls *KuberLogicService) BackupFinished() {
-	kls.setConditionStatus(backupInProgressCondType, false, "")
+	kls.setConditionStatus(backupInProgressCondType, false, "", "NoBackupRunning")
 }
 
 func (kls *KuberLogicService) RestoreStarted(name string) {
-	kls.setConditionStatus(restoreInProgressCondType, true, name)
+	kls.setConditionStatus(restoreInProgressCondType, true, name+" restore job is running", "RestoreRunning")
 }
 
 func (kls *KuberLogicService) RestoreFinished() {
-	kls.setConditionStatus(restoreInProgressCondType, false, "")
+	kls.setConditionStatus(restoreInProgressCondType, false, "", "NoRestoreRunning")
 }
 
 // TODO: Figure out workaround in https://github.com/kubernetes-sigs/kubebuilder/issues/1501, not it's a blocker
@@ -145,11 +136,12 @@ func (kls *KuberLogicService) InitDefaults(defaults Defaults) bool {
 	return dirty
 }
 
-func (kls *KuberLogicService) setConditionStatus(cond string, status bool, reason string) {
+func (kls *KuberLogicService) setConditionStatus(cond string, status bool, msg, reason string) {
 	c := metav1.Condition{
-		Type:   cond,
-		Status: metav1.ConditionFalse,
-		Reason: reason,
+		Type:    cond,
+		Status:  metav1.ConditionFalse,
+		Message: msg,
+		Reason:  reason,
 	}
 	if status {
 		c.Status = metav1.ConditionTrue
