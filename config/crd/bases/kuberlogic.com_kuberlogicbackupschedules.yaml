@@ -9,9 +9,9 @@ metadata:
   name: kuberlogicbackupschedules.kuberlogic.com
 spec:
   additionalPrinterColumns:
-  - JSONPath: .status.conditions[?(@.type == 'LastJobState')]
+  - JSONPath: .status.conditions[?(@.type == 'LastBackupSuccessful')].reason
     description: Current backup status
-    name: Status
+    name: Last backup status
     type: string
   - JSONPath: .spec.name
     description: The cluster name
