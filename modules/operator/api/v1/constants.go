@@ -16,6 +16,7 @@ const (
 	RestoreSuccessStatus = "Success"
 	RestoreFailedStatus  = "Failed"
 	RestoreRunningStatus = "Running"
+	RestoreUnknownStatus = "Unknown"
 
 	// alert status
 	AlertCreatedStatus  = "Created"

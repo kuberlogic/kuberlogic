@@ -93,6 +93,9 @@ func (kls *KuberLogicService) ReconciliationAllowed() bool {
 
 func (kls *KuberLogicService) IsReady() (bool, string) {
 	c := meta.FindStatusCondition(kls.Status.Conditions, readyCondType)
+	if c == nil {
+		return false, ClusterUnknownStatus
+	}
 	return c.Status == metav1.ConditionTrue, c.Reason
 }
 

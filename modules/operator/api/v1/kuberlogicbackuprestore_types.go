@@ -90,11 +90,17 @@ func (klr *KuberLogicBackupRestore) IsSuccessful() bool {
 // returns completion description and time
 func (klr *KuberLogicBackupRestore) GetCompletionStatus() (string, *time.Time) {
 	c := meta.FindStatusCondition(klr.Status.Conditions, finishedCondType)
+	if c == nil {
+		return RestoreUnknownStatus, nil
+	}
 	if c.Status == metav1.ConditionFalse {
 		return RestoreRunningStatus, nil
 	}
 
 	successCond := meta.FindStatusCondition(klr.Status.Conditions, successfulCondType)
+	if successCond == nil {
+		return RestoreUnknownStatus, nil
+	}
 	compTime := successCond.LastTransitionTime.Time
 	switch successCond.Status {
 	case metav1.ConditionTrue:
