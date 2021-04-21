@@ -209,10 +209,11 @@ func (s *ServiceStore) kuberLogicToService(kls *kuberlogicv1.KuberLogicService, 
 	ret.Replicas = int64AsPointer(int64(kls.Spec.Replicas - 1)) // 1 - master
 	ret.Masters = 1                                             // always equals 1
 
-	ret.Status = kls.Status.Status
+	ready, status := kls.IsReady()
+	ret.Status = status
 	ret.CreatedAt = strfmt.DateTime(kls.CreationTimestamp.Time)
 
-	if ret.Status != readyStatus {
+	if !ready {
 		s.log.Warnw(fmt.Sprintf("service status is not equal %s. not gathering more info", readyStatus),
 			"namespace", ret.Ns, "name", ret.Name, "status", ret.Status)
 		return ret, nil
