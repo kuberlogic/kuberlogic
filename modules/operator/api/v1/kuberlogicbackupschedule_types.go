@@ -27,7 +27,7 @@ type KuberLogicBackupScheduleStatus struct {
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:printcolumn:name="Status",type=string,JSONPath=".status.conditions[?(@.type == 'LastJobState')]",description="Current backup status"
+// +kubebuilder:printcolumn:name="Last backup status",type=string,JSONPath=".status.conditions[?(@.type == 'LastBackupSuccessful')].reason",description="Current backup status"
 // +kubebuilder:printcolumn:name="Cluster name",type=string,JSONPath=`.spec.name`,description="The cluster name"
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`,description="The backup type"
 // +kubebuilder:printcolumn:name="Schedule",type=string,JSONPath=`.spec.schedule`,description="The backup schedule"

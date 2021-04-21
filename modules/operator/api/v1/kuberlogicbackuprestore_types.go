@@ -3,6 +3,7 @@ package v1
 import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 )
 
 type KuberLogicBackupRestoreSpec struct {
@@ -84,6 +85,23 @@ func (klr *KuberLogicBackupRestore) setConditionStatus(cond string, status bool,
 
 func (klr *KuberLogicBackupRestore) IsSuccessful() bool {
 	return meta.IsStatusConditionTrue(klr.Status.Conditions, successfulCondType)
+}
+
+// returns completion description and time
+func (klr *KuberLogicBackupRestore) GetCompletionStatus() (string, *time.Time) {
+	c := meta.FindStatusCondition(klr.Status.Conditions, finishedCondType)
+	if c.Status == metav1.ConditionFalse {
+		return RestoreRunningStatus, nil
+	}
+
+	successCond := meta.FindStatusCondition(klr.Status.Conditions, successfulCondType)
+	compTime := successCond.LastTransitionTime.Time
+	switch successCond.Status {
+	case metav1.ConditionTrue:
+		return RestoreSuccessStatus, &compTime
+	default:
+		return RestoreFailedStatus, &compTime
+	}
 }
 
 func init() {
