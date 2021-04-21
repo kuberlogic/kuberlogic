@@ -112,7 +112,7 @@ func (p *Postgres) Init(cm *kuberlogicv1.KuberLogicService) {
 			Sidecars: []postgresv1.Sidecar{
 				{
 					Name:        "postgres-exporter",
-					DockerImage: "bitnami/postgres-exporter:0.8.0",
+					DockerImage: "quay.io/kuberlogic/bitnami-postgres-exporter:0.8.0",
 					Ports: []apiv1.ContainerPort{
 						{
 							Name:          "metrics",

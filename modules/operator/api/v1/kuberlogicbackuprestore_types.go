@@ -101,7 +101,7 @@ func (klr *KuberLogicBackupRestore) GetCompletionStatus() (string, *time.Time) {
 	if successCond == nil {
 		return RestoreUnknownStatus, nil
 	}
-	compTime := successCond.LastTransitionTime.Time
+	compTime := successCond.LastTransitionTime.Time.UTC()
 	switch successCond.Status {
 	case metav1.ConditionTrue:
 		return RestoreSuccessStatus, &compTime

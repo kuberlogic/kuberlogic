@@ -210,7 +210,7 @@ func (s *ServiceStore) kuberLogicToService(kls *kuberlogicv1.KuberLogicService, 
 
 	ready, status := kls.IsReady()
 	ret.Status = status
-	ret.CreatedAt = strfmt.DateTime(kls.CreationTimestamp.Time)
+	ret.CreatedAt = strfmt.DateTime(kls.CreationTimestamp.Time.UTC())
 
 	if !ready {
 		s.log.Warnw(fmt.Sprintf("service status is not equal %s. not gathering more info", readyStatus),
