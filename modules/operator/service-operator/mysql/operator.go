@@ -68,7 +68,8 @@ func (p *Mysql) Init(kls *kuberlogicv1.KuberLogicService) {
 			Namespace: kls.Namespace,
 		},
 		Spec: mysqlv1.MysqlClusterSpec{
-			SecretName: genCredentialsSecretName(kls.Name),
+			SecretName:   genCredentialsSecretName(kls.Name),
+			MysqlVersion: kls.Spec.Version,
 			PodSpec: mysqlv1.PodSpec{
 				Annotations: map[string]string{
 					"monitoring.cloudlinux.com/scrape": "true",
