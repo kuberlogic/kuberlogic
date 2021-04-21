@@ -62,7 +62,7 @@ jobs:
           docker images
         if: ${{ failure() }}
 
-      - name: Create test backet
+      - name: Create test bucket
         working-directory: ./modules/apiserver/tests
         run: |
           make create-bucket
@@ -81,7 +81,9 @@ jobs:
 
       - name: Show status
         run: |
-          kubectl get pod,sts,deploy,svc
+          kubectl get pod,sts,deploy,svc,cj,job -o yaml
+          mc ls minio/
+          mc ls minio/test
         if: ${{ failure() }}
 
       - name: Generating logs

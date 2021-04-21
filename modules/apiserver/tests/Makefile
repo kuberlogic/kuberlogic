@@ -15,7 +15,7 @@ KUBERLOGIC_OPERATOR_LOG = kuberlogic.operator.log
 
 KUBERLOGIC_DEBUG_LOGS = True
 
-ARGS ?=
+ARGS ?= -short
 
 INTERNAL_MINIO_IP=$(shell kubectl get pod -l app=minio -o go-template="{{range .items}}{{.status.podIP}}{{end}}")
 SERVICE_TYPE = $(shell bash -c "./service-type.sh $(RUN)")
