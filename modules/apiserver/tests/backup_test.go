@@ -1,16 +1,9 @@
 package tests
 
 import (
-	"bytes"
-	"context"
 	"fmt"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/util/kuberlogic"
-	"io"
-	v12 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 	"net/http"
 	"os"
 	"testing"
@@ -180,34 +173,7 @@ func makeTestBackupRestore(tb tBackupRestore) func(t *testing.T) {
 			tb.CreateSchedule,
 			// TODO: waiting Success state of the backup resource
 			func(t *testing.T) {
-				cfg, _ := clientcmd.BuildConfigFromFlags("", "/home/runner/.kube/config")
-				c, _ := kubernetes.NewForConfig(cfg)
-
-				for {
-					pods, _ := c.CoreV1().Pods("default").List(context.TODO(), v1.ListOptions{})
-					for _, p := range pods.Items {
-						lines := int64(50)
-						if p.Spec.Containers[0].Image == "quay.io/kuberlogic/backup-postgresql:latest" {
-							r := c.CoreV1().Pods("default").GetLogs(p.Name, &v12.PodLogOptions{
-								TailLines: &lines,
-								Follow:    false,
-								Container: p.Spec.Containers[0].Name,
-							})
-
-							l, err := r.Stream(context.TODO())
-							if err != nil {
-								return
-							}
-
-							buf := new(bytes.Buffer)
-							if _, err = io.Copy(buf, l); err != nil {
-								return
-							}
-							l.Close()
-							fmt.Println(buf.String())
-						}
-					}
-				}
+				os.Exit(0)
 			},
 			tb.db.OneRecord, // db exists
 			tb.db.Delete,
