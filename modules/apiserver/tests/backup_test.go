@@ -173,9 +173,6 @@ func makeTestBackupRestore(tb tBackupRestore) func(t *testing.T) {
 			tb.CreateSchedule,
 			// TODO: waiting Success state of the backup resource
 			wait(4 * 60),
-			func(t *testing.T) {
-				os.Exit(0)
-			},
 			tb.db.OneRecord, // db exists
 			tb.db.Delete,
 			tb.db.EmptyList,
