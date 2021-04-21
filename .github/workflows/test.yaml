@@ -74,34 +74,6 @@ jobs:
 
       - name: Upload coverage
         run: |
-          kubectl get pods | awk '/pgsql-[0-9]+-.*/ {print $1}' | head -n 1 | xargs kubectl logs
-          sleep 15
-          kubectl get pods | awk '/pgsql-[0-9]+-.*/ {print $1}' | head -n 1 | xargs kubectl logs
-          sleep 15
-          kubectl get pods | awk '/pgsql-[0-9]+-.*/ {print $1}' | head -n 1 | xargs kubectl logs
-          sleep 15
-          kubectl get pods | awk '/pgsql-[0-9]+-.*/ {print $1}' | head -n 1 | xargs kubectl logs
-          sleep 15
-          kubectl get pods | awk '/pgsql-[0-9]+-.*/ {print $1}' | head -n 1 | xargs kubectl logs
-          sleep 15
-          kubectl get pods | awk '/pgsql-[0-9]+-.*/ {print $1}' | head -n 1 | xargs kubectl logs
-          sleep 15
-          kubectl get pods | awk '/pgsql-[0-9]+-.*/ {print $1}' | head -n 1 | xargs kubectl logs
-          sleep 15
-          kubectl get pods | awk '/pgsql-[0-9]+-.*/ {print $1}' | head -n 1 | xargs kubectl logs
-          sleep 15
-          kubectl get pods | awk '/pgsql-[0-9]+-.*/ {print $1}' | head -n 1 | xargs kubectl logs
-          sleep 15
-          kubectl get pods | awk '/pgsql-[0-9]+-.*/ {print $1}' | head -n 1 | xargs kubectl logs
-          sleep 15
-          kubectl get pods | awk '/pgsql-[0-9]+-.*/ {print $1}' | head -n 1 | xargs kubectl logs
-          sleep 15
-          kubectl get pods | awk '/pgsql-[0-9]+-.*/ {print $1}' | head -n 1 | xargs kubectl logs
-          sleep 15
-          kubectl get pods | awk '/pgsql-[0-9]+-.*/ {print $1}' | head -n 1 | xargs kubectl logs
-          sleep 15
-          kubectl get pods | awk '/pgsql-[0-9]+-.*/ {print $1}' | head -n 1 | xargs kubectl logs
-          sleep 15
           bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-operator.out -F operator
           bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-apiserver.out -F apiserver
         env:

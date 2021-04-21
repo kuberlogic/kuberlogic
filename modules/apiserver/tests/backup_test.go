@@ -172,6 +172,7 @@ func makeTestBackupRestore(tb tBackupRestore) func(t *testing.T) {
 			tb.CreateTable, // mysql does not recover db if the entities  not exists
 			tb.CreateSchedule,
 			// TODO: waiting Success state of the backup resource
+			wait(4 * 60),
 			func(t *testing.T) {
 				os.Exit(0)
 			},
