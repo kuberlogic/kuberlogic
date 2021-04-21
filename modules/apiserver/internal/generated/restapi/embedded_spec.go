@@ -98,7 +98,10 @@ func init() {
             }
           },
           "400": {
-            "description": "bad input parameter"
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "401": {
             "description": "bad authentication"
@@ -112,7 +115,9 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "services:list",
+        "x-posthog": {}
       },
       "post": {
         "security": [
@@ -128,13 +133,7 @@ func init() {
         "operationId": "serviceAdd",
         "parameters": [
           {
-            "description": "service item to add",
-            "name": "serviceItem",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/Service"
-            }
+            "$ref": "#/parameters/ServiceItem"
           }
         ],
         "responses": {
@@ -165,7 +164,42 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "services:get",
+        "x-posthog": [
+          {
+            "key": "name",
+            "value": "ServiceItem.Name"
+          },
+          {
+            "key": "namespace",
+            "value": "ServiceItem.Ns"
+          },
+          {
+            "key": "type",
+            "value": "ServiceItem.Type"
+          },
+          {
+            "condition": "params.ServiceItem.Replicas != nil",
+            "key": "replicas",
+            "value": "ServiceItem.Replicas"
+          },
+          {
+            "condition": "params.ServiceItem.Limits != nil \u0026\u0026 params.ServiceItem.Limits.CPU != nil",
+            "key": "cpu-limit",
+            "value": "ServiceItem.Limits.CPU"
+          },
+          {
+            "condition": "params.ServiceItem.Limits != nil \u0026\u0026 params.ServiceItem.Limits.Memory != nil",
+            "key": "memory-limit",
+            "value": "ServiceItem.Limits.Memory"
+          },
+          {
+            "condition": "params.ServiceItem.Limits != nil \u0026\u0026 params.ServiceItem.Limits.VolumeSize != nil",
+            "key": "volume-limit",
+            "value": "ServiceItem.Limits.VolumeSize"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/": {
@@ -193,6 +227,12 @@ func init() {
               "$ref": "#/definitions/Service"
             }
           },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
           "401": {
             "description": "bad authentication"
           },
@@ -208,7 +248,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:get",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       },
       "put": {
         "security": [
@@ -227,13 +274,7 @@ func init() {
             "$ref": "#/parameters/ServiceID"
           },
           {
-            "description": "service item to edit",
-            "name": "serviceItem",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/Service"
-            }
+            "$ref": "#/parameters/ServiceItem"
           }
         ],
         "responses": {
@@ -264,7 +305,38 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "services:edit",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "type",
+            "value": "ServiceItem.Type"
+          },
+          {
+            "condition": "params.ServiceItem.Replicas != nil",
+            "key": "replicas",
+            "value": "ServiceItem.Replicas"
+          },
+          {
+            "condition": "params.ServiceItem.Limits != nil \u0026\u0026 params.ServiceItem.Limits.CPU != nil",
+            "key": "cpu-limit",
+            "value": "ServiceItem.Limits.CPU"
+          },
+          {
+            "condition": "params.ServiceItem.Limits != nil \u0026\u0026 params.ServiceItem.Limits.Memory != nil",
+            "key": "memory-limit",
+            "value": "ServiceItem.Limits.Memory"
+          },
+          {
+            "condition": "params.ServiceItem.Limits != nil \u0026\u0026 params.ServiceItem.Limits.VolumeSize != nil",
+            "key": "volume-limit",
+            "value": "ServiceItem.Limits.VolumeSize"
+          }
+        ]
       },
       "delete": {
         "security": [
@@ -308,7 +380,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "services:delete",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/backup-config": {
@@ -335,6 +414,12 @@ func init() {
               "$ref": "#/definitions/BackupConfig"
             }
           },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
           "401": {
             "description": "bad authentication"
           },
@@ -350,7 +435,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:backup-config:get",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       },
       "put": {
         "security": [
@@ -404,7 +496,30 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:backup-config:edit",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "enabled",
+            "value": "BackupConfig.Enabled"
+          },
+          {
+            "key": "schedule",
+            "value": "BackupConfig.Schedule"
+          },
+          {
+            "key": "bucket",
+            "value": "BackupConfig.Bucket"
+          },
+          {
+            "key": "endpoint",
+            "value": "BackupConfig.Endpoint"
+          }
+        ]
       },
       "post": {
         "security": [
@@ -458,7 +573,30 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:backup-config:add",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "enabled",
+            "value": "BackupConfig.Enabled"
+          },
+          {
+            "key": "schedule",
+            "value": "BackupConfig.Schedule"
+          },
+          {
+            "key": "bucket",
+            "value": "BackupConfig.Bucket"
+          },
+          {
+            "key": "endpoint",
+            "value": "BackupConfig.Endpoint"
+          }
+        ]
       },
       "delete": {
         "security": [
@@ -500,7 +638,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:backup-config:delete",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/backups/": {
@@ -550,7 +695,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:backup:list",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/databases/": {
@@ -597,7 +749,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:database:list",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       },
       "post": {
         "security": [
@@ -651,7 +810,18 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:database:add",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "database",
+            "value": "Database.Name"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/databases/{Database}/": {
@@ -702,7 +872,18 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:database:delete",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "database",
+            "value": "Database"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/logs": {
@@ -743,6 +924,12 @@ func init() {
               "$ref": "#/definitions/Log"
             }
           },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
           "401": {
             "description": "bad authentication"
           },
@@ -755,7 +942,22 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:logs",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "service-instance",
+            "value": "ServiceInstance"
+          },
+          {
+            "key": "tail",
+            "value": "Tail"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/restores": {
@@ -805,7 +1007,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:restore:list",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       },
       "post": {
         "security": [
@@ -868,7 +1077,22 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:backup-restore:create",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "key",
+            "value": "RestoreItem.Key"
+          },
+          {
+            "key": "database",
+            "value": "RestoreItem.Database"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/users/": {
@@ -915,7 +1139,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:user:list",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       },
       "post": {
         "security": [
@@ -963,7 +1194,18 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:user:add",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "user",
+            "value": "User.Name"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/users/{Username}/": {
@@ -1023,7 +1265,18 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:user:edit",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "user",
+            "value": "User.Name"
+          }
+        ]
       },
       "delete": {
         "security": [
@@ -1072,7 +1325,18 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:user:delete",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "user",
+            "value": "Username"
+          }
+        ]
       }
     }
   },
@@ -1434,6 +1698,15 @@ func init() {
       "name": "ServiceID",
       "in": "path",
       "required": true
+    },
+    "ServiceItem": {
+      "description": "service item",
+      "name": "serviceItem",
+      "in": "body",
+      "required": true,
+      "schema": {
+        "$ref": "#/definitions/Service"
+      }
     }
   },
   "securityDefinitions": {
@@ -1535,7 +1808,10 @@ func init() {
             }
           },
           "400": {
-            "description": "bad input parameter"
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "401": {
             "description": "bad authentication"
@@ -1549,7 +1825,9 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "services:list",
+        "x-posthog": {}
       },
       "post": {
         "security": [
@@ -1565,7 +1843,7 @@ func init() {
         "operationId": "serviceAdd",
         "parameters": [
           {
-            "description": "service item to add",
+            "description": "service item",
             "name": "serviceItem",
             "in": "body",
             "required": true,
@@ -1602,7 +1880,42 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "services:get",
+        "x-posthog": [
+          {
+            "key": "name",
+            "value": "ServiceItem.Name"
+          },
+          {
+            "key": "namespace",
+            "value": "ServiceItem.Ns"
+          },
+          {
+            "key": "type",
+            "value": "ServiceItem.Type"
+          },
+          {
+            "condition": "params.ServiceItem.Replicas != nil",
+            "key": "replicas",
+            "value": "ServiceItem.Replicas"
+          },
+          {
+            "condition": "params.ServiceItem.Limits != nil \u0026\u0026 params.ServiceItem.Limits.CPU != nil",
+            "key": "cpu-limit",
+            "value": "ServiceItem.Limits.CPU"
+          },
+          {
+            "condition": "params.ServiceItem.Limits != nil \u0026\u0026 params.ServiceItem.Limits.Memory != nil",
+            "key": "memory-limit",
+            "value": "ServiceItem.Limits.Memory"
+          },
+          {
+            "condition": "params.ServiceItem.Limits != nil \u0026\u0026 params.ServiceItem.Limits.VolumeSize != nil",
+            "key": "volume-limit",
+            "value": "ServiceItem.Limits.VolumeSize"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/": {
@@ -1635,6 +1948,12 @@ func init() {
               "$ref": "#/definitions/Service"
             }
           },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
           "401": {
             "description": "bad authentication"
           },
@@ -1650,7 +1969,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:get",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       },
       "put": {
         "security": [
@@ -1674,7 +2000,7 @@ func init() {
             "required": true
           },
           {
-            "description": "service item to edit",
+            "description": "service item",
             "name": "serviceItem",
             "in": "body",
             "required": true,
@@ -1711,7 +2037,38 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "services:edit",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "type",
+            "value": "ServiceItem.Type"
+          },
+          {
+            "condition": "params.ServiceItem.Replicas != nil",
+            "key": "replicas",
+            "value": "ServiceItem.Replicas"
+          },
+          {
+            "condition": "params.ServiceItem.Limits != nil \u0026\u0026 params.ServiceItem.Limits.CPU != nil",
+            "key": "cpu-limit",
+            "value": "ServiceItem.Limits.CPU"
+          },
+          {
+            "condition": "params.ServiceItem.Limits != nil \u0026\u0026 params.ServiceItem.Limits.Memory != nil",
+            "key": "memory-limit",
+            "value": "ServiceItem.Limits.Memory"
+          },
+          {
+            "condition": "params.ServiceItem.Limits != nil \u0026\u0026 params.ServiceItem.Limits.VolumeSize != nil",
+            "key": "volume-limit",
+            "value": "ServiceItem.Limits.VolumeSize"
+          }
+        ]
       },
       "delete": {
         "security": [
@@ -1760,7 +2117,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "services:delete",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/backup-config": {
@@ -1792,6 +2156,12 @@ func init() {
               "$ref": "#/definitions/BackupConfig"
             }
           },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
           "401": {
             "description": "bad authentication"
           },
@@ -1807,7 +2177,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:backup-config:get",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       },
       "put": {
         "security": [
@@ -1866,7 +2243,30 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:backup-config:edit",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "enabled",
+            "value": "BackupConfig.Enabled"
+          },
+          {
+            "key": "schedule",
+            "value": "BackupConfig.Schedule"
+          },
+          {
+            "key": "bucket",
+            "value": "BackupConfig.Bucket"
+          },
+          {
+            "key": "endpoint",
+            "value": "BackupConfig.Endpoint"
+          }
+        ]
       },
       "post": {
         "security": [
@@ -1925,7 +2325,30 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:backup-config:add",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "enabled",
+            "value": "BackupConfig.Enabled"
+          },
+          {
+            "key": "schedule",
+            "value": "BackupConfig.Schedule"
+          },
+          {
+            "key": "bucket",
+            "value": "BackupConfig.Bucket"
+          },
+          {
+            "key": "endpoint",
+            "value": "BackupConfig.Endpoint"
+          }
+        ]
       },
       "delete": {
         "security": [
@@ -1972,7 +2395,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:backup-config:delete",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/backups/": {
@@ -2027,7 +2457,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:backup:list",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/databases/": {
@@ -2079,7 +2516,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:database:list",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       },
       "post": {
         "security": [
@@ -2138,7 +2582,18 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:database:add",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "database",
+            "value": "Database.Name"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/databases/{Database}/": {
@@ -2194,7 +2649,18 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:database:delete",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "database",
+            "value": "Database"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/logs": {
@@ -2240,6 +2706,12 @@ func init() {
               "$ref": "#/definitions/Log"
             }
           },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
           "401": {
             "description": "bad authentication"
           },
@@ -2252,7 +2724,22 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:logs",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "service-instance",
+            "value": "ServiceInstance"
+          },
+          {
+            "key": "tail",
+            "value": "Tail"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/restores": {
@@ -2307,7 +2794,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:restore:list",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       },
       "post": {
         "security": [
@@ -2375,7 +2869,22 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:backup-restore:create",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "key",
+            "value": "RestoreItem.Key"
+          },
+          {
+            "key": "database",
+            "value": "RestoreItem.Database"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/users/": {
@@ -2427,7 +2936,14 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:user:list",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          }
+        ]
       },
       "post": {
         "security": [
@@ -2480,7 +2996,18 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:user:add",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "user",
+            "value": "User.Name"
+          }
+        ]
       }
     },
     "/services/{ServiceID}/users/{Username}/": {
@@ -2545,7 +3072,18 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:user:edit",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "user",
+            "value": "User.Name"
+          }
+        ]
       },
       "delete": {
         "security": [
@@ -2599,7 +3137,18 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           }
-        }
+        },
+        "x-permission": "service:user:delete",
+        "x-posthog": [
+          {
+            "key": "service-id",
+            "value": "ServiceID"
+          },
+          {
+            "key": "user",
+            "value": "Username"
+          }
+        ]
       }
     }
   },
@@ -2986,6 +3535,15 @@ func init() {
       "name": "ServiceID",
       "in": "path",
       "required": true
+    },
+    "ServiceItem": {
+      "description": "service item",
+      "name": "serviceItem",
+      "in": "body",
+      "required": true,
+      "schema": {
+        "$ref": "#/definitions/Service"
+      }
     }
   },
   "securityDefinitions": {

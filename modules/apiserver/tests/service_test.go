@@ -244,7 +244,7 @@ func (s *tService) IncorrectName(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
 	api.sendRequestTo(http.MethodGet, fmt.Sprintf("/services/%s:%s-incorrect", s.ns, s.name))
-	api.responseCodeShouldBe(503)
+	api.responseCodeShouldBe(400)
 }
 
 func (s *tService) CheckServiceName(t *testing.T) {

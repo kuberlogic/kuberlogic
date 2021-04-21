@@ -32,7 +32,7 @@ type ServiceAddParams struct {
 	// HTTP Request Object
 	HTTPRequest *http.Request `json:"-"`
 
-	/*service item to add
+	/*service item
 	  Required: true
 	  In: body
 	*/

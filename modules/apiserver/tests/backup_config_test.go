@@ -15,7 +15,7 @@ func TestServiceNotFoundForTestBackupConfig(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
 	api.sendRequestTo(http.MethodGet, "/services/default:simple-pg/backup-config")
-	api.responseCodeShouldBe(404)
+	api.responseCodeShouldBe(400)
 }
 
 func (u *tBackupConfig) CreateWithoutSchedule(t *testing.T) {
