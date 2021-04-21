@@ -82,8 +82,8 @@ jobs:
       - name: Show status
         run: |
           kubectl get pod,sts,deploy,svc,cj,job -o yaml
-          mc ls minio/
-          mc ls minio/test
+          ./mc ls minio/
+          ./mc ls minio/test
         if: ${{ failure() }}
 
       - name: Generating logs
