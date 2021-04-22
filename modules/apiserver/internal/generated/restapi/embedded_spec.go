@@ -1624,6 +1624,9 @@ func init() {
             "postgresql",
             "mysql"
           ]
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -3437,6 +3440,9 @@ func init() {
             "postgresql",
             "mysql"
           ]
+        },
+        "version": {
+          "type": "string"
         }
       }
     },

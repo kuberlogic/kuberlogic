@@ -937,6 +937,8 @@ definitions:
         enum:
           - postgresql
           - mysql
+      version:
+        type: string
       internalConnection:
         type: object
         readOnly: true

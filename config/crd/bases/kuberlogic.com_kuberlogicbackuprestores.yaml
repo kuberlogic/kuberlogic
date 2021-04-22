@@ -82,9 +82,12 @@ spec:
           description: KuberLogicBackupRestoreStatus defines the observed state of
             KuberLogicBackupRestore
           properties:
+            completionTime:
+              type: string
             status:
               type: string
           required:
+          - completionTime
           - status
           type: object
       type: object

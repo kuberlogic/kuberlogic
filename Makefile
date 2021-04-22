@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.21
+VERSION ?= 0.0.22
 # Default bundle image tag
 BUNDLE_IMG ?= kuberlogic-operator:$(VERSION)
 # Options for 'bundle-build'
@@ -85,7 +85,7 @@ deploy-dependencies: manifests kustomize
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
 	cd modules/operator; \
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases ;\
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=../../config/crd/bases ;\
 
 # Run go fmt against code
 fmt:

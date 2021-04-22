@@ -4,7 +4,7 @@ metadata:
   name: kl-pg
 spec:
   type: postgresql
-  replicas: 2
+  replicas: 1
 
 #  volumeSize: 3Gi
 ##
@@ -19,4 +19,4 @@ spec:
 #  advancedConf:
 #    shared_buffers: 32MB
 
-#  version: 12.1.3
+  version: "9.3"

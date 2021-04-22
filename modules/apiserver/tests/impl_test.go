@@ -189,6 +189,10 @@ func (a *API) setRequestBody(body string) {
 	a.jsonRequest = body
 }
 
+func (a *API) setJsonRequestBody(body interface{}) {
+	a.jsonRequest = toJson(body)
+}
+
 func GetFunctionName(i interface{}) string {
 	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
 }
