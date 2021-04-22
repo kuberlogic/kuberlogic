@@ -11,6 +11,48 @@ jobs:
     if: "!contains(github.event.commits[0].message, '[skip ci]')"
     name: Integration tests
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - type: postgresql
+            pg_version: 13
+
+          - type: postgresql
+            pg_version: 12
+
+          - type: postgresql
+            pg_version: 11
+
+          - type: postgresql
+            pg_version: 10
+
+          - type: postgresql
+            pg_version: 9.6
+
+          - type: postgresql
+            pg_version: 9.5
+
+#          - type: postgresql
+#            pg_version: 9.4
+#
+#          - type: postgresql
+#            pg_version: 9.3
+
+          - type: mysql
+            my_version: 5.7.31
+
+          - type: mysql
+            my_version: 5.7.29
+
+          - type: mysql
+            my_version: 5.7.26
+
+          - type: mysql
+            my_version: 5.7.24
+
+#         - type: mysql
+#            version: 8.0.20
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -70,7 +112,11 @@ jobs:
       - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
         run: |
-          KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report
+          KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=/$TYPE
+        env:
+          PG_VERSION: ${{ matrix.pg_version }}
+          MY_VERSION: ${{ matrix.my_version }}
+          TYPE: ${{ matrix.type }}
 
       - name: Upload coverage
         run: |

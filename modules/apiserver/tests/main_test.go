@@ -5,26 +5,36 @@ import (
 	"github.com/kuberlogic/operator/modules/operator/cmd"
 	"github.com/prometheus/common/log"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 )
 
 type Service struct {
-	ns    string
-	name  string
-	type_ string
+	ns      string
+	name    string
+	type_   string
+	version string
 }
 
-var pgService = Service{"default", "pgsql", "postgresql"}
-var mysqlService = Service{"default", "my", "mysql"}
+var pgService = Service{
+	ns:    "default",
+	name:  "pgsql",
+	type_: "postgresql",
+}
+var mysqlService = Service{
+	ns:    "default",
+	name:  "my",
+	type_: "mysql",
+}
 
 var services = []Service{
 	pgService,
 	mysqlService,
 }
 
-func setup(serviceType string) {
+func setup() {
 	args := []string{"--scheme=http"}
 	log.Info("Starting the apiserver in the goroutine...")
 	go cmd2.Main(args) // start the api server
@@ -34,15 +44,15 @@ func setup(serviceType string) {
 	time.Sleep(15 * time.Second)
 
 	if testing.Short() {
-		parallelFunc(serviceType, createService)
+		parallelFunc(createService)
 	}
 
 	//wait(60 * 60)(&testing.T{}) // for the manual tests
 }
 
-func tearDown(serviceType string) {
+func tearDown() {
 	if testing.Short() {
-		parallelFunc(serviceType, deleteService)
+		parallelFunc(deleteService)
 	}
 }
 
@@ -51,6 +61,7 @@ func createService(service Service) {
 		ns:       service.ns,
 		name:     service.name,
 		type_:    service.type_,
+		version:  service.version,
 		force:    true,
 		replicas: 0,
 		limits:   map[string]string{"cpu": "250m", "memory": "512Mi", "volumeSize": "1Gi"},
@@ -66,11 +77,13 @@ func deleteService(service Service) {
 	ts.Delete(&testing.T{})
 }
 
-func parallelFunc(serviceType string, f func(service Service)) {
+func parallelFunc(f func(service Service)) {
 	var wg sync.WaitGroup
 
+	type_ := serviceType()
 	for _, s := range services {
-		if serviceType == "" || serviceType == s.type_ {
+		usingVersion(&s)
+		if type_ == "" || type_ == s.type_ {
 			wg.Add(1)
 			go func(svc Service) {
 				defer wg.Done()
@@ -81,14 +94,36 @@ func parallelFunc(serviceType string, f func(service Service)) {
 	wg.Wait()
 }
 
-func TestMain(m *testing.M) {
-	serviceType := os.Getenv("SERVICE_TYPE")
+func usingVersion(service *Service) {
+	var env string
+	if service.type_ == "postgresql" {
+		env = "PG_VERSION"
 
-	setup(serviceType)
+	} else if service.type_ == "mysql" {
+		env = "MY_VERSION"
+	}
+
+	if version := os.Getenv(env); version != "" {
+		log.Infof("Using version %s for %s", version, service.type_)
+		service.version = version
+	}
+}
+
+func serviceType() string {
+	// RUN - TestService/postgresql, TestService, /postgresql
+	s := strings.Split(os.Getenv("RUN"), "/")
+	if len(s) == 2 {
+		return s[1]
+	}
+	return ""
+}
+
+func TestMain(m *testing.M) {
+	setup()
 	code := m.Run()
 	if code == 0 {
 		// no need destroy if the tests are failed
-		tearDown(serviceType)
+		tearDown()
 	}
 	os.Exit(code)
 }

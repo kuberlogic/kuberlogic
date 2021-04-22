@@ -67,6 +67,9 @@ type Service struct {
 	// Required: true
 	// Enum: [postgresql mysql]
 	Type *string `json:"type"`
+
+	// version
+	Version string `json:"version,omitempty"`
 }
 
 // Validate validates this service

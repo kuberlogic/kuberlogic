@@ -21,7 +21,7 @@ type tService struct {
 	limits      map[string]string
 	newLimits   map[string]string
 	force       bool
-	//version     string
+	version     string
 }
 
 var pgTestService = tService{
@@ -37,6 +37,7 @@ var pgTestService = tService{
 	force:       false, // do not create a service
 	//version:     "12.1.3",
 }
+
 var mysqlTestService = tService{
 	ns:          mysqlService.ns,
 	name:        mysqlService.name,
@@ -102,20 +103,25 @@ func TestNotEnoughDefinedParameters(t *testing.T) {
 }
 
 func (s *tService) Create(t *testing.T) {
-
 	if !s.force && testing.Short() {
 		t.Skip("Skipping. Using -short flag")
 		return
 	}
 	api := newApi(t)
 	api.setBearerToken()
-	api.setRequestBody(fmt.Sprintf(`     {
-        "name": "%s",
-        "ns": "%s",
-        "type": "%s",
-		"replicas": %d,
-		"limits": %s
-     }`, s.name, s.ns, s.type_, s.replicas, toJson(s.limits)))
+	params := map[string]interface{}{
+		"name":     s.name,
+		"ns":       s.ns,
+		"type":     s.type_,
+		"replicas": s.replicas,
+		"limits":   s.limits,
+	}
+	if s.version != "" {
+		t.Logf("using version - %s", s.version)
+		params["version"] = s.version
+	}
+	api.setJsonRequestBody(params)
+
 	api.sendRequestTo(http.MethodPost, "/services/")
 	api.responseCodeShouldBe(201)
 
@@ -124,12 +130,13 @@ func (s *tService) Create(t *testing.T) {
 func (s *tService) EditReplicas(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
-	api.setRequestBody(fmt.Sprintf(`     {
-        "name": "%s",
-        "ns": "%s",
-        "type": "%s",
-		"replicas": %d
-     }`, s.name, s.ns, s.type_, s.newReplicas))
+	api.setJsonRequestBody(
+		map[string]interface{}{
+			"name":     s.name,
+			"ns":       s.ns,
+			"type":     s.type_,
+			"replicas": s.newReplicas,
+		})
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
 	api.responseCodeShouldBe(200)
 	api.encodeResponseToJson()
@@ -139,13 +146,14 @@ func (s *tService) EditReplicas(t *testing.T) {
 func (s *tService) EditBackAdvancedConf(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
-	api.setRequestBody(fmt.Sprintf(`     {
-        "name": "%s",
-        "ns": "%s",
-        "type": "%s",
-		"replicas": %d,
-		"advancedConf": %s
-     }`, s.name, s.ns, s.type_, s.replicas, toJson(s.conf)))
+	api.setJsonRequestBody(
+		map[string]interface{}{
+			"name":         s.name,
+			"ns":           s.ns,
+			"type":         s.type_,
+			"replicas":     s.replicas,
+			"advancedConf": s.conf,
+		})
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
 	api.responseCodeShouldBe(200)
 }
@@ -153,13 +161,14 @@ func (s *tService) EditBackAdvancedConf(t *testing.T) {
 func (s *tService) EditLimits(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
-	api.setRequestBody(fmt.Sprintf(`     {
-        "name": "%s",
-        "ns": "%s",
-        "type": "%s",
-		"replicas": %d,
-		"limits": %s
-     }`, s.name, s.ns, s.type_, s.replicas, toJson(s.newLimits)))
+	api.setJsonRequestBody(
+		map[string]interface{}{
+			"name":     s.name,
+			"ns":       s.ns,
+			"type":     s.type_,
+			"replicas": s.replicas,
+			"limits":   s.newLimits,
+		})
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
 	api.responseCodeShouldBe(200)
 }
@@ -178,14 +187,15 @@ func (s *tService) CheckField(field string, value interface{}) func(t *testing.T
 func (s *tService) EditBackLimitsAndIncreaseAdvancedConf(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
-	api.setRequestBody(fmt.Sprintf(`     {
-        "name": "%s",
-        "ns": "%s",
-        "type": "%s",
-		"replicas": %d,
-		"limits": %s,
-		"advancedConf": %s
-     }`, s.name, s.ns, s.type_, s.replicas, toJson(s.limits), toJson(s.newConf)))
+	api.setJsonRequestBody(
+		map[string]interface{}{
+			"name":         s.name,
+			"ns":           s.ns,
+			"type":         s.type_,
+			"replicas":     s.replicas,
+			"limits":       s.limits,
+			"advancedConf": s.newConf,
+		})
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
 	api.responseCodeShouldBe(200)
 }
@@ -197,13 +207,14 @@ func (s *tService) DowngradeReplicasAndIncreaseAdvancedConf(t *testing.T) {
 
 	api := newApi(t)
 	api.setBearerToken()
-	api.setRequestBody(fmt.Sprintf(`     {
-        "name": "%s",
-        "ns": "%s",
-        "type": "%s",
-		"replicas": %d,
-		"advancedConf": %s
-     }`, s.name, s.ns, s.type_, s.replicas, toJson(s.newConf)))
+	api.setJsonRequestBody(
+		map[string]interface{}{
+			"name":     s.name,
+			"ns":       s.ns,
+			"type":     s.type_,
+			"replicas": s.replicas,
+			"conf":     s.newConf,
+		})
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
 	api.responseCodeShouldBe(200)
 	api.encodeResponseToJson()
@@ -214,11 +225,12 @@ func (s *tService) DowngradeReplicasAndIncreaseAdvancedConf(t *testing.T) {
 func (s *tService) CreateSecondOneWithSameName(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
-	api.setRequestBody(fmt.Sprintf(`     {
-        "name": "%s",
-        "ns": "%s",
-        "type": "%s"
-     }`, s.name, s.ns, s.type_))
+	api.setJsonRequestBody(
+		map[string]interface{}{
+			"name": s.name,
+			"ns":   s.ns,
+			"type": s.type_,
+		})
 	api.sendRequestTo(http.MethodPost, "/services/")
 	api.responseCodeShouldBe(400)
 

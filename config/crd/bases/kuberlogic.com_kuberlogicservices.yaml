@@ -134,7 +134,7 @@ spec:
               type: string
             version:
               description: '2 or 3 digits: 5.7 or 5.7.31'
-              pattern: ^\d+\.\d+[\.\d+]*$
+              pattern: ^\d+[\.\d+]*$
               type: string
             volumeSize:
               description: Volume size

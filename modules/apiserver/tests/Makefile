@@ -18,7 +18,6 @@ KUBERLOGIC_DEBUG_LOGS = True
 ARGS ?= -short
 
 INTERNAL_MINIO_IP=$(shell kubectl get pod -l app=minio -o go-template="{{range .items}}{{.status.podIP}}{{end}}")
-SERVICE_TYPE = $(shell bash -c "./service-type.sh $(RUN)")
 
 # access/secret also added in the deployment.yaml
 MINIO_ACCESS_KEY = BKIKJAA5BMMU2RHO6IBB
@@ -55,7 +54,10 @@ html-report: coverage-report
 	done;
 
 build-minio:
-	docker build minio/ -t $(IMG) --build-arg MINIO_ACCESS_KEY=$(MINIO_ACCESS_KEY) --build-arg MINIO_SECRET_KEY=$(MINIO_SECRET_KEY)
+	docker build minio/ \
+		-t $(IMG) \
+		--build-arg MINIO_ACCESS_KEY=$(MINIO_ACCESS_KEY) \
+		--build-arg MINIO_SECRET_KEY=$(MINIO_SECRET_KEY)
 
 push-minio:
 	docker push $(IMG)
