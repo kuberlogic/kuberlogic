@@ -2,6 +2,7 @@ package v1
 
 import (
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -40,11 +41,12 @@ type MaintenanceWindow struct {
 
 // KuberLogicServiceStatus defines the observed state of KuberLogicService
 type KuberLogicServiceStatus struct {
-	Status string `json:"status"`
+	Conditions []metav1.Condition `json:"conditions"`
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status",description="The cluster status"
+// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type == 'Ready')].status",description="The cluster readiness"
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[?(@.type == 'Ready')].reason",description="The cluster status"
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`,description="The cluster type"
 // +kubebuilder:printcolumn:name="Replicas",type=integer,JSONPath=`.spec.replicas`,description="The number of desired replicas"
 // +kubebuilder:printcolumn:name="Volume",type=string,JSONPath=`.spec.volumeSize`,description="Volume size for the cluster"
@@ -52,6 +54,7 @@ type KuberLogicServiceStatus struct {
 // +kubebuilder:printcolumn:name="Memory Request",type=string,JSONPath=`.spec.resources.requests.memory`,description="Memory request"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:resource:shortName=kls
+// +kubebuilder:subresource:status
 type KuberLogicService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -68,21 +71,48 @@ type KuberLogicServiceList struct {
 	Items           []KuberLogicService `json:"items"`
 }
 
-func (kls *KuberLogicService) IsEqual(newStatus string) bool {
-	return kls.Status.Status == newStatus
+const (
+	readyCondType             = "Ready"
+	backupInProgressCondType  = "BackupInProgress"
+	restoreInProgressCondType = "RestoreInProgress"
+)
+
+func (kls *KuberLogicService) MarkReady(msg string) {
+	kls.setConditionStatus(readyCondType, true, msg, msg)
 }
 
-func (kls *KuberLogicService) SetStatus(newStatus string) {
-	kls.Status.Status = newStatus
+func (kls *KuberLogicService) MarkNotReady(msg string) {
+	kls.setConditionStatus(readyCondType, false, msg, msg)
 }
 
-func (kls *KuberLogicService) GetStatus() string {
-	return kls.Status.Status
+func (kls *KuberLogicService) ReconciliationAllowed() bool {
+	return meta.IsStatusConditionTrue(kls.Status.Conditions, readyCondType) ||
+		meta.IsStatusConditionFalse(kls.Status.Conditions, backupInProgressCondType) ||
+		meta.IsStatusConditionFalse(kls.Status.Conditions, restoreInProgressCondType)
 }
 
-func (kls *KuberLogicService) UpdatesAllowed() bool {
-	return kls.Status.Status == ClusterOkStatus ||
-		kls.Status.Status == ClusterFailedStatus
+func (kls *KuberLogicService) IsReady() (bool, string) {
+	c := meta.FindStatusCondition(kls.Status.Conditions, readyCondType)
+	if c == nil {
+		return false, ClusterUnknownStatus
+	}
+	return c.Status == metav1.ConditionTrue, c.Reason
+}
+
+func (kls *KuberLogicService) BackupRunning(name string) {
+	kls.setConditionStatus(backupInProgressCondType, true, name+" backup job is running", "BackupRunning")
+}
+
+func (kls *KuberLogicService) BackupFinished() {
+	kls.setConditionStatus(backupInProgressCondType, false, "", "NoBackupRunning")
+}
+
+func (kls *KuberLogicService) RestoreStarted(name string) {
+	kls.setConditionStatus(restoreInProgressCondType, true, name+" restore job is running", "RestoreRunning")
+}
+
+func (kls *KuberLogicService) RestoreFinished() {
+	kls.setConditionStatus(restoreInProgressCondType, false, "", "NoRestoreRunning")
 }
 
 // TODO: Figure out workaround in https://github.com/kubernetes-sigs/kubebuilder/issues/1501, not it's a blocker
@@ -107,6 +137,19 @@ func (kls *KuberLogicService) InitDefaults(defaults Defaults) bool {
 	}
 
 	return dirty
+}
+
+func (kls *KuberLogicService) setConditionStatus(cond string, status bool, msg, reason string) {
+	c := metav1.Condition{
+		Type:    cond,
+		Status:  metav1.ConditionFalse,
+		Message: msg,
+		Reason:  reason,
+	}
+	if status {
+		c.Status = metav1.ConditionTrue
+	}
+	meta.SetStatusCondition(&kls.Status.Conditions, c)
 }
 
 func init() {

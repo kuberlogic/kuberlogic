@@ -27,7 +27,7 @@ type tBackupRestore struct {
 
 func (tb *tBackupRestore) CreateSchedule(t *testing.T) {
 
-	t.Logf("Current time is %v", time.Now())
+	t.Logf("Current UTC time is %v", time.Now().UTC())
 	t.Logf("Scheduled backup time is %v", tb.backupTime)
 
 	api := newApi(t)
@@ -159,7 +159,7 @@ func makeTestBackupRestore(tb tBackupRestore) func(t *testing.T) {
 			now.Minute(),
 			0, // set 0 for the seconds. Needed for the fast backups
 			0,
-			now.Location()).Add(2 * time.Minute) // 2 minutes delay needs for the resource creation
+			now.Location()).Add(2 * time.Minute).UTC() // 2 minutes delay needs for the resource creation
 
 		steps := []func(t *testing.T){
 			tb.service.Create,
@@ -172,7 +172,7 @@ func makeTestBackupRestore(tb tBackupRestore) func(t *testing.T) {
 			tb.CreateTable, // mysql does not recover db if the entities  not exists
 			tb.CreateSchedule,
 			// TODO: waiting Success state of the backup resource
-			wait(4 * 60),    // waiting for the backup
+			wait(4 * 60),
 			tb.db.OneRecord, // db exists
 			tb.db.Delete,
 			tb.db.EmptyList,

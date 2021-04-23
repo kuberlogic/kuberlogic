@@ -123,22 +123,23 @@ func (c KuberLogicCollector) Collect(ch chan<- prometheus.Metric) {
 func calcStatus(cmb interface{}) float64 {
 	switch val := cmb.(type) {
 	case *kuberlogicv1.KuberLogicBackupRestore:
-		switch val.Status.Status {
-		case kuberlogicv1.BackupSuccessStatus:
+		switch val.IsSuccessful() {
+		case true:
 			return 1
 		default:
 			return 0
 		}
 	case *kuberlogicv1.KuberLogicBackupSchedule:
-		switch val.Status.Status {
-		case kuberlogicv1.BackupSuccessStatus:
+		switch val.IsSuccessful() {
+		case true:
 			return 1
 		default:
 			return 0
 		}
 	case *kuberlogicv1.KuberLogicService:
-		switch val.Status.Status {
-		case kuberlogicv1.ClusterOkStatus:
+		status, _ := val.IsReady()
+		switch status {
+		case true:
 			return 1
 		default:
 			return 0

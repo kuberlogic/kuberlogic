@@ -114,7 +114,7 @@ func (p *Postgres) Init(kls *kuberlogicv1.KuberLogicService) {
 			Sidecars: []postgresv1.Sidecar{
 				{
 					Name:        "postgres-exporter",
-					DockerImage: "bitnami/postgres-exporter:0.8.0",
+					DockerImage: "quay.io/kuberlogic/bitnami-postgres-exporter:0.8.0",
 					Ports: []apiv1.ContainerPort{
 						{
 							Name:          "metrics",
@@ -242,16 +242,16 @@ func (p *Postgres) isEqualAdvancedConf(kls *kuberlogicv1.KuberLogicService) bool
 	return true
 }
 
-func (p *Postgres) CurrentStatus() string {
+func (p *Postgres) IsReady() (bool, string) {
 	switch p.Operator.Status.PostgresClusterStatus {
 	case postgresv1.ClusterStatusCreating, postgresv1.ClusterStatusUpdating, postgresv1.ClusterStatusUnknown:
-		return kuberlogicv1.ClusterNotReadyStatus
+		return false, kuberlogicv1.ClusterNotReadyStatus
 	case postgresv1.ClusterStatusAddFailed, postgresv1.ClusterStatusUpdateFailed, postgresv1.ClusterStatusSyncFailed, postgresv1.ClusterStatusInvalid:
-		return kuberlogicv1.ClusterFailedStatus
+		return false, kuberlogicv1.ClusterFailedStatus
 	case postgresv1.ClusterStatusRunning:
-		return kuberlogicv1.ClusterOkStatus
+		return true, kuberlogicv1.ClusterOkStatus
 	default:
-		return kuberlogicv1.ClusterUnknownStatus
+		return false, kuberlogicv1.ClusterUnknownStatus
 	}
 }
 

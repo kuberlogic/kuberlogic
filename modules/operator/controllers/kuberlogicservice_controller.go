@@ -19,6 +19,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sync"
+	"time"
+)
+
+const (
+	klsServiceNotReadyDelaySec = 300
 )
 
 // KuberLogicServiceReconciler reconciles a KuberLogicServices object
@@ -36,8 +41,9 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	defer util.HandlePanic(log)
 
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	mu := getMutex(req.NamespacedName)
+	mu.Lock()
+	defer mu.Unlock()
 
 	// metrics key
 	monitoringKey := fmt.Sprintf("%s/%s", req.Name, req.Namespace)
@@ -155,16 +161,16 @@ func (r *KuberLogicServiceReconciler) create(ctx context.Context, kls *kuberlogi
 
 func (r *KuberLogicServiceReconciler) update(ctx context.Context, kls *kuberlogicv1.KuberLogicService, op interfaces.OperatorInterface, log logr.Logger) (reconcile.Result, error) {
 	// sync status first
-	needsUpdate := syncStatus(kls, op)
-	if needsUpdate {
-		log.Info("status needs to be updated")
-		return ctrl.Result{}, r.Update(ctx, kls)
-	}
-	log = log.WithValues("status", kls.GetStatus())
-	if !kls.UpdatesAllowed() {
-		err := fmt.Errorf("updates are not allowed in current service state")
-		log.Error(err, "updates are not allowed")
+	syncStatus(kls, op)
+	if err := r.Status().Update(ctx, kls); err != nil {
+		log.Error(err, "error updating status")
 		return ctrl.Result{}, err
+	}
+	if !kls.ReconciliationAllowed() {
+		log.Info("updates are not allowed in current service state")
+		return ctrl.Result{
+			RequeueAfter: time.Second * klsServiceNotReadyDelaySec,
+		}, nil
 	}
 
 	op.Update(kls)
@@ -185,9 +191,10 @@ func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func syncStatus(kls *kuberlogicv1.KuberLogicService, op interfaces.OperatorInterface) bool {
-	status := op.CurrentStatus()
-	needsUpdate := !kls.IsEqual(status)
-	kls.SetStatus(status)
-	return needsUpdate
+func syncStatus(kls *kuberlogicv1.KuberLogicService, op interfaces.OperatorInterface) {
+	if ready, desc := op.IsReady(); ready {
+		kls.MarkReady(desc)
+	} else {
+		kls.MarkNotReady(desc)
+	}
 }

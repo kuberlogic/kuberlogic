@@ -44,15 +44,11 @@ func (s *ServiceStore) GetServiceRestores(ns, serviceName string, ctx context.Co
 func kuberlogicRestoreToRestore(r *kuberlogicv1.KuberLogicBackupRestore) (*models.Restore, error) {
 	res := new(models.Restore)
 
-	status := r.Status.Status
-	datetime, err := strfmt.ParseDateTime(r.Status.CompletionTime)
-	if err != nil {
-		return nil, err
-	}
+	status, completionTime := r.GetCompletionStatus()
 
 	res.File = &r.Spec.Backup
 	res.Status = &status
-	res.Time = &datetime
+	res.Time = (*strfmt.DateTime)(completionTime)
 	res.Database = &r.Spec.Database
 
 	return res, nil

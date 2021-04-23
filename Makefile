@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.22
+VERSION ?= 0.0.23
 # Default bundle image tag
 BUNDLE_IMG ?= kuberlogic-operator:$(VERSION)
 # Options for 'bundle-build'
@@ -43,6 +43,7 @@ GOBIN=$(shell go env GOPATH)/bin
 else
 GOBIN=$(shell go env GOBIN)
 endif
+GOPRIVATE=github.com/kuberlogic
 
 SENTRY_DSN =
 
@@ -161,6 +162,7 @@ bump-operator-version:
 	for module in updater alert-receiver watcher apiserver; do \
   		echo "Entering into" $${module}; \
 	  	cd ./modules/$${module}; \
+	  	go mod edit -droprequire github.com/kuberlogic/operator/modules/operator go.mod; \
   		go get github.com/kuberlogic/operator/modules/operator@${BRANCH}; \
   		cd -; \
 	done

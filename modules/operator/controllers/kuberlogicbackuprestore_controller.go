@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sync"
 )
 
@@ -26,6 +27,10 @@ type KuberLogicBackupRestoreReconciler struct {
 	mu     sync.Mutex
 }
 
+const (
+	backupRestoreFinalizer = "kuberlogic.com/backuprestore-finalizer"
+)
+
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicbackuprestores,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicbackuprestores/status,verbs=get;update;patch
 func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -33,8 +38,9 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 
 	defer util.HandlePanic(log)
 
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	mu := getMutex(req.NamespacedName)
+	mu.Lock()
+	defer mu.Unlock()
 
 	// metrics key
 	monitoringKey := fmt.Sprintf("%s/%s", req.Name, req.Namespace)
@@ -54,6 +60,7 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 		delete(monitoring.KuberLogicServices, monitoringKey)
 		return ctrl.Result{}, err
 	}
+	monitoring.KuberLogicBackupRestores[monitoringKey] = klr
 
 	clusterName := klr.Spec.ClusterName
 	kl := &kuberlogicv1.KuberLogicService{}
@@ -69,6 +76,30 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 	if err != nil && k8serrors.IsNotFound(err) {
 		log.Info("Cluster is not found",
 			"Cluster", clusterName)
+		return ctrl.Result{}, nil
+	}
+
+	if klr.GetDeletionTimestamp() != nil {
+		if controllerutil.ContainsFinalizer(klr, backupRestoreFinalizer) {
+			if err := r.finalize(ctx, kl, log); err != nil {
+				return ctrl.Result{}, err
+			}
+			controllerutil.RemoveFinalizer(klr, backupRestoreFinalizer)
+			if err := r.Update(ctx, klr); err != nil {
+				log.Error(err, "error removing finalizer")
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{}, nil
+		}
+	}
+
+	// add finalizer if it is not already there
+	if controllerutil.ContainsFinalizer(klr, backupRestoreFinalizer) {
+		controllerutil.AddFinalizer(klr, backupRestoreFinalizer)
+		if err := r.Update(ctx, klr); err != nil {
+			log.Error(err, "error adding finalizer")
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, nil
 	}
 
@@ -124,16 +155,35 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 		}
 	}
 	backupRestore.InitFrom(job)
-	status := backupRestore.CurrentStatus()
-	klr.SetStatus(status)
-	err = r.Update(ctx, klr)
+
+	if running := backupRestore.IsRunning(); running {
+		klr.MarkRunning()
+
+		// also notify corresponding kls that it is running
+		kl.RestoreStarted(job.Name)
+		if err := r.Status().Update(ctx, kl); err != nil {
+			log.Error(err, "error updating kuberlogicservice restore condition")
+			return ctrl.Result{}, err
+		}
+	} else {
+		kl.RestoreFinished()
+		if err := r.Status().Update(ctx, kl); err != nil {
+			log.Error(err, "error updating kuberlogicservice restore condition")
+			return ctrl.Result{}, err
+		}
+	}
+	if successful := backupRestore.IsSuccessful(); successful {
+		klr.MarkSuccessfulFinish()
+	} else {
+		klr.MarkFailed()
+	}
+
+	err = r.Status().Update(ctx, klr)
 	if err != nil {
-		log.Error(err, "Failed to update kl restore object")
+		log.Error(err, "Failed to update kl restore status")
 		return ctrl.Result{}, err
 	}
-	log.Info("KuberLogicBackupRestore status is updated", "Status", klr.GetStatus())
-
-	monitoring.KuberLogicBackupRestores[monitoringKey] = klr
+	log.Info("KuberLogicBackupRestore status is updated")
 
 	return ctrl.Result{}, nil
 }
@@ -150,6 +200,12 @@ func (r *KuberLogicBackupRestoreReconciler) defineJob(op interfaces.BackupRestor
 	}
 
 	return op.GetJob(), nil
+}
+
+func (r *KuberLogicBackupRestoreReconciler) finalize(ctx context.Context, kl *kuberlogicv1.KuberLogicService, log logr.Logger) error {
+	log.Info("finalizing backuprestore")
+	kl.RestoreFinished()
+	return r.Status().Update(ctx, kl)
 }
 
 func (r *KuberLogicBackupRestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {

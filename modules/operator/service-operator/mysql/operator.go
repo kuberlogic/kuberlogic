@@ -227,7 +227,7 @@ func (p *Mysql) isEqualAdvancedConf(kls *kuberlogicv1.KuberLogicService) bool {
 	return true
 }
 
-func (p *Mysql) CurrentStatus() string {
+func (p *Mysql) IsReady() (bool, string) {
 	status := ""
 	for _, v := range p.Operator.Status.Conditions {
 		if v.Type == "Ready" {
@@ -237,11 +237,11 @@ func (p *Mysql) CurrentStatus() string {
 
 	switch status {
 	case "False":
-		return kuberlogicv1.ClusterNotReadyStatus
+		return false, kuberlogicv1.ClusterNotReadyStatus
 	case "True":
-		return kuberlogicv1.ClusterOkStatus
+		return true, kuberlogicv1.ClusterOkStatus
 	default:
-		return kuberlogicv1.ClusterUnknownStatus
+		return false, kuberlogicv1.ClusterUnknownStatus
 	}
 }
 

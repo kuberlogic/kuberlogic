@@ -8,7 +8,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
-	"sort"
 )
 
 type BaseBackup struct {
@@ -18,30 +17,17 @@ type BaseBackup struct {
 	EnvVar []corev1.EnvVar
 }
 
-func (p *BaseBackup) CurrentStatus(ev v1.JobList) string {
-	// sort in reverse order
-	sort.SliceStable(ev.Items, func(i, j int) bool {
-		first, second := ev.Items[i], ev.Items[j]
-		return second.Status.StartTime.Before(first.Status.StartTime)
-	})
-
-	if len(ev.Items) > 0 {
-		lastJob := ev.Items[0]
-		if len(lastJob.Status.Conditions) > 0 {
-			lastCondition := lastJob.Status.Conditions[len(lastJob.Status.Conditions)-1]
-			switch lastCondition.Type {
-			case v1.JobComplete:
-				return kuberlogicv1.BackupSuccessStatus
-			case v1.JobFailed:
-				return kuberlogicv1.BackupFailedStatus
-			}
-		} else {
-			if lastJob.Status.Active > 0 {
-				return kuberlogicv1.BackupRunningStatus
-			}
+func (p *BaseBackup) IsSuccessful(j *v1.Job) bool {
+	for _, c := range j.Status.Conditions {
+		if c.Type == v1.JobComplete {
+			return true
 		}
 	}
-	return kuberlogicv1.BackupUnknownStatus
+	return false
+}
+
+func (p *BaseBackup) IsRunning(j *v1.Job) bool {
+	return j.Status.Active > 0
 }
 
 func (p *BaseBackup) NewCronJob(name, ns, schedule string) v1beta1.CronJob {

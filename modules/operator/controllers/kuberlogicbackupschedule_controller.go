@@ -16,6 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sort"
 	"sync"
 )
 
@@ -27,6 +29,10 @@ type KuberLogicBackupScheduleReconciler struct {
 	mu     sync.Mutex
 }
 
+const (
+	backupScheduleFinalizer = "kuberlogic.com/backupschedule-finalizer"
+)
+
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicbackupschedules,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicbackupschedules/status,verbs=get;update;patch
 func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -34,8 +40,9 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 
 	defer util.HandlePanic(log)
 
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	mu := getMutex(req.NamespacedName)
+	mu.Lock()
+	defer mu.Unlock()
 
 	// metrics key
 	monitoringKey := fmt.Sprintf("%s/%s", req.Name, req.Namespace)
@@ -55,6 +62,7 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 		delete(monitoring.KuberLogicServices, monitoringKey)
 		return ctrl.Result{}, err
 	}
+	monitoring.KuberLogicBackupSchedules[monitoringKey] = klb
 
 	clusterName := klb.Spec.ClusterName
 	kl := &kuberlogicv1.KuberLogicService{}
@@ -70,6 +78,31 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 	if err != nil && k8serrors.IsNotFound(err) {
 		log.Info("Cluster is not found",
 			"Cluster", clusterName)
+		return ctrl.Result{}, nil
+	}
+
+	// check if klb is about to be deleted and we should finalize it
+	if klb.GetDeletionTimestamp() != nil {
+		if controllerutil.ContainsFinalizer(klb, backupScheduleFinalizer) {
+			if err := r.finalize(ctx, kl, log); err != nil {
+				return ctrl.Result{}, err
+			}
+			controllerutil.RemoveFinalizer(klb, backupScheduleFinalizer)
+			if err := r.Update(ctx, klb); err != nil {
+				log.Error(err, "error removing finalizer")
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{}, nil
+		}
+	}
+
+	// add finalizer if it is not already there
+	if controllerutil.ContainsFinalizer(klb, backupScheduleFinalizer) {
+		controllerutil.AddFinalizer(klb, backupScheduleFinalizer)
+		if err := r.Update(ctx, klb); err != nil {
+			log.Error(err, "error adding finalizer")
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, nil
 	}
 
@@ -107,16 +140,16 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 	if err != nil && k8serrors.IsNotFound(err) {
 		dep, err := r.cronJob(backupSchedule, klb)
 		if err != nil {
-			log.Error(err, "Could not generate cron cronJob", "Name", klb.Name)
+			log.Error(err, "Could not generate cron cronJob")
 			return ctrl.Result{}, err
 		}
 
-		log.Info("Creating a new BaseBackup resource", "Name", klb.Name)
+		log.Info("Creating a new BaseBackup resource")
 		err = r.Create(ctx, dep)
 		if err != nil && k8serrors.IsAlreadyExists(err) {
-			log.Info("CronJob already exists", "Name", klb.Name)
+			log.Info("CronJob already exists")
 		} else if err != nil {
-			log.Error(err, "Failed to create new CronJob", "Name", klb.Name)
+			log.Error(err, "Failed to create new CronJob")
 			return ctrl.Result{}, err
 		} else {
 			// cronJob created successfully - return and requeue
@@ -130,35 +163,50 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 
 		err = r.Update(ctx, backupSchedule.GetCronJob())
 		if err != nil {
-			log.Error(err, "Failed to update object", "Name", klb.Name)
+			log.Error(err, "Failed to update object")
 			return ctrl.Result{}, err
 		} else {
-			log.Info("BaseBackup resource is updated", "Name", klb.Name)
+			log.Info("BaseBackup resource is updated")
 		}
 	} else {
-		log.Info("No difference", "Name", klb.Name)
+		log.Info("No difference")
 	}
 
-	jobList, err := r.getJobList(ctx, klb)
+	job, err := r.getBackupJob(ctx, klb)
 	if err != nil {
-		log.Error(err, "Failed to receive list of jobs",
-			"Name", klb.Name)
+		log.Error(err, "Failed to get the backup job")
 		return ctrl.Result{}, err
 	}
-
-	status := backupSchedule.CurrentStatus(jobList)
-	if !klb.IsEqual(status) {
-		klb.SetStatus(status)
-		err = r.Update(ctx, klb)
-		//err = r.Status().Update(ctx, kl) # FIXME: Figure out why it's failed
-		if err != nil {
-			log.Error(err, "Failed to update kl backup object")
-		} else {
-			log.Info("KuberLogicBackupSchedule status is updated", "Status", klb.GetStatus())
-		}
+	// no backup jobs
+	if job == nil {
+		log.Info("No backup jobs found")
+		klb.MarkUnknown("no backup jobs found")
+		return ctrl.Result{}, nil
 	}
 
-	monitoring.KuberLogicBackupSchedules[monitoringKey] = klb
+	if running := backupSchedule.IsRunning(job); running {
+		// notify kls that it has a running backup
+		kl.BackupRunning(klb.Name)
+		if err := r.Status().Update(ctx, kl); err != nil {
+			return ctrl.Result{}, err
+		}
+		klb.MarkRunning(job.Name)
+	} else {
+		kl.BackupFinished()
+		if err := r.Status().Update(ctx, kl); err != nil {
+			return ctrl.Result{}, err
+		}
+		klb.MarkNotRunning()
+	}
+
+	if successful := backupSchedule.IsSuccessful(job); successful {
+		klb.MarkSuccessful(job.Name)
+	} else {
+		klb.MarkFailed(job.Name)
+	}
+	if err := r.Status().Update(ctx, klb); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -176,7 +224,7 @@ func (r *KuberLogicBackupScheduleReconciler) cronJob(op interfaces.BackupSchedul
 	return op.GetCronJob(), nil
 }
 
-func (r *KuberLogicBackupScheduleReconciler) getJobList(ctx context.Context, cmb *kuberlogicv1.KuberLogicBackupSchedule) (v12.JobList, error) {
+func (r *KuberLogicBackupScheduleReconciler) getBackupJob(ctx context.Context, cmb *kuberlogicv1.KuberLogicBackupSchedule) (*v12.Job, error) {
 	jobs := v12.JobList{}
 	selector := &client.ListOptions{}
 
@@ -185,8 +233,26 @@ func (r *KuberLogicBackupScheduleReconciler) getJobList(ctx context.Context, cmb
 		"backup-name": cmb.Name,
 	}.ApplyToList(selector)
 
-	err := r.List(ctx, &jobs, selector)
-	return jobs, err
+	if err := r.List(ctx, &jobs, selector); err != nil {
+		return nil, err
+	}
+	if len(jobs.Items) < 1 {
+		return nil, nil
+	}
+
+	sort.SliceStable(jobs.Items, func(i, j int) bool {
+		first, second := jobs.Items[i], jobs.Items[j]
+		return second.Status.StartTime.Before(first.Status.StartTime)
+	})
+
+	return &jobs.Items[0], nil
+}
+
+func (r *KuberLogicBackupScheduleReconciler) finalize(ctx context.Context, kl *kuberlogicv1.KuberLogicService, log logr.Logger) error {
+	log.Info("finalizing backupschedule")
+
+	kl.BackupFinished()
+	return r.Status().Update(ctx, kl)
 }
 
 func (r *KuberLogicBackupScheduleReconciler) SetupWithManager(mgr ctrl.Manager) error {

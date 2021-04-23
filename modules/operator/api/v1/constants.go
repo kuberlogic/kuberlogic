@@ -5,13 +5,18 @@ const (
 	ClusterOkStatus       = "Ready"
 	ClusterNotReadyStatus = "NotReady"
 	ClusterFailedStatus   = "Failed"
-	ClusterUnknownStatus  = ""
+	ClusterUnknownStatus  = "Unknown"
 
 	// backup status
-	BackupRunningStatus = "Running"
 	BackupSuccessStatus = "Success"
 	BackupFailedStatus  = "Failed"
-	BackupUnknownStatus = ""
+	BackupUnknownStatus = "Unknown"
+
+	// restore status
+	RestoreSuccessStatus = "Success"
+	RestoreFailedStatus  = "Failed"
+	RestoreRunningStatus = "Running"
+	RestoreUnknownStatus = "Unknown"
 
 	// alert status
 	AlertCreatedStatus  = "Created"

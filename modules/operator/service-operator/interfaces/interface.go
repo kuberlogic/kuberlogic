@@ -20,7 +20,7 @@ type OperatorInterface interface {
 	AsMetaObject() metav1.Object
 	AsClientObject() client.Object
 	IsEqual(cm *v1.KuberLogicService) bool
-	CurrentStatus() string
+	IsReady() (bool, string)
 	GetDefaults() v1.Defaults
 
 	GetBackupSchedule() BackupSchedule
@@ -36,7 +36,8 @@ type BackupSchedule interface {
 	IsEqual(cm *v1.KuberLogicBackupSchedule) bool
 	Update(cm *v1.KuberLogicBackupSchedule)
 	GetCronJob() *v1beta1.CronJob
-	CurrentStatus(ev batchv1.JobList) string
+	IsSuccessful(job *batchv1.Job) bool
+	IsRunning(job *batchv1.Job) bool
 
 	SetBackupImage()
 	SetBackupEnv(cm *v1.KuberLogicBackupSchedule)
@@ -47,7 +48,8 @@ type BackupRestore interface {
 	Init(*v1.KuberLogicBackupRestore)
 	InitFrom(*batchv1.Job)
 	GetJob() *batchv1.Job
-	CurrentStatus() *v1.KuberLogicBackupRestoreStatus
+	IsSuccessful() bool
+	IsRunning() bool
 
 	SetRestoreImage()
 	SetRestoreEnv(cm *v1.KuberLogicBackupRestore)
