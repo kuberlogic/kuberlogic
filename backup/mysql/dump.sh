@@ -6,6 +6,9 @@ set -o nounset
 set -o pipefail
 IFS=$'\n\t'
 
+# integrate sentry
+[[ -v SENTRY_DSN ]] && eval "$(sentry-cli bash-hook)"
+
 BACKUP_NAME=$(date '+%s')
 [[ ! -z "$DATABASE" ]] && BACKUP_NAME=$DATABASE-$BACKUP_NAME
 

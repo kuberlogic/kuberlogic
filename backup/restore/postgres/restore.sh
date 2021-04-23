@@ -6,6 +6,9 @@ set -o nounset
 set -o pipefail
 IFS=$'\n\t'
 
+# integrate sentry
+[[ -v SENTRY_DSN ]] && eval "$(sentry-cli bash-hook)"
+
 PG_BIN=$PG_DIR/$PG_VERSION/bin
 
 TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)

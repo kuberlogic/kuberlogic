@@ -25,8 +25,8 @@ RUN apt-get update     \
         postgresql-client-9.6 \
         postgresql-client-9.5 \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-RUN curl -sL https://sentry.io/get-cli/ | bash
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -sL https://sentry.io/get-cli/ | bash
 
 COPY dump.sh ./
 

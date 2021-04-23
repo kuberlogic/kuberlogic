@@ -22,7 +22,7 @@ INTERNAL_MINIO_IP=$(shell kubectl get pod -l app=minio -o go-template="{{range .
 # access/secret also added in the deployment.yaml
 MINIO_ACCESS_KEY = BKIKJAA5BMMU2RHO6IBB
 MINIO_SECRET_KEY = V7f1CwQqAcwo80UEIJEjc5gVQUSSx5ohQ9GSrr12
-MINIO_ENDPOINT = http://$(INTERNAL_MINIO_IP):9000
+MINIO_ENDPOINT = http://$(INTERNAL_MINIO_IP):8000
 BUCKET ?= test
 
 SENTRY_DSN = https://50ec3b92240a4b4d97dbee02a07fc54f@kl.sentry.cloudlinux.com/5
