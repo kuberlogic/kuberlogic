@@ -44,10 +44,12 @@ func S3Credentials(secret string) []v1.EnvVar {
 }
 
 func SentryEnv() []v1.EnvVar {
-	return []v1.EnvVar{
-		{
+	var env []v1.EnvVar
+	if dsn := os.Getenv("SENTRY_DSN"); dsn != "" {
+		env = append(env, v1.EnvVar{
 			Name:  "SENTRY_DSN",
 			Value: os.Getenv("SENTRY_DSN"),
-		},
+		})
 	}
+	return env
 }
