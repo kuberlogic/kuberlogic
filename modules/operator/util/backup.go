@@ -2,6 +2,7 @@ package util
 
 import (
 	v1 "k8s.io/api/core/v1"
+	"os"
 )
 
 func BucketVariables(secret string) []v1.EnvVar {
@@ -40,4 +41,15 @@ func S3Credentials(secret string) []v1.EnvVar {
 			ValueFrom: FromSecret(secret, "aws-secret-access-key"),
 		},
 	}
+}
+
+func SentryEnv() []v1.EnvVar {
+	var env []v1.EnvVar
+	if dsn := os.Getenv("SENTRY_DSN"); dsn != "" {
+		env = append(env, v1.EnvVar{
+			Name:  "SENTRY_DSN",
+			Value: dsn,
+		})
+	}
+	return env
 }
