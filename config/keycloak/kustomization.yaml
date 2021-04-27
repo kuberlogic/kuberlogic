@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+  - crd.yaml
+  - rbac.yaml
+  - kuberlogic-keycloak.yaml
+
+namespace: default
+namePrefix: kl-

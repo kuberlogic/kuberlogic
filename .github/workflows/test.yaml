@@ -12,44 +12,44 @@ jobs:
     name: Integration tests
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - type: postgresql
             pg_version: 13
 
-          - type: postgresql
-            pg_version: 12
-
-          - type: postgresql
-            pg_version: 11
-
-          - type: postgresql
-            pg_version: 10
-
-          - type: postgresql
-            pg_version: 9.6
-
-          - type: postgresql
-            pg_version: 9.5
-
+#          - type: postgresql
+#            pg_version: 12
+#
+#          - type: postgresql
+#            pg_version: 11
+#
+#          - type: postgresql
+#            pg_version: 10
+#
+#          - type: postgresql
+#            pg_version: 9.6
+#
+#          - type: postgresql
+#            pg_version: 9.5
+#
 #          - type: postgresql
 #            pg_version: 9.4
 #
 #          - type: postgresql
 #            pg_version: 9.3
 
-          - type: mysql
-            my_version: 5.7.31
-
-          - type: mysql
-            my_version: 5.7.29
-
-          - type: mysql
-            my_version: 5.7.26
-
-          - type: mysql
-            my_version: 5.7.24
+#          - type: mysql
+#            my_version: 5.7.31
+#
+#          - type: mysql
+#            my_version: 5.7.29
+#
+#          - type: mysql
+#            my_version: 5.7.26
+#
+#          - type: mysql
+#            my_version: 5.7.24
 
 #         - type: mysql
 #            version: 8.0.20
@@ -87,6 +87,9 @@ jobs:
 
       - name: Deploy operator
         run: |
+          make deploy-dependencies || true
+          echo "we need to do this twice because of using CRDs..."
+          sleep 5
           make deploy-dependencies
 
       - name: Setup minio for backup storage
@@ -124,7 +127,6 @@ jobs:
           bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-apiserver.out -F apiserver
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
 
       - name: Show status
         run: |

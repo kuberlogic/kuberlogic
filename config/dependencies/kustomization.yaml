@@ -5,6 +5,8 @@ resources:
   - ../rbac
   - ../operators/postgresql/zalando
   - ../operators/mysql/presslabs
+  - ../keycloak
+
 
 namespace: default
 namePrefix: cm-
