@@ -50,6 +50,9 @@ func newCasbinEnforcer(cache cache.Cache, log logging.Logger) *CasbinEnforcer {
 }
 
 func (c *CasbinEnforcer) IsAuthorized(permissions Permissions, user, resource, action string) (bool, error) {
+	c.log.Debugw("checking if user is authorized to do an action",
+		"user", user, "resource", resource, "action", action,
+		"permissions", permissions)
 
 	for _, p := range permissions.Rules {
 		c.enforcer.AddPermissionForUser(user, p.Resource, p.Action)
