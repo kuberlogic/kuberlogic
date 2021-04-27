@@ -1,7 +1,5 @@
 .EXPORT_ALL_VARIABLES:
 
-KUBERLOGIC_AUTH_PROVIDER = none
-
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
 IMG = $(IMG_REPO)/minio:1.0.0
