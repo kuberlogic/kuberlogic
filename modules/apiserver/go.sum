@@ -527,6 +527,7 @@ github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
 github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
 github.com/kuberlogic/operator v0.0.19-0.20210428062110-76a6c5487ddd h1:iXrxUdDA+cCU/O/PNWljIFKK6lPog/QmbicZ3jJohhU=
+github.com/kuberlogic/operator v0.0.19-0.20210428131458-1faca8b5c54b h1:ZM+/AF1Hb0UGgIiLETCYjjA5t1qzKNdINb56Ic1QUfI=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210415125446-6bf1236cc741 h1:MPa1tkL16TrvtW4WEkkToapt0Z+TXG7G7Sbu4/pb5XE=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210415125446-6bf1236cc741/go.mod h1:2cyUHMHaurG84hq+Xti0icYvoMoeSv1XNykKC/v0MQ4=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210416112052-6ae5540a1522 h1:HCgL0GayJkq46EFjWPKHquESRy1a0GvZul+9HtyL7nM=
@@ -563,6 +564,8 @@ github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210423101240-9cc80ae
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210423101240-9cc80aeec939/go.mod h1:iuiR/qHc7f18J1ONkeZF/tMKdYwECi0wCkAgeSFTqdY=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210428062110-76a6c5487ddd h1:JPqTIkQ+BIzXXLgWOj/E+6iOWyNr4mmPRstftvfcONs=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210428062110-76a6c5487ddd/go.mod h1:iuiR/qHc7f18J1ONkeZF/tMKdYwECi0wCkAgeSFTqdY=
+github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210428131458-1faca8b5c54b h1:HhFbiG6nM1KGgtaFLMwI0JgzyKniG7heZhFwob9PTeY=
+github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210428131458-1faca8b5c54b/go.mod h1:iuiR/qHc7f18J1ONkeZF/tMKdYwECi0wCkAgeSFTqdY=
 github.com/kuberlogic/zapsentry v1.6.2 h1:aLnd1nQU2EUuFTB8z//s2sn5HRNOuqDyeQCcI/fCXw0=
 github.com/kuberlogic/zapsentry v1.6.2/go.mod h1:pvPfXqGhvpUQgeWfCfkrQxJ1Y65TVJtsA0hZ4eJ4sa0=
 github.com/labstack/echo/v4 v4.1.11/go.mod h1:i541M3Fj6f76NZtHSj7TXnyM8n2gaodfvfxNnFqi74g=
