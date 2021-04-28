@@ -1077,7 +1077,7 @@ definitions:
 
   Principal:
     properties:
-      username:
+      email:
         type: string
       token:
         type: string

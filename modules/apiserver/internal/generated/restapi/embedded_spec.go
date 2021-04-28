@@ -1515,10 +1515,10 @@ func init() {
     },
     "Principal": {
       "properties": {
-        "token": {
+        "email": {
           "type": "string"
         },
-        "username": {
+        "token": {
           "type": "string"
         }
       }
@@ -3331,10 +3331,10 @@ func init() {
     },
     "Principal": {
       "properties": {
-        "token": {
+        "email": {
           "type": "string"
         },
-        "username": {
+        "token": {
           "type": "string"
         }
       }

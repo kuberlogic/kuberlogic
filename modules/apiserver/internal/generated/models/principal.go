@@ -15,11 +15,11 @@ import (
 // swagger:model Principal
 type Principal struct {
 
+	// email
+	Email string `json:"email,omitempty"`
+
 	// token
 	Token string `json:"token,omitempty"`
-
-	// username
-	Username string `json:"username,omitempty"`
 }
 
 // Validate validates this principal
