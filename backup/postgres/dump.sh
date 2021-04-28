@@ -6,6 +6,9 @@ set -o nounset
 set -o pipefail
 IFS=$'\n\t'
 
+# integrate sentry
+[[ -v SENTRY_DSN ]] && eval "$(sentry-cli bash-hook)"
+
 ALL_DB_SIZE_QUERY="select sum(pg_database_size(datname)::numeric) from pg_database;"
 PG_BIN=$PG_DIR/$PG_VERSION/bin
 DUMP_SIZE_COEFF=5

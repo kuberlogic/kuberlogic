@@ -6,6 +6,9 @@ set -o nounset
 set -o pipefail
 IFS=$'\n\t'
 
+# integrate sentry
+[[ -v SENTRY_DSN ]] && eval "$(sentry-cli bash-hook)"
+
 TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
 K8S_API_URL=https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT/api/v1
 CERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
@@ -74,7 +77,7 @@ function get_master_pod() {
   get_pods "labelSelector=app.kubernetes.io/name%3Dmysql,role%3Dmaster,healthy%3Dyes,mysql.presslabs.org/cluster%3D${SCOPE}" | head -n 1
 }
 
-function check_replica_exists(){
+function check_replica_exists() {
   HOST=$(eval list_all_replica_pods_any_node)
   if [ -n "$HOST" ]; then
     echo "Replica exists $HOST. Should be available only the master node."

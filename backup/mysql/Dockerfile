@@ -21,7 +21,8 @@ RUN apt-get update     \
     && dpkg -i /tmp/installer.dpkg \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && rm /tmp/installer.dpkg
+    && rm /tmp/installer.dpkg \
+    && curl -sL https://sentry.io/get-cli/ | bash
 
 COPY dump.sh ./
 

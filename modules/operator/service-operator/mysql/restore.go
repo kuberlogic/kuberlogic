@@ -52,5 +52,6 @@ func (p *Restore) SetRestoreEnv(cm *cloudlinuxv1.KuberLogicBackupRestore) {
 	}
 	env = append(env, util.BucketVariables(cm.Spec.SecretName)...)
 	env = append(env, util.S3Credentials(cm.Spec.SecretName)...)
+	env = append(env, util.SentryEnv()...)
 	p.EnvVar = env
 }

@@ -88,6 +88,7 @@ func (tb *tBackupRestore) GetLastBackup(t *testing.T) {
 	if found == nil {
 		t.Errorf("backup is not found after %v", tb.backupTime)
 	}
+	t.Logf("backup is found %v", found)
 	tb.backup = found
 }
 
