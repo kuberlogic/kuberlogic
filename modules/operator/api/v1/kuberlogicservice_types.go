@@ -1,9 +1,11 @@
 package v1
 
 import (
+	"fmt"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"regexp"
 )
 
 type KuberLogicServiceSpec struct {
@@ -75,6 +77,8 @@ const (
 	readyCondType             = "Ready"
 	backupInProgressCondType  = "BackupInProgress"
 	restoreInProgressCondType = "RestoreInProgress"
+
+	alertEmailAnnotation = apiAnnotationsGroup + "/" + "alert-email"
 )
 
 func (kls *KuberLogicService) MarkReady(msg string) {
@@ -113,6 +117,33 @@ func (kls *KuberLogicService) RestoreStarted(name string) {
 
 func (kls *KuberLogicService) RestoreFinished() {
 	kls.setConditionStatus(restoreInProgressCondType, false, "", "NoRestoreRunning")
+}
+
+func (kls *KuberLogicService) SetAlertEmail(e string) error {
+	if e == "" {
+		return fmt.Errorf("email can't be empty")
+	}
+	m, err := regexp.MatchString(".*@.*", e)
+	if !m {
+		return fmt.Errorf("incorrect email address")
+	}
+	if err != nil {
+		return err
+	}
+
+	kls.SetAnnotations(map[string]string{
+		alertEmailAnnotation: e,
+	})
+	return nil
+}
+
+func (kls *KuberLogicService) GetAlertEmail() string {
+	a := kls.GetAnnotations()
+	email, found := a[alertEmailAnnotation]
+	if found {
+		return email
+	}
+	return ""
 }
 
 // TODO: Figure out workaround in https://github.com/kubernetes-sigs/kubebuilder/issues/1501, not it's a blocker
