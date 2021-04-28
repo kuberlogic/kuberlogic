@@ -7,7 +7,7 @@ import (
 )
 
 func (srv *Service) ServiceAddHandler(params apiService.ServiceAddParams, principal *models.Principal) middleware.Responder {
-	svc, errCreate := srv.serviceStore.CreateService(params.ServiceItem, params.HTTPRequest.Context())
+	svc, errCreate := srv.serviceStore.CreateService(params.ServiceItem, principal.Email, params.HTTPRequest.Context())
 	if errCreate != nil {
 		srv.log.Errorw("service create error", errCreate.Err)
 		if errCreate.Client {
