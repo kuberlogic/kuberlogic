@@ -88,11 +88,11 @@ jobs:
       - name: Deploy operator
         run: |
           make deploy-dependencies || true
-          echo "we need to do this twice because of using CRDs..."
+          echo "we need to do this twice because we rely on CRD resources"
           sleep 5
           make deploy-dependencies
           echo "wait some time for CRDs to be processed"
-          sleep 15
+          sleep 60
 
       - name: Setup minio for backup storage
         working-directory: ./modules/apiserver/tests
@@ -101,7 +101,7 @@ jobs:
 
       - name: Waiting ready the pods
         run: |
-          kubectl wait --for=condition=Ready pods --all --timeout=2m
+          kubectl wait --for=condition=Ready pods --all --timeout=5m
 
       - name: Show pod status
         run: |
