@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	"github.com/prometheus/common/log"
 	"io/ioutil"
 	"net/http"
@@ -39,8 +40,50 @@ type API struct {
 	t            *testing.T
 }
 
+func (a *API) getAuthToken(user, password string) (string, error) {
+	loginData := &models.UserCredentials{
+		Password: &password,
+		Username: &user,
+	}
+	data, err := json.Marshal(loginData)
+	if err != nil {
+		return "", err
+	}
+	req, err := http.NewRequest(http.MethodPost, a.baseUrl.buildUrl("/login"), bytes.NewBuffer(data))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := newHttpClient()
+	res, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	defer res.Body.Close()
+	resBody, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+
+	authData := new(models.AccessTokenResponse)
+	if err := json.Unmarshal([]byte(resBody), authData); err != nil {
+		return "", err
+	}
+
+	if authData.AccessToken == "" {
+		return "", fmt.Errorf("access token should not be empty after login")
+	}
+	return "Bearer " + authData.AccessToken, nil
+}
+
 func (a *API) setBearerToken() {
-	a.token = "Bearer " + "whatever"
+	token, err := a.getAuthToken(testUser, testPassword)
+	if err != nil || token == "" {
+		a.t.Errorf("error getting acess token")
+	}
+	a.token = token
 }
 
 func (a *API) sendRequestTo(method, endpoint string) {
@@ -67,7 +110,7 @@ func (a *API) sendRequestTo(method, endpoint string) {
 		req.Header.Add("Authorization", a.token)
 	}
 
-	client := &http.Client{}
+	client := newHttpClient()
 	resp, err := client.Do(req)
 	if err != nil {
 		a.t.Error(err)

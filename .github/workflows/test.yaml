@@ -12,7 +12,7 @@ jobs:
     name: Integration tests
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - type: postgresql
@@ -87,7 +87,12 @@ jobs:
 
       - name: Deploy operator
         run: |
+          make deploy-dependencies || true
+          echo "we need to do this twice because we rely on CRD resources"
+          sleep 5
           make deploy-dependencies
+          echo "wait some time for CRDs to be processed"
+          sleep 60
 
       - name: Setup minio for backup storage
         working-directory: ./modules/apiserver/tests
@@ -96,7 +101,7 @@ jobs:
 
       - name: Waiting ready the pods
         run: |
-          kubectl wait --for=condition=Ready pods --all --timeout=2m
+          kubectl wait --for=condition=Ready pods --all --timeout=5m
 
       - name: Show pod status
         run: |
@@ -112,8 +117,12 @@ jobs:
       - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
         run: |
-          KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=/$TYPE
+          KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443 GODEBUG=x509ignoreCN=0 KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=/$TYPE
         env:
+          KUBERLOGIC_AUTH_PROVIDER: keycloak
+          KUBERLOGIC_AUTH_KEYCLOAK_CLIENTID: apiserver
+          KUBERLOGIC_AUTH_KEYCLOAK_CLIENT_SECRET: apiserver-secret
+          KUBERLOGIC_AUTH_KEYCLOAK_REALM_NAME: kuberlogic_realm
           PG_VERSION: ${{ matrix.pg_version }}
           MY_VERSION: ${{ matrix.my_version }}
           TYPE: ${{ matrix.type }}
@@ -124,7 +133,6 @@ jobs:
           bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-apiserver.out -F apiserver
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
 
       - name: Show status
         run: |

@@ -34,6 +34,11 @@ var services = []Service{
 	mysqlService,
 }
 
+const (
+	testUser     = "kuberlogic@cloudlinux.com"
+	testPassword = "password"
+)
+
 func setup() {
 	args := []string{"--scheme=http"}
 	log.Info("Starting the apiserver in the goroutine...")
