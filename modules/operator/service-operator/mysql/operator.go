@@ -97,7 +97,7 @@ func (p *Mysql) Init(kls *kuberlogicv1.KuberLogicService) {
 				InitContainers: []corev1.Container{
 					{
 						Name:  "myisam-repair",
-						Image: util.GetImage(image, kls.Spec.Version),
+						Image: util.GetKuberlogicImage(image, kls.Spec.Version),
 						Command: []string{
 							"/bin/sh",
 							"-c",
@@ -161,10 +161,10 @@ func (p *Mysql) setVolumeSize(kls *kuberlogicv1.KuberLogicService) {
 }
 
 func (p *Mysql) setImage(kls *kuberlogicv1.KuberLogicService) {
-	p.Operator.Spec.Image = util.GetImage(image, kls.Spec.Version)
+	p.Operator.Spec.Image = util.GetKuberlogicImage(image, kls.Spec.Version)
 
 	secrets := []corev1.LocalObjectReference{
-		{Name: util.GetImagePullSecret()},
+		{Name: util.GetKuberlogicRepoPullSecret()},
 	}
 	p.Operator.Spec.PodSpec.ImagePullSecrets = secrets
 }
@@ -212,7 +212,7 @@ func (p *Mysql) isEqualVolumeSize(kls *kuberlogicv1.KuberLogicService) bool {
 }
 
 func (p *Mysql) isEqualImage(kls *kuberlogicv1.KuberLogicService) bool {
-	return p.Operator.Spec.Image == util.GetImage(image, kls.Spec.Version)
+	return p.Operator.Spec.Image == util.GetKuberlogicImage(image, kls.Spec.Version)
 }
 
 func (p *Mysql) isEqualAdvancedConf(kls *kuberlogicv1.KuberLogicService) bool {

@@ -18,7 +18,7 @@ type Backup struct {
 }
 
 func (p *Backup) SetBackupImage() {
-	p.Image = util.GetImage(backupImage, backupTag)
+	p.Image = util.GetKuberlogicImage(backupImage, backupTag)
 }
 
 func (p *Backup) SetBackupEnv(cm *kuberlogicv1.KuberLogicBackupSchedule) {

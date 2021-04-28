@@ -61,7 +61,7 @@ func (p *BaseBackup) NewCronJob(name, ns, schedule string) v1beta1.CronJob {
 								},
 							},
 							ImagePullSecrets: []corev1.LocalObjectReference{
-								{Name: util.GetImagePullSecret()},
+								{Name: util.GetKuberlogicRepoPullSecret()},
 							},
 							RestartPolicy: corev1.RestartPolicyOnFailure,
 						},
