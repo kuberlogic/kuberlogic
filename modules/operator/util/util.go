@@ -2,24 +2,27 @@ package util
 
 import (
 	"fmt"
+	"github.com/kuberlogic/operator/modules/operator/cfg"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"os"
 	"strings"
 )
 
-const (
-	EnvImgRepo       = "IMG_REPO"
-	EnvImgPullSecret = "IMG_PULL_SECRET"
+var (
+	klRepo, klRepoPullSecret string
 )
 
-func GetImage(base, v string) string {
-	repo := os.Getenv(EnvImgRepo)
-	return fmt.Sprintf("%s/%s:%s", strings.TrimSuffix(repo, "/"), base, v)
+func InitFromConfig(c *cfg.Config) {
+	klRepo = c.ImageRepo
+	klRepoPullSecret = c.ImagePullSecretName
 }
 
-func GetImagePullSecret() string {
-	return os.Getenv(EnvImgPullSecret)
+func GetKuberlogicImage(base, v string) string {
+	return fmt.Sprintf("%s/%s:%s", strings.TrimSuffix(klRepo, "/"), base, v)
+}
+
+func GetKuberlogicRepoPullSecret() string {
+	return klRepoPullSecret
 }
 
 func FromConfigMap(name, key string) *v1.EnvVarSource {
