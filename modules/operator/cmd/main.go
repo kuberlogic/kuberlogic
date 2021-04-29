@@ -33,7 +33,7 @@ func init() {
 func Main(args []string) {
 	cfg, err := operatorConfig.NewConfig()
 	if err != nil {
-		setupLog.Error(err, "unable to get config")
+		setupLog.Error(err, "unable to get required config")
 		os.Exit(1)
 	}
 	// populate some values that are used later on

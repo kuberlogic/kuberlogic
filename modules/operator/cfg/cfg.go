@@ -9,7 +9,7 @@ type Config struct {
 	ImageRepo           string `envconfig:"IMG_REPO"`
 	ImagePullSecretName string `envconfig:"IMG_PULL_SECRET"`
 
-	SentryDsn string `envconfig:"optioanl"`
+	SentryDsn string `envconfig:"optional"`
 
 	NotificationChannels struct {
 		Email struct {
