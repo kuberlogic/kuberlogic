@@ -23,4 +23,6 @@ const (
 	AlertAckedStatus    = "Acknowledged"
 	AlertResolvedStatus = "Resolved"
 	AlertUnknownStatus  = "Unknown"
+
+	apiAnnotationsGroup = "api.kuberlogic.com"
 )

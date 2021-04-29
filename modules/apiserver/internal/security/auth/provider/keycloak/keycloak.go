@@ -102,6 +102,7 @@ func (k *keycloakAuthProvider) Authenticate(token string) (string, string, error
 		k.log.Errorw("error extracting authentication token", "token", token)
 		return "", "", fmt.Errorf("error extracting authentication token")
 	}
+	authToken := p[1]
 
 	idToken, err := k.oidcVerifier.Verify(k.ctx, p[1])
 	if err != nil {
@@ -111,17 +112,18 @@ func (k *keycloakAuthProvider) Authenticate(token string) (string, string, error
 
 	var userInfo struct {
 		Username string `json:"preferred_username"`
+		Email    string `json:"email"`
 	}
 	if err := idToken.Claims(&userInfo); err != nil {
 		k.log.Errorw("error getting username from authentication token", "error", err)
 		return "", "", fmt.Errorf("error getting username from authentication token")
 	}
 
-	if userInfo.Username == "" {
-		return "", "", fmt.Errorf("empty username")
+	if userInfo.Username == "" || userInfo.Email == "" {
+		return "", "", fmt.Errorf("empty username or email")
 	}
 
-	return userInfo.Username, p[1], nil
+	return userInfo.Email, authToken, nil
 }
 
 func (k *keycloakAuthProvider) Authorize(token, action, object string) (bool, error) {
