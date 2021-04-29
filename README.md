@@ -1,7 +1,7 @@
 [![integration tests](https://github.com/kuberlogic/operator/actions/workflows/test.yaml/badge.svg?branch=master)](https://github.com/kuberlogic/operator/actions/workflows/test.yaml)
 [![codecov](https://codecov.io/gh/kuberlogic/operator/branch/master/graph/badge.svg?token=VRWDPT0EIC)](https://codecov.io/gh/kuberlogic/operator)
 
-## Cloudmanaged operator
+## Kuberlogic operator
 
 ### Deploy operators 
 
