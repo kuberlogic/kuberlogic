@@ -6,6 +6,7 @@ resources:
   - ../operators/postgresql/zalando
   - ../operators/mysql/presslabs
   - ../keycloak
+  - ../webhook
 
 
 namespace: default
