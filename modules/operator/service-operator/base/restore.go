@@ -66,7 +66,7 @@ func (r *BaseRestore) NewJob(name, ns string) batchv1.Job {
 						},
 					},
 					ImagePullSecrets: []corev1.LocalObjectReference{
-						{Name: util.GetImagePullSecret()},
+						{Name: util.GetKuberlogicRepoPullSecret()},
 					},
 					RestartPolicy: corev1.RestartPolicyOnFailure,
 				},

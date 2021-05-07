@@ -18,7 +18,7 @@ type Restore struct {
 }
 
 func (p *Restore) SetRestoreImage() {
-	p.Image = util.GetImage(restoreImage, restoreTag)
+	p.Image = util.GetKuberlogicImage(restoreImage, restoreTag)
 }
 
 func (p *Restore) SetRestoreEnv(cm *cloudlinuxv1.KuberLogicBackupRestore) {

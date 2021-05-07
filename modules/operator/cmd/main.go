@@ -1,10 +1,8 @@
 package cmd
 
 import (
-	"errors"
-	"flag"
-	"fmt"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	operatorConfig "github.com/kuberlogic/operator/modules/operator/cfg"
 	"github.com/kuberlogic/operator/modules/operator/controllers"
 	"github.com/kuberlogic/operator/modules/operator/logging"
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
@@ -32,32 +30,14 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 }
 
-var envRequired = []string{
-	util.EnvImgRepo,
-	util.EnvImgPullSecret,
-}
-
-func checkEnv() error {
-	for _, envVariable := range envRequired {
-		if value := os.Getenv(envVariable); value == "" {
-			return errors.New(fmt.Sprintf(
-				"required env variable is undefined: %s", envVariable,
-			))
-		} else {
-			setupLog.Info("env", envVariable, value)
-		}
-	}
-	return nil
-}
-
 func Main(args []string) {
-	var metricsAddr string
-	var enableLeaderElection bool
-	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
-	flag.Parse()
+	cfg, err := operatorConfig.NewConfig()
+	if err != nil {
+		setupLog.Error(err, "unable to get required config")
+		os.Exit(1)
+	}
+	// populate some values that are used later on
+	util.InitFromConfig(cfg)
 
 	zapl, err := logging.CreateZapLogger()
 	if err != nil {
@@ -67,17 +47,14 @@ func Main(args []string) {
 	logger := logging.GetLogger(zapl)
 
 	// init sentry
-	if dsn := os.Getenv("SENTRY_DSN"); dsn != "" {
+	if dsn := cfg.SentryDsn; dsn != "" {
 		logger = logging.UseSentry(dsn, zapl)
 		setupLog.Info("sentry for operator was initialized")
 	}
 	ctrl.SetLogger(logger)
 
-	if err := checkEnv(); err != nil {
-		logger.Error(err, "unable to start manager")
-		os.Exit(1)
-	}
-
+	metricsAddr := cfg.MetricsAddr
+	enableLeaderElection := cfg.EnableLeaderElection
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,

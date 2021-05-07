@@ -116,7 +116,7 @@ func init() {
             }
           }
         },
-        "x-permission": "services:list",
+        "x-permission": "service:list",
         "x-posthog": {}
       },
       "post": {
@@ -165,7 +165,7 @@ func init() {
             }
           }
         },
-        "x-permission": "services:get",
+        "x-permission": "service:get",
         "x-posthog": [
           {
             "key": "name",
@@ -306,7 +306,7 @@ func init() {
             }
           }
         },
-        "x-permission": "services:edit",
+        "x-permission": "service:edit",
         "x-posthog": [
           {
             "key": "service-id",
@@ -381,7 +381,7 @@ func init() {
             }
           }
         },
-        "x-permission": "services:delete",
+        "x-permission": "service:delete",
         "x-posthog": [
           {
             "key": "service-id",
@@ -1829,7 +1829,7 @@ func init() {
             }
           }
         },
-        "x-permission": "services:list",
+        "x-permission": "service:list",
         "x-posthog": {}
       },
       "post": {
@@ -1884,7 +1884,7 @@ func init() {
             }
           }
         },
-        "x-permission": "services:get",
+        "x-permission": "service:get",
         "x-posthog": [
           {
             "key": "name",
@@ -2041,7 +2041,7 @@ func init() {
             }
           }
         },
-        "x-permission": "services:edit",
+        "x-permission": "service:edit",
         "x-posthog": [
           {
             "key": "service-id",
@@ -2121,7 +2121,7 @@ func init() {
             }
           }
         },
-        "x-permission": "services:delete",
+        "x-permission": "service:delete",
         "x-posthog": [
           {
             "key": "service-id",

@@ -85,7 +85,7 @@ func (p *Postgres) Init(kls *kuberlogicv1.KuberLogicService) {
 				// required user like teamId name with necessary credentials
 				teamId: {"superuser", "createdb"},
 			},
-			DockerImage: util.GetImage(image, tag),
+			DockerImage: util.GetKuberlogicImage(image, tag),
 			PostgresqlParam: postgresv1.PostgresqlParam{
 				PgVersion: kls.Spec.Version,
 				Parameters: map[string]string{
