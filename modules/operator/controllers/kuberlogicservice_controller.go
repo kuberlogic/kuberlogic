@@ -73,18 +73,6 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
-	// init defaults first
-	if kls.InitDefaults(op.GetDefaults()) {
-		err := r.Update(ctx, kls)
-		if err != nil {
-			log.Error(err, "Failed to update KuberLogicService")
-			return ctrl.Result{}, err
-		} else {
-			log.Info("KuberLogicService defaults is updated")
-			return ctrl.Result{}, nil
-		}
-	}
-
 	serviceObj := op.AsClientObject()
 	err = r.Get(
 		ctx,

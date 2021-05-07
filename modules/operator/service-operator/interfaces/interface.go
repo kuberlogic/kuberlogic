@@ -21,7 +21,6 @@ type OperatorInterface interface {
 	AsClientObject() client.Object
 	IsEqual(cm *v1.KuberLogicService) bool
 	IsReady() (bool, string)
-	GetDefaults() v1.Defaults
 
 	GetBackupSchedule() BackupSchedule
 	GetBackupRestore() BackupRestore
