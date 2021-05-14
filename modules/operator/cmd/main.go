@@ -99,6 +99,17 @@ func Main(args []string) {
 		os.Exit(1)
 	}
 
+	// create controller for KuberlogicAlert resource
+	if err = (&controllers.KuberLogicAlertReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controller-alert").WithName("KuberlogicAlert"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create alert controller",
+			"controller-alert", "KuberlogicAlert")
+		os.Exit(1)
+	}
+
 	// init monitoring collector
 	klCollector := monitoring.KuberLogicCollector{}
 	metrics.Registry.MustRegister(klCollector)
