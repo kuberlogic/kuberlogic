@@ -2,7 +2,6 @@ package v1
 
 import (
 	"fmt"
-	"github.com/kuberlogic/operator/modules/operator/notifications"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -86,22 +85,6 @@ func (kla *KuberLogicAlert) IsNotificationSent() bool {
 	return meta.IsStatusConditionTrue(kla.Status.Conditions, notifiedCondType)
 }
 
-// NotifyNew sends a notification through all the required channels (for now email only)
-// when a new alert is created.
-func (kla *KuberLogicAlert) NotifyNew(addr string) error {
-	head := fmt.Sprintf("CRITICAL: SERVICE %s ALERT %s", kla.Spec.Cluster, kla.Spec.AlertName)
-	err := notifyEmail(addr, head, kla.Spec.Summary)
-	return err
-}
-
-// NotifyResolved sends a recovery notification when kla is considered as a resolved (it is implemented with finalizers).
-func (kla *KuberLogicAlert) NotifyResolved(addr string) error {
-	head := fmt.Sprintf("RESOLVED: SERVICE %s ALERT %s", kla.Spec.Cluster, kla.Spec.AlertName)
-	message := fmt.Sprintf("Alert %s is now resolved.", kla.Spec.AlertName)
-	err := notifyEmail(addr, head, message)
-	return err
-}
-
 func (kla *KuberLogicAlert) setConditionStatus(cond string, status bool, msg, reason string) {
 	c := metav1.Condition{
 		Type:    cond,
@@ -113,18 +96,6 @@ func (kla *KuberLogicAlert) setConditionStatus(cond string, status bool, msg, re
 		c.Status = metav1.ConditionTrue
 	}
 	meta.SetStatusCondition(&kla.Status.Conditions, c)
-}
-
-func notifyEmail(addr, subj, body string) error {
-	c, err := notifications.GetNotificationChannel(notifications.EmailChannel)
-	if err != nil {
-		return err
-	}
-
-	opts := map[string]string{
-		"to": addr,
-	}
-	return c.SendNotification(opts, subj, body)
 }
 
 func init() {

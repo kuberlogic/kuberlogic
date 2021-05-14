@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	"github.com/kuberlogic/operator/modules/operator/notifications"
 	"github.com/kuberlogic/operator/modules/operator/util"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -20,6 +22,8 @@ type KuberLogicAlertReconciler struct {
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 	mu     sync.Mutex
+
+	NotificationsManager *notifications.NotificationManager
 }
 
 const (
@@ -93,7 +97,7 @@ func (r *KuberLogicAlertReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	// check if we need to send a notification about new alert
 	// only email notifications are supported
 	if ignore := kla.IsSilenced() || kla.IsNotificationSent(); !ignore {
-		if err := kla.NotifyNew(kls.GetAlertEmail()); err != nil {
+		if err := r.notifyNew(kla, kls.GetAlertEmail()); err != nil {
 			log.Error(err, "notification sending failure")
 			return ctrl.Result{}, err
 		}
@@ -112,13 +116,44 @@ func (r *KuberLogicAlertReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 // finalize function "resolves" an alert when kuberlogicalert is deleted.
 func (r *KuberLogicAlertReconciler) finalize(ctx context.Context, kla *kuberlogicv1.KuberLogicAlert, kls *kuberlogicv1.KuberLogicService, log logr.Logger) error {
 	log.Info("processing finalizer")
-	err := kla.NotifyResolved(kls.GetAlertEmail())
+	err := r.notifyResolved(kla, kls.GetAlertEmail())
 	log.Info("alert recovery notification sent", "address", kls.GetAlertEmail())
 	return err
+}
+
+func (r *KuberLogicAlertReconciler) notifyNew(kla *kuberlogicv1.KuberLogicAlert, addr string) error {
+	head := fmt.Sprintf("CRITICAL: SERVICE %s ALERT %s", kla.Spec.Cluster, kla.Spec.AlertName)
+
+	if err := notifyEmail(addr, head, kla.Spec.Summary, r.NotificationsManager); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *KuberLogicAlertReconciler) notifyResolved(kla *kuberlogicv1.KuberLogicAlert, addr string) error {
+	head := fmt.Sprintf("RESOLVED: SERVICE %s ALERT %s", kla.Spec.Cluster, kla.Spec.AlertName)
+	message := fmt.Sprintf("Alert %s is now resolved.", kla.Spec.AlertName)
+
+	if err := notifyEmail(addr, head, message, r.NotificationsManager); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *KuberLogicAlertReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kuberlogicv1.KuberLogicAlert{}).
 		Complete(r)
+}
+
+func notifyEmail(addr, subj, body string, mgr *notifications.NotificationManager) error {
+	ch, err := mgr.GetNotificationChannel(notifications.EmailChannel)
+	if err != nil {
+		return err
+	}
+
+	opts := map[string]string{
+		"to": addr,
+	}
+	return ch.SendNotification(opts, subj, body)
 }
