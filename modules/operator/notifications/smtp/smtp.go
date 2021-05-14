@@ -49,16 +49,16 @@ func (s *smtpChannel) auth() smtpLib.Auth {
 	return smtpLib.PlainAuth("", s.username, s.password, s.host)
 }
 
-func NewSmtpChannel() (*smtpChannel, error) {
+func NewSmtpChannel(host string, port int, tlsEnabled, tlsInsecure bool, username, password string) (*smtpChannel, error) {
 	c := &smtpChannel{
-		host: "mailservice.default",
-		port: 25,
+		host: host,
+		port: port,
 		tls: struct {
 			insecure bool
 			enabled  bool
-		}{insecure: false, enabled: false},
-		username: "",
-		password: "",
+		}{insecure: tlsInsecure, enabled: tlsEnabled},
+		username: username,
+		password: password,
 	}
 	return c, nil
 }
