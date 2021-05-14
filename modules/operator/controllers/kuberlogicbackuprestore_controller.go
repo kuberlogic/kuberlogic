@@ -28,7 +28,7 @@ type KuberLogicBackupRestoreReconciler struct {
 }
 
 const (
-	backupRestoreFinalizer = "kuberlogic.com/backuprestore-finalizer"
+	backupRestoreFinalizer = "/backuprestore-finalizer"
 )
 
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicbackuprestores,verbs=get;list;watch;create;update;patch;delete

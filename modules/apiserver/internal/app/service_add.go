@@ -9,7 +9,7 @@ import (
 func (srv *Service) ServiceAddHandler(params apiService.ServiceAddParams, principal *models.Principal) middleware.Responder {
 	svc, errCreate := srv.serviceStore.CreateService(params.ServiceItem, principal.Email, params.HTTPRequest.Context())
 	if errCreate != nil {
-		srv.log.Errorw("service create error", errCreate.Err)
+		srv.log.Errorw("service create error", "error", errCreate.Err)
 		if errCreate.Client {
 			return apiService.NewServiceAddBadRequest().WithPayload(&models.Error{Message: errCreate.ClientMsg})
 		} else {
