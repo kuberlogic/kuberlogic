@@ -45,6 +45,7 @@ rules:
   - apiGroups:
       - kuberlogic.com
     resources:
+      - kuberlogicalerts/status
       - kuberlogicservices/status
       - kuberlogicbackupschedules/status
       - kuberlogicbackuprestores/status
