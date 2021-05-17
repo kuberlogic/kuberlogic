@@ -4,6 +4,7 @@ import (
 	"fmt"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/prometheus/client_golang/prometheus"
+	"sync"
 )
 
 var labels = []string{
@@ -51,6 +52,7 @@ var (
 		"KuberLogicServices backup status",
 		backupLabels,
 		nil)
+
 	// Restore
 	cmRestoreSuccess = prometheus.NewDesc(
 		"kuberlogicbackuprestore_success",
@@ -64,14 +66,39 @@ var (
 		nil)
 )
 
-var KuberLogicServices = make(map[string]*kuberlogicv1.KuberLogicService)
-var KuberLogicBackupSchedules = make(map[string]*kuberlogicv1.KuberLogicBackupSchedule)
-var KuberLogicBackupRestores = make(map[string]*kuberlogicv1.KuberLogicBackupRestore)
+// KuberLogicCollector implements prometheus.Collector and stores pointers to monitored resources
+type KuberLogicCollector struct {
+	mu  sync.RWMutex
+	kls map[string]*kuberlogicv1.KuberLogicService
+	klb map[string]*kuberlogicv1.KuberLogicBackupSchedule
+	klr map[string]*kuberlogicv1.KuberLogicBackupRestore
+}
 
-// Implements prometheus.Collector
-type KuberLogicCollector struct{}
+func (c *KuberLogicCollector) MonitorKuberlogicService(key string, kls *kuberlogicv1.KuberLogicService) error {
+	return c.monitorResource(key, kls)
+}
 
-func (c KuberLogicCollector) Describe(ch chan<- *prometheus.Desc) {
+func (c *KuberLogicCollector) ForgetKuberlogicService(key string) {
+	delete(c.kls, key)
+}
+
+func (c *KuberLogicCollector) MonitorKuberlogicBackup(key string, klb *kuberlogicv1.KuberLogicBackupSchedule) error {
+	return c.monitorResource(key, klb)
+}
+
+func (c *KuberLogicCollector) ForgetKuberlogicBackup(key string) {
+	delete(c.klb, key)
+}
+
+func (c *KuberLogicCollector) MonitorKuberlogicRestore(key string, klr *kuberlogicv1.KuberLogicBackupRestore) error {
+	return c.monitorResource(key, klr)
+}
+
+func (c *KuberLogicCollector) ForgetKuberlogicRestore(key string) {
+	delete(c.klr, key)
+}
+
+func (c *KuberLogicCollector) Describe(ch chan<- *prometheus.Desc) {
 	descriptors := []*prometheus.Desc{
 		cmReady,
 		cmReplicas,
@@ -87,36 +114,66 @@ func (c KuberLogicCollector) Describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c KuberLogicCollector) Collect(ch chan<- prometheus.Metric) {
-	for _, c := range KuberLogicServices {
+func (c *KuberLogicCollector) Collect(ch chan<- prometheus.Metric) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	for _, res := range c.kls {
 		ch <- prometheus.MustNewConstMetric(
-			cmReady, prometheus.GaugeValue, calcStatus(c),
-			c.Name, c.Namespace, c.Spec.Type)
+			cmReady, prometheus.GaugeValue, calcStatus(res),
+			res.Name, res.Namespace, res.Spec.Type)
 		ch <- prometheus.MustNewConstMetric(
-			cmReplicas, prometheus.GaugeValue, float64(c.Spec.Replicas),
-			c.Name, c.Namespace, c.Spec.Type)
+			cmReplicas, prometheus.GaugeValue, float64(res.Spec.Replicas),
+			res.Name, res.Namespace, res.Spec.Type)
 		ch <- prometheus.MustNewConstMetric(
-			cmMemLimit, prometheus.GaugeValue, float64(c.Spec.Resources.Limits.Memory().Value()),
-			c.Name, c.Namespace, c.Spec.Type)
+			cmMemLimit, prometheus.GaugeValue, float64(res.Spec.Resources.Limits.Memory().Value()),
+			res.Name, res.Namespace, res.Spec.Type)
 		ch <- prometheus.MustNewConstMetric(
-			cmCPULimit, prometheus.GaugeValue, float64(c.Spec.Resources.Limits.Cpu().MilliValue()),
-			c.Name, c.Namespace, c.Spec.Type)
+			cmCPULimit, prometheus.GaugeValue, float64(res.Spec.Resources.Limits.Cpu().MilliValue()),
+			res.Name, res.Namespace, res.Spec.Type)
 	}
-	for _, c := range KuberLogicBackupSchedules {
+	for _, res := range c.klb {
 		ch <- prometheus.MustNewConstMetric(
-			cmBackupSuccess, prometheus.GaugeValue, calcStatus(c),
-			c.Name, c.Namespace, c.Spec.ClusterName)
+			cmBackupSuccess, prometheus.GaugeValue, calcStatus(res),
+			res.Name, res.Namespace, res.Spec.ClusterName)
 		ch <- prometheus.MustNewConstMetric(
 			cmBackupStatus, prometheus.GaugeValue, 1,
-			c.Name, c.Namespace, c.Spec.ClusterName)
+			res.Name, res.Namespace, res.Spec.ClusterName)
 	}
-	for _, c := range KuberLogicBackupRestores {
+	for _, res := range c.klr {
 		ch <- prometheus.MustNewConstMetric(
-			cmRestoreSuccess, prometheus.GaugeValue, calcStatus(c),
-			c.Name, c.Namespace, c.Spec.ClusterName)
+			cmRestoreSuccess, prometheus.GaugeValue, calcStatus(res),
+			res.Name, res.Namespace, res.Spec.ClusterName)
 		ch <- prometheus.MustNewConstMetric(
 			cmRestoreStatus, prometheus.GaugeValue, 1,
-			c.Name, c.Namespace, c.Spec.ClusterName)
+			res.Name, res.Namespace, res.Spec.ClusterName)
+	}
+
+}
+
+func (c *KuberLogicCollector) monitorResource(key string, res interface{}) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	switch val := res.(type) {
+	case *kuberlogicv1.KuberLogicService:
+		c.kls[key] = val
+	case *kuberlogicv1.KuberLogicBackupSchedule:
+		c.klb[key] = val
+	case *kuberlogicv1.KuberLogicBackupRestore:
+		c.klr[key] = val
+	default:
+		return fmt.Errorf("unknown resource type")
+	}
+	return nil
+}
+
+func NewCollector() *KuberLogicCollector {
+	return &KuberLogicCollector{
+		mu:  sync.RWMutex{},
+		kls: make(map[string]*kuberlogicv1.KuberLogicService),
+		klb: make(map[string]*kuberlogicv1.KuberLogicBackupSchedule),
+		klr: make(map[string]*kuberlogicv1.KuberLogicBackupRestore),
 	}
 }
 

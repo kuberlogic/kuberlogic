@@ -68,11 +68,16 @@ func Main(args []string) {
 		os.Exit(1)
 	}
 
+	// init monitoring collector
+	klCollector := monitoring.NewCollector()
+	metrics.Registry.MustRegister(klCollector)
+
 	// create controller for KuberLogicServices resource
 	if err = (&controllers.KuberLogicServiceReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controller").WithName("KuberLogicServices"),
-		Scheme: mgr.GetScheme(),
+		Client:              mgr.GetClient(),
+		Log:                 ctrl.Log.WithName("controller").WithName("KuberLogicServices"),
+		Scheme:              mgr.GetScheme(),
+		MonitoringCollector: klCollector,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KuberLogicServices")
 		os.Exit(1)
@@ -80,9 +85,10 @@ func Main(args []string) {
 
 	// create controller for KuberLogicBackupSchedule resource
 	if err = (&controllers.KuberLogicBackupScheduleReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controller-backup").WithName("KuberLogicBackupSchedule"),
-		Scheme: mgr.GetScheme(),
+		Client:              mgr.GetClient(),
+		Log:                 ctrl.Log.WithName("controller-backup").WithName("KuberLogicBackupSchedule"),
+		Scheme:              mgr.GetScheme(),
+		MonitoringCollector: klCollector,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create backup controller",
 			"controller-backup", "KuberLogicBackupSchedule")
@@ -91,9 +97,10 @@ func Main(args []string) {
 
 	// create controller for KuberLogicBackupRestore resource
 	if err = (&controllers.KuberLogicBackupRestoreReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controller-backup").WithName("KuberLogicBackupSchedule"),
-		Scheme: mgr.GetScheme(),
+		Client:              mgr.GetClient(),
+		Log:                 ctrl.Log.WithName("controller-backup").WithName("KuberLogicBackupSchedule"),
+		Scheme:              mgr.GetScheme(),
+		MonitoringCollector: klCollector,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create restore controller",
 			"controller-restore-backup", "KuberLogicBackupRestore")
@@ -113,10 +120,6 @@ func Main(args []string) {
 			"controller-alert", "KuberlogicAlert")
 		os.Exit(1)
 	}
-
-	// init monitoring collector
-	klCollector := monitoring.KuberLogicCollector{}
-	metrics.Registry.MustRegister(klCollector)
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

@@ -29,9 +29,10 @@ const (
 // KuberLogicServiceReconciler reconciles a KuberLogicServices object
 type KuberLogicServiceReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
-	mu     sync.Mutex
+	Log                 logr.Logger
+	Scheme              *runtime.Scheme
+	mu                  sync.Mutex
+	MonitoringCollector *monitoring.KuberLogicCollector
 }
 
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicservices,verbs=get;list;watch;create;update;patch;delete
@@ -46,7 +47,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	defer mu.Unlock()
 
 	// metrics key
-	monitoringKey := fmt.Sprintf("%s/%s", req.Name, req.Namespace)
+	monitoringKey := fmt.Sprintf(req.String())
 
 	// Fetch the KuberLogicServices instance
 	kls := &kuberlogicv1.KuberLogicService{}
@@ -57,13 +58,14 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
 			log.Info(req.Namespace, req.Name, " has been deleted")
-			delete(monitoring.KuberLogicServices, monitoringKey)
+			r.MonitoringCollector.ForgetKuberlogicService(monitoringKey)
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
 		log.Error(err, "Failed to get KuberLogicService")
 		return ctrl.Result{}, err
 	}
+	defer r.MonitoringCollector.MonitorKuberlogicService(monitoringKey, kls)
 
 	op, err := serviceOperator.GetOperator(kls.Spec.Type)
 	if err != nil {
@@ -100,7 +102,6 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
-	monitoring.KuberLogicServices[monitoringKey] = kls
 	op.InitFrom(serviceObj)
 	return r.update(ctx, kls, op, log)
 }
