@@ -6,6 +6,7 @@ import (
 	"github.com/kuberlogic/operator/modules/operator/controllers"
 	"github.com/kuberlogic/operator/modules/operator/logging"
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
+	"github.com/kuberlogic/operator/modules/operator/notifications"
 	"github.com/kuberlogic/operator/modules/operator/util"
 	mysql "github.com/presslabs/mysql-operator/pkg/apis"
 	postgres "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
@@ -96,6 +97,20 @@ func Main(args []string) {
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create restore controller",
 			"controller-restore-backup", "KuberLogicBackupRestore")
+		os.Exit(1)
+	}
+
+	// init notification manager
+	notifMgr := notifications.NewWithConfig(cfg)
+	// create controller for KuberlogicAlert resource
+	if err = (&controllers.KuberLogicAlertReconciler{
+		Client:               mgr.GetClient(),
+		Log:                  ctrl.Log.WithName("controller-alert").WithName("KuberlogicAlert"),
+		Scheme:               mgr.GetScheme(),
+		NotificationsManager: notifMgr,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create alert controller",
+			"controller-alert", "KuberlogicAlert")
 		os.Exit(1)
 	}
 

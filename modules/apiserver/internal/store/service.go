@@ -73,6 +73,9 @@ func (s *ServiceStore) CreateService(m *models.Service, alertEmail string, ctx c
 	if err != nil {
 		return nil, NewServiceError("error converting service object", true, err)
 	}
+	if err := c.SetAlertEmail(alertEmail); err != nil {
+		return nil, NewServiceError("error setting email for monitoring notifications", true, err)
+	}
 
 	_, found, _ := s.GetService(*m.Name, *m.Ns, ctx)
 	if found {
@@ -80,9 +83,6 @@ func (s *ServiceStore) CreateService(m *models.Service, alertEmail string, ctx c
 	}
 
 	result := new(kuberlogicv1.KuberLogicService)
-	if err := result.SetAlertEmail(alertEmail); err != nil {
-		return nil, NewServiceError("error setting email for monitoring notifications", true, err)
-	}
 	err = s.restClient.Post().
 		Resource(serviceK8sResource).
 		Namespace(c.Namespace).

@@ -77,8 +77,6 @@ const (
 	readyCondType             = "Ready"
 	backupInProgressCondType  = "BackupInProgress"
 	restoreInProgressCondType = "RestoreInProgress"
-
-	alertEmailAnnotation = apiAnnotationsGroup + "/" + "alert-email"
 )
 
 func (kls *KuberLogicService) MarkReady(msg string) {

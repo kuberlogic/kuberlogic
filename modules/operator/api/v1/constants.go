@@ -18,11 +18,7 @@ const (
 	RestoreRunningStatus = "Running"
 	RestoreUnknownStatus = "Unknown"
 
-	// alert status
-	AlertCreatedStatus  = "Created"
-	AlertAckedStatus    = "Acknowledged"
-	AlertResolvedStatus = "Resolved"
-	AlertUnknownStatus  = "Unknown"
-
-	apiAnnotationsGroup = "api.kuberlogic.com"
+	Group                = "kuberlogic.com"
+	apiAnnotationsGroup  = "api." + Group
+	alertEmailAnnotation = apiAnnotationsGroup + "/" + "alert-email"
 )
