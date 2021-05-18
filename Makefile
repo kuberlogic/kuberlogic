@@ -71,14 +71,13 @@ uninstall: manifests kustomize
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
 # Deploy kuberlogic-operator in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests kustomize deploy-requirements
+deploy: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image operator=$(IMG)
 	cd config/updater && $(KUSTOMIZE) edit set image updater=$(UPDATER_IMG)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 undeploy: kustomize
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
-	$(MAKE) undeploy-requirements
 
 deploy-requirements: kustomize
 	for module in config/certmanager/cert-manager.yml \

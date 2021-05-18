@@ -18,9 +18,9 @@ jobs:
           - type: postgresql
             pg_version: 13
 
-#          - type: postgresql
-#            pg_version: 12
-#
+          - type: postgresql
+            pg_version: 12
+
 #          - type: postgresql
 #            pg_version: 11
 #
@@ -87,6 +87,7 @@ jobs:
 
       - name: Deploy operator
         run: |
+          make deploy-requirements
           make deploy
 
       - name: Patch deployment process for the tests
