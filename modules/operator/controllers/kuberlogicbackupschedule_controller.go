@@ -24,9 +24,10 @@ import (
 // KuberLogicBackupScheduleReconciler reconciles a KuberLogicBackupSchedule object
 type KuberLogicBackupScheduleReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
-	mu     sync.Mutex
+	Log                 logr.Logger
+	Scheme              *runtime.Scheme
+	mu                  sync.Mutex
+	MonitoringCollector *monitoring.KuberLogicCollector
 }
 
 const (
@@ -45,7 +46,7 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 	defer mu.Unlock()
 
 	// metrics key
-	monitoringKey := fmt.Sprintf("%s/%s", req.Name, req.Namespace)
+	monitoringKey := fmt.Sprintf(req.String())
 
 	// Fetch the KuberLogicBackupSchedule instance
 	klb := &kuberlogicv1.KuberLogicBackupSchedule{}
@@ -59,10 +60,10 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 		}
 		// Error reading the object - requeue the request.
 		log.Error(err, "Failed to get KuberLogicBackupSchedule")
-		delete(monitoring.KuberLogicServices, monitoringKey)
+		r.MonitoringCollector.ForgetKuberlogicBackup(monitoringKey)
 		return ctrl.Result{}, err
 	}
-	monitoring.KuberLogicBackupSchedules[monitoringKey] = klb
+	defer r.MonitoringCollector.MonitorKuberlogicBackup(monitoringKey, klb)
 
 	clusterName := klb.Spec.ClusterName
 	kl := &kuberlogicv1.KuberLogicService{}
