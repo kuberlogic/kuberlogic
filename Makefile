@@ -71,16 +71,26 @@ uninstall: manifests kustomize
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
 # Deploy kuberlogic-operator in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests kustomize
+deploy: manifests kustomize deploy-requirements
 	cd config/manager && $(KUSTOMIZE) edit set image operator=$(IMG)
 	cd config/updater && $(KUSTOMIZE) edit set image updater=$(UPDATER_IMG)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
-undeploy:
+undeploy: kustomize
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
+	$(MAKE) undeploy-requirements
 
-deploy-dependencies: manifests kustomize
-	$(KUSTOMIZE) build config/dependencies | kubectl apply -f -
+deploy-requirements: kustomize
+	for module in config/certmanager/cert-manager.yml \
+				  config/keycloak/crd.yaml; do \
+  		kubectl apply -f $${module} ;\
+  	done
+
+undeploy-requirements: kustomize
+	for module in config/certmanager/cert-manager.yml \
+				  config/keycloak/crd.yaml; do \
+  		kubectl delete -f $${module} ;\
+  	done
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen

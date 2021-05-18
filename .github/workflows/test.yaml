@@ -18,41 +18,41 @@ jobs:
           - type: postgresql
             pg_version: 13
 
-          - type: postgresql
-            pg_version: 12
-
-          - type: postgresql
-            pg_version: 11
-
-          - type: postgresql
-            pg_version: 10
-
-          - type: postgresql
-            pg_version: 9.6
-
-          - type: postgresql
-            pg_version: 9.5
-
 #          - type: postgresql
-#            pg_version: 9.4
+#            pg_version: 12
 #
 #          - type: postgresql
-#            pg_version: 9.3
-
-          - type: mysql
-            my_version: 5.7.31
-
-          - type: mysql
-            my_version: 5.7.29
-
-          - type: mysql
-            my_version: 5.7.26
-
-          - type: mysql
-            my_version: 5.7.24
-
-#         - type: mysql
-#            version: 8.0.20
+#            pg_version: 11
+#
+#          - type: postgresql
+#            pg_version: 10
+#
+#          - type: postgresql
+#            pg_version: 9.6
+#
+#          - type: postgresql
+#            pg_version: 9.5
+#
+##          - type: postgresql
+##            pg_version: 9.4
+##
+##          - type: postgresql
+##            pg_version: 9.3
+#
+#          - type: mysql
+#            my_version: 5.7.31
+#
+#          - type: mysql
+#            my_version: 5.7.29
+#
+#          - type: mysql
+#            my_version: 5.7.26
+#
+#          - type: mysql
+#            my_version: 5.7.24
+#
+##         - type: mysql
+##            version: 8.0.20
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -87,12 +87,12 @@ jobs:
 
       - name: Deploy operator
         run: |
-          make deploy-dependencies || true
-          echo "we need to do this twice because we rely on CRD resources"
-          sleep 5
-          make deploy-dependencies
-          echo "wait some time for CRDs to be processed"
-          sleep 60
+          make deploy
+
+      - name: Patch deployment process for the tests
+        working-directory: ./modules/apiserver/tests
+        run: |
+          make undeploy-operator patch-endpoint generate-local-webhook-certs
 
       - name: Setup minio for backup storage
         working-directory: ./modules/apiserver/tests
@@ -117,7 +117,7 @@ jobs:
       - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
         run: |
-          KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443 GODEBUG=x509ignoreCN=0 KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=/$TYPE
+          KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443 GODEBUG=x509ignoreCN=0 KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=TestService/$TYPE
         env:
           KUBERLOGIC_AUTH_PROVIDER: keycloak
           KUBERLOGIC_AUTH_KEYCLOAK_CLIENTID: apiserver

@@ -1,6 +1,6 @@
 .EXPORT_ALL_VARIABLES:
 
-KUBERLOGIC_AUTH_PROVIDER = none
+KUBERLOGIC_AUTH_PROVIDER ?= none
 
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
@@ -91,4 +91,4 @@ generate-local-webhook-certs:
 	kubectl get secret webhook-server-cert -o=jsonpath="{.data['tls\.crt']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.crt
 
 undeploy-operator:
-	kubectl delete deploy cm-kuberlogic-operator
+	kubectl delete deploy -l control-plane=kuberlogic-operator
