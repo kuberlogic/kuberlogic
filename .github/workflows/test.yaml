@@ -81,8 +81,9 @@ jobs:
           minikube version: 'v1.19.0'
           kubernetes version: 'v1.20.5'
           github token: ${{ secrets.GITHUB_TOKEN }}
+
+          # It's need for the local usage for the webhook:
           # Turns on aggregator routing requests to endpoints IP rather than cluster IP.
-          # It's need for the local usage for the webhook
           start args: --extra-config=apiserver.enable-aggregator-routing=true
 
       - name: Create secret of operator
@@ -93,7 +94,7 @@ jobs:
           REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: PATCH - Create endpoint for deploying (next stage) validate/mutate webhook configuration in enable-aggregator-routing mode
+      - name: PATCH - Create endpoint for deploying (next stage) validate/mutate webhook configuration in enable-aggregator-routing apiserver mode
         working-directory: ./modules/apiserver/tests
         run: |
           make patch-endpoint
@@ -112,10 +113,6 @@ jobs:
       - name: Waiting ready the pods
         run: |
           kubectl wait --for=condition=Ready pods --all --timeout=5m
-          echo "Waiting some time for creating keycloak pods dynamically"
-          sleep 10
-          echo "Waiting for keycloak pods"
-          kubectl wait --for=condition=Ready pods --all --timeout=5m
 
       - name: Show pod status
         run: |
@@ -133,6 +130,10 @@ jobs:
         run: |
           make undeploy-operator generate-local-webhook-certs patch-endpoint
           kubectl get endpoints
+
+      - name: Ensure keycloak is running
+        run: |
+          kubectl wait --for=condition=Ready pods -l app=keycloak --timeout=5m
 
       - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
