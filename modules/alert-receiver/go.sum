@@ -436,6 +436,7 @@ github.com/kuberlogic/operator v0.0.19-0.20210428131458-1faca8b5c54b h1:ZM+/AF1H
 github.com/kuberlogic/operator v0.0.19-0.20210429112423-99b19813850c h1:nrnD69msGZlsBmn/s3DFO9q9EEHeFh2DLj4FK8JZ8HM=
 github.com/kuberlogic/operator v0.0.19-0.20210518132824-9288174e3b8e h1:/0CodbYD1zrR8GGFAwud2Vp8tXbArHteXrnklbeH1eg=
 github.com/kuberlogic/operator v0.0.19-0.20210519062852-eebefd191bed h1:MwhKhZM4xSLTDDJ03avEXhal2CudvvQVBe1n/+Ayt7A=
+github.com/kuberlogic/operator v0.0.19-0.20210519072214-3383b82a88f3 h1:Vge2w6zBrT9ZQcNpQ8NWEPI2SRUcrVVhFOPxpY2CnGk=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210326104939-6afc6b99e02f h1:b/oflb+I7/hoZmPDMBVBgBzDxA7HJsjcJoSXVNnOC0M=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210326104939-6afc6b99e02f/go.mod h1:2cyUHMHaurG84hq+Xti0icYvoMoeSv1XNykKC/v0MQ4=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210326124307-3155388d73f5 h1:lSfA6gGI22kKRgIJjYu3cnzJzvO1z9Q3jBRi8RMHUow=
@@ -486,6 +487,8 @@ github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210518132824-9288174
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210518132824-9288174e3b8e/go.mod h1:iuiR/qHc7f18J1ONkeZF/tMKdYwECi0wCkAgeSFTqdY=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210519062852-eebefd191bed h1:VSqLRbkJKhJ+k1kf1gQt4sz4doYZo8f2jPITgmsYq68=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210519062852-eebefd191bed/go.mod h1:8XmInRmNsNRC6Im25IESAPDOb9hP+L8l8Lk76qUvQNc=
+github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210519072214-3383b82a88f3 h1:WPB71FoZx9LICKDGL0bunkIyB4UVlPjQN63H7qE0mmQ=
+github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210519072214-3383b82a88f3/go.mod h1:8XmInRmNsNRC6Im25IESAPDOb9hP+L8l8Lk76qUvQNc=
 github.com/kuberlogic/zapsentry v1.6.2 h1:aLnd1nQU2EUuFTB8z//s2sn5HRNOuqDyeQCcI/fCXw0=
 github.com/kuberlogic/zapsentry v1.6.2/go.mod h1:pvPfXqGhvpUQgeWfCfkrQxJ1Y65TVJtsA0hZ4eJ4sa0=
 github.com/labstack/echo/v4 v4.1.11/go.mod h1:i541M3Fj6f76NZtHSj7TXnyM8n2gaodfvfxNnFqi74g=

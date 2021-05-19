@@ -90,11 +90,6 @@ jobs:
           make deploy-requirements
           make deploy
 
-      - name: Patch deployment process for the tests
-        working-directory: ./modules/apiserver/tests
-        run: |
-          make undeploy-operator patch-endpoint generate-local-webhook-certs
-
       - name: Setup minio for backup storage
         working-directory: ./modules/apiserver/tests
         run: |
@@ -103,6 +98,11 @@ jobs:
       - name: Waiting ready the pods
         run: |
           kubectl wait --for=condition=Ready pods --all --timeout=5m
+
+      - name: Patch deployment process for the tests
+        working-directory: ./modules/apiserver/tests
+        run: |
+          make undeploy-operator patch-endpoint generate-local-webhook-certs
 
       - name: Show pod status
         run: |
@@ -137,7 +137,7 @@ jobs:
 
       - name: Show status
         run: |
-          kubectl get pod,sts,deploy,svc,cj,job -o yaml
+          kubectl get pod,sts,deploy,svc,cj,job
         if: ${{ failure() }}
 
       - name: Generating logs

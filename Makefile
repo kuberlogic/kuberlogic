@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.23
+VERSION ?= 0.0.24
 # Default bundle image tag
 BUNDLE_IMG ?= kuberlogic-operator:$(VERSION)
 # Options for 'bundle-build'
@@ -167,7 +167,7 @@ refresh-go-sum:
 
 bump-operator-version:
 	set -o errexit; \
-	for module in updater alert-receiver watcher apiserver; do \
+	for module in updater alert-receiver apiserver; do \
   		echo "Entering into" $${module}; \
 	  	cd ./modules/$${module}; \
 	  	go mod edit -droprequire github.com/kuberlogic/operator/modules/operator go.mod; \
