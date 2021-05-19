@@ -93,4 +93,4 @@ generate-local-webhook-certs:
 	kubectl get secret webhook-server-cert -o=jsonpath="{.data['tls\.crt']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.crt
 
 undeploy-operator:
-	kubectl delete deployment -l control-plane=kuberlogic-operator --wait
+	kubectl delete deployment -l control-plane=kuberlogic-operator

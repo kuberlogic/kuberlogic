@@ -111,7 +111,10 @@ jobs:
       - name: Patch deployment process for ability using webhook locally in the tests
         working-directory: ./modules/apiserver/tests
         run: |
-          make undeploy-operator generate-local-webhook-certs patch-endpoint
+          make undeploy-operator generate-local-webhook-certs
+          echo "Waiting some time to process updating endpoint to none after deleting deployments"
+          sleep 10
+          make patch-endpoint
 
       - name: Show pod status
         run: |
