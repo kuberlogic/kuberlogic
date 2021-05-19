@@ -93,7 +93,7 @@ jobs:
           REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Execute patch (endpoints) for ability using webhook locally in the tests
+      - name: PATCH - Create endpoint for ability using webhook locally in the tests
         working-directory: ./modules/apiserver/tests
         run: |
           make patch-endpoint
@@ -123,10 +123,20 @@ jobs:
           echo "Waiting for keycloak pods"
           kubectl wait --for=condition=Ready pods --all --timeout=5m
 
-      - name: Execute patch (remove operator & certs) for ability using webhook locally in the tests
+      - name: PATCH - Remove operator, creating certs, change endpoint for ability using webhook locally in the tests
         working-directory: ./modules/apiserver/tests
         run: |
-          make undeploy-operator generate-local-webhook-certs patch-endpoint
+          make undeploy-operator generate-local-webhook-certs
+          echo "Wait some time before patching endpoint"
+          sleep 10
+          make patch-endpoint
+
+      - name: endpoints & services
+        run: |
+          kubectl get endpoints
+          kubectl get services
+        if: ${{ always() }}
+        continue-on-error: true
 
       - name: Show pod status
         run: |
