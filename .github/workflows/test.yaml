@@ -65,7 +65,8 @@ jobs:
 
       - name: Updating modules onto current operator version
         run: |
-          make bump-operator-version BRANCH=$GITHUB_SHA
+          make bump-operator-version BRANCH=${{ github.event.pull_request.head.sha }}
+        if: github.event_name == 'pull_request'
 
       - name: Get dependencies for the apiserver
         working-directory: ./modules/apiserver
