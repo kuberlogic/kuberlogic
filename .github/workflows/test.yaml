@@ -81,6 +81,13 @@ jobs:
           minikube version: 'v1.19.0'
           kubernetes version: 'v1.20.5'
           github token: ${{ secrets.GITHUB_TOKEN }}
+          start args: --extra-config=apiserver.enable-aggregator-routing=true
+
+      - name: kube apiserver
+        run: |
+          cat /etc/kubernetes/manifests/kube-apiserver.yaml
+        if: ${{ always() }}
+        continue-on-error: true
 
       - name: Create secret of operator
         run: |
