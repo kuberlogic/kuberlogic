@@ -1,6 +1,8 @@
 .EXPORT_ALL_VARIABLES:
 
-KUBERLOGIC_AUTH_PROVIDER ?= none
+ifeq ($(KUBERLOGIC_AUTH_PROVIDER),)
+  KUBERLOGIC_AUTH_PROVIDER = none
+endif
 
 # private repo for images
 IMG_REPO = quay.io/kuberlogic

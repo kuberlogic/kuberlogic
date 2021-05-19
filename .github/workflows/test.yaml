@@ -98,6 +98,10 @@ jobs:
       - name: Waiting ready the pods
         run: |
           kubectl wait --for=condition=Ready pods --all --timeout=5m
+          echo "Waiting some time for creating keycloak pods dynamically"
+          sleep 10
+          echo "Waiting for keycloak pods"
+          kubectl wait --for=condition=Ready pods --all --timeout=5m
 
       - name: Patch deployment process for the tests
         working-directory: ./modules/apiserver/tests
@@ -118,12 +122,12 @@ jobs:
       - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
         run: |
-          KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=TestService/$TYPE
+          KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443 GODEBUG=x509ignoreCN=0 KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=TestService/$TYPE
         env:
-          #KUBERLOGIC_AUTH_PROVIDER: keycloak
-          #KUBERLOGIC_AUTH_KEYCLOAK_CLIENTID: apiserver
-          #KUBERLOGIC_AUTH_KEYCLOAK_CLIENT_SECRET: apiserver-secret
-          #KUBERLOGIC_AUTH_KEYCLOAK_REALM_NAME: kuberlogic_realm
+          KUBERLOGIC_AUTH_PROVIDER: keycloak
+          KUBERLOGIC_AUTH_KEYCLOAK_CLIENTID: apiserver
+          KUBERLOGIC_AUTH_KEYCLOAK_CLIENT_SECRET: apiserver-secret
+          KUBERLOGIC_AUTH_KEYCLOAK_REALM_NAME: kuberlogic_realm
           PG_VERSION: ${{ matrix.pg_version }}
           MY_VERSION: ${{ matrix.my_version }}
           TYPE: ${{ matrix.type }}
@@ -137,7 +141,7 @@ jobs:
 
       - name: Show status
         run: |
-          kubectl get pod,sts,deploy,svc,cj,job
+          kubectl get pod,sts,deploy,svc,cj,job -o yaml
         if: ${{ failure() }}
 
       - name: Generating logs
