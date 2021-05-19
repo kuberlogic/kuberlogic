@@ -83,12 +83,6 @@ jobs:
           github token: ${{ secrets.GITHUB_TOKEN }}
           start args: --extra-config=apiserver.enable-aggregator-routing=true
 
-      - name: kube apiserver
-        run: |
-          cat /etc/kubernetes/manifests/kube-apiserver.yaml
-        if: ${{ always() }}
-        continue-on-error: true
-
       - name: Create secret of operator
         run: |
           kubectl create secret docker-registry kuberlogic-registry --docker-server=$REGISTRY_SERVER --docker-username=$REGISTRY_USER --docker-password=$REGISTRY_PASSWORD
@@ -96,6 +90,18 @@ jobs:
           REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
           REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Execute patch (endpoints) for ability using webhook locally in the tests
+        working-directory: ./modules/apiserver/tests
+        run: |
+          make patch-endpoint
+
+      - name: endpoints & services
+        run: |
+          kubectl get endpoints
+          kubectl get services
+        if: ${{ always() }}
+        continue-on-error: true
 
       - name: Deploy operator
         run: |
@@ -115,13 +121,10 @@ jobs:
           echo "Waiting for keycloak pods"
           kubectl wait --for=condition=Ready pods --all --timeout=5m
 
-      - name: Patch deployment process for ability using webhook locally in the tests
+      - name: Execute patch (remove operator & certs) for ability using webhook locally in the tests
         working-directory: ./modules/apiserver/tests
         run: |
           make undeploy-operator generate-local-webhook-certs
-          echo "Waiting some time to process updating endpoint to none after deleting deployments"
-          sleep 10
-          make patch-endpoint
 
       - name: Show pod status
         run: |
