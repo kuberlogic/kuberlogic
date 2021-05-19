@@ -6,10 +6,10 @@ images:
   newTag: 0.0.18
 - name: controller
   newName: quay.io/kuberlogic/operator
-  newTag: 0.0.23
+  newTag: 0.0.24
 - name: operator
   newName: quay.io/kuberlogic/operator
-  newTag: 0.0.23
+  newTag: 0.0.24
 patchesStrategicMerge:
 - env.yaml
 resources:
