@@ -108,10 +108,10 @@ jobs:
           echo "Waiting for keycloak pods"
           kubectl wait --for=condition=Ready pods --all --timeout=5m
 
-      - name: Patch deployment process for the tests
+      - name: Patch deployment process for ability using webhook locally in the tests
         working-directory: ./modules/apiserver/tests
         run: |
-          make undeploy-operator patch-endpoint generate-local-webhook-certs
+          make undeploy-operator generate-local-webhook-certs patch-endpoint
 
       - name: Show pod status
         run: |
@@ -157,6 +157,8 @@ jobs:
           kubectl describe pod -l name=postgres-operator > postgres-operator.describe.log
           kubectl describe pod -l app=mysql-operator > mysql-operator.describe.log
           kubectl get pod > pods-status.log
+          kubectl get endpoints > endpoints.log
+          kubectl get services > services.log
           kubectl get kuberlogicservice,kuberlogicbackupschedules,kuberlogicbackuprestores > kuberlogics-services.log
           kubectl describe pod -l app.kubernetes.io/name=mysql > mysql-cluster.describe.log
           kubectl describe pod -l application=spilo > pg-cluster.describe.log
