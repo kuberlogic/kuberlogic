@@ -112,6 +112,7 @@ github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f/go.mod h1:E3G3o1h8I7cfc
 github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwcJI5acqYI6dE=
 github.com/cpuguy83/go-md2man/v2 v2.0.0/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
+github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -430,10 +431,13 @@ github.com/kr/pty v1.1.5/go.mod h1:9r2w37qlBe7rQ6e1fg1S/9xpWHSnaqNdHD3WcMdbPDA=
 github.com/kr/pty v1.1.8/go.mod h1:O1sed60cT9XZ5uDucP5qwvh+TE3NnUj51EiZO/lmSfw=
 github.com/kr/text v0.1.0 h1:45sCR5RtlFHMR4UwH9sdQ5TC8v0qDQCHnXt+kaKSTVE=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
+github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
+github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
 github.com/kuberlogic/operator v0.0.19-0.20210428062110-76a6c5487ddd h1:iXrxUdDA+cCU/O/PNWljIFKK6lPog/QmbicZ3jJohhU=
 github.com/kuberlogic/operator v0.0.19-0.20210428131458-1faca8b5c54b h1:ZM+/AF1Hb0UGgIiLETCYjjA5t1qzKNdINb56Ic1QUfI=
 github.com/kuberlogic/operator v0.0.19-0.20210429112423-99b19813850c h1:nrnD69msGZlsBmn/s3DFO9q9EEHeFh2DLj4FK8JZ8HM=
 github.com/kuberlogic/operator v0.0.19-0.20210518132824-9288174e3b8e h1:/0CodbYD1zrR8GGFAwud2Vp8tXbArHteXrnklbeH1eg=
+github.com/kuberlogic/operator v0.0.19-0.20210519062852-eebefd191bed h1:MwhKhZM4xSLTDDJ03avEXhal2CudvvQVBe1n/+Ayt7A=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210326133005-d49b714c8e5a h1:pHQYnK5OSAcg6tg8LJYjvvWqqPn5Pw4mJggqObPUYq4=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210326133005-d49b714c8e5a/go.mod h1:2cyUHMHaurG84hq+Xti0icYvoMoeSv1XNykKC/v0MQ4=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210415125446-6bf1236cc741 h1:MPa1tkL16TrvtW4WEkkToapt0Z+TXG7G7Sbu4/pb5XE=
@@ -478,6 +482,8 @@ github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210429112423-99b1981
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210429112423-99b19813850c/go.mod h1:iuiR/qHc7f18J1ONkeZF/tMKdYwECi0wCkAgeSFTqdY=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210518132824-9288174e3b8e h1:uQVTXuKqZn9KlRk4nlwo+4SppU39LoTm4N2ZYCZQXfc=
 github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210518132824-9288174e3b8e/go.mod h1:iuiR/qHc7f18J1ONkeZF/tMKdYwECi0wCkAgeSFTqdY=
+github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210519062852-eebefd191bed h1:VSqLRbkJKhJ+k1kf1gQt4sz4doYZo8f2jPITgmsYq68=
+github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210519062852-eebefd191bed/go.mod h1:8XmInRmNsNRC6Im25IESAPDOb9hP+L8l8Lk76qUvQNc=
 github.com/kuberlogic/zapsentry v1.6.2 h1:aLnd1nQU2EUuFTB8z//s2sn5HRNOuqDyeQCcI/fCXw0=
 github.com/kuberlogic/zapsentry v1.6.2/go.mod h1:pvPfXqGhvpUQgeWfCfkrQxJ1Y65TVJtsA0hZ4eJ4sa0=
 github.com/labstack/echo/v4 v4.1.11/go.mod h1:i541M3Fj6f76NZtHSj7TXnyM8n2gaodfvfxNnFqi74g=
@@ -544,6 +550,7 @@ github.com/nats-io/jwt v0.3.0/go.mod h1:fRYCDE99xlTsqUzISS1Bi75UBJ6ljOJQOAAu5Vgl
 github.com/nats-io/nats.go v1.9.1/go.mod h1:ZjDU1L/7fJ09jvUSRVBR2e7+RnLiiIQyqyzEE/Zbp4w=
 github.com/nats-io/nkeys v0.1.0/go.mod h1:xpnFELMwJABBLVhffcfd1MZx6VsNRFpEugbxziKVo7w=
 github.com/nats-io/nuid v1.0.1/go.mod h1:19wcPz3Ph3q0Jbyiqsd0kePYG7A95tJPxeL+1OSON2c=
+github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/nxadm/tail v1.4.4 h1:DQuhQpB1tVlglWS2hLQ5OV6B5r8aGxSrPc5Qo6uTN78=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
@@ -679,6 +686,8 @@ github.com/valyala/fasthttp v1.6.0/go.mod h1:FstJa9V+Pj9vQ7OJie2qMHdwemEDaDiSdBn
 github.com/valyala/fasttemplate v1.0.1/go.mod h1:UQGH1tvbgY+Nz5t2n7tXsz52dQxojPUpymEIMZ47gx8=
 github.com/valyala/tcplisten v0.0.0-20161114210144-ceec8f93295a/go.mod h1:v3UYOV9WzVtRmSR+PDvWpU/qWl4Wa5LApYYX4ZtKbio=
 github.com/vektah/gqlparser v1.1.2/go.mod h1:1ycwN7Ij5njmMkPPAOaRFY4rET2Enx7IkVv3vaXspKw=
+github.com/vrischmann/envconfig v1.3.0 h1:4XIvQTXznxmWMnjouj0ST5lFo/WAYf5Exgl3x82crEk=
+github.com/vrischmann/envconfig v1.3.0/go.mod h1:bbvxFYJdRSpXrhS63mBFtKJzkDiNkyArOLXtY6q0kuI=
 github.com/wgliang/cron v0.0.0-20180129105837-79834306f643/go.mod h1:8vrxYe6J+ZIHJViXE2UhdSbbu3VWHGxLo+QzdqeGDvM=
 github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=
 github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415/go.mod h1:GwrjFmJcFw6At/Gs6z4yjiIwzuJ1/+UwLxMQDVQXShQ=
@@ -1023,6 +1032,7 @@ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 h1:YR8cESwS4TdDjEe65xsg0ogRM/Nc3DYOhEAlW+xobZo=
 gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/cheggaaa/pb.v1 v1.0.25/go.mod h1:V/YB90LKu/1FcN3WVnfiiE5oMCibMjukxqG/qStrOgw=
 gopkg.in/errgo.v2 v2.1.0/go.mod h1:hNsd1EY+bozCKY1Ytp96fpM3vjJbqLJn88ws8XvfDNI=
 gopkg.in/fsnotify.v1 v1.4.7/go.mod h1:Tz8NjZHkW78fSQdbUxIjBTcgA1z1m8ZHf0WmKUhAMys=

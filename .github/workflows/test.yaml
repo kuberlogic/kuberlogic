@@ -18,8 +18,8 @@ jobs:
           - type: postgresql
             pg_version: 13
 
-          - type: postgresql
-            pg_version: 12
+#          - type: postgresql
+#            pg_version: 12
 
 #          - type: postgresql
 #            pg_version: 11
