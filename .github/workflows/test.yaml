@@ -81,6 +81,8 @@ jobs:
           minikube version: 'v1.19.0'
           kubernetes version: 'v1.20.5'
           github token: ${{ secrets.GITHUB_TOKEN }}
+          # Turns on aggregator routing requests to endpoints IP rather than cluster IP.
+          # It's need for the local usage for the webhook
           start args: --extra-config=apiserver.enable-aggregator-routing=true
 
       - name: Create secret of operator
@@ -124,7 +126,7 @@ jobs:
       - name: Execute patch (remove operator & certs) for ability using webhook locally in the tests
         working-directory: ./modules/apiserver/tests
         run: |
-          make undeploy-operator generate-local-webhook-certs
+          make undeploy-operator generate-local-webhook-certs patch-endpoint
 
       - name: Show pod status
         run: |
