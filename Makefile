@@ -2,16 +2,6 @@
 
 # Current Operator version
 VERSION ?= 0.0.24
-# Default bundle image tag
-BUNDLE_IMG ?= kuberlogic-operator:$(VERSION)
-# Options for 'bundle-build'
-ifneq ($(origin CHANNELS), undefined)
-BUNDLE_CHANNELS := --channels=$(CHANNELS)
-endif
-ifneq ($(origin DEFAULT_CHANNEL), undefined)
-BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
-endif
-BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
