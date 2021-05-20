@@ -39,8 +39,8 @@ jobs:
 ##          - type: postgresql
 ##            pg_version: 9.3
 #
-#          - type: mysql
-#            my_version: 5.7.31
+          - type: mysql
+            my_version: 5.7.31
 #
 #          - type: mysql
 #            my_version: 5.7.29
@@ -120,7 +120,7 @@ jobs:
           docker images
         if: ${{ failure() }}
 
-      - name: Create test bucket
+      - name: Create test bucket (backup storage)
         working-directory: ./modules/apiserver/tests
         run: |
           make create-bucket
@@ -131,7 +131,7 @@ jobs:
           make undeploy-operator generate-local-webhook-certs patch-endpoint
           kubectl get endpoints
 
-      - name: Ensure keycloak is running
+      - name: Ensure keycloak pods are running
         run: |
           kubectl wait --for=condition=Ready pods -l app=keycloak --timeout=5m
 

@@ -58,7 +58,7 @@ manager: generate fmt vet
 	go build -o bin/manager main.go
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
-run: generate fmt manifests
+run: generate fmt vet manifests
 	cd modules/operator ;\
 	go run main.go ;\
 
@@ -80,13 +80,16 @@ undeploy: kustomize
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
 deploy-requirements: kustomize
-	for module in config/certmanager/cert-manager.yml \
+	# cert-manager included non-crd resources
+	# it can not configured with kustomization due to tight integrate with namespace=cert-manager
+	# (see cert-manager.yaml for the details)
+	for module in config/certmanager/cert-manager.yaml \
 				  config/keycloak/crd.yaml; do \
   		kubectl apply -f $${module} ;\
   	done
 
 undeploy-requirements: kustomize
-	for module in config/certmanager/cert-manager.yml \
+	for module in config/certmanager/cert-manager.yaml \
 				  config/keycloak/crd.yaml; do \
   		kubectl delete -f $${module} ;\
   	done

@@ -9,11 +9,11 @@ var (
 	syncMus = sync.Map{}
 )
 
-func getMutex(name types.NamespacedName) sync.Mutex {
+func getMutex(name types.NamespacedName) *sync.Mutex {
 	v, ok := syncMus.Load(name)
 	if !ok {
-		v = sync.Mutex{}
+		v = &sync.Mutex{}
 		syncMus.Store(name, v)
 	}
-	return v.(sync.Mutex)
+	return v.(*sync.Mutex)
 }

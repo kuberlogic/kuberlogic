@@ -12,7 +12,7 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: serving-cert  #commonName this name should match the one appeared in kustomizeconfig.yaml
+  name: serving-cert  #this name should match the one appeared in kustomizeconfig.yaml
   namespace: system
 spec:
   # $(SERVICE_NAME) and $(SERVICE_NAMESPACE) will be substituted by kustomize
