@@ -64,7 +64,7 @@ uninstall: manifests kustomize
 deploy: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image operator=$(IMG)
 	cd config/updater && $(KUSTOMIZE) edit set image updater=$(UPDATER_IMG)
-	$(KUSTOMIZE) build config/default --reorder none | kubectl apply -f -
+	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 undeploy: kustomize
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
@@ -76,7 +76,9 @@ deploy-requirements: kustomize
 	for module in config/certmanager/cert-manager.yaml \
 				  config/keycloak/crd.yaml; do \
   		kubectl apply -f $${module} ;\
-  	done
+  	done; \
+  	# waiting for cert-manager-webhook endpoint assign an ip address \
+  	kubectl wait -n cert-manager --for=condition=Ready pods --all --timeout=5m
 
 undeploy-requirements: kustomize
 	for module in config/certmanager/cert-manager.yaml \
