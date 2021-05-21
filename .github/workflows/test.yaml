@@ -18,41 +18,41 @@ jobs:
           - type: postgresql
             pg_version: 13
 
-          - type: postgresql
-            pg_version: 12
-
-          - type: postgresql
-            pg_version: 11
-
-          - type: postgresql
-            pg_version: 10
-
-          - type: postgresql
-            pg_version: 9.6
-
-          - type: postgresql
-            pg_version: 9.5
-
 #          - type: postgresql
-#            pg_version: 9.4
+#            pg_version: 12
 #
 #          - type: postgresql
-#            pg_version: 9.3
-
-          - type: mysql
-            my_version: 5.7.31
-
-          - type: mysql
-            my_version: 5.7.29
-
-          - type: mysql
-            my_version: 5.7.26
-
-          - type: mysql
-            my_version: 5.7.24
-
-#         - type: mysql
-#            version: 8.0.20
+#            pg_version: 11
+#
+#          - type: postgresql
+#            pg_version: 10
+#
+#          - type: postgresql
+#            pg_version: 9.6
+#
+#          - type: postgresql
+#            pg_version: 9.5
+#
+##          - type: postgresql
+##            pg_version: 9.4
+##
+##          - type: postgresql
+##            pg_version: 9.3
+#
+#          - type: mysql
+#            my_version: 5.7.31
+#
+#          - type: mysql
+#            my_version: 5.7.29
+#
+#          - type: mysql
+#            my_version: 5.7.26
+#
+#          - type: mysql
+#            my_version: 5.7.24
+#
+##         - type: mysql
+##            version: 8.0.20
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -93,6 +93,12 @@ jobs:
           REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
           REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: PATCH - Create endpoint for deploying (next stage) validate/mutate webhook configuration in enable-aggregator-routing apiserver mode
+        working-directory: ./modules/apiserver/tests
+        run: |
+          make patch-endpoint
+          kubectl get endpoints
 
       - name: Deploy operator
         run: |

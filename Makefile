@@ -64,7 +64,7 @@ uninstall: manifests kustomize
 deploy: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image operator=$(IMG)
 	cd config/updater && $(KUSTOMIZE) edit set image updater=$(UPDATER_IMG)
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	$(KUSTOMIZE) build config/default --reorder none | kubectl apply -f -
 
 undeploy: kustomize
 	$(KUSTOMIZE) build config/default | kubectl delete -f -

@@ -3,8 +3,6 @@ kind: Kustomization
 resources:
   - ../crd
   - ../rbac
-  - ../manager
-  - ../webhook
   - ../certmanager
   - ../updater
   - ../monitoring
@@ -12,6 +10,8 @@ resources:
   - ../operators/mysql/presslabs
   - ../operators/redis/spotahome
   - ../keycloak
+  - ../webhook # should be before manager
+  - ../manager
 # Adds namespace to all resources.
 namespace: default
 
