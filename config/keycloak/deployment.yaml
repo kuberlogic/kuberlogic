@@ -31,3 +31,7 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "keycloak-operator"
+            - name: RELATED_IMAGE_KEYCLOAK_INIT_CONTAINER
+              value: quay.io/kuberlogic/keycloak-init-container:master
+            - name: RELATED_IMAGE_POSTGRESQL
+              value: quay.io/kuberlogic/keycloak-postgresql-10-rhel7:1

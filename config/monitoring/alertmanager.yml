@@ -35,7 +35,7 @@ spec:
     spec:
       containers:
         - name: alertmanager
-          image: prom/alertmanager
+          image: quay.io/kuberlogic/alertmanager:latest
           volumeMounts:
             - name: alertmanager-config
               mountPath: /etc/alertmanager/alertmanager.yml

@@ -99,7 +99,7 @@ spec:
       serviceAccountName: sa-kube-eagle
       containers:
         - name: kube-eagle
-          image: "quay.io/google-cloud-tools/kube-eagle:1.1.4"
+          image: quay.io/kuberlogic/kube-eagle:1.1.4
           imagePullPolicy: IfNotPresent
           env:
             - name: TELEMETRY_HOST
@@ -122,7 +122,7 @@ spec:
             - --upstream=http://127.0.0.1:8080/
             - --logtostderr=true
             - --v=10
-          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+          image: quay.io/kuberlogic/kube-rbac-proxy:v0.5.0
           imagePullPolicy: IfNotPresent
           name: kube-rbac-proxy
           ports:
