@@ -5,8 +5,10 @@ metadata:
   name: webhook-service
   namespace: system
 spec:
+#  type: LoadBalancer
   ports:
     - port: 443
       targetPort: 9443
+#      nodePort: 30843
   selector:
     control-plane: kuberlogic-operator

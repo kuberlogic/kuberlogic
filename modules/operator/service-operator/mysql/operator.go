@@ -15,8 +15,7 @@ import (
 )
 
 const (
-	image   = "mysql"
-	version = "5.7.26"
+	image = "mysql"
 )
 
 type Mysql struct {
@@ -119,14 +118,6 @@ func (p *Mysql) Init(kls *kuberlogicv1.KuberLogicService) {
 
 func (p *Mysql) InitFrom(o runtime.Object) {
 	p.Operator = *o.(*mysqlv1.MysqlCluster)
-}
-
-func (p *Mysql) GetDefaults() kuberlogicv1.Defaults {
-	return kuberlogicv1.Defaults{
-		VolumeSize: kuberlogicv1.DefaultVolumeSize,
-		Resources:  kuberlogicv1.DefaultResources,
-		Version:    version,
-	}
 }
 
 func (p *Mysql) Update(cm *kuberlogicv1.KuberLogicService) {

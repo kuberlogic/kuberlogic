@@ -63,6 +63,11 @@ jobs:
         env:
           PRIVATE_GITHUB_TOKEN: ${{ secrets.PRIVATE_GITHUB_TOKEN }}
 
+      - name: Updating modules onto current operator version
+        run: |
+          make bump-operator-version BRANCH=${{ github.event.pull_request.head.sha }}
+        if: github.event_name == 'pull_request'
+
       - name: Get dependencies for the apiserver
         working-directory: ./modules/apiserver
         env:
@@ -77,6 +82,10 @@ jobs:
           kubernetes version: 'v1.20.5'
           github token: ${{ secrets.GITHUB_TOKEN }}
 
+          # It's need for the local usage for the webhook:
+          # Turns on aggregator routing requests to endpoints IP rather than cluster IP.
+          start args: --extra-config=apiserver.enable-aggregator-routing=true
+
       - name: Create secret of operator
         run: |
           kubectl create secret docker-registry kuberlogic-registry --docker-server=$REGISTRY_SERVER --docker-username=$REGISTRY_USER --docker-password=$REGISTRY_PASSWORD
@@ -87,12 +96,8 @@ jobs:
 
       - name: Deploy operator
         run: |
-          make deploy-dependencies || true
-          echo "we need to do this twice because we rely on CRD resources"
-          sleep 5
-          make deploy-dependencies
-          echo "wait some time for CRDs to be processed"
-          sleep 60
+          make deploy-requirements
+          make deploy
 
       - name: Setup minio for backup storage
         working-directory: ./modules/apiserver/tests
@@ -109,10 +114,20 @@ jobs:
           docker images
         if: ${{ failure() }}
 
-      - name: Create test bucket
+      - name: Create test bucket (backup storage)
         working-directory: ./modules/apiserver/tests
         run: |
           make create-bucket
+
+      - name: PATCH - Remove operator, creating certs, change endpoint for ability using webhook locally in the tests
+        working-directory: ./modules/apiserver/tests
+        run: |
+          make undeploy-operator generate-local-webhook-certs patch-endpoint
+          kubectl get endpoints
+
+      - name: Ensure keycloak pods are running
+        run: |
+          kubectl wait --for=condition=Ready pods -l app=keycloak --timeout=5m
 
       - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
@@ -147,6 +162,8 @@ jobs:
           kubectl describe pod -l name=postgres-operator > postgres-operator.describe.log
           kubectl describe pod -l app=mysql-operator > mysql-operator.describe.log
           kubectl get pod > pods-status.log
+          kubectl get endpoints > endpoints.log
+          kubectl get services > services.log
           kubectl get kuberlogicservice,kuberlogicbackupschedules,kuberlogicbackuprestores > kuberlogics-services.log
           kubectl describe pod -l app.kubernetes.io/name=mysql > mysql-cluster.describe.log
           kubectl describe pod -l application=spilo > pg-cluster.describe.log

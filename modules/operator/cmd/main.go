@@ -83,6 +83,12 @@ func Main(args []string) {
 		os.Exit(1)
 	}
 
+	// init kuberlogic service webhook
+	if err = (&kuberlogicv1.KuberLogicService{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "KuberLogicServices")
+		os.Exit(1)
+	}
+
 	// create controller for KuberLogicBackupSchedule resource
 	if err = (&controllers.KuberLogicBackupScheduleReconciler{
 		Client:              mgr.GetClient(),

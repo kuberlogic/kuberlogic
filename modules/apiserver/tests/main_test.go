@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"flag"
 	cmd2 "github.com/kuberlogic/operator/modules/apiserver/cmd"
 	"github.com/kuberlogic/operator/modules/operator/cmd"
 	"github.com/prometheus/common/log"
@@ -48,6 +49,7 @@ func setup() {
 	log.Info("Waiting 15 seconds for the starting goroutines...")
 	time.Sleep(15 * time.Second)
 
+	flag.Parse()
 	if testing.Short() {
 		parallelFunc(createService)
 	}

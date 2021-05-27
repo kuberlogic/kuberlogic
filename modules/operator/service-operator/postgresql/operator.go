@@ -14,10 +14,9 @@ import (
 )
 
 const (
-	image   = "postgresql"
-	tag     = "spilo-13-2.0-p6"
-	version = "13"
-	teamId  = "kuberlogic"
+	image  = "postgresql"
+	tag    = "spilo-13-2.0-p6"
+	teamId = "kuberlogic"
 )
 
 type Postgres struct {
@@ -153,14 +152,6 @@ func (p *Postgres) Init(kls *kuberlogicv1.KuberLogicService) {
 				},
 			},
 		},
-	}
-}
-
-func (p *Postgres) GetDefaults() kuberlogicv1.Defaults {
-	return kuberlogicv1.Defaults{
-		VolumeSize: kuberlogicv1.DefaultVolumeSize,
-		Resources:  kuberlogicv1.DefaultResources,
-		Version:    version,
 	}
 }
 

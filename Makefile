@@ -1,17 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.23
-# Default bundle image tag
-BUNDLE_IMG ?= kuberlogic-operator:$(VERSION)
-# Options for 'bundle-build'
-ifneq ($(origin CHANNELS), undefined)
-BUNDLE_CHANNELS := --channels=$(CHANNELS)
-endif
-ifneq ($(origin DEFAULT_CHANNEL), undefined)
-BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
-endif
-BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
+VERSION ?= 0.0.24
 
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
@@ -32,7 +22,6 @@ ALERT_RECEIVER_IMG ?= $(IMG_REPO)/$(ALERT_RECEIVER_NAME):$(VERSION)
 BACKUP_PREFIX = backup
 # restore from backup image prefix
 RESTORE_PREFIX = backup-restore
-
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
@@ -77,16 +66,30 @@ deploy: manifests kustomize
 	cd config/updater && $(KUSTOMIZE) edit set image updater=$(UPDATER_IMG)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
-undeploy:
+undeploy: kustomize
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
-deploy-dependencies: manifests kustomize
-	$(KUSTOMIZE) build config/dependencies | kubectl apply -f -
+deploy-requirements: kustomize
+	# cert-manager included non-crd resources
+	# it can not configured with kustomization due to tight integrate with namespace=cert-manager
+	# (see cert-manager.yaml for the details)
+	for module in config/certmanager/cert-manager.yaml \
+				  config/keycloak/crd.yaml; do \
+  		kubectl apply -f $${module} ;\
+  	done; \
+  	# waiting for cert-manager-webhook endpoint assign an ip address \
+  	kubectl wait -n cert-manager --for=condition=Ready pods --all --timeout=5m
+
+undeploy-requirements: kustomize
+	for module in config/certmanager/cert-manager.yaml \
+				  config/keycloak/crd.yaml; do \
+  		kubectl delete -f $${module} ;\
+  	done
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
 	cd modules/operator; \
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=../../config/crd/bases ;\
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=../../config/crd/bases output:webhook:artifacts:config=../../config/webhook ;\
 
 # Run go fmt against code
 fmt:
@@ -159,7 +162,7 @@ refresh-go-sum:
 
 bump-operator-version:
 	set -o errexit; \
-	for module in updater alert-receiver watcher apiserver; do \
+	for module in updater alert-receiver apiserver; do \
   		echo "Entering into" $${module}; \
 	  	cd ./modules/$${module}; \
 	  	go mod edit -droprequire github.com/kuberlogic/operator/modules/operator go.mod; \
@@ -167,48 +170,24 @@ bump-operator-version:
   		cd -; \
 	done
 
-# find or download controller-gen
-# download controller-gen if necessary
-controller-gen:
-ifeq (, $(shell which controller-gen))
-	@{ \
-	set -e ;\
-	CONTROLLER_GEN_TMP_DIR=$$(mktemp -d) ;\
-	cd $$CONTROLLER_GEN_TMP_DIR ;\
-	go mod init tmp ;\
-	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.3.0 ;\
-	rm -rf $$CONTROLLER_GEN_TMP_DIR ;\
-	}
-CONTROLLER_GEN=$(GOBIN)/controller-gen
-else
-CONTROLLER_GEN=$(shell which controller-gen)
-endif
+CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
+controller-gen: ## Download controller-gen locally if necessary.
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0)
 
-kustomize:
-ifeq (, $(shell which kustomize))
-	@{ \
-	set -e ;\
-	KUSTOMIZE_GEN_TMP_DIR=$$(mktemp -d) ;\
-	cd $$KUSTOMIZE_GEN_TMP_DIR ;\
-	go mod init tmp ;\
-	go get sigs.k8s.io/kustomize/kustomize/v3@v3.5.4 ;\
-	rm -rf $$KUSTOMIZE_GEN_TMP_DIR ;\
-	}
-KUSTOMIZE=$(GOBIN)/kustomize
-else
-KUSTOMIZE=$(shell which kustomize)
-endif
+KUSTOMIZE = $(shell pwd)/bin/kustomize
+kustomize: ## Download kustomize locally if necessary.
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.1.2)
 
-# Generate bundle manifests and metadata, then validate generated files.
-.PHONY: bundle
-bundle: manifests
-	operator-sdk generate kustomize manifests -q
-	cd config/manager && $(KUSTOMIZE) edit set image operator=$(IMG)
-	cd config/updater && $(KUSTOMIZE) edit set image updater=$(UPDATER_IMG)
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	operator-sdk bundle validate ./bundle
-
-# Build the bundle image.
-.PHONY: bundle-build
-bundle-build:
-	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+# go-get-tool will 'go get' any package $2 and install it to $1.
+PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+define go-get-tool
+@[ -f $(1) ] || { \
+set -e ;\
+TMP_DIR=$$(mktemp -d) ;\
+cd $$TMP_DIR ;\
+go mod init tmp ;\
+echo "Downloading $(2)" ;\
+GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+rm -rf $$TMP_DIR ;\
+}
+endef

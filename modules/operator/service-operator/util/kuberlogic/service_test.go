@@ -26,9 +26,7 @@ var cmPg = &kuberlogicv1.KuberLogicService{
 			Weekday:   "Monday",
 		},
 	},
-	Status: kuberlogicv1.KuberLogicServiceStatus{
-		Status: "Running",
-	},
+	Status: kuberlogicv1.KuberLogicServiceStatus{},
 }
 
 var cmMy = &kuberlogicv1.KuberLogicService{
@@ -49,9 +47,7 @@ var cmMy = &kuberlogicv1.KuberLogicService{
 			Weekday:   "Sunday",
 		},
 	},
-	Status: kuberlogicv1.KuberLogicServiceStatus{
-		Status: "Running",
-	},
+	Status: kuberlogicv1.KuberLogicServiceStatus{},
 }
 
 func TestGetClusterCredentialsInfo(t *testing.T) {

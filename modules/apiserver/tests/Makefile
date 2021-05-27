@@ -1,5 +1,9 @@
 .EXPORT_ALL_VARIABLES:
 
+ifeq ($(KUBERLOGIC_AUTH_PROVIDER),)
+  KUBERLOGIC_AUTH_PROVIDER = none
+endif
+
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
 IMG = $(IMG_REPO)/minio:1.0.0
@@ -61,7 +65,7 @@ push-minio:
 	docker push $(IMG)
 
 deploy-minio:
-	kubectl apply -f minio/deployment.yaml
+	kubectl apply -f config/minio/deployment.yaml
 
 endpoint-minio:
 	@echo $(MINIO_ENDPOINT)
@@ -79,3 +83,15 @@ show-minio-credentials:
 	@echo "AWS_SECRET_ACCESS_KEY:" $(MINIO_SECRET_KEY)
 	@echo "Endpoint:" $(MINIO_ENDPOINT)
 	@echo "Default bucket:" $(BUCKET)
+
+patch-endpoint:
+	MINIKUBE_IP=$$(minikube ip) envsubst < config/webhook/endpoint.yaml | kubectl apply -f -
+
+generate-local-webhook-certs:
+	mkdir -p /tmp/k8s-webhook-server/serving-certs/; \
+	kubectl get secret webhook-server-cert -o=jsonpath="{.data['tls\.key']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.key
+	kubectl get secret webhook-server-cert -o=jsonpath="{.data['tls\.crt']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.crt
+
+undeploy-operator:
+	kubectl delete deployment -l control-plane=kuberlogic-operator
+	kubectl wait pod -l control-plane=kuberlogic-operator --for=delete --timeout=2m

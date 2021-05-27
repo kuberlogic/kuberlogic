@@ -127,6 +127,76 @@ func (s *tService) Create(t *testing.T) {
 
 }
 
+func (s *tService) TryCreateWithSmallCPULimits(t *testing.T) {
+	api := newApi(t)
+	api.setBearerToken()
+	params := map[string]interface{}{
+		"name":     "new-" + s.name,
+		"ns":       s.ns,
+		"type":     s.type_,
+		"replicas": s.replicas,
+		// min: 250m
+		"limits": map[string]string{"cpu": "200m", "memory": "512Mi", "volumeSize": "1Gi"},
+	}
+	api.setJsonRequestBody(params)
+	api.sendRequestTo(http.MethodPost, "/services/")
+	api.responseCodeShouldBe(503) // 503 - operator's error
+	api.encodeResponseToJson()
+	api.responseShouldMatchJson(`{"message": "error creating service"}`)
+}
+
+func (s *tService) TryCreateWithSmallMemoryLimits(t *testing.T) {
+	api := newApi(t)
+	api.setBearerToken()
+	params := map[string]interface{}{
+		"name":     "new-" + s.name,
+		"ns":       s.ns,
+		"type":     s.type_,
+		"replicas": s.replicas,
+		// min: 512Mi
+		"limits": map[string]string{"cpu": "250m", "memory": "500Mi", "volumeSize": "1Gi"},
+	}
+	api.setJsonRequestBody(params)
+	api.sendRequestTo(http.MethodPost, "/services/")
+	api.responseCodeShouldBe(503) // 503 - operator's error
+	api.encodeResponseToJson()
+	api.responseShouldMatchJson(`{"message": "error creating service"}`)
+}
+
+func (s *tService) TryCreateWithSmallDiskLimits(t *testing.T) {
+	api := newApi(t)
+	api.setBearerToken()
+	params := map[string]interface{}{
+		"name":     "new-" + s.name,
+		"ns":       s.ns,
+		"type":     s.type_,
+		"replicas": s.replicas,
+		// min: 1Gi
+		"limits": map[string]string{"cpu": "250m", "memory": "512Mi", "volumeSize": "900Mi"},
+	}
+	api.setJsonRequestBody(params)
+	api.sendRequestTo(http.MethodPost, "/services/")
+	api.responseCodeShouldBe(503) // 503 - operator's error
+	api.encodeResponseToJson()
+	api.responseShouldMatchJson(`{"message": "error creating service"}`)
+}
+
+func (s *tService) TryDecreaseVolumeSize(t *testing.T) {
+	api := newApi(t)
+	api.setBearerToken()
+	api.setJsonRequestBody(
+		map[string]interface{}{
+			"name":   s.name,
+			"ns":     s.ns,
+			"type":   s.type_,
+			"limits": map[string]string{"cpu": "250m", "memory": "512Mi", "volumeSize": "800Mi"},
+		})
+	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
+	api.responseCodeShouldBe(400) // 400 - apiserver validating error
+	api.encodeResponseToJson()
+	api.responseShouldMatchJson(`{"message": "error changing service: volume size can't be lowered"}`)
+}
+
 func (s *tService) EditReplicas(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
@@ -141,6 +211,25 @@ func (s *tService) EditReplicas(t *testing.T) {
 	api.responseCodeShouldBe(200)
 	api.encodeResponseToJson()
 	api.fieldIs("replicas", s.newReplicas)
+}
+
+func (s *tService) TryEditType(t *testing.T) {
+	api := newApi(t)
+	api.setBearerToken()
+	newType := "postgresql"
+	if s.type_ == "postgresql" {
+		newType = "mysql"
+	}
+	api.setJsonRequestBody(
+		map[string]interface{}{
+			"name": s.name,
+			"ns":   s.ns,
+			"type": newType,
+		})
+	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
+	api.responseCodeShouldBe(400) // 400 - apiserver validating error
+	api.encodeResponseToJson()
+	api.responseShouldMatchJson(`{"message": "error changing service: type can't be changed"}`)
 }
 
 func (s *tService) EditBackAdvancedConf(t *testing.T) {
@@ -323,6 +412,12 @@ func makeTestService(ts tService) func(t *testing.T) {
 		steps := []func(t *testing.T){
 			ts.Create,
 			ts.CreateSecondOneWithSameName,
+			ts.TryCreateWithSmallCPULimits,
+			ts.TryCreateWithSmallMemoryLimits,
+			ts.TryCreateWithSmallDiskLimits,
+			ts.TryEditType,
+			ts.TryDecreaseVolumeSize,
+
 			ts.CheckRecordCount(1),
 			ts.IncorrectName,
 			ts.WaitForStatus("Ready", 5, 2*60),
