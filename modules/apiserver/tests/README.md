@@ -37,3 +37,8 @@ make test RUN=/postgresql
 ```bash
 make test RUN=TestDb/postgresql
 ```
+
+* run tests against remote Kuberlogic installation
+``bash
+make test REMOTE_DEPS=1 API_HOST=localhost API_PORT=10000 RUN=/postgresql
+``
