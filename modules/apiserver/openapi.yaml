@@ -77,7 +77,7 @@ paths:
           schema:
             $ref: "#/definitions/Error"
     post:
-      x-permission: service:get
+      x-permission: service:add
       x-posthog:
         - key: name
           value: ServiceItem.Name
@@ -737,7 +737,7 @@ paths:
             $ref: "#/definitions/Error"
   /services/{ServiceID}/restores:
     post:
-      x-permission: service:backup-restore:create
+      x-permission: service:backup-restore:add
       x-posthog:
         - key: service-id
           value: ServiceID

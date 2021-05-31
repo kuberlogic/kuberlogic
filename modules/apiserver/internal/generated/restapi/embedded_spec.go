@@ -165,7 +165,7 @@ func init() {
             }
           }
         },
-        "x-permission": "service:get",
+        "x-permission": "service:add",
         "x-posthog": [
           {
             "key": "name",
@@ -1078,7 +1078,7 @@ func init() {
             }
           }
         },
-        "x-permission": "service:backup-restore:create",
+        "x-permission": "service:backup-restore:add",
         "x-posthog": [
           {
             "key": "service-id",
@@ -1884,7 +1884,7 @@ func init() {
             }
           }
         },
-        "x-permission": "service:get",
+        "x-permission": "service:add",
         "x-posthog": [
           {
             "key": "name",
@@ -2873,7 +2873,7 @@ func init() {
             }
           }
         },
-        "x-permission": "service:backup-restore:create",
+        "x-permission": "service:backup-restore:add",
         "x-posthog": [
           {
             "key": "service-id",
