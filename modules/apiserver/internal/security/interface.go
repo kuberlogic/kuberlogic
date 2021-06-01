@@ -12,7 +12,7 @@ import (
 
 type AuthProvider interface {
 	GetAuthenticationSecret(username, password string) (string, error) // returns secret, error
-	Authenticate(secret string) (string, string, error)                // returns username, secret, error
+	Authenticate(secret string) (string, string, string, error)        // returns username, secret, namespace, error
 	Authorize(username, action, object string) (bool, error)           // return authorization success, error
 	CreatePermissionResource(obj string) error
 	DeletePermissionResource(obj string) error

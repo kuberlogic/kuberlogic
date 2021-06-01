@@ -3,7 +3,9 @@ package keycloak
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"crypto/tls"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/coreos/go-oidc"
@@ -94,20 +96,20 @@ func (k *keycloakAuthProvider) GetAuthenticationSecret(username, password string
 	return resp.Oauth2token.AccessToken, nil
 }
 
-func (k *keycloakAuthProvider) Authenticate(token string) (string, string, error) {
+func (k *keycloakAuthProvider) Authenticate(token string) (string, string, string, error) {
 	k.log.Debugw("authenticating new user with token")
 
 	p := strings.Split(token, " ")
 	if len(p) != 2 {
 		k.log.Errorw("error extracting authentication token", "token", token)
-		return "", "", fmt.Errorf("error extracting authentication token")
+		return "", "", "", fmt.Errorf("error extracting authentication token")
 	}
 	authToken := p[1]
 
 	idToken, err := k.oidcVerifier.Verify(k.ctx, p[1])
 	if err != nil {
 		k.log.Errorw("error verifying authentication token", "error", err)
-		return "", "", fmt.Errorf("error veryfying authentication token")
+		return "", "", "", fmt.Errorf("error veryfying authentication token")
 	}
 
 	var userInfo struct {
@@ -116,14 +118,18 @@ func (k *keycloakAuthProvider) Authenticate(token string) (string, string, error
 	}
 	if err := idToken.Claims(&userInfo); err != nil {
 		k.log.Errorw("error getting username from authentication token", "error", err)
-		return "", "", fmt.Errorf("error getting username from authentication token")
+		return "", "", "", fmt.Errorf("error getting username from authentication token")
 	}
 
 	if userInfo.Username == "" || userInfo.Email == "" {
-		return "", "", fmt.Errorf("empty username or email")
+		return "", "", "", fmt.Errorf("empty username or email")
 	}
 
-	return userInfo.Email, authToken, nil
+	// calculate namespace using MD5 function
+	// namespace is not considered as secure data, so it is safe to use MD5 with 32chars fixed length
+	md5Ns := md5.Sum([]byte(userInfo.Email))
+
+	return userInfo.Email, authToken, hex.EncodeToString(md5Ns[:]), nil
 }
 
 func (k *keycloakAuthProvider) Authorize(token, action, object string) (bool, error) {
