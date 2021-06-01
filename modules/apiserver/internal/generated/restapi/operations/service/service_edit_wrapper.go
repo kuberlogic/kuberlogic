@@ -16,8 +16,10 @@ func ServiceEditWrapper(srv Service, next ServiceEditHandlerFunc) (fn ServiceEdi
 
 		log := srv.GetLogger()
 
+		// namespace is always provided as a part of Principal object
+		ns := principal.Namespace
 		// check ServiceID param
-		ns, name, err := util.SplitID(params.ServiceID)
+		_, name, err := util.SplitID(params.ServiceID)
 		if err != nil {
 			msg := "incorrect service id"
 			log.Errorw(msg, "serviceId", params.ServiceID, "error", err)
@@ -60,7 +62,7 @@ func ServiceEditWrapper(srv Service, next ServiceEditHandlerFunc) (fn ServiceEdi
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("service-edit")
-		posthogMsg.With("service-id", params.ServiceID)
+		posthogMsg.With("name", params.ServiceID)
 		posthogMsg.With("type", params.ServiceItem.Type)
 
 		if params.ServiceItem.Replicas != nil {

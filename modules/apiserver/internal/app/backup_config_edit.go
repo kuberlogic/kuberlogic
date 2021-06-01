@@ -13,7 +13,7 @@ import (
 // curl -v -H Content-Type:application/json -H "Authorization: Bearer" -X PUT localhost:8001/api/v1/services/<service-id>/backup-config -d '{"aws_access_key_id":"","aws_secret_access_key":"","bucket":"cloudmanaged","endpoint":"https://fra1.digitaloceanspaces.com","schedule":"* 1 * * *","type":"s3","enabled":false}'
 func (srv *Service) BackupConfigEditHandler(params apiService.BackupConfigEditParams, principal *models.Principal) middleware.Responder {
 	service := params.HTTPRequest.Context().Value("service").(*kuberlogicv1.KuberLogicService)
-	ns, name := service.Namespace, service.Name
+	ns, name := principal.Namespace, service.Name
 
 	secretResource := util.BackupConfigModelToResource(params.BackupConfig)
 	secretResource.ObjectMeta = v1.ObjectMeta{

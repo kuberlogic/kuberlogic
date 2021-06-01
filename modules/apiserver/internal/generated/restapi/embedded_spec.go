@@ -168,14 +168,6 @@ func init() {
         "x-permission": "service:add",
         "x-posthog": [
           {
-            "key": "name",
-            "value": "ServiceItem.Name"
-          },
-          {
-            "key": "namespace",
-            "value": "ServiceItem.Ns"
-          },
-          {
             "key": "type",
             "value": "ServiceItem.Type"
           },
@@ -252,7 +244,7 @@ func init() {
         "x-permission": "service:get",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -309,7 +301,7 @@ func init() {
         "x-permission": "service:edit",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -384,7 +376,7 @@ func init() {
         "x-permission": "service:delete",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -439,7 +431,7 @@ func init() {
         "x-permission": "service:backup-config:get",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -500,7 +492,7 @@ func init() {
         "x-permission": "service:backup-config:edit",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -577,7 +569,7 @@ func init() {
         "x-permission": "service:backup-config:add",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -642,7 +634,7 @@ func init() {
         "x-permission": "service:backup-config:delete",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -699,7 +691,7 @@ func init() {
         "x-permission": "service:backup:list",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -753,7 +745,7 @@ func init() {
         "x-permission": "service:database:list",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -814,7 +806,7 @@ func init() {
         "x-permission": "service:database:add",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -876,7 +868,7 @@ func init() {
         "x-permission": "service:database:delete",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -946,7 +938,7 @@ func init() {
         "x-permission": "service:logs",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -1011,7 +1003,7 @@ func init() {
         "x-permission": "service:restore:list",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -1081,7 +1073,7 @@ func init() {
         "x-permission": "service:backup-restore:add",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -1143,7 +1135,7 @@ func init() {
         "x-permission": "service:user:list",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -1198,7 +1190,7 @@ func init() {
         "x-permission": "service:user:add",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -1269,7 +1261,7 @@ func init() {
         "x-permission": "service:user:edit",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -1329,7 +1321,7 @@ func init() {
         "x-permission": "service:user:delete",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -1516,6 +1508,9 @@ func init() {
     "Principal": {
       "properties": {
         "email": {
+          "type": "string"
+        },
+        "namespace": {
           "type": "string"
         },
         "token": {
@@ -1887,14 +1882,6 @@ func init() {
         "x-permission": "service:add",
         "x-posthog": [
           {
-            "key": "name",
-            "value": "ServiceItem.Name"
-          },
-          {
-            "key": "namespace",
-            "value": "ServiceItem.Ns"
-          },
-          {
             "key": "type",
             "value": "ServiceItem.Type"
           },
@@ -1976,7 +1963,7 @@ func init() {
         "x-permission": "service:get",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -2044,7 +2031,7 @@ func init() {
         "x-permission": "service:edit",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -2124,7 +2111,7 @@ func init() {
         "x-permission": "service:delete",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -2184,7 +2171,7 @@ func init() {
         "x-permission": "service:backup-config:get",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -2250,7 +2237,7 @@ func init() {
         "x-permission": "service:backup-config:edit",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -2332,7 +2319,7 @@ func init() {
         "x-permission": "service:backup-config:add",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -2402,7 +2389,7 @@ func init() {
         "x-permission": "service:backup-config:delete",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -2464,7 +2451,7 @@ func init() {
         "x-permission": "service:backup:list",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -2523,7 +2510,7 @@ func init() {
         "x-permission": "service:database:list",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -2589,7 +2576,7 @@ func init() {
         "x-permission": "service:database:add",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -2656,7 +2643,7 @@ func init() {
         "x-permission": "service:database:delete",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -2731,7 +2718,7 @@ func init() {
         "x-permission": "service:logs",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -2801,7 +2788,7 @@ func init() {
         "x-permission": "service:restore:list",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -2876,7 +2863,7 @@ func init() {
         "x-permission": "service:backup-restore:add",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -2943,7 +2930,7 @@ func init() {
         "x-permission": "service:user:list",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           }
         ]
@@ -3003,7 +2990,7 @@ func init() {
         "x-permission": "service:user:add",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -3079,7 +3066,7 @@ func init() {
         "x-permission": "service:user:edit",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -3144,7 +3131,7 @@ func init() {
         "x-permission": "service:user:delete",
         "x-posthog": [
           {
-            "key": "service-id",
+            "key": "name",
             "value": "ServiceID"
           },
           {
@@ -3332,6 +3319,9 @@ func init() {
     "Principal": {
       "properties": {
         "email": {
+          "type": "string"
+        },
+        "namespace": {
           "type": "string"
         },
         "token": {

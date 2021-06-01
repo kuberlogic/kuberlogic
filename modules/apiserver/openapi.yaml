@@ -79,10 +79,6 @@ paths:
     post:
       x-permission: service:add
       x-posthog:
-        - key: name
-          value: ServiceItem.Name
-        - key: namespace
-          value: ServiceItem.Ns
         - key: type
           value: ServiceItem.Type
         - key: replicas
@@ -130,7 +126,7 @@ paths:
     get:
       x-permission: service:get
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
       tags:
         - service
@@ -164,7 +160,7 @@ paths:
     put:
       x-permission: service:edit
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
         - key: type
           value: ServiceItem.Type
@@ -213,7 +209,7 @@ paths:
     delete:
       x-permission: service:delete
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
       tags:
         - service
@@ -247,7 +243,7 @@ paths:
     get:
       x-permission: service:backup-config:get
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
       tags:
         - service
@@ -279,7 +275,7 @@ paths:
     post:
       x-permission: service:backup-config:add
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
         - key: enabled
           value: BackupConfig.Enabled
@@ -325,7 +321,7 @@ paths:
     put:
       x-permission: service:backup-config:edit
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
         - key: enabled
           value: BackupConfig.Enabled
@@ -371,7 +367,7 @@ paths:
     delete:
       x-permission: service:backup-config:delete
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
       tags:
         - service
@@ -402,7 +398,7 @@ paths:
     get:
       x-permission: service:backup:list
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
       tags:
         - service
@@ -437,7 +433,7 @@ paths:
     get:
       x-permission: service:logs
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
         - key: service-instance
           value: ServiceInstance
@@ -484,7 +480,7 @@ paths:
     get:
       x-permission: service:user:list
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
       tags:
         - service
@@ -515,7 +511,7 @@ paths:
     post:
       x-permission: service:user:add
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
         - key: user
           value: User.Name
@@ -552,7 +548,7 @@ paths:
     put:
       x-permission: service:user:edit
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
         - key: user
           value: User.Name
@@ -594,7 +590,7 @@ paths:
     delete:
       x-permission: service:user:delete
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
         - key: user
           value: Username
@@ -631,7 +627,7 @@ paths:
     get:
       x-permission: service:database:list
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
       tags:
         - service
@@ -662,7 +658,7 @@ paths:
     post:
       x-permission: service:database:add
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
         - key: database
           value: Database.Name
@@ -702,7 +698,7 @@ paths:
     delete:
       x-permission: service:database:delete
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
         - key: database
           value: Database
@@ -739,7 +735,7 @@ paths:
     post:
       x-permission: service:backup-restore:add
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
         - key: key
           value: RestoreItem.Key
@@ -788,7 +784,7 @@ paths:
     get:
       x-permission: service:restore:list
       x-posthog:
-        - key: service-id
+        - key: name
           value: ServiceID
       tags:
         - service
@@ -1081,7 +1077,8 @@ definitions:
         type: string
       token:
         type: string
-
+      namespace:
+        type: string
 
   Error:
     type: object

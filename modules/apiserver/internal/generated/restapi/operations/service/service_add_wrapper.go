@@ -41,8 +41,6 @@ func ServiceAddWrapper(srv Service, next ServiceAddHandlerFunc) (fn ServiceAddHa
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("service-add")
-		posthogMsg.With("name", params.ServiceItem.Name)
-		posthogMsg.With("namespace", params.ServiceItem.Ns)
 		posthogMsg.With("type", params.ServiceItem.Type)
 
 		if params.ServiceItem.Replicas != nil {

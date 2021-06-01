@@ -16,8 +16,10 @@ func LogsGetWrapper(srv Service, next LogsGetHandlerFunc) (fn LogsGetHandlerFunc
 
 		log := srv.GetLogger()
 
+		// namespace is always provided as a part of Principal object
+		ns := principal.Namespace
 		// check ServiceID param
-		ns, name, err := util.SplitID(params.ServiceID)
+		_, name, err := util.SplitID(params.ServiceID)
 		if err != nil {
 			msg := "incorrect service id"
 			log.Errorw(msg, "serviceId", params.ServiceID, "error", err)
@@ -60,7 +62,7 @@ func LogsGetWrapper(srv Service, next LogsGetHandlerFunc) (fn LogsGetHandlerFunc
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("logs-get")
-		posthogMsg.With("service-id", params.ServiceID)
+		posthogMsg.With("name", params.ServiceID)
 		posthogMsg.With("service-instance", params.ServiceInstance)
 		posthogMsg.With("tail", params.Tail)
 		if perr := posthogMsg.Create(); perr != nil {

@@ -16,8 +16,10 @@ func BackupConfigEditWrapper(srv Service, next BackupConfigEditHandlerFunc) (fn 
 
 		log := srv.GetLogger()
 
+		// namespace is always provided as a part of Principal object
+		ns := principal.Namespace
 		// check ServiceID param
-		ns, name, err := util.SplitID(params.ServiceID)
+		_, name, err := util.SplitID(params.ServiceID)
 		if err != nil {
 			msg := "incorrect service id"
 			log.Errorw(msg, "serviceId", params.ServiceID, "error", err)
@@ -60,7 +62,7 @@ func BackupConfigEditWrapper(srv Service, next BackupConfigEditHandlerFunc) (fn 
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("backup-config-edit")
-		posthogMsg.With("service-id", params.ServiceID)
+		posthogMsg.With("name", params.ServiceID)
 		posthogMsg.With("enabled", params.BackupConfig.Enabled)
 		posthogMsg.With("schedule", params.BackupConfig.Schedule)
 		posthogMsg.With("bucket", params.BackupConfig.Bucket)
