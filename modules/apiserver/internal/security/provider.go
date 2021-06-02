@@ -1,6 +1,8 @@
 package security
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/cache"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/config"
@@ -10,16 +12,25 @@ import (
 	"github.com/kuberlogic/operator/modules/apiserver/internal/security/auth/provider/none"
 )
 
-type AuthProvider interface {
+type AuthProviderInterface interface {
 	GetAuthenticationSecret(username, password string) (string, error) // returns secret, error
-	Authenticate(secret string) (string, string, string, error)        // returns username, secret, namespace, error
+	Authenticate(secret string) (string, string, error)                // returns username, secret, error
 	Authorize(username, action, object string) (bool, error)           // return authorization success, error
 	CreatePermissionResource(obj string) error
 	DeletePermissionResource(obj string) error
 }
 
-func NewAuthProvider(c *config.Config, cache cache.Cache, log logging.Logger) (AuthProvider, error) {
-	var p AuthProvider
+type AuthProvider struct {
+	AuthProviderInterface
+}
+
+func (a AuthProvider) GetNamespace(owner string) string {
+	n := md5.Sum([]byte(owner))
+	return hex.EncodeToString(n[:])
+}
+
+func NewAuthProvider(c *config.Config, cache cache.Cache, log logging.Logger) (*AuthProvider, error) {
+	var p AuthProviderInterface
 	var e error
 
 	log.Infow("auth provider", "provider", c.Auth.Provider)
@@ -42,5 +53,7 @@ func NewAuthProvider(c *config.Config, cache cache.Cache, log logging.Logger) (A
 	if e != nil {
 		return nil, e
 	}
-	return p, nil
+	return &AuthProvider{
+		AuthProviderInterface: p,
+	}, nil
 }

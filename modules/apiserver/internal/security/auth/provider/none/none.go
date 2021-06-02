@@ -1,9 +1,8 @@
 package none
 
 const (
-	noneEmail     = "none@example.com"
-	noneSecret    = "secret"
-	noneNamespace = "default"
+	noneEmail  = "none@example.com"
+	noneSecret = "secret"
 )
 
 type noneAuthProvider struct{}
@@ -12,8 +11,8 @@ func (n *noneAuthProvider) GetAuthenticationSecret(username, password string) (s
 	return noneSecret, nil
 }
 
-func (n *noneAuthProvider) Authenticate(secret string) (string, string, string, error) {
-	return noneEmail, noneSecret, noneNamespace, nil
+func (n *noneAuthProvider) Authenticate(secret string) (string, string, error) {
+	return noneEmail, noneSecret, nil
 }
 
 func (n *noneAuthProvider) Authorize(username, action, object string) (bool, error) {
