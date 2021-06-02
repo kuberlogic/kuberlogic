@@ -72,6 +72,10 @@ type Session interface {
 	GetDatabase() Database
 	GetUser() User
 	CreateTable(table string) error
+	ConnectionString(host, db string) string
+
+	GetMasterIP() string
+	GetReplicaIPs() []string
 }
 
 type Database interface {
