@@ -96,7 +96,7 @@ spec:
           config:
             applyPolicies: '["kuberlogic-system-allow"]'
             scopes: '["service:*"]'
-            resources: '["*"]'
+            resources: '["a0c394e31c9740376635c8878cf5889e:*"]'
     protocolMappers:
       - name: "apiserver-aud"
         protocol: "openid-connect"
