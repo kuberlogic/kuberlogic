@@ -90,7 +90,7 @@ spec:
           logic: POSITIVE
           config:
             users: '["kuberlogic-system-admin"]'
-        - name: kuberlogic-system-full
+        - name: test-ns-full
           type: scope
           decisionStrategy: UNANIMOUS
           config:
@@ -119,9 +119,9 @@ spec:
   user:
     credentials:
     - type: password
-      value: password
+      value: secret
       temporary: false
-    email: kuberlogic@cloudlinux.com
+    email: none@example.com
     id: kuberlogic-system-admin
     username: kuberlogic-system-admin
     enabled: true
