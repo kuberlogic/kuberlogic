@@ -62,7 +62,7 @@ func BackupConfigCreateWrapper(srv Service, next BackupConfigCreateHandlerFunc) 
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("backup-config-create")
-		posthogMsg.With("name", params.ServiceID)
+		posthogMsg.With("service-id", params.ServiceID)
 		posthogMsg.With("enabled", params.BackupConfig.Enabled)
 		posthogMsg.With("schedule", params.BackupConfig.Schedule)
 		posthogMsg.With("bucket", params.BackupConfig.Bucket)

@@ -50,11 +50,16 @@ type Service struct {
 
 	// name
 	// Required: true
+	// Max Length: 20
+	// Min Length: 3
+	// Pattern: [a-z0-9]([-a-z0-9]*[a-z0-9])?
 	Name *string `json:"name"`
 
 	// ns
-	// Required: true
-	Ns *string `json:"ns"`
+	// Max Length: 32
+	// Min Length: 32
+	// Pattern: [a-z0-9]([-a-z0-9]*[a-z0-9])?
+	Ns string `json:"ns,omitempty"`
 
 	// replicas
 	Replicas *int64 `json:"replicas,omitempty"`
@@ -254,12 +259,36 @@ func (m *Service) validateName(formats strfmt.Registry) error {
 		return err
 	}
 
+	if err := validate.MinLength("name", "body", string(*m.Name), 3); err != nil {
+		return err
+	}
+
+	if err := validate.MaxLength("name", "body", string(*m.Name), 20); err != nil {
+		return err
+	}
+
+	if err := validate.Pattern("name", "body", string(*m.Name), `[a-z0-9]([-a-z0-9]*[a-z0-9])?`); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (m *Service) validateNs(formats strfmt.Registry) error {
 
-	if err := validate.Required("ns", "body", m.Ns); err != nil {
+	if swag.IsZero(m.Ns) { // not required
+		return nil
+	}
+
+	if err := validate.MinLength("ns", "body", string(m.Ns), 32); err != nil {
+		return err
+	}
+
+	if err := validate.MaxLength("ns", "body", string(m.Ns), 32); err != nil {
+		return err
+	}
+
+	if err := validate.Pattern("ns", "body", string(m.Ns), `[a-z0-9]([-a-z0-9]*[a-z0-9])?`); err != nil {
 		return err
 	}
 

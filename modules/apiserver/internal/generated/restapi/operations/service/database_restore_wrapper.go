@@ -62,7 +62,7 @@ func DatabaseRestoreWrapper(srv Service, next DatabaseRestoreHandlerFunc) (fn Da
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("database-restore")
-		posthogMsg.With("name", params.ServiceID)
+		posthogMsg.With("service-id", params.ServiceID)
 		posthogMsg.With("key", params.RestoreItem.Key)
 		posthogMsg.With("database", params.RestoreItem.Database)
 		if perr := posthogMsg.Create(); perr != nil {

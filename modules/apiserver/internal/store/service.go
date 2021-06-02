@@ -71,6 +71,7 @@ func (s *ServiceStore) ListServices(p *models.Principal, ctx context.Context) ([
 }
 
 func (s *ServiceStore) CreateService(m *models.Service, p *models.Principal, ctx context.Context) (*models.Service, *ServiceError) {
+	s.log.Debugw("create service request", "service", m, "principal", p)
 	// ensure that namespace exists before we create a service
 	if err := s.ensureNamespace(p.Namespace, ctx); err != nil {
 		return nil, NewServiceError("error creating service namespace", false, err)
@@ -83,7 +84,7 @@ func (s *ServiceStore) CreateService(m *models.Service, p *models.Principal, ctx
 		return nil, NewServiceError("error setting email for monitoring notifications", true, err)
 	}
 
-	_, found, _ := s.GetService(*m.Name, *m.Ns, ctx)
+	_, found, _ := s.GetService(*m.Name, m.Ns, ctx)
 	if found {
 		return nil, NewServiceError("service already exists", true, fmt.Errorf("service already exists"))
 	}
@@ -173,7 +174,7 @@ func (s *ServiceStore) DeleteService(m *models.Service, p *models.Principal, ctx
 }
 
 func (s *ServiceStore) GetServiceLogs(m *models.Service, instance string, lines int64, ctx context.Context) (string, *ServiceError) {
-	m, f, errGet := s.GetService(*m.Name, *m.Ns, ctx)
+	m, f, errGet := s.GetService(*m.Name, m.Ns, ctx)
 	if errGet != nil {
 		return "", errGet
 	}
@@ -205,14 +206,14 @@ func NewServiceStore(clientset *kubernetes.Clientset, restClient *rest.RESTClien
 }
 
 func (s *ServiceStore) NewServiceObject(name, namespace string) *models.Service {
-	return &models.Service{Name: &name, Ns: &namespace}
+	return &models.Service{Name: &name, Ns: namespace}
 }
 
 func (s *ServiceStore) kuberLogicToService(kls *kuberlogicv1.KuberLogicService, ctx context.Context) (*models.Service, error) {
 	ret := new(models.Service)
 	s.log.Debugw("converting kuberlogic to service", "kuberlogic service", kls)
 	ret.Name = strAsPointer(kls.Name)
-	ret.Ns = strAsPointer(kls.Namespace)
+	ret.Ns = kls.Namespace
 	ret.Type = strAsPointer(kls.Spec.Type)
 	ret.Replicas = int64AsPointer(int64(kls.Spec.Replicas - 1)) // 1 - master
 	ret.Masters = 1                                             // always equals 1
@@ -274,7 +275,7 @@ func (s *ServiceStore) serviceToKuberLogic(svc *models.Service) (*kuberlogicv1.K
 	c := &kuberlogicv1.KuberLogicService{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      *svc.Name,
-			Namespace: *svc.Ns,
+			Namespace: svc.Ns,
 		},
 	}
 

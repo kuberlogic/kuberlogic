@@ -62,7 +62,7 @@ func ServiceGetWrapper(srv Service, next ServiceGetHandlerFunc) (fn ServiceGetHa
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("service-get")
-		posthogMsg.With("name", params.ServiceID)
+		posthogMsg.With("service-id", params.ServiceID)
 		if perr := posthogMsg.Create(); perr != nil {
 			msg := "could not enqueue posthog message"
 			log.Errorw(msg, "error", perr)

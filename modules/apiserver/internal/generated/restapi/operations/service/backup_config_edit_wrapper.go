@@ -62,7 +62,7 @@ func BackupConfigEditWrapper(srv Service, next BackupConfigEditHandlerFunc) (fn 
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("backup-config-edit")
-		posthogMsg.With("name", params.ServiceID)
+		posthogMsg.With("service-id", params.ServiceID)
 		posthogMsg.With("enabled", params.BackupConfig.Enabled)
 		posthogMsg.With("schedule", params.BackupConfig.Schedule)
 		posthogMsg.With("bucket", params.BackupConfig.Bucket)

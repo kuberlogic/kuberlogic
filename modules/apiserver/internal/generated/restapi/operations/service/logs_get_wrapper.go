@@ -62,7 +62,7 @@ func LogsGetWrapper(srv Service, next LogsGetHandlerFunc) (fn LogsGetHandlerFunc
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("logs-get")
-		posthogMsg.With("name", params.ServiceID)
+		posthogMsg.With("service-id", params.ServiceID)
 		posthogMsg.With("service-instance", params.ServiceInstance)
 		posthogMsg.With("tail", params.Tail)
 		if perr := posthogMsg.Create(); perr != nil {

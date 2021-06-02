@@ -62,7 +62,7 @@ func ServiceEditWrapper(srv Service, next ServiceEditHandlerFunc) (fn ServiceEdi
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("service-edit")
-		posthogMsg.With("name", params.ServiceID)
+		posthogMsg.With("service-id", params.ServiceID)
 		posthogMsg.With("type", params.ServiceItem.Type)
 
 		if params.ServiceItem.Replicas != nil {

@@ -40,7 +40,7 @@ func {{ pascalize .Name }}Wrapper(srv Service, next {{ pascalize .Name }}Handler
                 // build the ServiceID param
                 name := params.{{ pascalize .Name }}.Name
                 ns := params.{{ pascalize .Name }}.Ns
-                serviceId, err := util.JoinID(*ns, *name)
+                serviceId, err := util.JoinID(ns, *name)
                 if err != nil {
                     msg := "incorrect service id"
                     log.Errorw(msg, "name", name, "ns", ns, "error", err)

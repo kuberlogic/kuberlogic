@@ -62,7 +62,7 @@ func BackupConfigGetWrapper(srv Service, next BackupConfigGetHandlerFunc) (fn Ba
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("backup-config-get")
-		posthogMsg.With("name", params.ServiceID)
+		posthogMsg.With("service-id", params.ServiceID)
 		if perr := posthogMsg.Create(); perr != nil {
 			msg := "could not enqueue posthog message"
 			log.Errorw(msg, "error", perr)

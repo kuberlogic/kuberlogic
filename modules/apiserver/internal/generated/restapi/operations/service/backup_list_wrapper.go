@@ -62,7 +62,7 @@ func BackupListWrapper(srv Service, next BackupListHandlerFunc) (fn BackupListHa
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("backup-list")
-		posthogMsg.With("name", params.ServiceID)
+		posthogMsg.With("service-id", params.ServiceID)
 		if perr := posthogMsg.Create(); perr != nil {
 			msg := "could not enqueue posthog message"
 			log.Errorw(msg, "error", perr)

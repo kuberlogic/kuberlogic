@@ -17,7 +17,7 @@ func ServiceAddWrapper(srv Service, next ServiceAddHandlerFunc) (fn ServiceAddHa
 		// build the ServiceID param
 		name := params.ServiceItem.Name
 		ns := params.ServiceItem.Ns
-		serviceId, err := util.JoinID(*ns, *name)
+		serviceId, err := util.JoinID(ns, *name)
 		if err != nil {
 			msg := "incorrect service id"
 			log.Errorw(msg, "name", name, "ns", ns, "error", err)

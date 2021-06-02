@@ -62,7 +62,7 @@ func UserEditWrapper(srv Service, next UserEditHandlerFunc) (fn UserEditHandlerF
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("user-edit")
-		posthogMsg.With("name", params.ServiceID)
+		posthogMsg.With("service-id", params.ServiceID)
 		posthogMsg.With("user", params.User.Name)
 		if perr := posthogMsg.Create(); perr != nil {
 			msg := "could not enqueue posthog message"

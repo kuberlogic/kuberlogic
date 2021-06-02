@@ -62,7 +62,7 @@ func UserCreateWrapper(srv Service, next UserCreateHandlerFunc) (fn UserCreateHa
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("user-create")
-		posthogMsg.With("name", params.ServiceID)
+		posthogMsg.With("service-id", params.ServiceID)
 		posthogMsg.With("user", params.User.Name)
 		if perr := posthogMsg.Create(); perr != nil {
 			msg := "could not enqueue posthog message"

@@ -62,7 +62,7 @@ func DatabaseCreateWrapper(srv Service, next DatabaseCreateHandlerFunc) (fn Data
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("database-create")
-		posthogMsg.With("name", params.ServiceID)
+		posthogMsg.With("service-id", params.ServiceID)
 		posthogMsg.With("database", params.Database.Name)
 		if perr := posthogMsg.Create(); perr != nil {
 			msg := "could not enqueue posthog message"

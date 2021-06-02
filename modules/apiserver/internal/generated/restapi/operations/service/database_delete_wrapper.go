@@ -62,7 +62,7 @@ func DatabaseDeleteWrapper(srv Service, next DatabaseDeleteHandlerFunc) (fn Data
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("database-delete")
-		posthogMsg.With("name", params.ServiceID)
+		posthogMsg.With("service-id", params.ServiceID)
 		posthogMsg.With("database", params.Database)
 		if perr := posthogMsg.Create(); perr != nil {
 			msg := "could not enqueue posthog message"

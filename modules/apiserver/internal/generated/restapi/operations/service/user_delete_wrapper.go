@@ -62,7 +62,7 @@ func UserDeleteWrapper(srv Service, next UserDeleteHandlerFunc) (fn UserDeleteHa
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("user-delete")
-		posthogMsg.With("name", params.ServiceID)
+		posthogMsg.With("service-id", params.ServiceID)
 		posthogMsg.With("user", params.Username)
 		if perr := posthogMsg.Create(); perr != nil {
 			msg := "could not enqueue posthog message"

@@ -244,7 +244,7 @@ func init() {
         "x-permission": "service:get",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -301,7 +301,7 @@ func init() {
         "x-permission": "service:edit",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -376,7 +376,7 @@ func init() {
         "x-permission": "service:delete",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -431,7 +431,7 @@ func init() {
         "x-permission": "service:backup-config:get",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -492,7 +492,7 @@ func init() {
         "x-permission": "service:backup-config:edit",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -569,7 +569,7 @@ func init() {
         "x-permission": "service:backup-config:add",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -634,7 +634,7 @@ func init() {
         "x-permission": "service:backup-config:delete",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -691,7 +691,7 @@ func init() {
         "x-permission": "service:backup:list",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -745,7 +745,7 @@ func init() {
         "x-permission": "service:database:list",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -806,7 +806,7 @@ func init() {
         "x-permission": "service:database:add",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -868,7 +868,7 @@ func init() {
         "x-permission": "service:database:delete",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -938,7 +938,7 @@ func init() {
         "x-permission": "service:logs",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -1003,7 +1003,7 @@ func init() {
         "x-permission": "service:restore:list",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -1073,7 +1073,7 @@ func init() {
         "x-permission": "service:backup-restore:add",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -1135,7 +1135,7 @@ func init() {
         "x-permission": "service:user:list",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -1190,7 +1190,7 @@ func init() {
         "x-permission": "service:user:add",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -1261,7 +1261,7 @@ func init() {
         "x-permission": "service:user:edit",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -1321,7 +1321,7 @@ func init() {
         "x-permission": "service:user:delete",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -1546,7 +1546,6 @@ func init() {
       "type": "object",
       "required": [
         "name",
-        "ns",
         "type"
       ],
       "properties": {
@@ -1600,10 +1599,16 @@ func init() {
           "readOnly": true
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "maxLength": 20,
+          "minLength": 3,
+          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
         },
         "ns": {
-          "type": "string"
+          "type": "string",
+          "maxLength": 32,
+          "minLength": 32,
+          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
         },
         "replicas": {
           "type": "integer",
@@ -1690,6 +1695,8 @@ func init() {
   },
   "parameters": {
     "ServiceID": {
+      "maxLength": 120,
+      "minLength": 3,
       "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
       "type": "string",
       "description": "service Resource ID",
@@ -1923,6 +1930,8 @@ func init() {
         "operationId": "serviceGet",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -1963,7 +1972,7 @@ func init() {
         "x-permission": "service:get",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -1982,6 +1991,8 @@ func init() {
         "operationId": "serviceEdit",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -2031,7 +2042,7 @@ func init() {
         "x-permission": "service:edit",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -2074,6 +2085,8 @@ func init() {
         "operationId": "serviceDelete",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -2111,7 +2124,7 @@ func init() {
         "x-permission": "service:delete",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -2131,6 +2144,8 @@ func init() {
         "operationId": "backupConfigGet",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -2171,7 +2186,7 @@ func init() {
         "x-permission": "service:backup-config:get",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -2188,6 +2203,8 @@ func init() {
         "operationId": "backupConfigEdit",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -2237,7 +2254,7 @@ func init() {
         "x-permission": "service:backup-config:edit",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -2270,6 +2287,8 @@ func init() {
         "operationId": "backupConfigCreate",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -2319,7 +2338,7 @@ func init() {
         "x-permission": "service:backup-config:add",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -2352,6 +2371,8 @@ func init() {
         "operationId": "backupConfigDelete",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -2389,7 +2410,7 @@ func init() {
         "x-permission": "service:backup-config:delete",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -2408,6 +2429,8 @@ func init() {
         "operationId": "backupList",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -2451,7 +2474,7 @@ func init() {
         "x-permission": "service:backup:list",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -2470,6 +2493,8 @@ func init() {
         "operationId": "databaseList",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -2510,7 +2535,7 @@ func init() {
         "x-permission": "service:database:list",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -2527,6 +2552,8 @@ func init() {
         "operationId": "databaseCreate",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -2576,7 +2603,7 @@ func init() {
         "x-permission": "service:database:add",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -2599,6 +2626,8 @@ func init() {
         "operationId": "databaseDelete",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -2643,7 +2672,7 @@ func init() {
         "x-permission": "service:database:delete",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -2666,6 +2695,8 @@ func init() {
         "operationId": "logsGet",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -2718,7 +2749,7 @@ func init() {
         "x-permission": "service:logs",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -2745,6 +2776,8 @@ func init() {
         "operationId": "restoreList",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -2788,7 +2821,7 @@ func init() {
         "x-permission": "service:restore:list",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -2805,6 +2838,8 @@ func init() {
         "operationId": "databaseRestore",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -2863,7 +2898,7 @@ func init() {
         "x-permission": "service:backup-restore:add",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -2890,6 +2925,8 @@ func init() {
         "operationId": "userList",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -2930,7 +2967,7 @@ func init() {
         "x-permission": "service:user:list",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           }
         ]
@@ -2947,6 +2984,8 @@ func init() {
         "operationId": "userCreate",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -2990,7 +3029,7 @@ func init() {
         "x-permission": "service:user:add",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -3013,6 +3052,8 @@ func init() {
         "operationId": "userEdit",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -3066,7 +3107,7 @@ func init() {
         "x-permission": "service:user:edit",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -3087,6 +3128,8 @@ func init() {
         "operationId": "userDelete",
         "parameters": [
           {
+            "maxLength": 120,
+            "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
@@ -3131,7 +3174,7 @@ func init() {
         "x-permission": "service:user:delete",
         "x-posthog": [
           {
-            "key": "name",
+            "key": "service-id",
             "value": "ServiceID"
           },
           {
@@ -3357,7 +3400,6 @@ func init() {
       "type": "object",
       "required": [
         "name",
-        "ns",
         "type"
       ],
       "properties": {
@@ -3411,10 +3453,16 @@ func init() {
           "readOnly": true
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "maxLength": 20,
+          "minLength": 3,
+          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
         },
         "ns": {
-          "type": "string"
+          "type": "string",
+          "maxLength": 32,
+          "minLength": 32,
+          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
         },
         "replicas": {
           "type": "integer",
@@ -3525,6 +3573,8 @@ func init() {
   },
   "parameters": {
     "ServiceID": {
+      "maxLength": 120,
+      "minLength": 3,
       "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
       "type": "string",
       "description": "service Resource ID",
