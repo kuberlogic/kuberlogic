@@ -35,12 +35,12 @@ spec:
       - username: "realm_admin"
         firstName: "John"
         lastName: "Doe"
-        email: "jdoe@kuberlogic.com"
+        email: "none@example.com"
         enabled: True
         emailVerified: False
         credentials:
           - type: password
-            value: kuberlogic
+            value: secret
             temporary: false
         realmRoles:
           - "offline_access"
@@ -79,7 +79,7 @@ spec:
     authorizationSettings:
       allowRemoteResourceManagement: true
       resources:
-        - name: "*"
+        - name: "a0c394e31c9740376635c8878cf5889e:*"
           type: kuberlogicservice
           uri: "/blah"
           scopes:
