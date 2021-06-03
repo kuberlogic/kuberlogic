@@ -6,4 +6,5 @@ for i in $(seq 1 10); do
 done
 echo "Keycloak is not ready in time!"
 kubectl get keycloakclient -o yaml
+kubectl logs keycloak-0
 exit 1
