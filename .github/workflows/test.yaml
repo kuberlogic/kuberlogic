@@ -125,9 +125,10 @@ jobs:
           make undeploy-operator generate-local-webhook-certs patch-endpoint
           kubectl get endpoints
 
-      - name: Ensure keycloak pods are running
+      - name: Ensure keycloak is ready
+        working-directory: ./modules/apiserver/tests/config
         run: |
-          kubectl wait --for=condition=Ready pods -l app=keycloak --timeout=5m
+          ./wait-for-keycloak.sh
 
       - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
