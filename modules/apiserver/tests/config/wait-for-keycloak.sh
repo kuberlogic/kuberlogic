@@ -5,4 +5,5 @@ for i in $(seq 1 10); do
   sleep $SLEEP_TIME
 done
 echo "Keycloak is not ready in time!"
+kubectl get keycloakclient -o yaml
 exit 1
