@@ -220,7 +220,7 @@ spec:
       serviceAccountName: kube-state-metrics
       containers:
         - name: kube-state-metrics
-          image: docker.io/bitnami/kube-state-metrics:1.9.7-debian-10-r73
+          image: quay.io/kuberlogic/kube-state-metrics:1.9.7-debian-10-r73
           imagePullPolicy: IfNotPresent
           args:
             - --collectors=certificatesigningrequests
@@ -262,7 +262,7 @@ spec:
             - --upstream=http://127.0.0.1:8080/
             - --logtostderr=true
             - --v=10
-          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+          image: quay.io/kuberlogic/kube-rbac-proxy:v0.5.0
           imagePullPolicy: IfNotPresent
           name: kube-rbac-proxy
           ports:

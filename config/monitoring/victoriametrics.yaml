@@ -168,7 +168,7 @@ spec:
     spec:
       containers:
         - name: vmalert
-          image: victoriametrics/vmalert:v1.45.0
+          image: quay.io/kuberlogic/vmalert:v1.45.0
           args:
             - -datasource.url=http://localhost:8428
             - -remoteWrite.url=http://localhost:8428
@@ -184,7 +184,7 @@ spec:
             - -httpListenAddr=:8428
             - -promscrape.config=/etc/config/victoriametrics.yaml
             - -storageDataPath=/data
-          image: victoriametrics/victoria-metrics:v1.45.0
+          image: quay.io/kuberlogic/victoria-metrics:v1.45.0
           name: vmserver
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File

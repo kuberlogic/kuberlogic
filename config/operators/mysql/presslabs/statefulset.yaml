@@ -41,9 +41,9 @@ spec:
             - --leader-election-namespace=default
             # connect to orchestrator on localhost
             - --orchestrator-uri=http://127.0.0.1:3000/api
-            # TODO: need to use private registry to sidecar container?
-            - --sidecar-image=quay.io/presslabs/mysql-operator-sidecar:latest
+            - --sidecar-image=quay.io/kuberlogic/mysql-operator-sidecar-mysql57:latest
             - --sidecar-mysql8-image=quay.io/kuberlogic/mysql-operator-sidecar-mysql8:latest
+            - --metrics-exporter-image=quay.io/kuberlogic/mysqld-exporter:v0.11.0
           resources:
             { }
           # TODO: add livenessProbe to controller
@@ -52,8 +52,7 @@ spec:
           #     path: /health
           #     port: 80
         - name: orchestrator
-          # TODO: need to use private registry to sidecar container?
-          image: quay.io/presslabs/mysql-operator-orchestrator:latest
+          image: quay.io/kuberlogic/mysql-operator-orchestrator:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
