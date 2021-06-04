@@ -8,9 +8,6 @@ on:
 
 jobs:
   test:
-    concurrency:
-      group: "concurrency-${{ github.event.pull_request.title }}"
-      cancel-in-progress: true
     if: "!contains(github.event.commits[0].message, '[skip ci]')"
     name: Integration tests
     runs-on: ubuntu-latest
