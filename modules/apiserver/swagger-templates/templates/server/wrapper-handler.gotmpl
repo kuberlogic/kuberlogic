@@ -39,7 +39,7 @@ func {{ pascalize .Name }}Wrapper(srv Service, next {{ pascalize .Name }}Handler
             {{ if eq $.Name "serviceAdd" }}
                 // build the ServiceID param
                 name := params.{{ pascalize .Name }}.Name
-                ns := params.{{ pascalize .Name }}.Ns
+                ns := principal.Namespace
                 serviceId, err := util.JoinID(ns, *name)
                 if err != nil {
                     msg := "incorrect service id"
