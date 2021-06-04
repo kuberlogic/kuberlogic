@@ -78,6 +78,7 @@ func Main(args []string) {
 		Log:                 ctrl.Log.WithName("controller").WithName("KuberLogicServices"),
 		Scheme:              mgr.GetScheme(),
 		MonitoringCollector: klCollector,
+		Config:              cfg,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KuberLogicServices")
 		os.Exit(1)

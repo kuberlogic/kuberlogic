@@ -1,6 +1,8 @@
 package cfg
 
-import "github.com/vrischmann/envconfig"
+import (
+	"github.com/vrischmann/envconfig"
+)
 
 type Config struct {
 	MetricsAddr          string `envconfig:"default=:8080,optional"`
@@ -8,6 +10,7 @@ type Config struct {
 
 	ImageRepo           string `envconfig:"IMG_REPO"`
 	ImagePullSecretName string `envconfig:"IMG_PULL_SECRET"`
+	Namespace           string `envconfig:"POD_NAMESPACE"`
 
 	SentryDsn string `envconfig:"optional"`
 

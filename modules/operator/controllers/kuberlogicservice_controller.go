@@ -1,10 +1,12 @@
 package controllers
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	"github.com/kuberlogic/operator/modules/operator/cfg"
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
 	serviceOperator "github.com/kuberlogic/operator/modules/operator/service-operator"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
@@ -13,6 +15,7 @@ import (
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -33,6 +36,7 @@ type KuberLogicServiceReconciler struct {
 	Scheme              *runtime.Scheme
 	mu                  sync.Mutex
 	MonitoringCollector *monitoring.KuberLogicCollector
+	Config              *cfg.Config
 }
 
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicservices,verbs=get;list;watch;create;update;patch;delete
@@ -106,6 +110,36 @@ func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op interfaces.Op
 		if err := r.Create(ctx, credSecret); err != nil && !k8serrors.IsAlreadyExists(err) {
 			return err
 		}
+	}
+
+	// sync imagePullSecret
+	imgPullSecret := new(corev1.Secret)
+	imgPullSecretName := types.NamespacedName{
+		Namespace: r.Config.Namespace,
+		Name:      r.Config.ImagePullSecretName,
+	}
+	if err := r.Get(ctx, imgPullSecretName, imgPullSecret); err != nil {
+		return err
+	}
+	nsPullSecret := new(corev1.Secret)
+	imgPullSecretName.Namespace = cm.Namespace
+	if err := r.Get(ctx, imgPullSecretName, nsPullSecret); err != nil {
+		if k8serrors.IsNotFound(err) {
+			return r.Create(ctx, &corev1.Secret{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      imgPullSecretName.Name,
+					Namespace: cm.Namespace,
+				},
+				Data: imgPullSecret.Data,
+			})
+		}
+		return err
+	}
+
+	dockerCfgKey := ".dockerconfigjson"
+	if cmp := bytes.Compare(imgPullSecret.Data[dockerCfgKey], nsPullSecret.Data[dockerCfgKey]); cmp != 0 {
+		nsPullSecret.Data[dockerCfgKey] = imgPullSecret.Data[dockerCfgKey]
+		return r.Update(ctx, nsPullSecret)
 	}
 	return nil
 }
