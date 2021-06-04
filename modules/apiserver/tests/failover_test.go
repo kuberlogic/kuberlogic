@@ -279,7 +279,7 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			tf.IncrementPostgresqlCounter(2),
 			tf.IncrementMysqlCounter(2),
 
-			tf.service.WaitForRole("replica", "Running", 5, 5*60),
+			tf.service.WaitForRole("replica", "Running", 5, 10*60),
 
 			tf.CheckPostgresqlCounter(2),
 			tf.CheckMysqlCounter(2),
