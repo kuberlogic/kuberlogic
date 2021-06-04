@@ -4,6 +4,9 @@ ifeq ($(KUBERLOGIC_AUTH_PROVIDER),)
   KUBERLOGIC_AUTH_PROVIDER = none
 endif
 
+# faking pod namespace configuration for operator
+POD_NAMESPACE = default
+
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
 IMG = $(IMG_REPO)/minio:1.0.0
