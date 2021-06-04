@@ -258,7 +258,7 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			tf.IncrementMysqlCounter(1),
 
 			// wait for synchronization with replicas
-			wait(2 * 60),
+			wait(3 * 60),
 
 			// check the counter
 			tf.CheckPostgresqlCounter(1),
