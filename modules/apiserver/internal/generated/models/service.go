@@ -51,7 +51,7 @@ type Service struct {
 	// name
 	// Required: true
 	// Max Length: 20
-	// Min Length: 3
+	// Min Length: 2
 	// Pattern: [a-z0-9]([-a-z0-9]*[a-z0-9])?
 	Name *string `json:"name"`
 
@@ -259,7 +259,7 @@ func (m *Service) validateName(formats strfmt.Registry) error {
 		return err
 	}
 
-	if err := validate.MinLength("name", "body", string(*m.Name), 3); err != nil {
+	if err := validate.MinLength("name", "body", string(*m.Name), 2); err != nil {
 		return err
 	}
 

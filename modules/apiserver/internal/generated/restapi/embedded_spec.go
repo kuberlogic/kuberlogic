@@ -1601,7 +1601,7 @@ func init() {
         "name": {
           "type": "string",
           "maxLength": 20,
-          "minLength": 3,
+          "minLength": 2,
           "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
         },
         "ns": {
@@ -3455,7 +3455,7 @@ func init() {
         "name": {
           "type": "string",
           "maxLength": 20,
-          "minLength": 3,
+          "minLength": 2,
           "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
         },
         "ns": {
