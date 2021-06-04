@@ -247,7 +247,7 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			// wait replica pod
 			tf.service.WaitForRole("replica", "Running", 5, 5*60),
 
-			// Create db endpoint returned 400 without timeout
+			// "Create db" endpoint returned 400 without timeout
 			// dial tcp 172.17.0.15:3306: connect: connection refused
 			wait(30),
 
