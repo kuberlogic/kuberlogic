@@ -396,7 +396,7 @@ func (s *tService) WaitForStatus(status string, delay, timeout int64) func(t *te
 	}
 }
 
-func (s *tService) WaitForRole(role string, delay, timeout int64) func(t *testing.T) {
+func (s *tService) WaitForRole(role, status string, delay, timeout int64) func(t *testing.T) {
 	return func(t *testing.T) {
 		begin := time.Now().Unix()
 		left := timeout
@@ -416,8 +416,8 @@ func (s *tService) WaitForRole(role string, delay, timeout int64) func(t *testin
 			api.encodeResponseTo(&service)
 
 			for _, i := range service.Instances {
-				if i.Role == role {
-					t.Logf("Service %s:%s is reached the role %s", s.ns, s.name, role)
+				if i.Role == role && i.Status.Status == status {
+					t.Logf("Service %s:%s is reached the running role %s", s.ns, s.name, role)
 					return
 				}
 			}

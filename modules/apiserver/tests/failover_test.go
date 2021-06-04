@@ -245,7 +245,7 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			tf.service.WaitForStatus("Ready", 5, 5*60),
 
 			// wait replica pod
-			tf.service.WaitForRole("replica", 5, 5*60),
+			tf.service.WaitForRole("replica", "Running", 5, 5*60),
 
 			tf.backup.db.Create,
 			tf.backup.CreateTable,
@@ -271,15 +271,11 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			// it's time when sts recreates pvc
 			tf.ExecCommand("kubectl", "delete", "pod", tf.masterPodName),
 
-			// make sure that replica pod is ready
-			tf.ExecCommand("kubectl",
-				"wait", "--for=condition=Ready", "pods", "--timeout=1m", tf.replicaPodName),
-
 			// insert should work
 			tf.IncrementPostgresqlCounter(2),
 			tf.IncrementMysqlCounter(2),
 
-			tf.service.WaitForRole("replica", 5, 5*60),
+			tf.service.WaitForRole("replica", "Running", 5, 5*60),
 
 			tf.CheckPostgresqlCounter(2),
 			tf.CheckMysqlCounter(2),
