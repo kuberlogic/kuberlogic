@@ -247,6 +247,8 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			// wait replica pod
 			tf.service.WaitForRole("replica", "Running", 5, 5*60),
 
+			//wait(10), // Create db endpoint returned 400 without timeout
+
 			tf.backup.db.Create,
 			tf.backup.CreateTable,
 
