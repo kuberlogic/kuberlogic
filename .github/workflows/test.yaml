@@ -170,7 +170,7 @@ jobs:
           kubectl logs -l app=mysql-operator -c mysql-operator --tail=-1 > mysql-operator.log
           kubectl describe pod -l name=postgres-operator > postgres-operator.describe.log
           kubectl describe pod -l app=mysql-operator > mysql-operator.describe.log
-          kubectl get pod > pods-status.log
+          kubectl get pod --show-labels > pods-status.log
           kubectl get endpoints > endpoints.log
           kubectl get services > services.log
           kubectl get kuberlogicservice,kuberlogicbackupschedules,kuberlogicbackuprestores > kuberlogics-services.log
