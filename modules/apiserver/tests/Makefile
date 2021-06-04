@@ -32,7 +32,7 @@ SENTRY_DSN = https://50ec3b92240a4b4d97dbee02a07fc54f@kl.sentry.cloudlinux.com/5
 POSTHOG_API_KEY =
 
 test:
-	POD_NAMESPACE = default go test -v \
+	POD_NAMESPACE=default go test -v \
 		-coverprofile=coverage.out \
 		-coverpkg="github.com/kuberlogic/..." \
 		-covermode=atomic \
