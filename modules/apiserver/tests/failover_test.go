@@ -248,9 +248,6 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			tf.ExecCommand("kubectl",
 				"wait", "pod", "--for=condition=Ready", "--timeout=2m", tf.replicaPodName),
 
-			// need to wait when the labels for pod is appears
-			wait(60),
-
 			tf.backup.db.Create,
 			tf.backup.CreateTable,
 
@@ -258,7 +255,7 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			tf.IncrementMysqlCounter(1),
 
 			// wait for synchronization with replicas
-			wait(3 * 60),
+			wait(5 * 60),
 
 			// check the counter
 			tf.CheckPostgresqlCounter(1),
@@ -284,12 +281,11 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			tf.IncrementMysqlCounter(2),
 
 			// wait for synchronization with replicas
-			wait(2 * 60),
+			wait(5 * 60),
 
 			tf.CheckPostgresqlCounter(2),
 			tf.CheckMysqlCounter(2),
 
-			//wait(10 * 60),
 			tf.service.Delete,
 		}
 
