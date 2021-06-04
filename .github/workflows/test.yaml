@@ -18,20 +18,20 @@ jobs:
           - type: postgresql
             pg_version: 13
 
-          - type: postgresql
-            pg_version: 12
-
-          - type: postgresql
-            pg_version: 11
-
-          - type: postgresql
-            pg_version: 10
-
-          - type: postgresql
-            pg_version: 9.6
-
-          - type: postgresql
-            pg_version: 9.5
+#          - type: postgresql
+#            pg_version: 12
+#
+#          - type: postgresql
+#            pg_version: 11
+#
+#          - type: postgresql
+#            pg_version: 10
+#
+#          - type: postgresql
+#            pg_version: 9.6
+#
+#          - type: postgresql
+#            pg_version: 9.5
 
 #          - type: postgresql
 #            pg_version: 9.4
@@ -42,17 +42,17 @@ jobs:
           - type: mysql
             my_version: 5.7.31
 
-          - type: mysql
-            my_version: 5.7.29
-
-          - type: mysql
-            my_version: 5.7.26
-
-          - type: mysql
-            my_version: 5.7.24
-
-#         - type: mysql
-#            version: 8.0.20
+#          - type: mysql
+#            my_version: 5.7.29
+#
+#          - type: mysql
+#            my_version: 5.7.26
+#
+#          - type: mysql
+#            my_version: 5.7.24
+#
+##         - type: mysql
+##            version: 8.0.20
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -141,7 +141,7 @@ jobs:
       - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
         run: |
-          KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443 GODEBUG=x509ignoreCN=0 KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=/$TYPE
+          KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443 GODEBUG=x509ignoreCN=0 KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=TestFailover/$TYPE
         env:
           KUBERLOGIC_AUTH_PROVIDER: keycloak
           KUBERLOGIC_AUTH_KEYCLOAK_CLIENTID: apiserver
