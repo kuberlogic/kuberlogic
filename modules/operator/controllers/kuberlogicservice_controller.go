@@ -77,6 +77,13 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
+	// we need dependencies before we create or update operator object
+	log.Info("ensure that we have dependencies set up")
+	if err := r.ensureClusterDependencies(op, kls, ctx); err != nil {
+		log.Error(err, "failed to ensure dependencies", "BaseOperator", kls.Spec.Type)
+		return ctrl.Result{}, err
+	}
+
 	serviceObj := op.AsClientObject()
 	err = r.Get(
 		ctx,
@@ -125,6 +132,8 @@ func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op interfaces.Op
 	imgPullSecretName.Namespace = cm.Namespace
 	if err := r.Get(ctx, imgPullSecretName, nsPullSecret); err != nil {
 		if k8serrors.IsNotFound(err) {
+			// this object doesn't have ownerReference set to kls intentionally!
+			// as we don't wnt to clean it up if only one kls is deleted
 			return r.Create(ctx, &corev1.Secret{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      imgPullSecretName.Name,
@@ -162,12 +171,6 @@ func (r *KuberLogicServiceReconciler) create(ctx context.Context, kls *kuberlogi
 	dep, err := r.defineCluster(op, kls)
 	if err != nil {
 		log.Error(err, "Could not generate definition struct", "BaseOperator", kls.Spec.Type)
-		return ctrl.Result{}, err
-	}
-
-	log.Info("ensure that we have dependencies set up")
-	if err := r.ensureClusterDependencies(op, kls, ctx); err != nil {
-		log.Error(err, "failed to ensure dependencies", "BaseOperator", kls.Spec.Type)
 		return ctrl.Result{}, err
 	}
 
