@@ -245,8 +245,7 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			tf.service.WaitForStatus("Ready", 5, 5*60),
 
 			// wait replica pod
-			tf.ExecCommand("kubectl",
-				"wait", "pod", "--for=condition=Ready", "--timeout=2m", tf.replicaPodName),
+			tf.service.WaitForRole("replica", 5, 5*60),
 
 			tf.backup.db.Create,
 			tf.backup.CreateTable,
@@ -255,7 +254,7 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			tf.IncrementMysqlCounter(1),
 
 			// wait for synchronization with replicas
-			wait(5 * 60),
+			wait(30),
 
 			// check the counter
 			tf.CheckPostgresqlCounter(1),
@@ -280,8 +279,7 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			tf.IncrementPostgresqlCounter(2),
 			tf.IncrementMysqlCounter(2),
 
-			// wait for synchronization with replicas
-			wait(5 * 60),
+			tf.service.WaitForRole("replica", 5, 5*60),
 
 			tf.CheckPostgresqlCounter(2),
 			tf.CheckMysqlCounter(2),

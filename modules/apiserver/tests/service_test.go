@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	"github.com/prometheus/common/log"
 	"net/http"
 	"reflect"
@@ -389,6 +390,39 @@ func (s *tService) WaitForStatus(status string, delay, timeout int64) func(t *te
 			}
 
 			log.Infof("Waiting %s:%s. Left %d seconds", s.ns, s.name, left)
+			time.Sleep(time.Duration(delay) * time.Second)
+			left = left - delay
+		}
+	}
+}
+
+func (s *tService) WaitForRole(role string, delay, timeout int64) func(t *testing.T) {
+	return func(t *testing.T) {
+		begin := time.Now().Unix()
+		left := timeout
+		for {
+			currentTime := time.Now().Unix()
+			if currentTime-begin > timeout {
+				log.Fatalf("Timeout %d is expired", timeout)
+				return
+			}
+
+			api := newApi(t)
+			api.setBearerToken()
+			api.sendRequestTo(http.MethodGet, fmt.Sprintf("/services/%s:%s", s.ns, s.name))
+			api.responseCodeShouldBe(200)
+
+			var service models.Service
+			api.encodeResponseTo(&service)
+
+			for _, i := range service.Instances {
+				if i.Role == role {
+					t.Logf("Service %s:%s is reached the role %s", s.ns, s.name, role)
+					return
+				}
+			}
+
+			log.Infof("Waiting role %s for %s:%s. Left %d seconds", role, s.ns, s.name, left)
 			time.Sleep(time.Duration(delay) * time.Second)
 			left = left - delay
 		}
