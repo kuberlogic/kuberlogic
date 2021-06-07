@@ -245,7 +245,7 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			tf.service.WaitForStatus("Ready", 5, 5*60),
 
 			// wait replica pod
-			tf.service.WaitForRole("replica", "Running", 5, 5*60),
+			tf.service.WaitForRole("replica", "Running", 5, 3*60),
 
 			// "Create db" endpoint returned 400 without timeout
 			// dial tcp 172.17.0.15:3306: connect: connection refused
@@ -280,7 +280,7 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			tf.IncrementMysqlCounter(2),
 
 			tf.service.WaitForStatus("Ready", 5, 5*60),
-			tf.service.WaitForRole("replica", "Running", 5, 5*60),
+			tf.service.WaitForRole("replica", "Running", 5, 3*60),
 
 			tf.CheckPostgresqlCounter(2),
 			tf.CheckMysqlCounter(2),
