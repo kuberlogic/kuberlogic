@@ -127,19 +127,21 @@ func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op interfaces.Op
 	if err := r.Get(ctx, imgPullSecretName, imgPullSecret); err != nil {
 		return err
 	}
-	nsPullSecret := new(corev1.Secret)
+	nsPullSecret := &corev1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      imgPullSecretName.Name,
+			Namespace: kls.Namespace,
+		},
+		Type: "kubernetes.io/dockerconfigjson",
+	}
+
 	imgPullSecretName.Namespace = kls.Namespace
 	if err := r.Get(ctx, imgPullSecretName, nsPullSecret); err != nil {
 		if k8serrors.IsNotFound(err) {
 			// this object doesn't have ownerReference set to kls intentionally!
 			// as we don't wnt to clean it up if only one kls is deleted
-			return r.Create(ctx, &corev1.Secret{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      imgPullSecretName.Name,
-					Namespace: kls.Namespace,
-				},
-				Data: imgPullSecret.Data,
-			})
+			nsPullSecret.Data = imgPullSecret.Data
+			return r.Create(ctx, nsPullSecret)
 		}
 		return err
 	}
