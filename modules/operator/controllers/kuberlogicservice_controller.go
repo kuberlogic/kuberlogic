@@ -77,13 +77,6 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
-	// we need dependencies before we create or update operator object
-	log.Info("ensure that we have dependencies set up")
-	if err := r.ensureClusterDependencies(op, kls, ctx); err != nil {
-		log.Error(err, "failed to ensure dependencies", "BaseOperator", kls.Spec.Type)
-		return ctrl.Result{}, err
-	}
-
 	serviceObj := op.AsClientObject()
 	err = r.Get(
 		ctx,
@@ -100,18 +93,24 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		log.Error(err, "Failed to get object", "BaseOperator", kls.Spec.Type)
 		return ctrl.Result{}, err
 	}
-
 	op.InitFrom(serviceObj)
+
+	log.Info("ensure that we have operator dependencies set up")
+	if err := r.ensureClusterDependencies(op, kls, ctx); err != nil {
+		log.Error(err, "failed to ensure dependencies", "BaseOperator", kls.Spec.Type)
+		return ctrl.Result{}, err
+	}
+
 	return r.update(ctx, kls, op, log)
 }
 
-func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService, ctx context.Context) error {
+func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op interfaces.OperatorInterface, kls *kuberlogicv1.KuberLogicService, ctx context.Context) error {
 	credSecret, err := op.GetInternalDetails().GetCredentialsSecret()
 	if err != nil {
 		return err
 	}
 	if credSecret != nil {
-		if err := ctrl.SetControllerReference(cm, credSecret, r.Scheme); err != nil {
+		if err := ctrl.SetControllerReference(kls, credSecret, r.Scheme); err != nil {
 			return err
 		}
 		if err := r.Create(ctx, credSecret); err != nil && !k8serrors.IsAlreadyExists(err) {
@@ -129,7 +128,7 @@ func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op interfaces.Op
 		return err
 	}
 	nsPullSecret := new(corev1.Secret)
-	imgPullSecretName.Namespace = cm.Namespace
+	imgPullSecretName.Namespace = kls.Namespace
 	if err := r.Get(ctx, imgPullSecretName, nsPullSecret); err != nil {
 		if k8serrors.IsNotFound(err) {
 			// this object doesn't have ownerReference set to kls intentionally!
@@ -137,7 +136,7 @@ func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op interfaces.Op
 			return r.Create(ctx, &corev1.Secret{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      imgPullSecretName.Name,
-					Namespace: cm.Namespace,
+					Namespace: kls.Namespace,
 				},
 				Data: imgPullSecret.Data,
 			})
