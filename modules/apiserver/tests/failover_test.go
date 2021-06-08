@@ -170,7 +170,13 @@ func (tf tFailover) CheckMysqlCounter(value int) func(t *testing.T) {
 			return
 		}
 
-		db, err := sql.Open("mysql", session.ConnectionString(session.GetMasterIP(), tf.backup.db.name))
+		replicas := session.GetReplicaIPs()
+		if len(replicas) == 0 {
+			t.Error("amount of replicas is zero")
+			return
+		}
+
+		db, err := sql.Open("mysql", session.ConnectionString(replicas[0], tf.backup.db.name))
 		if err != nil {
 			t.Error(err)
 			return

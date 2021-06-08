@@ -9,57 +9,9 @@ import (
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	util "github.com/kuberlogic/operator/modules/operator/service-operator/util/kuberlogic"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
-
-func mergeServices(m1 *models.Service, m2 *models.Service) (*models.Service, error) {
-	if *m1.Name != *m1.Name || *m1.Ns != *m2.Ns {
-		return nil, fmt.Errorf("name or namespace can't be changed")
-	}
-
-	if *m1.Type != *m2.Type {
-		return nil, fmt.Errorf("type can't be changed")
-	}
-
-	if m2.AdvancedConf != nil {
-		m1.AdvancedConf = m2.AdvancedConf
-	}
-	if m2.MaintenanceWindow != nil {
-		m1.MaintenanceWindow = m2.MaintenanceWindow
-	}
-
-	if m2.Limits != nil {
-		if m1.Limits == nil {
-			m1.Limits = new(models.Limits)
-		}
-
-		if m2.Limits.Memory != nil {
-			m1.Limits.Memory = m2.Limits.Memory
-		}
-
-		if m2.Limits.CPU != nil {
-			m1.Limits.CPU = m2.Limits.CPU
-		}
-
-		if m2.Limits.VolumeSize != nil {
-			m2Vol := resource.MustParse(*m2.Limits.VolumeSize)
-
-			if m1.Limits.VolumeSize == nil {
-				m1.Limits.VolumeSize = new(string)
-			} else if m2Vol.Cmp(resource.MustParse(*m1.Limits.VolumeSize)) == -1 {
-				return nil, fmt.Errorf("volume size can't be lowered")
-			}
-
-			m1.Limits.VolumeSize = m2.Limits.VolumeSize
-		}
-	}
-
-	m1.Replicas = m2.Replicas
-
-	return m1, nil
-}
 
 func getServiceExternalConnection(c *kubernetes.Clientset, log logging.Logger, kls *kuberlogicv1.KuberLogicService) (*models.ServiceExternalConnection, error) {
 	svc := new(models.ServiceExternalConnection)

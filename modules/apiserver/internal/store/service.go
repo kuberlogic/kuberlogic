@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/go-openapi/strfmt"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
@@ -11,6 +12,7 @@ import (
 	v12 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -100,48 +102,30 @@ func (s *ServiceStore) CreateService(m *models.Service, alertEmail string, ctx c
 	return svc, nil
 }
 
-func (s *ServiceStore) UpdateService(m *models.Service, ctx context.Context) (*models.Service, *ServiceError) {
-	// 1. see if exists
-	currentC := new(kuberlogicv1.KuberLogicService)
-	if err := s.restClient.Get().
-		Resource(serviceK8sResource).
-		Namespace(*m.Ns).
-		Name(*m.Name).
-		Do(ctx).
-		Into(currentC); err != nil && k8s.ErrNotFound(err) {
-		return nil, NewServiceError("service not found", true, fmt.Errorf("service not found"))
-	} else if err != nil {
-		s.log.Errorw("service get error", "error", err)
-		return nil, NewServiceError("error getting service", false, err)
-	}
-
-	current, err := s.kuberLogicToService(currentC, ctx)
-	if err != nil {
-		return nil, NewServiceError("error converting service object", false, err)
-	}
-	wanted, errMerge := mergeServices(current, m)
-	if errMerge != nil {
-		return nil, NewServiceError(fmt.Sprintf("error changing service: %s", errMerge.Error()), true, errMerge)
-	}
-
-	c, errConvert := s.serviceToKuberLogic(wanted)
+func (s *ServiceStore) UpdateService(m *models.Service, ctx context.Context) *ServiceError {
+	kls, errConvert := s.serviceToKuberLogic(m)
 	if errConvert != nil {
-		return nil, NewServiceError("error converting service object", false, errConvert)
+		return NewServiceError("error converting service object", false, errConvert)
 	}
-	c.ResourceVersion = currentC.ResourceVersion
 
-	s.log.Debugw("kuberlogic object result", "body", c)
-	if err := s.restClient.Put().
+	patch, err := json.Marshal(kls)
+	if err != nil {
+		s.log.Errorw("service decode error", "error", err)
+		return NewServiceError("error decode service", false, err)
+	}
+
+	s.log.Debugw("kuberlogic object result", "body", kls)
+	if err := s.restClient.Patch(types.MergePatchType).
 		Resource(serviceK8sResource).
-		Name(c.Name).
-		Namespace(c.Namespace).
-		Body(c).
+		Name(kls.Name).
+		Namespace(kls.Namespace).
+		Body(patch).
 		Do(ctx).
 		Error(); err != nil {
-		return nil, NewServiceError("error updating service", false, err)
+		return NewServiceError("error updating service", false, err)
 	}
 
-	return wanted, nil
+	return nil
 }
 
 func (s *ServiceStore) DeleteService(m *models.Service, ctx context.Context) *ServiceError {
