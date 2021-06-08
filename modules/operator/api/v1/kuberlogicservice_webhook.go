@@ -122,7 +122,8 @@ func (kls *KuberLogicService) ValidateUpdate(old runtime.Object) error {
 		errs.Collect(err)
 	}
 
-	if kls.Spec.VolumeSize < oldKls.Spec.VolumeSize {
+	currentVolume := resource.MustParse(oldKls.Spec.VolumeSize)
+	if currentVolume.Cmp(resource.MustParse(kls.Spec.VolumeSize)) < 0 {
 		err := errors.New("volume size can not be decreased")
 		log.Error(err, "volume size can not be decreased", "current", oldKls.Spec.VolumeSize, "new", kls.Spec.VolumeSize)
 		errs.Collect(err)
