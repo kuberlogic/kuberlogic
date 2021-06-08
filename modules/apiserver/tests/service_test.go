@@ -193,9 +193,9 @@ func (s *tService) TryDecreaseVolumeSize(t *testing.T) {
 			"limits": map[string]string{"cpu": "250m", "memory": "512Mi", "volumeSize": "800Mi"},
 		})
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
-	api.responseCodeShouldBe(400) // 400 - apiserver validating error
+	api.responseCodeShouldBe(503)
 	api.encodeResponseToJson()
-	api.responseShouldMatchJson(`{"message": "error changing service: volume size can't be lowered"}`)
+	api.responseShouldMatchJson(`{"message": "error updating service"}`)
 }
 
 func (s *tService) EditReplicas(t *testing.T) {
@@ -228,9 +228,9 @@ func (s *tService) TryEditType(t *testing.T) {
 			"type": newType,
 		})
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
-	api.responseCodeShouldBe(400) // 400 - apiserver validating error
+	api.responseCodeShouldBe(503)
 	api.encodeResponseToJson()
-	api.responseShouldMatchJson(`{"message": "error changing service: type can't be changed"}`)
+	api.responseShouldMatchJson(`{"message": "error updating service"}`)
 }
 
 func (s *tService) EditBackAdvancedConf(t *testing.T) {

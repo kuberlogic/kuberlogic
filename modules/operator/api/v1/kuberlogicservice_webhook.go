@@ -32,8 +32,6 @@ func (kls *KuberLogicService) Default() {
 		version = "5.7.26"
 	}
 
-	fmt.Printf("---> %v/n", kls)
-
 	kls.InitDefaults(Defaults{
 		VolumeSize: DefaultVolumeSize,
 		Resources:  DefaultResources,
