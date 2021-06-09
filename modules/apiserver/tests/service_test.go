@@ -299,11 +299,11 @@ func (s *tService) DowngradeReplicasAndIncreaseAdvancedConf(t *testing.T) {
 	api.setBearerToken()
 	api.setJsonRequestBody(
 		map[string]interface{}{
-			"name":     s.name,
-			"ns":       s.ns,
-			"type":     s.type_,
-			"replicas": s.replicas,
-			"conf":     s.newConf,
+			"name":         s.name,
+			"ns":           s.ns,
+			"type":         s.type_,
+			"replicas":     s.replicas,
+			"advancedConf": s.newConf,
 		})
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
 	api.responseCodeShouldBe(200)
