@@ -88,7 +88,7 @@ jobs:
 
       - name: Configure logs
         working-directory: ./modules/apiserver/tests
-        run:
+        run: |
           echo Your testid label value is $GITHUB_RUN_ID
           make configure-logs
         env:
