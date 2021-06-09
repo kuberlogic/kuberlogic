@@ -181,17 +181,19 @@ jobs:
           kubectl logs -l spilo-role=replica -c postgres --tail=-1 > pg-replica.log
           kubectl logs -l spilo-role=master -c postgres-exporter --tail=-1 > pg-master-exporter.log
           kubectl logs -l spilo-role=replica -c postgres-exporter --tail=-1 > pg-replica-exporter.log
-          kubectl logs -l app.kubernetes.io/name=mysql -c mysql --tail=-1 > mysql.log
-          kubectl logs -l app.kubernetes.io/name=mysql -l role=master -c mysql --tail=-1 > mysql-master.log
-          kubectl logs -l app.kubernetes.io/name=mysql -l role=replica -c mysql --tail=-1 > mysql-replica.log
-          kubectl logs -l app.kubernetes.io/name=mysql -l role=master -c sidecar --tail=-1 > mysql-master-sidecar.log
-          kubectl logs -l app.kubernetes.io/name=mysql -l role=replica -c sidecar --tail=-1 > mysql-replica-sidecar.log
+
           kubectl logs -l app.kubernetes.io/name=mysql -l role=master -c myisam-repair --tail=-1 > mysql-master-myisam-repair.log
           kubectl logs -l app.kubernetes.io/name=mysql -l role=replica -c myisam-repair --tail=-1 > mysql-replica-myisam-repair.log
           kubectl logs -l app.kubernetes.io/name=mysql -l role=master -c myisam-repair --tail=-1 > mysql-master-myisam-repair.log
           kubectl logs -l app.kubernetes.io/name=mysql -l role=replica -c myisam-repair --tail=-1 > mysql-replica-myisam-repair.log
           kubectl logs -l app.kubernetes.io/name=mysql -l role=master -c init --tail=-1 > mysql-master-init.log
           kubectl logs -l app.kubernetes.io/name=mysql -l role=replica -c init --tail=-1 > mysql-replica-init.log
+          kubectl logs -l app.kubernetes.io/name=mysql -c mysql --tail=-1 > mysql.log
+          kubectl logs -l app.kubernetes.io/name=mysql -l role=master -c mysql --tail=-1 > mysql-master.log
+          kubectl logs -l app.kubernetes.io/name=mysql -l role=replica -c mysql --tail=-1 > mysql-replica.log
+          kubectl logs -l app.kubernetes.io/name=mysql -l role=master -c sidecar --tail=-1 > mysql-master-sidecar.log
+          kubectl logs -l app.kubernetes.io/name=mysql -l role=replica -c sidecar --tail=-1 > mysql-replica-sidecar.log
+
         if: ${{ always() }}
         continue-on-error: true
 
