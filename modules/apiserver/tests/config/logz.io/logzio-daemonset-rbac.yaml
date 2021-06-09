@@ -344,7 +344,7 @@ data:
       <record>
         type  k8s
         message ${record["log"]}
-        testid ${TEST_RUN_ID}
+        testid ${GITHUB_RUN_ID}
       </record>
       remove_keys log
     </filter>
@@ -586,7 +586,7 @@ data:
       <record>
         type  k8s
         message ${record["log"]}
-        testid ${TEST_RUN_ID}
+        testid ${GITHUB_RUN_ID}
       </record>
       remove_keys log
     </filter>
