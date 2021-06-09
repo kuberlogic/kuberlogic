@@ -89,6 +89,7 @@ jobs:
       - name: Configure logs
         working-directory: ./modules/apiserver/tests
         run:
+          echo Your testid label value is $GITHUB_RUN_ID
           make configure-logs
         env:
           LOGZ_IO_TOKEN: ${{ secrets.LOGZ_IO_TOKEN }}
