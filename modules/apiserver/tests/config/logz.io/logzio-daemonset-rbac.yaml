@@ -1,0 +1,640 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fluentd
+  namespace: default
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: fluentd
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: fluentd
+roleRef:
+  kind: ClusterRole
+  name: fluentd
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: fluentd
+  namespace: default
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd-logzio
+  namespace: default
+  labels:
+    k8s-app: fluentd-logzio
+    version: v1
+spec:
+  selector:
+    matchLabels:
+      k8s-app: fluentd-logzio
+  template:
+    metadata:
+      labels:
+        k8s-app: fluentd-logzio
+        version: v1
+    spec:
+      serviceAccount: fluentd
+      serviceAccountName: fluentd
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      # Because the image's entrypoint requires to write on /fluentd/etc but we mount configmap there which is read-only,
+      # this initContainers workaround or other is needed.
+      # See https://github.com/fluent/fluentd-kubernetes-daemonset/issues/90
+      initContainers:
+        - name: copy-fluentd-config
+          image: busybox
+          command: ['sh', '-c', 'cp /config-volume/..data/* /fluentd/etc']
+          volumeMounts:
+            - name: config-volume
+              mountPath: /config-volume
+            - name: fluentdconf
+              mountPath: /fluentd/etc
+      containers:
+      - name: fluentd
+        image: logzio/logzio-fluentd:1.0.0
+        env:
+        - name: LOGZIO_LOG_SHIPPING_TOKEN
+          value: ${LOGZ_IO_TOKEN}
+        - name: LOGZIO_LOG_LISTENER
+          value: ${LOGZ_IO_LISTENER}
+        - name: FLUENTD_SYSTEMD_CONF
+          value: "disable"
+        - name: FLUENTD_PROMETHEUS_CONF
+          value: "disable"
+        - name: INCLUDE_NAMESPACE
+          value: ""
+        - name: KUBERNETES_VERIFY_SSL
+          value: "true"
+        - name: AUDIT_LOG_FORMAT
+          value: audit
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: config-volume
+          mountPath: /config-volume
+        - name: fluentdconf
+          mountPath: /fluentd/etc
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: config-volume
+        configMap:
+          name: fluentd-config
+      - name: fluentdconf
+        emptyDir: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  namespace: default
+  labels:
+    k8s-app: fluentd-logzio
+data:
+  fluent.conf: |
+    @include "#{ENV['FLUENTD_SYSTEMD_CONF'] || 'systemd'}.conf"
+    @include "#{ENV['FLUENTD_PROMETHEUS_CONF'] || 'prometheus'}.conf"
+    @include "#{ENV['FLUENTD_KUBERNETES_CONTAINERD_CONF'] || 'kubernetes'}.conf"
+    @include system.conf
+    @include conf.d/*.conf
+
+    <match "#{ENV['INCLUDE_NAMESPACE'] || '**'}">
+      @type logzio_buffered
+      @id out_logzio
+      endpoint_url "#{ENV['LOGZIO_LOG_LISTENER']}?token=#{ENV['LOGZIO_LOG_SHIPPING_TOKEN']}"
+      output_include_time true
+      output_include_tags true
+      <buffer>
+        # Set the buffer type to file to improve the reliability and reduce the memory consumption
+        @type "#{ENV['LOGZIO_BUFFER_TYPE']}"
+        path "#{ENV['LOGZIO_BUFFER_PATH']}"
+        # Set queue_full action to block because we want to pause gracefully
+        # in case of the off-the-limits load instead of throwing an exception
+        overflow_action "#{ENV['LOGZIO_OVERFLOW_ACTION']}"
+        # Set the chunk limit conservatively to avoid exceeding the GCL limit
+        # of 10MiB per write request.
+        chunk_limit_size "#{ENV['LOGZIO_CHUNK_LIMIT_SIZE']}"
+        # Cap the combined memory usage of this buffer and the one below to
+        # 2MiB/chunk * (6 + 2) chunks = 16 MiB
+        queue_limit_length "#{ENV['LOGZIO_QUEUE_LIMIT_LENGTH']}"
+        # Never wait more than 5 seconds before flushing logs in the non-error case.
+        flush_interval "#{ENV['LOGZIO_FLUSH_INTERVAL']}"
+        # Never wait longer than 30 seconds between retries.
+        retry_max_interval "#{ENV['LOGZIO_RETRY_MAX_INTERVAL']}"
+        # Disable the limit on the number of retries (retry forever).
+        retry_forever "#{ENV['LOGZIO_RETRY_FOREVER']}"
+        # Use multiple threads for processing.
+        flush_thread_count "#{ENV['LOGZIO_FLUSH_THREAD_COUNT']}"
+      </buffer>
+    </match>
+  kubernetes.conf: |
+    <label @FLUENT_LOG>
+      <match fluent.*>
+        @type null
+      </match>
+    </label>
+
+    <source>
+      @type tail
+      @id in_tail_container_logs
+      path /var/log/containers/*.log
+      pos_file /var/log/fluentd-containers.log.pos
+      exclude_path /var/log/containers/fluentd*.log
+      tag logzio.kubernetes.*
+      read_from_head true
+      <parse>
+        @type json
+        time_format %Y-%m-%dT%H:%M:%S.%NZ
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_minion
+      path /var/log/salt/minion
+      pos_file /var/log/fluentd-salt.pos
+      tag logzio.salt
+      <parse>
+        @type regexp
+        expression /^(?<time>[^ ]* [^ ,]*)[^\[]*\[[^\]]*\]\[(?<severity>[^ \]]*) *\] (?<message>.*)$/
+        time_format %Y-%m-%d %H:%M:%S
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_startupscript
+      path /var/log/startupscript.log
+      pos_file /var/log/fluentd-startupscript.log.pos
+      tag logzio.startupscript
+      <parse>
+        @type syslog
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_docker
+      path /var/log/docker.log
+      pos_file /var/log/fluentd-docker.log.pos
+      tag logzio.docker
+      <parse>
+        @type regexp
+        expression /^time="(?<time>[^)]*)" level=(?<severity>[^ ]*) msg="(?<message>[^"]*)"( err="(?<error>[^"]*)")?( statusCode=($<status_code>\d+))?/
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_etcd
+      path /var/log/etcd.log
+      pos_file /var/log/fluentd-etcd.log.pos
+      tag logzio.etcd
+      <parse>
+        @type none
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_kubelet
+      multiline_flush_interval 5s
+      path /var/log/kubelet.log
+      pos_file /var/log/fluentd-kubelet.log.pos
+      tag logzio.kubelet
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_kube_proxy
+      multiline_flush_interval 5s
+      path /var/log/kube-proxy.log
+      pos_file /var/log/fluentd-kube-proxy.log.pos
+      tag logzio.kube-proxy
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_kube_apiserver
+      multiline_flush_interval 5s
+      path /var/log/kube-apiserver.log
+      pos_file /var/log/fluentd-kube-apiserver.log.pos
+      tag logzio.kube-apiserver
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_kube_controller_manager
+      multiline_flush_interval 5s
+      path /var/log/kube-controller-manager.log
+      pos_file /var/log/fluentd-kube-controller-manager.log.pos
+      tag logzio.kube-controller-manager
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_kube_scheduler
+      multiline_flush_interval 5s
+      path /var/log/kube-scheduler.log
+      pos_file /var/log/fluentd-kube-scheduler.log.pos
+      tag logzio.kube-scheduler
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_rescheduler
+      multiline_flush_interval 5s
+      path /var/log/rescheduler.log
+      pos_file /var/log/fluentd-rescheduler.log.pos
+      tag logzio.rescheduler
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_glbc
+      multiline_flush_interval 5s
+      path /var/log/glbc.log
+      pos_file /var/log/fluentd-glbc.log.pos
+      tag logzio.glbc
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_cluster_autoscaler
+      multiline_flush_interval 5s
+      path /var/log/cluster-autoscaler.log
+      pos_file /var/log/fluentd-cluster-autoscaler.log.pos
+      tag logzio.cluster-autoscaler
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    @include "#{ENV['AUDIT_LOG_FORMAT'] || 'audit'}.conf"
+
+    # This handles multiline exceptions automatically: https://github.com/GoogleCloudPlatform/fluent-plugin-detect-exceptions
+    <match logzio.**>
+      @type detect_exceptions
+      remove_tag_prefix logzio
+      message log
+      languages all
+      multiline_flush_interval 0.1
+    </match>
+
+    # This adds type to the log && change key log to message
+    <filter **>
+      @type record_modifier
+      <record>
+        type  k8s
+        message ${record["log"]}
+        testid ${GITHUB_RUN_ID}
+      </record>
+      remove_keys log
+    </filter>
+
+    <filter kubernetes.**>
+      @type kubernetes_metadata
+      @id filter_kube_metadata
+      kubernetes_url "#{ENV['FLUENT_FILTER_KUBERNETES_URL'] || 'https://' + ENV.fetch('KUBERNETES_SERVICE_HOST') + ':' + ENV.fetch('KUBERNETES_SERVICE_PORT') + '/api'}"
+      verify_ssl "#{ENV['KUBERNETES_VERIFY_SSL'] || true}"
+    </filter>
+
+  system.conf: |
+    <system>
+      log_level "#{ENV['LOGZIO_LOG_LEVEL']}"
+    </system>
+
+  systemd.conf: |
+    # Logs from systemd-journal for interesting services.
+    <source>
+      @type systemd
+      @id in_systemd_kubelet
+      filters [{ "_SYSTEMD_UNIT": "kubelet.service" }]
+      <storage>
+        @type local
+        persistent true
+        path /var/log/fluentd-journald-kubelet-cursor.json
+      </storage>
+      read_from_head true
+      tag kubelet
+    </source>
+
+    # Logs from docker-systemd
+    <source>
+      @type systemd
+      @id in_systemd_docker
+      filters [{ "_SYSTEMD_UNIT": "docker.service" }]
+      <storage>
+        @type local
+        persistent true
+        path /var/log/fluentd-journald-docker-cursor.json
+      </storage>
+      read_from_head true
+      tag docker.systemd
+    </source>
+
+    # Logs from systemd-journal for interesting services.
+    <source>
+      @type systemd
+      @id in_systemd_bootkube
+      filters [{ "_SYSTEMD_UNIT": "bootkube.service" }]
+      <storage>
+        @type local
+        persistent true
+        path /var/log/fluentd-journald-bootkube-cursor.json
+      </storage>
+      read_from_head true
+      tag bootkube
+    </source>
+
+  kubernetes-containerd.conf: |
+    <label @FLUENT_LOG>
+      <match fluent.*>
+        @type null
+      </match>
+    </label>
+
+    <source>
+      @type tail
+      @id in_tail_container_logs
+      path /var/log/containers/*.log
+      pos_file /var/log/fluentd-containers.log.pos
+      exclude_path /var/log/containers/fluentd*.log
+      tag logzio.kubernetes.*
+      read_from_head true
+      <parse>
+        @type regexp
+        expression /^(?<time>.+) (?<stream>stdout|stderr) [^ ]* (?<log>.*)$/
+        time_format %Y-%m-%dT%H:%M:%S.%NZ
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_minion
+      path /var/log/salt/minion
+      pos_file /var/log/fluentd-salt.pos
+      tag logzio.salt
+      <parse>
+        @type regexp
+        expression /^(?<time>[^ ]* [^ ,]*)[^\[]*\[[^\]]*\]\[(?<severity>[^ \]]*) *\] (?<message>.*)$/
+        time_format %Y-%m-%d %H:%M:%S
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_startupscript
+      path /var/log/startupscript.log
+      pos_file /var/log/fluentd-startupscript.log.pos
+      tag logzio.startupscript
+      <parse>
+        @type syslog
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_docker
+      path /var/log/docker.log
+      pos_file /var/log/fluentd-docker.log.pos
+      tag logzio.docker
+      <parse>
+        @type regexp
+        expression /^time="(?<time>[^)]*)" level=(?<severity>[^ ]*) msg="(?<message>[^"]*)"( err="(?<error>[^"]*)")?( statusCode=($<status_code>\d+))?/
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_etcd
+      path /var/log/etcd.log
+      pos_file /var/log/fluentd-etcd.log.pos
+      tag logzio.etcd
+      <parse>
+        @type none
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_kubelet
+      multiline_flush_interval 5s
+      path /var/log/kubelet.log
+      pos_file /var/log/fluentd-kubelet.log.pos
+      tag logzio.kubelet
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_kube_proxy
+      multiline_flush_interval 5s
+      path /var/log/kube-proxy.log
+      pos_file /var/log/fluentd-kube-proxy.log.pos
+      tag logzio.kube-proxy
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_kube_apiserver
+      multiline_flush_interval 5s
+      path /var/log/kube-apiserver.log
+      pos_file /var/log/fluentd-kube-apiserver.log.pos
+      tag logzio.kube-apiserver
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_kube_controller_manager
+      multiline_flush_interval 5s
+      path /var/log/kube-controller-manager.log
+      pos_file /var/log/fluentd-kube-controller-manager.log.pos
+      tag logzio.kube-controller-manager
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_kube_scheduler
+      multiline_flush_interval 5s
+      path /var/log/kube-scheduler.log
+      pos_file /var/log/fluentd-kube-scheduler.log.pos
+      tag logzio.kube-scheduler
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_rescheduler
+      multiline_flush_interval 5s
+      path /var/log/rescheduler.log
+      pos_file /var/log/fluentd-rescheduler.log.pos
+      tag logzio.rescheduler
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_glbc
+      multiline_flush_interval 5s
+      path /var/log/glbc.log
+      pos_file /var/log/fluentd-glbc.log.pos
+      tag logzio.glbc
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    <source>
+      @type tail
+      @id in_tail_cluster_autoscaler
+      multiline_flush_interval 5s
+      path /var/log/cluster-autoscaler.log
+      pos_file /var/log/fluentd-cluster-autoscaler.log.pos
+      tag logzio.cluster-autoscaler
+      <parse>
+        @type kubernetes
+      </parse>
+    </source>
+
+    @include "#{ENV['AUDIT_LOG_FORMAT'] || 'audit'}.conf"
+
+    # This handles multiline exceptions automatically: https://github.com/GoogleCloudPlatform/fluent-plugin-detect-exceptions
+    <match logzio.**>
+      @type detect_exceptions
+      remove_tag_prefix logzio
+      message log
+      languages all
+      multiline_flush_interval 0.1
+    </match>
+
+    # This adds type to the log && change key log to message
+    <filter **>
+      @type record_modifier
+      <record>
+        type  k8s
+        message ${record["log"]}
+        testid ${GITHUB_RUN_ID}
+      </record>
+      remove_keys log
+    </filter>
+
+    <filter kubernetes.**>
+      @type kubernetes_metadata
+      @id filter_kube_metadata
+      kubernetes_url "#{ENV['FLUENT_FILTER_KUBERNETES_URL'] || 'https://' + ENV.fetch('KUBERNETES_SERVICE_HOST') + ':' + ENV.fetch('KUBERNETES_SERVICE_PORT') + '/api'}"
+      verify_ssl "#{ENV['KUBERNETES_VERIFY_SSL'] || true}"
+    </filter>
+
+  audit.conf: |
+    # Example:
+    # 2017-02-09T00:15:57.992775796Z AUDIT: id="90c73c7c-97d6-4b65-9461-f94606ff825f" ip="104.132.1.72" method="GET" user="kubecfg" as="<self>" asgroups="<lookup>" namespace="default" uri="/api/v1/namespaces/default/pods"
+    # 2017-02-09T00:15:57.993528822Z AUDIT: id="90c73c7c-97d6-4b65-9461-f94606ff825f" response="200"
+    <source>
+      @type tail
+      @id in_tail_kube_apiserver_audit
+      multiline_flush_interval 5s
+      path /var/log/kubernetes/kube-apiserver-audit.log
+      pos_file /var/log/kube-apiserver-audit.log.pos
+      tag logzio.kube-apiserver-audit
+      <parse>
+        @type multiline
+        format_firstline /^\S+\s+AUDIT:/
+        # Fields must be explicitly captured by name to be parsed into the record.
+        # Fields may not always be present, and order may change, so this just looks
+        # for a list of key="\"quoted\" value" pairs separated by spaces.
+        # Unknown fields are ignored.
+        # Note: We can't separate query/response lines as format1/format2 because
+        #       they don't always come one after the other for a given query.
+        format1 /^(?<time>\S+) AUDIT:(?: (?:id="(?<id>(?:[^"\\]|\\.)*)"|ip="(?<ip>(?:[^"\\]|\\.)*)"|method="(?<method>(?:[^"\\]|\\.)*)"|user="(?<user>(?:[^"\\]|\\.)*)"|groups="(?<groups>(?:[^"\\]|\\.)*)"|as="(?<as>(?:[^"\\]|\\.)*)"|asgroups="(?<asgroups>(?:[^"\\]|\\.)*)"|namespace="(?<namespace>(?:[^"\\]|\\.)*)"|uri="(?<uri>(?:[^"\\]|\\.)*)"|response="(?<response>(?:[^"\\]|\\.)*)"|\w+="(?:[^"\\]|\\.)*"))*/
+        time_format %Y-%m-%dT%T.%L%Z
+      </parse>
+    </source>
+
+  audit-json.conf: |
+    <source>
+      @type tail
+      @id in_tail_kube_apiserver_audit
+      multiline_flush_interval 5s
+      path /var/log/kubernetes/kube-apiserver-audit.log
+      pos_file /var/log/kube-apiserver-audit.log.pos
+      tag logzio.kube-apiserver-audit
+      <parse>
+        @type json
+        keep_time_key true
+        time_key timestamp
+        time_format %Y-%m-%dT%T.%L%Z
+      </parse>
+    </source>
