@@ -34,12 +34,9 @@ spec:
             type: object
           spec:
             properties:
-              namespace:
-                type: string
               ownerEmail:
                 type: string
             required:
-            - namespace
             - ownerEmail
             type: object
           status:

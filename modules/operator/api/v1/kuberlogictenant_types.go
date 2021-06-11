@@ -7,7 +7,6 @@ import (
 
 type KuberLogicTenantSpec struct {
 	OwnerEmail string `json:"ownerEmail"`
-	Namespace string `json:"namespace"`
 }
 
 type KuberLogicTenantStatus struct {
@@ -37,7 +36,7 @@ const (
 )
 
 func (kt KuberLogicTenant) GetTenantName() string {
-	return kt.Spec.Namespace
+	return kt.ObjectMeta.Name
 }
 
 func (kt *KuberLogicTenant) SetActive() {
