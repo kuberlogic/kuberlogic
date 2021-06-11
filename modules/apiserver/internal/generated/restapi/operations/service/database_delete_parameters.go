@@ -37,6 +37,8 @@ type DatabaseDeleteParams struct {
 	Database string
 	/*service Resource ID
 	  Required: true
+	  Max Length: 120
+	  Min Length: 3
 	  Pattern: [a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?
 	  In: path
 	*/
@@ -104,6 +106,14 @@ func (o *DatabaseDeleteParams) bindServiceID(rawData []string, hasKey bool, form
 
 // validateServiceID carries on validations for parameter ServiceID
 func (o *DatabaseDeleteParams) validateServiceID(formats strfmt.Registry) error {
+
+	if err := validate.MinLength("ServiceID", "path", o.ServiceID, 3); err != nil {
+		return err
+	}
+
+	if err := validate.MaxLength("ServiceID", "path", o.ServiceID, 120); err != nil {
+		return err
+	}
 
 	if err := validate.Pattern("ServiceID", "path", o.ServiceID, `[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?`); err != nil {
 		return err

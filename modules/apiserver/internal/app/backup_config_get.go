@@ -14,7 +14,7 @@ import (
 // curl -v -H Content-Type:application/json -H "Authorization: Bearer" -X GET localhost:8001/api/v1/services/<service-id>/backup-config
 func (srv *Service) BackupConfigGetHandler(params apiService.BackupConfigGetParams, principal *models.Principal) middleware.Responder {
 	service := params.HTTPRequest.Context().Value("service").(*kuberlogicv1.KuberLogicService)
-	ns, name := service.Namespace, service.Name
+	ns, name := principal.Namespace, service.Name
 
 	srv.log.Debugw("attempting to get a backup config",
 		"namespace", ns, "name", name)

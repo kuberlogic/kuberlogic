@@ -77,12 +77,8 @@ paths:
           schema:
             $ref: "#/definitions/Error"
     post:
-      x-permission: service:get
+      x-permission: service:add
       x-posthog:
-        - key: name
-          value: ServiceItem.Name
-        - key: namespace
-          value: ServiceItem.Ns
         - key: type
           value: ServiceItem.Type
         - key: replicas
@@ -737,7 +733,7 @@ paths:
             $ref: "#/definitions/Error"
   /services/{ServiceID}/restores:
     post:
-      x-permission: service:backup-restore:create
+      x-permission: service:backup-restore:add
       x-posthog:
         - key: service-id
           value: ServiceID
@@ -925,13 +921,18 @@ definitions:
     type: object
     required:
       - name
-      - ns
       - type
     properties:
       name:
         type: string
+        pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+        minLength: 2
+        maxLength: 20
       ns:
         type: string
+        pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+        maxLength: 32
+        minLength: 32
       type:
         type: string
         enum:
@@ -1081,7 +1082,8 @@ definitions:
         type: string
       token:
         type: string
-
+      namespace:
+        type: string
 
   Error:
     type: object
@@ -1097,6 +1099,8 @@ parameters:
     required: true
     type: "string"
     pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+    minLength: 3
+    maxLength: 120
 
   ServiceItem:
     in: body

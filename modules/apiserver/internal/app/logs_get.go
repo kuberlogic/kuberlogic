@@ -9,7 +9,7 @@ import (
 
 func (srv *Service) LogsGetHandler(params apiService.LogsGetParams, principal *models.Principal) middleware.Responder {
 	service := params.HTTPRequest.Context().Value("service").(*kuberlogicv1.KuberLogicService)
-	ns, name := service.Namespace, service.Name
+	ns, name := principal.Namespace, service.Name
 
 	m := srv.serviceStore.NewServiceObject(name, ns)
 	logs, errLogs := srv.serviceStore.GetServiceLogs(m, params.ServiceInstance, *params.Tail, params.HTTPRequest.Context())

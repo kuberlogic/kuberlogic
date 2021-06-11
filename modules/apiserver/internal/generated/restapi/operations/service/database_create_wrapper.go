@@ -16,8 +16,10 @@ func DatabaseCreateWrapper(srv Service, next DatabaseCreateHandlerFunc) (fn Data
 
 		log := srv.GetLogger()
 
+		// namespace is always provided as a part of Principal object
+		ns := principal.Namespace
 		// check ServiceID param
-		ns, name, err := util.SplitID(params.ServiceID)
+		_, name, err := util.SplitID(params.ServiceID)
 		if err != nil {
 			msg := "incorrect service id"
 			log.Errorw(msg, "serviceId", params.ServiceID, "error", err)
