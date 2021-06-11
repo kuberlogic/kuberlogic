@@ -6,6 +6,7 @@ import (
 	"github.com/kuberlogic/operator/modules/operator/cmd"
 	"github.com/prometheus/common/log"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -20,13 +21,13 @@ type Service struct {
 }
 
 var pgService = Service{
-	ns:    "default",
 	name:  "pgsql",
+	ns:    testNs,
 	type_: "postgresql",
 }
 var mysqlService = Service{
-	ns:    "default",
-	name:  "my",
+	name:  "mys",
+	ns:    testNs,
 	type_: "mysql",
 }
 
@@ -35,19 +36,38 @@ var services = []Service{
 	mysqlService,
 }
 
+// default api contact values
+var (
+	apiHost = "localhost"
+	apiPort = 8001
+)
+
 const (
-	testUser     = "kuberlogic@cloudlinux.com"
-	testPassword = "password"
+	testUser     = "none@example.com"
+	testNs       = "a0c394e31c9740376635c8878cf5889e"
+	testPassword = "secret"
 )
 
 func setup() {
-	args := []string{"--scheme=http"}
-	log.Info("Starting the apiserver in the goroutine...")
-	go cmd2.Main(args) // start the api server
-	log.Info("Starting the operator in the goroutine...")
-	go cmd.Main([]string{}) // start the operator
-	log.Info("Waiting 15 seconds for the starting goroutines...")
-	time.Sleep(15 * time.Second)
+	if localDeps := os.Getenv("REMOTE_DEPS"); localDeps == "" {
+		log.Info("Starting the apiserver in the goroutine...")
+		args := []string{"--scheme=http"}
+		go cmd2.Main(args) // start the api server
+		log.Info("Starting the operator in the goroutine...")
+		go cmd.Main([]string{}) // start the operator
+		log.Info("Waiting 15 seconds for the starting goroutines...")
+		time.Sleep(15 * time.Second)
+	} else {
+		apiHost = os.Getenv("API_HOST")
+		if apiHost == "" {
+			panic("API_HOST string variable must be set for remote tests")
+		}
+		p, e := strconv.Atoi(os.Getenv("API_PORT"))
+		if e != nil && p == 0 {
+			panic("API_PORT int variable must be set for remote tests")
+		}
+		apiPort = p
+	}
 
 	flag.Parse()
 	if testing.Short() {
