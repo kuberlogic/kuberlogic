@@ -33,7 +33,7 @@ type KuberLogicBackupRestoreStatus struct {
 // +kubebuilder:printcolumn:name="Cluster name",type=string,JSONPath=`.spec.name`,description="The cluster name"
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`,description="The backup type"
 // +kubebuilder:printcolumn:name="Link",type=string,JSONPath=`.spec.backup`,description="The backup link"
-// +kubebuilder:resource:shortName=klr
+// +kubebuilder:resource:shortName=klr,categories=kuberlogic
 // +kubebuilder:subresource:status
 type KuberLogicBackupRestore struct {
 	metav1.TypeMeta   `json:",inline"`

@@ -6,45 +6,21 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.5.0
   creationTimestamp: null
-  name: kuberlogicalerts.kuberlogic.com
+  name: kuberlogictenants.kuberlogic.com
 spec:
   group: kuberlogic.com
   names:
     categories:
     - kuberlogic
-    kind: KuberLogicAlert
-    listKind: KuberLogicAlertList
-    plural: kuberlogicalerts
+    kind: KuberLogicTenant
+    listKind: KuberLogicTenantList
+    plural: kuberlogictenants
     shortNames:
-    - kla
-    singular: kuberlogicalert
-  scope: Namespaced
+    - klt
+    singular: kuberlogictenant
+  scope: Cluster
   versions:
-  - additionalPrinterColumns:
-    - description: Alert has been acknowledged
-      jsonPath: .status.conditions[?(@.type == 'Acknowledged')].status
-      name: Acknowledged
-      type: string
-    - description: Alert name
-      jsonPath: .spec.alertname
-      name: AlertName
-      type: string
-    - description: Alert value
-      jsonPath: .spec.alertvalue
-      name: AlertValue
-      type: string
-    - description: Cluster name
-      jsonPath: .spec.cluster
-      name: Cluster
-      type: string
-    - description: Affected Pod Name
-      jsonPath: .spec.pod
-      name: Pod
-      type: string
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    name: v1
+  - name: v1
     schema:
       openAPIV3Schema:
         properties:
@@ -58,35 +34,15 @@ spec:
             type: object
           spec:
             properties:
-              alertname:
-                description: Alert name
-                pattern: ^.*$
+              namespace:
                 type: string
-              alertvalue:
-                description: Value
-                pattern: ^.*$
-                type: string
-              cluster:
-                description: Cluster name
-                pattern: ^.*$
-                type: string
-              pod:
-                description: Pod
-                pattern: ^.*$
-                type: string
-              silenced:
-                description: Silenced set to true suppresses user notification for this alert
-                type: boolean
-              summary:
-                description: Summary contains a descriptive message for this alert
+              ownerEmail:
                 type: string
             required:
-            - alertname
-            - alertvalue
-            - cluster
+            - namespace
+            - ownerEmail
             type: object
           status:
-            description: KuberLogicAlert defines the observed state of KuberLogicAlert
             properties:
               conditions:
                 items:

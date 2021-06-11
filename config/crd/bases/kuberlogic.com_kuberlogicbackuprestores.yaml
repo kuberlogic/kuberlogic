@@ -10,6 +10,8 @@ metadata:
 spec:
   group: kuberlogic.com
   names:
+    categories:
+    - kuberlogic
     kind: KuberLogicBackupRestore
     listKind: KuberLogicBackupRestoreList
     plural: kuberlogicbackuprestores
