@@ -15,29 +15,29 @@ jobs:
       fail-fast: true
       matrix:
         include:
+          - type: postgresql
+            pg_version: 13
+
+          - type: postgresql
+            pg_version: 12
+
+          - type: postgresql
+            pg_version: 11
+
+          - type: postgresql
+            pg_version: 10
+
+          - type: postgresql
+            pg_version: 9.6
+
+          - type: postgresql
+            pg_version: 9.5
+
 #          - type: postgresql
-#            pg_version: 13
+#            pg_version: 9.4
 #
 #          - type: postgresql
-#            pg_version: 12
-#
-#          - type: postgresql
-#            pg_version: 11
-#
-#          - type: postgresql
-#            pg_version: 10
-#
-#          - type: postgresql
-#            pg_version: 9.6
-#
-#          - type: postgresql
-#            pg_version: 9.5
-#
-##          - type: postgresql
-##            pg_version: 9.4
-##
-##          - type: postgresql
-##            pg_version: 9.3
+#            pg_version: 9.3
 
           - type: mysql
             my_version: 5.7.31

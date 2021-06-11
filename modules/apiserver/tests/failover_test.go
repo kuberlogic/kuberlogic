@@ -14,7 +14,6 @@ import (
 type tFailover struct {
 	service        tService
 	backup         tBackupRestore
-	masterLabel    string
 	pvcName        string
 	masterPodName  string
 	replicaPodName string
@@ -241,6 +240,24 @@ func (tf tFailover) IncrementMysqlCounter(value int) func(t *testing.T) {
 	}
 }
 
+func (tf *tFailover) RemovePersistentVolumeClaim(t *testing.T) {
+	if tf.service.type_ == "mysql" {
+		// when pvc is deleted and pod is recreated sometimes
+		// https://github.com/presslabs/mysql-operator/issues/401
+		t.Skipf("skipping, not a mysql")
+		return
+	}
+
+	// kill the pvc, we'll check the failover and replication
+	tf.ExecCommand("kubectl", "delete", "pvc", tf.pvcName, "--wait=false")(t)
+
+	// kill the master replica by masterPodName
+	tf.ExecCommand("kubectl", "delete", "pod", tf.masterPodName)(t)
+
+	// wait Pending state, pod can not be Ready due to "pvc not found"
+	wait(30)(t)
+}
+
 func makeTestFailover(tf tFailover) func(t *testing.T) {
 	return func(t *testing.T) {
 		steps := []func(t *testing.T){
@@ -252,6 +269,10 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 
 			// wait replica pod
 			tf.service.WaitForRole("replica", "Running", 5, 3*60),
+
+			// check replica & master before the failover
+			tf.service.CheckRole(tf.masterPodName, "master", "Running"),
+			tf.service.CheckRole(tf.replicaPodName, "replica", "Running"),
 
 			// "Create db" endpoint returned 400 without timeout
 			// dial tcp 172.17.0.15:3306: connect: connection refused
@@ -270,23 +291,23 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			tf.CheckPostgresqlCounter(1),
 			tf.CheckMysqlCounter(1),
 
-			// kill the pvc, we'll check the failover and replication
-			tf.ExecCommand("kubectl", "delete", "pvc", tf.pvcName, "--wait=false"),
-			// kill the master replica by masterLabel
-			tf.ExecCommand("kubectl", "delete", "pod", "-l", tf.masterLabel),
-			// wait Pending state, pod can not be Ready due to "pvc not found"
-			wait(30),
+			tf.RemovePersistentVolumeClaim, // skipped for the mysql
 
-			// kill the pod second time due to "Pending" state.
-			// it's time when sts recreates pvc
 			tf.ExecCommand("kubectl", "delete", "pod", tf.masterPodName),
 
-			// insert should work
+			// wait for the failover
+			wait(30),
+
+			// now insert should work
 			tf.IncrementPostgresqlCounter(2),
 			tf.IncrementMysqlCounter(2),
 
 			tf.service.WaitForStatus("Ready", 5, 5*60),
 			tf.service.WaitForRole("replica", "Running", 5, 3*60),
+
+			// now master & replica pod should be switched
+			tf.service.CheckRole(tf.replicaPodName, "master", "Running"),
+			tf.service.CheckRole(tf.masterPodName, "replica", "Running"),
 
 			tf.CheckPostgresqlCounter(2),
 			tf.CheckMysqlCounter(2),
@@ -313,7 +334,6 @@ func TestFailover(t *testing.T) {
 				},
 				table: "failover",
 			},
-			masterLabel:    "spilo-role=master",
 			pvcName:        "pgdata-kuberlogic-pgsql-0",
 			masterPodName:  "kuberlogic-pgsql-0",
 			replicaPodName: "kuberlogic-pgsql-1",
@@ -328,7 +348,6 @@ func TestFailover(t *testing.T) {
 				},
 				table: "failover",
 			},
-			masterLabel:    "role=master",
 			pvcName:        "data-my-mysql-0",
 			masterPodName:  "my-mysql-0",
 			replicaPodName: "my-mysql-1",

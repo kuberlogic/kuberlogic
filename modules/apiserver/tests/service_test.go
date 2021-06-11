@@ -429,6 +429,26 @@ func (s *tService) WaitForRole(role, status string, delay, timeout int64) func(t
 	}
 }
 
+func (s *tService) CheckRole(name, role, status string) func(t *testing.T) {
+	return func(t *testing.T) {
+
+		api := newApi(t)
+		api.setBearerToken()
+		api.sendRequestTo(http.MethodGet, fmt.Sprintf("/services/%s:%s", s.ns, s.name))
+		api.responseCodeShouldBe(200)
+
+		var service models.Service
+		api.encodeResponseTo(&service)
+
+		for _, i := range service.Instances {
+			if i.Role == role && i.Status.Status == status && i.Name == name {
+				return
+			}
+		}
+		t.Errorf("%s not found with role %s and status %s", name, role, status)
+	}
+}
+
 func (s *tService) Delete(t *testing.T) {
 	if !s.force && testing.Short() {
 		t.Skip("Skipping. Using -short flag")

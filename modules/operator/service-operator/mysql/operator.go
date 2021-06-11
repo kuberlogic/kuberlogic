@@ -101,14 +101,10 @@ func (p *Mysql) Init(kls *kuberlogicv1.KuberLogicService) {
 							"/bin/sh",
 							"-c",
 							`
-MYSQL_DIR=/var/lib/mysql
+MYSQL_DIR=/var/lib/mysql/mysql
 if [ -d $MYSQL_DIR ] 
 then
-	# details why need chown command here ->
-	# https://github.com/presslabs/mysql-operator/issues/401
-	# https://cloud.ibm.com/docs/containers?topic=containers-nonroot
-	chown 999:999 $MYSQL_DIR
-	for f in $(ls $MYSQL_DIR/mysql/*MYI); do 
+	for f in $(ls $MYSQL_DIR/*MYI); do 
 		myisamchk -r --update-state $(echo $f | tr -d .MYI); 
 	done
 else
