@@ -111,7 +111,7 @@ func makeTestDb(td tDb) func(t *testing.T) {
 	return func(t *testing.T) {
 		steps := []func(t *testing.T){
 			td.service.Create,
-			td.service.WaitForStatus("Ready", 5, 2*60),
+			td.service.WaitForStatus("Ready", 5, 5*60),
 
 			td.Create,
 			td.CreateTheSameName,

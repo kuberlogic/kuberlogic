@@ -262,7 +262,7 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 	return func(t *testing.T) {
 		steps := []func(t *testing.T){
 			tf.service.Create,
-			tf.service.WaitForStatus("Ready", 5, 2*60),
+			tf.service.WaitForStatus("Ready", 5, 5*60),
 
 			tf.service.EditReplicas, // increase replicas to 2
 			tf.service.WaitForStatus("Ready", 5, 5*60),
@@ -315,6 +315,8 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			// for the consistency other tests due to https://cloudlinux.atlassian.net/browse/KL-48
 			// need to return replicas at the beginning state
 			tf.service.DowngradeReplicas,
+			//tf.service.WaitForStatus("Ready", 5, 5*60),
+
 			tf.service.Delete,
 		}
 

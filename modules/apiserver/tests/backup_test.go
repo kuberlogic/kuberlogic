@@ -164,7 +164,7 @@ func makeTestBackupRestore(tb tBackupRestore) func(t *testing.T) {
 
 		steps := []func(t *testing.T){
 			tb.service.Create,
-			tb.service.WaitForStatus("Ready", 5, 2*60),
+			tb.service.WaitForStatus("Ready", 5, 5*60),
 			tb.EnsureClearConfig,
 			tb.EnsureClearDB,
 

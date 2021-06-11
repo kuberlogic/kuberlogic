@@ -490,7 +490,7 @@ func makeTestService(ts tService) func(t *testing.T) {
 
 			ts.CheckRecordCount(1),
 			ts.IncorrectName,
-			ts.WaitForStatus("Ready", 5, 2*60),
+			ts.WaitForStatus("Ready", 5, 5*60),
 
 			ts.CheckField("limits", ts.limits),
 			ts.CheckField("replicas", ts.replicas),
