@@ -312,6 +312,22 @@ func (s *tService) DowngradeReplicasAndIncreaseAdvancedConf(t *testing.T) {
 	api.fieldIs("advancedConf", s.newConf)
 }
 
+func (s *tService) DowngradeReplicas(t *testing.T) {
+	api := newApi(t)
+	api.setBearerToken()
+	api.setJsonRequestBody(
+		map[string]interface{}{
+			"name":     s.name,
+			"ns":       s.ns,
+			"type":     s.type_,
+			"replicas": s.replicas,
+		})
+	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
+	api.responseCodeShouldBe(200)
+	api.encodeResponseToJson()
+	api.fieldIs("replicas", s.replicas)
+}
+
 func (s *tService) CreateSecondOneWithSameName(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()

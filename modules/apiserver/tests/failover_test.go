@@ -46,7 +46,7 @@ func (tf *tFailover) ExecCommand(name string, args ...string) func(t *testing.T)
 
 func (tf tFailover) CheckPostgresqlCounter(expected int) func(t *testing.T) {
 	return func(t *testing.T) {
-		if tf.service.type_ != "postgresql" {
+		if tf.service.type_ != pgService.type_ {
 			t.Skipf("skipping, not a postgresql")
 			return
 		}
@@ -103,7 +103,7 @@ FROM %s;
 
 func (tf tFailover) IncrementPostgresqlCounter(value int) func(t *testing.T) {
 	return func(t *testing.T) {
-		if tf.service.type_ != "postgresql" {
+		if tf.service.type_ != pgService.type_ {
 			t.Skipf("skipping, not a postgresql")
 			return
 		}
@@ -152,7 +152,7 @@ func (tf tFailover) IncrementPostgresqlCounter(value int) func(t *testing.T) {
 
 func (tf tFailover) CheckMysqlCounter(value int) func(t *testing.T) {
 	return func(t *testing.T) {
-		if tf.service.type_ != "mysql" {
+		if tf.service.type_ != mysqlService.type_ {
 			t.Skipf("skipping, not a mysql")
 			return
 		}
@@ -205,7 +205,7 @@ func (tf tFailover) CheckMysqlCounter(value int) func(t *testing.T) {
 
 func (tf tFailover) IncrementMysqlCounter(value int) func(t *testing.T) {
 	return func(t *testing.T) {
-		if tf.service.type_ != "mysql" {
+		if tf.service.type_ != mysqlService.type_ {
 			t.Skipf("skipping, not a mysql")
 			return
 		}
@@ -241,7 +241,7 @@ func (tf tFailover) IncrementMysqlCounter(value int) func(t *testing.T) {
 }
 
 func (tf *tFailover) RemovePersistentVolumeClaim(t *testing.T) {
-	if tf.service.type_ == "mysql" {
+	if tf.service.type_ == mysqlService.type_ {
 		// when pvc is deleted and pod is recreated sometimes
 		// https://github.com/presslabs/mysql-operator/issues/401
 		t.Skipf("skipping, not a mysql")
@@ -312,6 +312,9 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 			tf.CheckPostgresqlCounter(2),
 			tf.CheckMysqlCounter(2),
 
+			// for the consistency other tests due to https://cloudlinux.atlassian.net/browse/KL-48
+			// need to return replicas at the beginning state
+			tf.service.DowngradeReplicas,
 			tf.service.Delete,
 		}
 
