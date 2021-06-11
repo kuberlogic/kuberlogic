@@ -141,7 +141,7 @@ jobs:
       - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
         run: |
-          KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443 GODEBUG=x509ignoreCN=0 KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=TestFailover/$TYPE
+          KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443 GODEBUG=x509ignoreCN=0 KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=/$TYPE
         env:
           KUBERLOGIC_AUTH_PROVIDER: keycloak
           KUBERLOGIC_AUTH_KEYCLOAK_CLIENTID: apiserver
