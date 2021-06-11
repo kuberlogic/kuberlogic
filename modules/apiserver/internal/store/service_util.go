@@ -15,7 +15,7 @@ import (
 )
 
 func mergeServices(m1 *models.Service, m2 *models.Service) (*models.Service, error) {
-	if *m1.Name != *m1.Name || *m1.Ns != *m2.Ns {
+	if *m1.Name != *m1.Name || m1.Ns != m2.Ns {
 		return nil, fmt.Errorf("name or namespace can't be changed")
 	}
 
