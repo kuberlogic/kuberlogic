@@ -11,8 +11,9 @@ func (srv *Service) BearerAuthentication(token string) (*models.Principal, error
 		return nil, errors.Unauthenticated("authentication failed: " + err.Error())
 	}
 	p := &models.Principal{
-		Email: email,
-		Token: bearerToken,
+		Email:     email,
+		Token:     bearerToken,
+		Namespace: srv.authProvider.GetNamespace(email),
 	}
 	return p, nil
 }
