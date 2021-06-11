@@ -6,24 +6,26 @@ import (
 	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/api/rbac/v1beta1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// syncer is responsible for controlling all sync operations for a parent kt
 type syncer struct {
 	kt *kuberlogicv1.KuberLogicTenant
 
-	synced map[int]client.Object
+	synced  map[int]client.Object
 	syncErr error
-	client client.Client
-	scheme *runtime.Scheme
-	log logr.Logger
-	ctx context.Context
+	client  client.Client
+	scheme  *runtime.Scheme
+	log     logr.Logger
+	ctx     context.Context
 }
 
 const (
@@ -35,9 +37,8 @@ const (
 )
 
 func (s *syncer) withNamespace() *syncer {
-	s.log.Info("syncing tenant namespace")
 	ns := &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: s.kt.GetTenantName(),
 		},
 	}
@@ -46,7 +47,6 @@ func (s *syncer) withNamespace() *syncer {
 }
 
 func (s *syncer) withImagePullSecret(parentName, parentNmespace string) *syncer {
-	s.log.Info("syncing tenant image pull secret")
 	parentSecret := &corev1.Secret{}
 	err := s.client.Get(s.ctx, types.NamespacedName{Name: parentName, Namespace: parentNmespace}, parentSecret)
 	if err != nil {
@@ -55,8 +55,8 @@ func (s *syncer) withImagePullSecret(parentName, parentNmespace string) *syncer 
 	}
 
 	clientSecret := &corev1.Secret{
-		ObjectMeta: v1.ObjectMeta{
-			Name: parentName,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      parentName,
 			Namespace: s.kt.GetTenantName(),
 		},
 		Type: parentSecret.Type,
@@ -67,10 +67,9 @@ func (s *syncer) withImagePullSecret(parentName, parentNmespace string) *syncer 
 }
 
 func (s *syncer) withServiceAccount() *syncer {
-	s.log.Info("syncing tenant service account")
 	sa := &corev1.ServiceAccount{
-		ObjectMeta: v1.ObjectMeta{
-			Name: s.kt.GetTenantName(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      s.kt.GetTenantName(),
 			Namespace: s.kt.GetTenantName(),
 		},
 	}
@@ -79,17 +78,16 @@ func (s *syncer) withServiceAccount() *syncer {
 }
 
 func (s *syncer) withRole() *syncer {
-	s.log.Info("syncing tenant service account role")
-	r := &v1beta1.Role{
-		ObjectMeta: v1.ObjectMeta{
-			Name: s.kt.GetTenantName(),
+	r := &rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      s.kt.GetTenantName(),
 			Namespace: s.kt.GetTenantName(),
 		},
-		Rules: []v1beta1.PolicyRule{
-			v1beta1.PolicyRule{
-				Verbs:           []string{"get", "list"},
-				APIGroups:       []string{""},
-				Resources:       []string{"pods"},
+		Rules: []rbacv1.PolicyRule{
+			{
+				Verbs:     []string{"get", "list"},
+				APIGroups: []string{""},
+				Resources: []string{"pods"},
 			},
 		},
 	}
@@ -98,8 +96,6 @@ func (s *syncer) withRole() *syncer {
 }
 
 func (s *syncer) withRoleBinding() *syncer {
-	s.log.Info("syncing tenant service account role binding")
-
 	role := s.getSyncedObj(roleKey)
 	sa := s.getSyncedObj(saKey)
 
@@ -108,21 +104,21 @@ func (s *syncer) withRoleBinding() *syncer {
 		return s
 	}
 
-	rb := &v1beta1.RoleBinding{
-		ObjectMeta: v1.ObjectMeta{
-			Name: s.kt.GetTenantName(),
+	rb := &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      s.kt.GetTenantName(),
 			Namespace: s.kt.GetTenantName(),
 		},
-		Subjects:   []v1beta1.Subject{
+		Subjects: []rbacv1.Subject{
 			{
 				Kind:      "ServiceAccount",
-				APIGroup:  "v1",
+				APIGroup:  "",
 				Name:      sa.GetName(),
 				Namespace: sa.GetNamespace(),
-						},
+			},
 		},
-		RoleRef:    v1beta1.RoleRef{
-			APIGroup: "v1beta1",
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "Role",
 			Name:     role.GetName(),
 		},
@@ -131,7 +127,7 @@ func (s *syncer) withRoleBinding() *syncer {
 	return s
 }
 
-// sync function creates or updates client.Object in cluster
+// sync function creates or updates v1.Object in cluster
 func (s *syncer) sync(object client.Object, key int) error {
 	if object == nil {
 		s.syncErr = fmt.Errorf("object can't be nil")
@@ -141,16 +137,23 @@ func (s *syncer) sync(object client.Object, key int) error {
 		return s.syncErr
 	}
 
+	// guess the type of the object using reflection
+	// client.Object is expected to be a pointer here
+	res := reflect.TypeOf(object).Elem().Name()
+	log := s.log.WithValues("resource", res, "name", object.GetName(), "namespace", object.GetNamespace())
 	err := ctrl.SetControllerReference(s.kt, object, s.scheme)
 	if err != nil {
 		return err
 	}
 
+	log.Info("creating object")
 	err = s.client.Create(s.ctx, object)
 	if k8serrors.IsAlreadyExists(err) {
+		log.Info("object already exists. updating")
 		err = s.client.Patch(s.ctx, object, client.MergeFrom(object.DeepCopyObject()))
 	}
 	if err != nil {
+		log.Error(err, "error syncing object")
 		return err
 	}
 
@@ -166,9 +169,11 @@ func (s *syncer) addSyncedObj(key int, obj client.Object) {
 	s.synced[key] = obj
 }
 
+// newSyncer function sync object that will contain all sync information
 func newSyncer(ctx context.Context, log logr.Logger, c client.Client, s *runtime.Scheme, kt *kuberlogicv1.KuberLogicTenant, err error) *syncer {
 	return &syncer{
 		kt:      kt,
+		synced:  make(map[int]client.Object),
 		syncErr: err,
 		client:  c,
 		scheme:  s,
