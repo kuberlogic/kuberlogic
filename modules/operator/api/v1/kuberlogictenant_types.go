@@ -20,7 +20,7 @@ type KuberLogicTenant struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec KuberLogicTenantSpec   `json:"spec,omitempty"`
+	Spec   KuberLogicTenantSpec   `json:"spec,omitempty"`
 	Status KuberLogicTenantStatus `json:"status,omitempty"`
 }
 
@@ -34,6 +34,10 @@ type KuberLogicTenantList struct {
 const (
 	activeCondType = "Active"
 )
+
+func (kt KuberLogicTenant) GetServiceAccountName() string {
+	return kt.GetTenantName()
+}
 
 func (kt KuberLogicTenant) GetTenantName() string {
 	return kt.ObjectMeta.Name
