@@ -144,7 +144,7 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 		},
 		job)
 	if err != nil && k8serrors.IsNotFound(err) {
-		dep, err := r.defineJob(ctx, backupRestore, klr, log)
+		dep, err := r.defineJob(backupRestore, klr)
 		if err != nil {
 			log.Error(err, "Could not generate job", "Name", klr.Name)
 			return ctrl.Result{}, err
@@ -197,7 +197,9 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 	return ctrl.Result{}, nil
 }
 
-func (r *KuberLogicBackupRestoreReconciler) defineJob(ctx context.Context, op interfaces.BackupRestore, cr *kuberlogicv1.KuberLogicBackupRestore, log logr.Logger) (*v1.Job, error) {
+func (r *KuberLogicBackupRestoreReconciler) defineJob(op interfaces.BackupRestore, cr *kuberlogicv1.KuberLogicBackupRestore) (*v1.Job, error) {
+	op.Init(cr)
+
 	// Set kuberlogic restore instance as the owner and controller
 	// if kuberlogic restore will remove -> dep also should be removed automatically
 	err := ctrl.SetControllerReference(cr, op.GetJob(), r.Scheme)
