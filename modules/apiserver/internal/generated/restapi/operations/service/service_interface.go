@@ -10,5 +10,5 @@ import (
 type Service interface {
 	LookupService(ns, name string) (*kuberlogicv1.KuberLogicService, bool, error)
 	GetLogger() logging.Logger
-	GetAuthProvider() *security.AuthProvider
+	GetAuthProvider() security.AuthProvider
 }
