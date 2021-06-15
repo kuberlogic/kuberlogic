@@ -339,12 +339,14 @@ func (s *ServiceStore) ensureTenant(p *models.Principal, ctx context.Context) er
 	err := s.restClient.Post().
 		Resource(tenantK8sResource).
 		Name(t.ObjectMeta.Name).
-		Namespace("").
 		Body(t).
 		Do(ctx).
 		Error()
 	if err != nil && errors.IsAlreadyExists(err) {
+		s.log.Debugw("kuberlogic tenant already exists", "tenant", t.ObjectMeta.Namespace)
 		return nil
 	}
+	s.log.Debugw("kuberlogic tenant create request",
+		"tenant", t.ObjectMeta.Name, "email", t.Spec.OwnerEmail, "error", err)
 	return err
 }
