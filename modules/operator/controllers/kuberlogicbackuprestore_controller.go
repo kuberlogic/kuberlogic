@@ -104,6 +104,13 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 		return ctrl.Result{}, nil
 	}
 
+	// get tenant information first
+	kt := &kuberlogicv1.KuberLogicTenant{}
+	if err := r.Get(ctx, types.NamespacedName{Name: klr.Namespace}, kt); err != nil {
+		log.Error(err, "error searching for kuberlogic tenant", "name", klr.Namespace)
+		return ctrl.Result{}, err
+	}
+
 	op, err := serviceOperator.GetOperator(kl.Spec.Type)
 	if err != nil {
 		log.Error(err, "Could not define the base operator")
@@ -127,6 +134,7 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 	backupRestore := op.GetBackupRestore()
 	backupRestore.SetRestoreImage()
 	backupRestore.SetRestoreEnv(klr)
+	backupRestore.SetServiceAccount(kt.GetServiceAccountName())
 
 	job := backupRestore.GetJob()
 	err = r.Get(ctx,
@@ -136,7 +144,7 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 		},
 		job)
 	if err != nil && k8serrors.IsNotFound(err) {
-		dep, err := r.defineJob(backupRestore, klr)
+		dep, err := r.defineJob(ctx, backupRestore, klr, log)
 		if err != nil {
 			log.Error(err, "Could not generate job", "Name", klr.Name)
 			return ctrl.Result{}, err
@@ -189,10 +197,7 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 	return ctrl.Result{}, nil
 }
 
-func (r *KuberLogicBackupRestoreReconciler) defineJob(op interfaces.BackupRestore, cr *kuberlogicv1.KuberLogicBackupRestore) (*v1.Job, error) {
-
-	op.Init(cr)
-
+func (r *KuberLogicBackupRestoreReconciler) defineJob(ctx context.Context, op interfaces.BackupRestore, cr *kuberlogicv1.KuberLogicBackupRestore, log logr.Logger) (*v1.Job, error) {
 	// Set kuberlogic restore instance as the owner and controller
 	// if kuberlogic restore will remove -> dep also should be removed automatically
 	err := ctrl.SetControllerReference(cr, op.GetJob(), r.Scheme)

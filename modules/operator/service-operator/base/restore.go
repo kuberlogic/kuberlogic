@@ -12,8 +12,9 @@ type BaseRestore struct {
 	Job batchv1.Job
 
 	// set in the specific operator
-	Image  string
-	EnvVar []corev1.EnvVar
+	Image          string
+	EnvVar         []corev1.EnvVar
+	ServiceAccount string
 }
 
 func (r *BaseRestore) Init(crb *kuberlogicv1.KuberLogicBackupRestore) {
@@ -41,6 +42,10 @@ func (r *BaseRestore) GetJob() *batchv1.Job {
 	return &r.Job
 }
 
+func (r *BaseRestore) SetServiceAccount(name string) {
+	r.ServiceAccount = name
+}
+
 func (r *BaseRestore) New(crb *kuberlogicv1.KuberLogicBackupRestore) batchv1.Job {
 	return r.NewJob(crb.Name, crb.Namespace)
 }
@@ -57,6 +62,7 @@ func (r *BaseRestore) NewJob(name, ns string) batchv1.Job {
 			BackoffLimit: &backOffLimit,
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
+					ServiceAccountName: r.ServiceAccount,
 					Containers: []corev1.Container{
 						{
 							Name:            name,

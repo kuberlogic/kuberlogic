@@ -107,6 +107,13 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, nil
 	}
 
+	// get kuberlogictenant info
+	kt := &kuberlogicv1.KuberLogicTenant{}
+	if err := r.Get(ctx, types.NamespacedName{Name: klb.Namespace}, kt); err != nil {
+		log.Error(err, "error searching for kuberlogic tenant", "name", klb.Namespace)
+		return ctrl.Result{}, err
+	}
+
 	op, err := serviceOperator.GetOperator(kl.Spec.Type)
 	if err != nil {
 		log.Error(err, "Could not define the base operator")
@@ -130,6 +137,7 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 	backupSchedule := op.GetBackupSchedule()
 	backupSchedule.SetBackupImage()
 	backupSchedule.SetBackupEnv(klb)
+	backupSchedule.SetServiceAccount(kt.GetServiceAccountName())
 
 	cronJob := backupSchedule.GetCronJob()
 	err = r.Get(ctx,
@@ -139,7 +147,7 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 		},
 		cronJob)
 	if err != nil && k8serrors.IsNotFound(err) {
-		dep, err := r.cronJob(backupSchedule, klb, ctx)
+		dep, err := r.cronJob(ctx, backupSchedule, klb, log)
 		if err != nil {
 			log.Error(err, "Could not generate cron cronJob")
 			return ctrl.Result{}, err
@@ -212,12 +220,12 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 	return ctrl.Result{}, nil
 }
 
-func (r *KuberLogicBackupScheduleReconciler) cronJob(op interfaces.BackupSchedule, cmb *kuberlogicv1.KuberLogicBackupSchedule, ctx context.Context) (*v1beta1.CronJob, error) {
-	op.Init(cmb)
+func (r *KuberLogicBackupScheduleReconciler) cronJob(ctx context.Context, op interfaces.BackupSchedule, klb *kuberlogicv1.KuberLogicBackupSchedule, log logr.Logger) (*v1beta1.CronJob, error) {
+	op.Init(klb)
 
 	// Set kuberlogic backup instance as the owner and controller
 	// if kuberlogic backup will remove -> dep also should be removed automatically
-	err := ctrl.SetControllerReference(cmb, op.GetCronJob(), r.Scheme)
+	err := ctrl.SetControllerReference(klb, op.GetCronJob(), r.Scheme)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +233,7 @@ func (r *KuberLogicBackupScheduleReconciler) cronJob(op interfaces.BackupSchedul
 	// update serviceAccount information
 	// get tenant serviceAccount name
 	klt := &kuberlogicv1.KuberLogicTenant{}
-	if err := r.Get(ctx, types.NamespacedName{Name: cmb.Namespace, Namespace: ""}, klt); err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Name: klb.Namespace, Namespace: ""}, klt); err != nil {
 		return nil, err
 	}
 	c := op.GetCronJob()
@@ -234,13 +242,13 @@ func (r *KuberLogicBackupScheduleReconciler) cronJob(op interfaces.BackupSchedul
 	return c, nil
 }
 
-func (r *KuberLogicBackupScheduleReconciler) getBackupJob(ctx context.Context, cmb *kuberlogicv1.KuberLogicBackupSchedule) (*v12.Job, error) {
+func (r *KuberLogicBackupScheduleReconciler) getBackupJob(ctx context.Context, klb *kuberlogicv1.KuberLogicBackupSchedule) (*v12.Job, error) {
 	jobs := v12.JobList{}
 	selector := &client.ListOptions{}
 
-	client.InNamespace(cmb.Namespace).ApplyToList(selector)
+	client.InNamespace(klb.Namespace).ApplyToList(selector)
 	client.MatchingLabels{
-		"backup-name": cmb.Name,
+		"backup-name": klb.Name,
 	}.ApplyToList(selector)
 
 	if err := r.List(ctx, &jobs, selector); err != nil {

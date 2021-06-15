@@ -40,6 +40,7 @@ type BackupSchedule interface {
 
 	SetBackupImage()
 	SetBackupEnv(cm *v1.KuberLogicBackupSchedule)
+	SetServiceAccount(name string)
 }
 
 type BackupRestore interface {
@@ -52,6 +53,7 @@ type BackupRestore interface {
 
 	SetRestoreImage()
 	SetRestoreEnv(cm *v1.KuberLogicBackupRestore)
+	SetServiceAccount(name string)
 }
 
 type InternalDetails interface {
