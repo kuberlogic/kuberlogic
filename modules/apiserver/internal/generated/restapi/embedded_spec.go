@@ -1606,8 +1606,8 @@ func init() {
         },
         "ns": {
           "type": "string",
-          "maxLength": 2,
-          "minLength": 63,
+          "maxLength": 33,
+          "minLength": 2,
           "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
         },
         "replicas": {
@@ -3460,8 +3460,8 @@ func init() {
         },
         "ns": {
           "type": "string",
-          "maxLength": 2,
-          "minLength": 63,
+          "maxLength": 33,
+          "minLength": 2,
           "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
         },
         "replicas": {

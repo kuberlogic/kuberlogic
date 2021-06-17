@@ -121,8 +121,6 @@ func (a *API) sendRequestTo(method, endpoint string) {
 
 func (a *API) responseCodeShouldBe(code int) {
 	if code != a.response.StatusCode {
-		a.encodeResponseToJson()
-		log.Error(fmt.Sprintf("response body: %s", a.jsonResponse))
 		a.t.Errorf("expected response code to be: %d, but actual is: %d", code, a.response.StatusCode)
 	}
 }
