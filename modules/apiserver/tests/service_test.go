@@ -109,7 +109,7 @@ func TestNotEnoughPermissions(t *testing.T) {
         "name": "cloudmanaged-pg",
         "ns": "default",
 		"type": "postgresql",
-		"replicas": 2,
+		"replicas": 2
      }`)
 	api.sendRequestTo(http.MethodPost, "/services/")
 	api.responseCodeShouldBe(http.StatusForbidden)
