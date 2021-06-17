@@ -22,10 +22,8 @@ func {{ pascalize .Name }}Wrapper(srv Service, next {{ pascalize .Name }}Handler
 
              {{ $serviceId = "params.ServiceID" }}
 
-		    // namespace is always provided as a part of Principal object
-		    ns := principal.Namespace
             // check ServiceID param
-            _, name, err := util.SplitID(params.ServiceID)
+            ns, name, err := util.SplitID(params.ServiceID)
             if err != nil {
                 msg := "incorrect service id"
                 log.Errorw(msg, "serviceId", params.ServiceID, "error", err)
@@ -39,7 +37,7 @@ func {{ pascalize .Name }}Wrapper(srv Service, next {{ pascalize .Name }}Handler
             {{ if eq $.Name "serviceAdd" }}
                 // build the ServiceID param
                 name := params.{{ pascalize .Name }}.Name
-                ns := principal.Namespace
+                ns := params.{{ pascalize .Name }}.Ns
                 serviceId, err := util.JoinID(ns, *name)
                 if err != nil {
                     msg := "incorrect service id"
