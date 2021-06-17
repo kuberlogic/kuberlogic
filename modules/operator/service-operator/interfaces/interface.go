@@ -49,6 +49,7 @@ type BackupRestore interface {
 	InitFrom(*batchv1.Job)
 	GetJob() *batchv1.Job
 	IsSuccessful() bool
+	IsFinished() bool
 	IsRunning() bool
 
 	SetRestoreImage()

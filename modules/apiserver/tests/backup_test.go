@@ -124,7 +124,7 @@ func (tb *tBackupRestore) CheckSuccesfulRestore(t *testing.T) {
 		}
 	}
 	if found == nil {
-		t.Errorf("no restore found for service %s:%s", tb.service.ns, tb.service.name)
+		t.Errorf("no succesful restore found for service %s:%s", tb.service.ns, tb.service.name)
 	}
 }
 

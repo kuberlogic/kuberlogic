@@ -14,8 +14,6 @@ const (
 
 	operatorConfigMap = "cm-postgres-operator"
 	postgreSuperUser  = "postgres" // TODO: Could be grabbed from config map ^
-
-	clusterNameLabel = "cluster-name"
 )
 
 type Backup struct {
@@ -38,7 +36,7 @@ func (p *Backup) SetBackupEnv(cm *kuberlogicv1.KuberLogicBackupSchedule) {
 		},
 		{
 			Name:  "CLUSTER_NAME_LABEL",
-			Value: clusterNameLabel,
+			Value: postgresPodLabelKey,
 		},
 		{
 			Name: "POD_NAMESPACE",

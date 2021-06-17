@@ -38,6 +38,10 @@ func (r *BaseRestore) IsRunning() bool {
 	return r.Job.Status.Active > 0
 }
 
+func (r *BaseRestore) IsFinished() bool {
+	return r.Job.Status.CompletionTime != nil
+}
+
 func (r *BaseRestore) GetJob() *batchv1.Job {
 	return &r.Job
 }

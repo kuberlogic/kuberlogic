@@ -165,7 +165,7 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 	}
 	backupRestore.InitFrom(job)
 
-	if running := backupRestore.IsRunning(); running {
+	if backupRestore.IsRunning() { // restore job is running
 		klr.MarkRunning()
 
 		// also notify corresponding kls that it is running
@@ -174,17 +174,19 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 			log.Error(err, "error updating kuberlogicservice restore condition")
 			return ctrl.Result{}, err
 		}
-	} else {
+	} else if backupRestore.IsFinished() { // restore job is completed
 		kl.RestoreFinished()
 		if err := r.Status().Update(ctx, kl); err != nil {
 			log.Error(err, "error updating kuberlogicservice restore condition")
 			return ctrl.Result{}, err
 		}
-	}
-	if successful := backupRestore.IsSuccessful(); successful {
-		klr.MarkSuccessfulFinish()
-	} else {
-		klr.MarkFailed()
+		if backupRestore.IsSuccessful() {
+			klr.MarkSuccessfulFinish()
+		} else {
+			klr.MarkFailed()
+		}
+	} else { // restore job is Pending
+		klr.MarkPending()
 	}
 
 	err = r.Status().Update(ctx, klr)
