@@ -34,12 +34,17 @@ func (r *BaseRestore) IsSuccessful() bool {
 	return false
 }
 
-func (r *BaseRestore) IsRunning() bool {
-	return r.Job.Status.Active > 0
+func (r *BaseRestore) IsFailed() bool {
+	for _, c := range r.Job.Status.Conditions {
+		if c.Type == batchv1.JobFailed {
+			return true
+		}
+	}
+	return false
 }
 
-func (r *BaseRestore) IsFinished() bool {
-	return r.Job.Status.CompletionTime != nil
+func (r *BaseRestore) IsRunning() bool {
+	return r.Job.Status.Active > 0
 }
 
 func (r *BaseRestore) GetJob() *batchv1.Job {
