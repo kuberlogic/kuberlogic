@@ -931,8 +931,8 @@ definitions:
       ns:
         type: string
         pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
-        maxLength: 32
-        minLength: 32
+        maxLength: 33
+        minLength: 2
       type:
         type: string
         enum:

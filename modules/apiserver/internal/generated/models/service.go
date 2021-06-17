@@ -56,8 +56,8 @@ type Service struct {
 	Name *string `json:"name"`
 
 	// ns
-	// Max Length: 32
-	// Min Length: 32
+	// Max Length: 2
+	// Min Length: 63
 	// Pattern: [a-z0-9]([-a-z0-9]*[a-z0-9])?
 	Ns string `json:"ns,omitempty"`
 
@@ -280,11 +280,11 @@ func (m *Service) validateNs(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if err := validate.MinLength("ns", "body", string(m.Ns), 32); err != nil {
+	if err := validate.MinLength("ns", "body", string(m.Ns), 63); err != nil {
 		return err
 	}
 
-	if err := validate.MaxLength("ns", "body", string(m.Ns), 32); err != nil {
+	if err := validate.MaxLength("ns", "body", string(m.Ns), 2); err != nil {
 		return err
 	}
 
