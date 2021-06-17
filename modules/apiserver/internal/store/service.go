@@ -102,30 +102,37 @@ func (s *ServiceStore) CreateService(m *models.Service, alertEmail string, ctx c
 	return svc, nil
 }
 
-func (s *ServiceStore) UpdateService(m *models.Service, ctx context.Context) *ServiceError {
+func (s *ServiceStore) UpdateService(m *models.Service, ctx context.Context) (*models.Service, *ServiceError) {
 	kls, errConvert := s.serviceToKuberLogic(m)
 	if errConvert != nil {
-		return NewServiceError("error converting service object", false, errConvert)
+		return nil, NewServiceError("error converting service object", false, errConvert)
 	}
 
 	patch, err := json.Marshal(kls)
 	if err != nil {
 		s.log.Errorw("service decode error", "error", err)
-		return NewServiceError("error decode service", false, err)
+		return nil, NewServiceError("error decode service", false, err)
 	}
 
-	s.log.Debugw("kuberlogic object result", "body", kls)
+	newKls := &kuberlogicv1.KuberLogicService{}
+	s.log.Debugw("kuberlogic object kls", "body", kls)
 	if err := s.restClient.Patch(types.MergePatchType).
 		Resource(serviceK8sResource).
 		Name(kls.Name).
 		Namespace(kls.Namespace).
 		Body(patch).
 		Do(ctx).
-		Error(); err != nil {
-		return NewServiceError("error updating service", false, err)
+		Into(newKls); err != nil {
+		return nil, NewServiceError("error updating service", false, err)
+	}
+	s.log.Debugw("kuberlogic new object kls", "body", newKls)
+
+	service, err := s.kuberLogicToService(newKls, ctx)
+	if err != nil {
+		return nil, NewServiceError("error converting object to service", false, err)
 	}
 
-	return nil
+	return service, nil
 }
 
 func (s *ServiceStore) DeleteService(m *models.Service, ctx context.Context) *ServiceError {

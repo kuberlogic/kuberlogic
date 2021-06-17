@@ -339,9 +339,9 @@ func TestFailover(t *testing.T) {
 				},
 				table: "failover",
 			},
-			pvcName:        "pgdata-kuberlogic-pgsql-0",
-			masterPodName:  "kuberlogic-pgsql-0",
-			replicaPodName: "kuberlogic-pgsql-1",
+			pvcName:        fmt.Sprintf("pgdata-kuberlogic-%s-0", pgTestService.name),
+			masterPodName:  fmt.Sprintf("kuberlogic-%s-0", pgTestService.name),
+			replicaPodName: fmt.Sprintf("kuberlogic-%s-1", pgTestService.name),
 		}, {
 			service: mysqlTestService,
 			backup: tBackupRestore{
@@ -353,9 +353,9 @@ func TestFailover(t *testing.T) {
 				},
 				table: "failover",
 			},
-			pvcName:        "data-my-mysql-0",
-			masterPodName:  "my-mysql-0",
-			replicaPodName: "my-mysql-1",
+			pvcName:        fmt.Sprintf("data-%s-mysql-0", mysqlTestService.name),
+			masterPodName:  fmt.Sprintf("%s-mysql-0", mysqlTestService.name),
+			replicaPodName: fmt.Sprintf("%s-mysql-1", mysqlTestService.name),
 		}} {
 		t.Run(svc.service.type_, makeTestFailover(svc))
 	}
