@@ -91,6 +91,8 @@ func (s *ServiceStore) CreateService(m *models.Service, p *models.Principal, ctx
 	}
 
 	result := new(kuberlogicv1.KuberLogicService)
+	// always use principal Namespace during create events
+	c.Namespace = p.Namespace
 	err = s.restClient.Post().
 		Resource(serviceK8sResource).
 		Namespace(p.Namespace).
