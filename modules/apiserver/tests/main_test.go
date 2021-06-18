@@ -48,7 +48,7 @@ const (
 )
 
 func setup() {
-	if localDeps := os.Getenv("REMOTE_DEPS"); localDeps == "" {
+	if apiAddr := os.Getenv("REMOTE_HOST"); apiAddr == "" {
 		log.Info("Starting the apiserver in the goroutine...")
 		args := []string{"--scheme=http"}
 		go cmd2.Main(args) // start the api server
@@ -57,11 +57,12 @@ func setup() {
 		log.Info("Waiting 15 seconds for the starting goroutines...")
 		time.Sleep(15 * time.Second)
 	} else {
-		apiHost = os.Getenv("API_HOST")
-		if apiHost == "" {
-			panic("API_HOST string variable must be set for remote tests")
+		hostPort := strings.Split(apiAddr, ":")
+		if len(hostPort) != 2 {
+			panic("REMOTE_HOST must be in host:port form")
 		}
-		p, e := strconv.Atoi(os.Getenv("API_PORT"))
+		apiHost = hostPort[0]
+		p, e := strconv.Atoi(hostPort[1])
 		if e != nil && p == 0 {
 			panic("API_PORT int variable must be set for remote tests")
 		}
