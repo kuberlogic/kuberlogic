@@ -16,7 +16,9 @@ func {{ pascalize .Name }}Wrapper(srv Service, next {{ pascalize .Name }}Handler
         log := srv.GetLogger()
         {{ end }}
 
-        {{ $serviceId := `"*"` }}
+        {{/* serviceId will be set to params.ServiceId if found */}}
+        {{/* otherwise it is set to principal.Namespace:* for list operation */}}
+        {{ $serviceId := `fmt.Sprintf("%s:*", principal.Namespace)` }}
         {{ range .Params }}
             {{ if eq .Name "ServiceID"}}
 
@@ -54,7 +56,7 @@ func {{ pascalize .Name }}Wrapper(srv Service, next {{ pascalize .Name }}Handler
         {{ if .Authorized}}
         // check auth
         authProvider := srv.GetAuthProvider()
-        if authorized, err := authProvider.Authorize(principal.Token, security.{{ pascalize .Name }}Permission, {{ $serviceId }}); err != nil {
+        if authorized, err := authProvider.Authorize(principal, security.{{ pascalize .Name }}Permission, {{ $serviceId }}); err != nil {
             msg := "auth bad request"
             log.Errorw(msg, "permission", security.{{ pascalize .Name }}Permission, "serviceId", {{ $serviceId }}, "error", err)
             return New{{ pascalize .Name }}BadRequest().WithPayload(&models.Error{

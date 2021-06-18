@@ -28,7 +28,7 @@ func DatabaseRestoreWrapper(srv Service, next DatabaseRestoreHandlerFunc) (fn Da
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, security.DatabaseRestorePermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal, security.DatabaseRestorePermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
 			log.Errorw(msg, "permission", security.DatabaseRestorePermission, "serviceId", params.ServiceID, "error", err)
 			return NewDatabaseRestoreBadRequest().WithPayload(&models.Error{

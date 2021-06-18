@@ -28,7 +28,7 @@ func ServiceDeleteWrapper(srv Service, next ServiceDeleteHandlerFunc) (fn Servic
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, security.ServiceDeletePermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal, security.ServiceDeletePermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
 			log.Errorw(msg, "permission", security.ServiceDeletePermission, "serviceId", params.ServiceID, "error", err)
 			return NewServiceDeleteBadRequest().WithPayload(&models.Error{

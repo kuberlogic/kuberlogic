@@ -28,7 +28,7 @@ func DatabaseCreateWrapper(srv Service, next DatabaseCreateHandlerFunc) (fn Data
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, security.DatabaseCreatePermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal, security.DatabaseCreatePermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
 			log.Errorw(msg, "permission", security.DatabaseCreatePermission, "serviceId", params.ServiceID, "error", err)
 			return NewDatabaseCreateBadRequest().WithPayload(&models.Error{
