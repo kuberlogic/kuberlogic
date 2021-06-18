@@ -93,7 +93,7 @@ func (s *ServiceStore) CreateService(m *models.Service, p *models.Principal, ctx
 	result := new(kuberlogicv1.KuberLogicService)
 	err = s.restClient.Post().
 		Resource(serviceK8sResource).
-		Namespace(c.Namespace).
+		Namespace(p.Namespace).
 		Name(c.Name).
 		Body(c).
 		Do(ctx).
