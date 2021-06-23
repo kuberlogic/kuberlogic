@@ -257,8 +257,8 @@ func newApi(t *testing.T) *API {
 		t: t,
 		baseUrl: baseUrl{
 			scheme: "http",
-			host:   "localhost",
-			port:   8001,
+			host:   apiHost,
+			port:   apiPort,
 			base:   "/api/v1/",
 		},
 	}
