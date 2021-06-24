@@ -14,7 +14,7 @@ KUBERLOGIC_DEBUGLOGS=True
 SENTRY_DSN =
 
 clean:
-	@rm -rf ./cmd internal/generated  internal/config
+	@rm -rf ./cmd internal/generated
 	@mkdir -p cmd
 	@mkdir -p internal/generated
 	@mkdir -p internal/app

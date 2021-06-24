@@ -9,6 +9,7 @@ require (
 	github.com/dgraph-io/ristretto v0.0.3
 	github.com/getsentry/sentry-go v0.10.0
 	github.com/go-chi/chi v1.5.1
+	github.com/go-chi/cors v1.2.0
 	github.com/go-openapi/errors v0.19.9
 	github.com/go-openapi/loads v0.19.7
 	github.com/go-openapi/runtime v0.19.24
@@ -17,7 +18,7 @@ require (
 	github.com/go-openapi/swag v0.19.12
 	github.com/go-openapi/validate v0.19.15
 	github.com/jessevdk/go-flags v1.4.0
-	github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210519115636-1bf089581048
+	github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210611124745-0422e6addee1
 	github.com/kuberlogic/zapsentry v1.6.2
 	github.com/pkg/errors v0.9.1
 	github.com/posthog/posthog-go v0.0.0-20210111202400-c80159165cb6

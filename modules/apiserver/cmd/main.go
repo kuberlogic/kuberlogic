@@ -153,6 +153,8 @@ func Main(args []string) {
 	r.Use(middleware.Recoverer)
 	r.Use(apiserverMiddleware.SentryLogPanic)
 	r.Use(apiserverMiddleware.SetSentryRequestScope)
+	r.Use(apiserverMiddleware.NewCorsMiddleware(cfg))
+
 	r.Mount("/", h)
 
 	server.ConfigureAPI()
