@@ -39,8 +39,12 @@ func (td *tDb) Create(t *testing.T) {
      }`, td.name))
 	api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/databases/",
 		td.service.ns, td.service.name))
-	api.responseCodeShouldBe(201)
 
+	if api.response.StatusCode != 201 {
+		api.encodeResponseToJson()
+		t.Logf("response: %v", api.jsonResponse)
+	}
+	api.responseCodeShouldBe(201)
 }
 
 func (td *tDb) CreateTheSameName(t *testing.T) {
@@ -107,7 +111,7 @@ func makeTestDb(td tDb) func(t *testing.T) {
 	return func(t *testing.T) {
 		steps := []func(t *testing.T){
 			td.service.Create,
-			td.service.WaitForStatus("Ready", 5, 2*60),
+			td.service.WaitForStatus("Ready", 5, 5*60),
 
 			td.Create,
 			td.CreateTheSameName,

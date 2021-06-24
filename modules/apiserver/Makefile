@@ -3,7 +3,7 @@
 KUBERLOGIC_AUTH_PROVIDER = none
 
 #  Current apiserver version
-VERSION ?= 0.0.18
+VERSION ?= 0.0.24
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
 NAME = apiserver
