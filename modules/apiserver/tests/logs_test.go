@@ -78,7 +78,7 @@ func makeTestLogs(tlogs tLogs) func(t *testing.T) {
 	return func(t *testing.T) {
 		steps := []func(t *testing.T){
 			tlogs.service.Create,
-			tlogs.service.WaitForStatus("Ready", 5, 2*60),
+			tlogs.service.WaitForStatus("Ready", 5, 5*60),
 
 			tlogs.Get(10),
 			tlogs.Get(50),

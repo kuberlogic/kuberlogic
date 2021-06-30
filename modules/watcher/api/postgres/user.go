@@ -94,6 +94,5 @@ FROM pg_catalog.pg_user;
 		}
 		items = append(items, name)
 	}
-
 	return items, nil
 }

@@ -103,7 +103,7 @@ func makeTestUser(tu tUser) func(t *testing.T) {
 	return func(t *testing.T) {
 		steps := []func(t *testing.T){
 			tu.service.Create,
-			tu.service.WaitForStatus("Ready", 5, 2*60),
+			tu.service.WaitForStatus("Ready", 5, 5*60),
 			tu.Create,
 			tu.CreateTheSameName,
 			tu.List,

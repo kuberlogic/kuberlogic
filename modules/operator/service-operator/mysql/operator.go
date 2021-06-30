@@ -100,7 +100,17 @@ func (p *Mysql) Init(kls *kuberlogicv1.KuberLogicService) {
 						Command: []string{
 							"/bin/sh",
 							"-c",
-							"for f in $(ls /var/lib/mysql/mysql/*MYI); do myisamchk -r --update-state $(echo $f | tr -d .MYI); done",
+							`
+MYSQL_DIR=/var/lib/mysql/mysql
+if [ -d $MYSQL_DIR ] 
+then
+	for f in $(ls $MYSQL_DIR/*MYI); do 
+		myisamchk -r --update-state $(echo $f | tr -d .MYI); 
+	done
+else
+	echo "Directory $MYSQL_DIR does not exists"
+fi
+`,
 						},
 						VolumeMounts: []corev1.VolumeMount{
 							{
