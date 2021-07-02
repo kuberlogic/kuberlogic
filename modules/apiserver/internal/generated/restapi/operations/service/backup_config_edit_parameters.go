@@ -41,6 +41,8 @@ type BackupConfigEditParams struct {
 	BackupConfig *models.BackupConfig
 	/*service Resource ID
 	  Required: true
+	  Max Length: 120
+	  Min Length: 3
 	  Pattern: [a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?
 	  In: path
 	*/
@@ -110,6 +112,14 @@ func (o *BackupConfigEditParams) bindServiceID(rawData []string, hasKey bool, fo
 
 // validateServiceID carries on validations for parameter ServiceID
 func (o *BackupConfigEditParams) validateServiceID(formats strfmt.Registry) error {
+
+	if err := validate.MinLength("ServiceID", "path", o.ServiceID, 3); err != nil {
+		return err
+	}
+
+	if err := validate.MaxLength("ServiceID", "path", o.ServiceID, 120); err != nil {
+		return err
+	}
 
 	if err := validate.Pattern("ServiceID", "path", o.ServiceID, `[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?`); err != nil {
 		return err

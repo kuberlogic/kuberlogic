@@ -18,6 +18,9 @@ type Principal struct {
 	// email
 	Email string `json:"email,omitempty"`
 
+	// namespace
+	Namespace string `json:"namespace,omitempty"`
+
 	// token
 	Token string `json:"token,omitempty"`
 }

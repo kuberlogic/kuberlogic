@@ -28,7 +28,7 @@ func DatabaseDeleteWrapper(srv Service, next DatabaseDeleteHandlerFunc) (fn Data
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, security.DatabaseDeletePermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal, security.DatabaseDeletePermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
 			log.Errorw(msg, "permission", security.DatabaseDeletePermission, "serviceId", params.ServiceID, "error", err)
 			return NewDatabaseDeleteBadRequest().WithPayload(&models.Error{

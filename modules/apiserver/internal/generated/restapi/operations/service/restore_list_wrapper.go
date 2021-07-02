@@ -28,7 +28,7 @@ func RestoreListWrapper(srv Service, next RestoreListHandlerFunc) (fn RestoreLis
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, security.RestoreListPermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal, security.RestoreListPermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
 			log.Errorw(msg, "permission", security.RestoreListPermission, "serviceId", params.ServiceID, "error", err)
 			return NewRestoreListBadRequest().WithPayload(&models.Error{

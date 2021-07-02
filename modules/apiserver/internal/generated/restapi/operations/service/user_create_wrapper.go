@@ -28,7 +28,7 @@ func UserCreateWrapper(srv Service, next UserCreateHandlerFunc) (fn UserCreateHa
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, security.UserCreatePermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal, security.UserCreatePermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
 			log.Errorw(msg, "permission", security.UserCreatePermission, "serviceId", params.ServiceID, "error", err)
 			return NewUserCreateBadRequest().WithPayload(&models.Error{

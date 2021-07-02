@@ -1,5 +1,7 @@
 package none
 
+import "github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
+
 const (
 	noneEmail  = "none@example.com"
 	noneSecret = "secret"
@@ -15,7 +17,7 @@ func (n *noneAuthProvider) Authenticate(secret string) (string, string, error) {
 	return noneEmail, noneSecret, nil
 }
 
-func (n *noneAuthProvider) Authorize(username, action, object string) (bool, error) {
+func (n *noneAuthProvider) Authorize(principal *models.Principal, action, object string) (bool, error) {
 	return true, nil
 }
 

@@ -21,13 +21,13 @@ type Service struct {
 }
 
 var pgService = Service{
-	ns:    "default",
 	name:  "pgsql",
+	ns:    testNs,
 	type_: "postgresql",
 }
 var mysqlService = Service{
-	ns:    "default",
-	name:  "my",
+	name:  "mys",
+	ns:    testNs,
 	type_: "mysql",
 }
 
@@ -43,8 +43,9 @@ var (
 )
 
 const (
-	testUser     = "kuberlogic@cloudlinux.com"
-	testPassword = "password"
+	testUser     = "none@example.com"
+	testNs       = "a0c394e31c9740376635c8878cf5889e"
+	testPassword = "secret"
 )
 
 func setup() {

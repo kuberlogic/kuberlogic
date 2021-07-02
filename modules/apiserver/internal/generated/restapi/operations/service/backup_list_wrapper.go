@@ -28,7 +28,7 @@ func BackupListWrapper(srv Service, next BackupListHandlerFunc) (fn BackupListHa
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, security.BackupListPermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal, security.BackupListPermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
 			log.Errorw(msg, "permission", security.BackupListPermission, "serviceId", params.ServiceID, "error", err)
 			return NewBackupListBadRequest().WithPayload(&models.Error{

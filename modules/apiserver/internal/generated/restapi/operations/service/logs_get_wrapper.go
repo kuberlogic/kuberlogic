@@ -28,7 +28,7 @@ func LogsGetWrapper(srv Service, next LogsGetHandlerFunc) (fn LogsGetHandlerFunc
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, security.LogsGetPermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal, security.LogsGetPermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
 			log.Errorw(msg, "permission", security.LogsGetPermission, "serviceId", params.ServiceID, "error", err)
 			return NewLogsGetBadRequest().WithPayload(&models.Error{

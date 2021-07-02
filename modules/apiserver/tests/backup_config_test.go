@@ -14,7 +14,7 @@ type tBackupConfig struct {
 func TestServiceNotFoundForTestBackupConfig(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
-	api.sendRequestTo(http.MethodGet, "/services/default:simple-pg/backup-config")
+	api.sendRequestTo(http.MethodGet, fmt.Sprintf("/services/%s:simple-pg/backup-config", testNs))
 	api.responseCodeShouldBe(400)
 }
 
@@ -113,7 +113,7 @@ func makeTestBackupConfig(tbc tBackupConfig) func(t *testing.T) {
 	return func(t *testing.T) {
 		steps := []func(t *testing.T){
 			tbc.service.Create,
-			tbc.service.WaitForStatus("Ready", 5, 2*60),
+			tbc.service.WaitForStatus("Ready", 5, 5*60),
 			tbc.CreateWithoutSchedule,
 			tbc.Create,
 			tbc.Get,

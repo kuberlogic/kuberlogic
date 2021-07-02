@@ -28,7 +28,7 @@ func UserEditWrapper(srv Service, next UserEditHandlerFunc) (fn UserEditHandlerF
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, security.UserEditPermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal, security.UserEditPermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
 			log.Errorw(msg, "permission", security.UserEditPermission, "serviceId", params.ServiceID, "error", err)
 			return NewUserEditBadRequest().WithPayload(&models.Error{

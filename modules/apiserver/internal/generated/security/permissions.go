@@ -10,11 +10,11 @@ const (
 	DatabaseCreatePermission     = "service:database:add"
 	DatabaseDeletePermission     = "service:database:delete"
 	DatabaseListPermission       = "service:database:list"
-	DatabaseRestorePermission    = "service:backup-restore:create"
+	DatabaseRestorePermission    = "service:backup-restore:add"
 
 	LogsGetPermission       = "service:logs"
 	RestoreListPermission   = "service:restore:list"
-	ServiceAddPermission    = "service:get"
+	ServiceAddPermission    = "service:add"
 	ServiceDeletePermission = "service:delete"
 	ServiceEditPermission   = "service:edit"
 	ServiceGetPermission    = "service:get"

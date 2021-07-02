@@ -16,8 +16,8 @@ func ServiceAddWrapper(srv Service, next ServiceAddHandlerFunc) (fn ServiceAddHa
 
 		// build the ServiceID param
 		name := params.ServiceItem.Name
-		ns := params.ServiceItem.Ns
-		serviceId, err := util.JoinID(*ns, *name)
+		ns := principal.Namespace
+		serviceId, err := util.JoinID(ns, *name)
 		if err != nil {
 			msg := "incorrect service id"
 			log.Errorw(msg, "name", name, "ns", ns, "error", err)
@@ -28,7 +28,7 @@ func ServiceAddWrapper(srv Service, next ServiceAddHandlerFunc) (fn ServiceAddHa
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, security.ServiceAddPermission, serviceId); err != nil {
+		if authorized, err := authProvider.Authorize(principal, security.ServiceAddPermission, serviceId); err != nil {
 			msg := "auth bad request"
 			log.Errorw(msg, "permission", security.ServiceAddPermission, "serviceId", serviceId, "error", err)
 			return NewServiceAddBadRequest().WithPayload(&models.Error{
@@ -41,8 +41,6 @@ func ServiceAddWrapper(srv Service, next ServiceAddHandlerFunc) (fn ServiceAddHa
 
 		// enqueue data to posthog
 		posthogMsg := posthog.NewMessage("service-add")
-		posthogMsg.With("name", params.ServiceItem.Name)
-		posthogMsg.With("namespace", params.ServiceItem.Ns)
 		posthogMsg.With("type", params.ServiceItem.Type)
 
 		if params.ServiceItem.Replicas != nil {
