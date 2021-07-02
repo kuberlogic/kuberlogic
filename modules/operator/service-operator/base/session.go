@@ -44,3 +44,11 @@ func (session *BaseSession) GetPods(client *kubernetes.Clientset, matchingLabels
 	}
 	return pods, nil
 }
+
+func (session *BaseSession) GetMasterIP() string {
+	return session.MasterIP
+}
+
+func (session *BaseSession) GetReplicaIPs() []string {
+	return session.ReplicaIPs
+}

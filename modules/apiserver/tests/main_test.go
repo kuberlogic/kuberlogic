@@ -6,6 +6,7 @@ import (
 	"github.com/kuberlogic/operator/modules/operator/cmd"
 	"github.com/prometheus/common/log"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -35,19 +36,38 @@ var services = []Service{
 	mysqlService,
 }
 
+// default api contact values
+var (
+	apiHost = "localhost"
+	apiPort = 8001
+)
+
 const (
 	testUser     = "kuberlogic@cloudlinux.com"
 	testPassword = "password"
 )
 
 func setup() {
-	args := []string{"--scheme=http"}
-	log.Info("Starting the apiserver in the goroutine...")
-	go cmd2.Main(args) // start the api server
-	log.Info("Starting the operator in the goroutine...")
-	go cmd.Main([]string{}) // start the operator
-	log.Info("Waiting 15 seconds for the starting goroutines...")
-	time.Sleep(15 * time.Second)
+	if apiAddr := os.Getenv("REMOTE_HOST"); apiAddr == "" {
+		log.Info("Starting the apiserver in the goroutine...")
+		args := []string{"--scheme=http"}
+		go cmd2.Main(args) // start the api server
+		log.Info("Starting the operator in the goroutine...")
+		go cmd.Main([]string{}) // start the operator
+		log.Info("Waiting 15 seconds for the starting goroutines...")
+		time.Sleep(15 * time.Second)
+	} else {
+		hostPort := strings.Split(apiAddr, ":")
+		if len(hostPort) != 2 {
+			panic("REMOTE_HOST must be in host:port form")
+		}
+		apiHost = hostPort[0]
+		p, e := strconv.Atoi(hostPort[1])
+		if e != nil && p == 0 {
+			panic("API_PORT int variable must be set for remote tests")
+		}
+		apiPort = p
+	}
 
 	flag.Parse()
 	if testing.Short() {

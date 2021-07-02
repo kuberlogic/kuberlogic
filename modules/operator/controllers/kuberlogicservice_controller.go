@@ -94,19 +94,20 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	return r.update(ctx, kls, op, log)
 }
 
-func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService, ctx context.Context) error {
+func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op interfaces.OperatorInterface, kls *kuberlogicv1.KuberLogicService, ctx context.Context) error {
 	credSecret, err := op.GetInternalDetails().GetCredentialsSecret()
 	if err != nil {
 		return err
 	}
 	if credSecret != nil {
-		if err := ctrl.SetControllerReference(cm, credSecret, r.Scheme); err != nil {
+		if err := ctrl.SetControllerReference(kls, credSecret, r.Scheme); err != nil {
 			return err
 		}
 		if err := r.Create(ctx, credSecret); err != nil && !k8serrors.IsAlreadyExists(err) {
 			return err
 		}
 	}
+
 	return nil
 }
 

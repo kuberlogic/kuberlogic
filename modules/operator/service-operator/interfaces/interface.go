@@ -40,6 +40,7 @@ type BackupSchedule interface {
 
 	SetBackupImage()
 	SetBackupEnv(cm *v1.KuberLogicBackupSchedule)
+	SetServiceAccount(name string)
 }
 
 type BackupRestore interface {
@@ -48,10 +49,12 @@ type BackupRestore interface {
 	InitFrom(*batchv1.Job)
 	GetJob() *batchv1.Job
 	IsSuccessful() bool
+	IsFailed() bool
 	IsRunning() bool
 
 	SetRestoreImage()
 	SetRestoreEnv(cm *v1.KuberLogicBackupRestore)
+	SetServiceAccount(name string)
 }
 
 type InternalDetails interface {
@@ -72,6 +75,10 @@ type Session interface {
 	GetDatabase() Database
 	GetUser() User
 	CreateTable(table string) error
+	ConnectionString(host, db string) string
+
+	GetMasterIP() string
+	GetReplicaIPs() []string
 }
 
 type Database interface {
