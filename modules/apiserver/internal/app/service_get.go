@@ -9,7 +9,7 @@ import (
 
 func (srv *Service) ServiceGetHandler(params apiService.ServiceGetParams, principal *models.Principal) middleware.Responder {
 	kuberlogicService := params.HTTPRequest.Context().Value("service").(*kuberlogicv1.KuberLogicService)
-	ns, name := kuberlogicService.Namespace, kuberlogicService.Name
+	ns, name := principal.Namespace, kuberlogicService.Name
 	// TODO: need to use kuberLogicToService directly
 
 	service, found, errGet := srv.serviceStore.GetService(name, ns, params.HTTPRequest.Context())

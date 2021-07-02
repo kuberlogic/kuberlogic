@@ -9,10 +9,10 @@ import (
 
 func (srv *Service) ServiceDeleteHandler(params apiService.ServiceDeleteParams, principal *models.Principal) middleware.Responder {
 	service := params.HTTPRequest.Context().Value("service").(*kuberlogicv1.KuberLogicService)
-	ns, name := service.Namespace, service.Name
+	ns, name := principal.Namespace, service.Name
 
 	s := srv.serviceStore.NewServiceObject(name, ns)
-	errDelete := srv.serviceStore.DeleteService(s, params.HTTPRequest.Context())
+	errDelete := srv.serviceStore.DeleteService(s, principal, params.HTTPRequest.Context())
 	if errDelete != nil {
 		srv.log.Errorw("service delete error", "namespace", ns, "name", name, "error", errDelete.Err)
 		return apiService.NewServiceDeleteServiceUnavailable().WithPayload(&models.Error{Message: errDelete.ClientMsg})

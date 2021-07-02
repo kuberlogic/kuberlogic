@@ -29,11 +29,11 @@ type KuberLogicBackupRestoreStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:printcolumn:name="Finished",type="string",JSONPath=".status.conditions[?(@.type == 'Finished')].status",description="Restore status"
-// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[?(@.type == 'Finished')].reason",description="Restore description"
+// +kubebuilder:printcolumn:name="Successful",type="string",JSONPath=".status.conditions[?(@.type == 'Successful')].status",description="Restore description"
 // +kubebuilder:printcolumn:name="Cluster name",type=string,JSONPath=`.spec.name`,description="The cluster name"
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`,description="The backup type"
 // +kubebuilder:printcolumn:name="Link",type=string,JSONPath=`.spec.backup`,description="The backup link"
-// +kubebuilder:resource:shortName=klr
+// +kubebuilder:resource:shortName=klr,categories=kuberlogic
 // +kubebuilder:subresource:status
 type KuberLogicBackupRestore struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -52,6 +52,7 @@ type KuberLogicBackupRestoreList struct {
 }
 
 const (
+	pendingCondType    = "Pending"
 	finishedCondType   = "Finished"
 	successfulCondType = "Successful"
 )
@@ -59,15 +60,22 @@ const (
 func (klr *KuberLogicBackupRestore) MarkSuccessfulFinish() {
 	klr.setConditionStatus(finishedCondType, true, "", "RestoreFinished")
 	klr.setConditionStatus(successfulCondType, true, "", "JobSuccessful")
+	klr.setConditionStatus(pendingCondType, false, pendingCondType, pendingCondType)
 }
 
 func (klr *KuberLogicBackupRestore) MarkFailed() {
 	klr.setConditionStatus(finishedCondType, true, "", "RestoreFinished")
 	klr.setConditionStatus(successfulCondType, false, "", "JobFailed")
+	klr.setConditionStatus(pendingCondType, false, pendingCondType, pendingCondType)
 }
 
 func (klr *KuberLogicBackupRestore) MarkRunning() {
 	klr.setConditionStatus(finishedCondType, false, "restore is in progress", "JobIsRunning")
+	klr.setConditionStatus(pendingCondType, false, finishedCondType, finishedCondType)
+}
+
+func (klr *KuberLogicBackupRestore) MarkPending() {
+	klr.setConditionStatus(pendingCondType, true, pendingCondType, pendingCondType)
 }
 
 func (klr *KuberLogicBackupRestore) setConditionStatus(cond string, status bool, msg, reason string) {

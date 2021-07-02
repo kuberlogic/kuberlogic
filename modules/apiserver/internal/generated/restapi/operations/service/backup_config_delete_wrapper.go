@@ -28,7 +28,7 @@ func BackupConfigDeleteWrapper(srv Service, next BackupConfigDeleteHandlerFunc) 
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, security.BackupConfigDeletePermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal, security.BackupConfigDeletePermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
 			log.Errorw(msg, "permission", security.BackupConfigDeletePermission, "serviceId", params.ServiceID, "error", err)
 			return NewBackupConfigDeleteBadRequest().WithPayload(&models.Error{

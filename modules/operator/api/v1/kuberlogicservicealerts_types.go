@@ -38,7 +38,7 @@ type KuberLogicAlertStatus struct {
 // +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".spec.cluster",description="Cluster name"
 // +kubebuilder:printcolumn:name="Pod",type="string",JSONPath=".spec.pod",description="Affected Pod Name"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
-// +kubebuilder:resource:shortName=kla
+// +kubebuilder:resource:shortName=kla,categories=kuberlogic
 // +kubebuilder:subresource:status
 type KuberLogicAlert struct {
 	metav1.TypeMeta   `json:",inline"`

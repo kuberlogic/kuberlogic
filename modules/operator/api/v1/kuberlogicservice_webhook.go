@@ -58,6 +58,7 @@ func (c *checkQuantity) compareQuanitity() error {
 	return nil
 }
 
+// +kubebuilder:object:generate=false
 type ErrorCollector []error
 
 func (c *ErrorCollector) Collect(e error) {

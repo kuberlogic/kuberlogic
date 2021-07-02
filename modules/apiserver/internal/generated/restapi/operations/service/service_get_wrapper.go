@@ -28,7 +28,7 @@ func ServiceGetWrapper(srv Service, next ServiceGetHandlerFunc) (fn ServiceGetHa
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, security.ServiceGetPermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal, security.ServiceGetPermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
 			log.Errorw(msg, "permission", security.ServiceGetPermission, "serviceId", params.ServiceID, "error", err)
 			return NewServiceGetBadRequest().WithPayload(&models.Error{

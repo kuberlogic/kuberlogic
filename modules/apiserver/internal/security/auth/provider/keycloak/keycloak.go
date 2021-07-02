@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/coreos/go-oidc"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/cache"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/security/auth/policy"
 	"golang.org/x/oauth2"
@@ -104,7 +105,7 @@ func (k *keycloakAuthProvider) Authenticate(token string) (string, string, error
 	}
 	authToken := p[1]
 
-	idToken, err := k.oidcVerifier.Verify(k.ctx, p[1])
+	idToken, err := k.oidcVerifier.Verify(k.ctx, authToken)
 	if err != nil {
 		k.log.Errorw("error verifying authentication token", "error", err)
 		return "", "", fmt.Errorf("error veryfying authentication token")
@@ -126,17 +127,19 @@ func (k *keycloakAuthProvider) Authenticate(token string) (string, string, error
 	return userInfo.Email, authToken, nil
 }
 
-func (k *keycloakAuthProvider) Authorize(token, action, object string) (bool, error) {
+func (k *keycloakAuthProvider) Authorize(principal *models.Principal, action, object string) (bool, error) {
+	userKey := principal.Email
+
 	// check cache first
-	if permissions, found := k.cache.Get(token); found {
+	if permissions, found := k.cache.Get(userKey); found {
 		k.log.Debugw("permissions for action on object found in cache",
 			"action", action, "object", object)
-		authorized, err := k.permissionEnforcer.IsAuthorized(permissions.(policy.Permissions), token, object, action)
+		authorized, err := k.permissionEnforcer.IsAuthorized(permissions.(policy.Permissions), userKey, object, action)
 		return authorized, err
 	}
 
 	// get permissions from keycloak
-	kPermissions, err := k.getUserPermissions(token)
+	kPermissions, err := k.getUserPermissions(principal)
 	if err != nil {
 		k.log.Errorw("error getting permissions from keycloak", "error", err)
 		return false, err
@@ -146,15 +149,15 @@ func (k *keycloakAuthProvider) Authorize(token, action, object string) (bool, er
 	for _, p := range *kPermissions {
 		for _, s := range p.Scopes {
 			permissions.Rules = append(permissions.Rules, policy.PermissionRule{
-				Subject:  token,
+				Subject:  userKey,
 				Resource: p.Rsname,
 				Action:   s,
 			})
 		}
 	}
-	k.cache.Set(token, permissions, 60)
+	k.cache.Set(userKey, permissions, 60)
 
-	authorized, err := k.permissionEnforcer.IsAuthorized(permissions, token, object, action)
+	authorized, err := k.permissionEnforcer.IsAuthorized(permissions, userKey, object, action)
 	return authorized, err
 }
 
@@ -192,7 +195,7 @@ func (k *keycloakAuthProvider) DeletePermissionResource(obj string) error {
 	return nil
 }
 
-func (k *keycloakAuthProvider) getUserPermissions(token string) (*userPermissions, error) {
+func (k *keycloakAuthProvider) getUserPermissions(principal *models.Principal) (*userPermissions, error) {
 	data := url.Values{}
 
 	data.Set("grant_type", umaGrantType)
@@ -205,7 +208,7 @@ func (k *keycloakAuthProvider) getUserPermissions(token string) (*userPermission
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Authorization", "Bearer "+principal.Token)
 
 	res, err := k.httpClient.Do(req)
 	if err != nil {

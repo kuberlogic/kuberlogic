@@ -4,6 +4,7 @@ import (
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	operatorConfig "github.com/kuberlogic/operator/modules/operator/cfg"
 	"github.com/kuberlogic/operator/modules/operator/controllers"
+	"github.com/kuberlogic/operator/modules/operator/controllers/kuberlogictenant_controller"
 	"github.com/kuberlogic/operator/modules/operator/logging"
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
 	"github.com/kuberlogic/operator/modules/operator/notifications"
@@ -124,6 +125,18 @@ func Main(args []string) {
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create alert controller",
 			"controller-alert", "KuberlogicAlert")
+		os.Exit(1)
+	}
+
+	// start kuberlogic tenant controller
+	if err = (&kuberlogictenant_controller.KuberlogicTenantReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controller-tenant").WithName("KuberlogicTenant"),
+		Scheme: mgr.GetScheme(),
+		Config: cfg,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create tenant controller",
+			"controller-tenant", "KuberlogicTenant")
 		os.Exit(1)
 	}
 

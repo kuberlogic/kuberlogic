@@ -104,7 +104,8 @@ vet:
 
 # Generate code
 generate: controller-gen
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="modules/operator/..."
+	cd modules/operator ;\
+	$(CONTROLLER_GEN) object paths="./..." output:dir="./api/v1"
 
 # Build the operator images
 operator-build:

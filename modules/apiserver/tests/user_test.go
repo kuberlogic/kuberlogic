@@ -14,7 +14,7 @@ type tUser struct {
 
 func TestUsersDoesNotAllowMethodDelete(t *testing.T) {
 	api := newApi(t)
-	api.sendRequestTo(http.MethodDelete, "/services/default:cloudmanaged-pg/users/")
+	api.sendRequestTo(http.MethodDelete, fmt.Sprintf("/services/%s:cloudmanaged-pg/users/", testNs))
 	api.responseCodeShouldBe(http.StatusMethodNotAllowed)
 	api.encodeResponseToJson()
 	api.fieldContains("message", "method DELETE is not allowed")
@@ -23,7 +23,7 @@ func TestUsersDoesNotAllowMethodDelete(t *testing.T) {
 func TestServiceNotFoundForUsers(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
-	api.sendRequestTo(http.MethodGet, "/services/default:cloudmanaged-pg/users/")
+	api.sendRequestTo(http.MethodGet, fmt.Sprintf("/services/%s:cloudmanaged-pg/users/", testNs))
 	api.responseCodeShouldBe(400)
 	api.encodeResponseToJson()
 	api.responseTypeOf(reflect.Map)

@@ -14,7 +14,7 @@ type tBackupConfig struct {
 func TestServiceNotFoundForTestBackupConfig(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
-	api.sendRequestTo(http.MethodGet, "/services/default:simple-pg/backup-config")
+	api.sendRequestTo(http.MethodGet, fmt.Sprintf("/services/%s:simple-pg/backup-config", testNs))
 	api.responseCodeShouldBe(400)
 }
 

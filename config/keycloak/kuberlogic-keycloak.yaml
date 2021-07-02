@@ -35,12 +35,12 @@ spec:
       - username: "realm_admin"
         firstName: "John"
         lastName: "Doe"
-        email: "jdoe@kuberlogic.com"
+        email: "admin@example.com"
         enabled: True
         emailVerified: False
         credentials:
           - type: password
-            value: kuberlogic
+            value: secret
             temporary: false
         realmRoles:
           - "offline_access"
@@ -79,24 +79,24 @@ spec:
     authorizationSettings:
       allowRemoteResourceManagement: true
       resources:
-        - name: "*"
+        - name: "a0c394e31c9740376635c8878cf5889e:*"
           type: kuberlogicservice
           uri: "/blah"
           scopes:
             - name: "service:*"
       policies:
-        - name: kuberlogic-system-allow
+        - name: kuberlogic-test-allow
           type: user
           logic: POSITIVE
           config:
-            users: '["kuberlogic-system-admin"]'
-        - name: kuberlogic-system-full
+            users: '["kuberlogic-test-user"]'
+        - name: test-ns-full
           type: scope
           decisionStrategy: UNANIMOUS
           config:
-            applyPolicies: '["kuberlogic-system-allow"]'
+            applyPolicies: '["kuberlogic-test-allow"]'
             scopes: '["service:*"]'
-            resources: '["*"]'
+            resources: '["a0c394e31c9740376635c8878cf5889e:*"]'
     protocolMappers:
       - name: "apiserver-aud"
         protocol: "openid-connect"
@@ -109,7 +109,7 @@ spec:
 apiVersion: keycloak.org/v1alpha1
 kind: KeycloakUser
 metadata:
-  name: kuberlogic-system-user
+  name: kuberlogic-test-user
   labels:
     app: sso
 spec:
@@ -119,11 +119,11 @@ spec:
   user:
     credentials:
     - type: password
-      value: password
+      value: secret
       temporary: false
-    email: kuberlogic@cloudlinux.com
-    id: kuberlogic-system-admin
-    username: kuberlogic-system-admin
+    email: none@example.com
+    id: kuberlogic-test-user
+    username: kuberlogic-test-user
     enabled: true
     firstName: kuberlogic
     lastName: system

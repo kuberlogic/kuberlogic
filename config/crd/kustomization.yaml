@@ -6,6 +6,7 @@ resources:
 - bases/kuberlogic.com_kuberlogicbackupschedules.yaml
 - bases/kuberlogic.com_kuberlogicbackuprestores.yaml
 - bases/kuberlogic.com_kuberlogicalerts.yaml
+- bases/kuberlogic.com_kuberlogictenants.yaml
 - bases/postgresql/zalando/operatorconfiguration.crd.yaml
 - bases/postgresql/zalando/postgresql.crd.yaml
 - bases/postgresql/zalando/postgresteam.crd.yaml

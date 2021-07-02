@@ -103,6 +103,19 @@ func TestNotEnoughDefinedParameters(t *testing.T) {
 
 }
 
+func TestNotEnoughPermissions(t *testing.T) {
+	api := newApi(t)
+	api.setBearerToken()
+	api.setRequestBody(`{
+        "name": "cloudmanaged-pg",
+        "ns": "default",
+		"type": "postgresql",
+		"replicas": 2
+     }`)
+	api.sendRequestTo(http.MethodPost, "/services/")
+	api.responseCodeShouldBe(http.StatusForbidden)
+}
+
 func (s *tService) Create(t *testing.T) {
 	if !s.force && testing.Short() {
 		t.Skip("Skipping. Using -short flag")

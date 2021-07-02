@@ -10,6 +10,7 @@ import (
 	"github.com/kuberlogic/operator/modules/apiserver/util/k8s"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	v12 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -19,6 +20,7 @@ import (
 
 const (
 	serviceK8sResource = "kuberlogicservices"
+	tenantK8sResource  = "kuberlogictenants"
 	readyStatus        = "Ready"
 )
 
@@ -47,11 +49,12 @@ func (s *ServiceStore) GetService(name, namespace string, ctx context.Context) (
 	return ret, true, nil
 }
 
-func (s *ServiceStore) ListServices(ctx context.Context) ([]*models.Service, *ServiceError) {
+func (s *ServiceStore) ListServices(p *models.Principal, ctx context.Context) ([]*models.Service, *ServiceError) {
 	res := new(kuberlogicv1.KuberLogicServiceList)
 
 	err := s.restClient.Get().
 		Resource(serviceK8sResource).
+		Namespace(p.Namespace).
 		Do(context.TODO()).
 		Into(res)
 	if err != nil {
@@ -70,24 +73,31 @@ func (s *ServiceStore) ListServices(ctx context.Context) ([]*models.Service, *Se
 	return services, nil
 }
 
-func (s *ServiceStore) CreateService(m *models.Service, alertEmail string, ctx context.Context) (*models.Service, *ServiceError) {
+func (s *ServiceStore) CreateService(m *models.Service, p *models.Principal, ctx context.Context) (*models.Service, *ServiceError) {
+	s.log.Debugw("create service request", "service", m, "principal", p)
+	// ensure that the tenant is created for this principal
+	if err := s.ensureTenant(p, ctx); err != nil {
+		return nil, NewServiceError("error creating service namespace", false, err)
+	}
 	c, err := s.serviceToKuberLogic(m)
 	if err != nil {
 		return nil, NewServiceError("error converting service object", true, err)
 	}
-	if err := c.SetAlertEmail(alertEmail); err != nil {
+	if err := c.SetAlertEmail(p.Email); err != nil {
 		return nil, NewServiceError("error setting email for monitoring notifications", true, err)
 	}
 
-	_, found, _ := s.GetService(*m.Name, *m.Ns, ctx)
+	_, found, _ := s.GetService(*m.Name, m.Ns, ctx)
 	if found {
 		return nil, NewServiceError("service already exists", true, fmt.Errorf("service already exists"))
 	}
 
 	result := new(kuberlogicv1.KuberLogicService)
+	// always use principal Namespace during create events
+	c.Namespace = p.Namespace
 	err = s.restClient.Post().
 		Resource(serviceK8sResource).
-		Namespace(c.Namespace).
+		Namespace(p.Namespace).
 		Name(c.Name).
 		Body(c).
 		Do(ctx).
@@ -102,7 +112,8 @@ func (s *ServiceStore) CreateService(m *models.Service, alertEmail string, ctx c
 	return svc, nil
 }
 
-func (s *ServiceStore) UpdateService(m *models.Service, ctx context.Context) (*models.Service, *ServiceError) {
+func (s *ServiceStore) UpdateService(m *models.Service, p *models.Principal, ctx context.Context) (*models.Service, *ServiceError) {
+	m.Ns = p.Namespace
 	kls, errConvert := s.serviceToKuberLogic(m)
 	if errConvert != nil {
 		return nil, NewServiceError("error converting service object", false, errConvert)
@@ -135,8 +146,8 @@ func (s *ServiceStore) UpdateService(m *models.Service, ctx context.Context) (*m
 	return service, nil
 }
 
-func (s *ServiceStore) DeleteService(m *models.Service, ctx context.Context) *ServiceError {
-	_, f, getErr := s.GetService(*m.Name, *m.Ns, ctx)
+func (s *ServiceStore) DeleteService(m *models.Service, p *models.Principal, ctx context.Context) *ServiceError {
+	_, f, getErr := s.GetService(*m.Name, p.Namespace, ctx)
 	if !f {
 		return NewServiceError("service not found", true, getErr.Err)
 	}
@@ -146,7 +157,7 @@ func (s *ServiceStore) DeleteService(m *models.Service, ctx context.Context) *Se
 
 	err := s.restClient.Delete().
 		Resource(serviceK8sResource).
-		Namespace(*m.Ns).
+		Namespace(p.Namespace).
 		Name(*m.Name).
 		Do(ctx).
 		Error()
@@ -158,7 +169,7 @@ func (s *ServiceStore) DeleteService(m *models.Service, ctx context.Context) *Se
 }
 
 func (s *ServiceStore) GetServiceLogs(m *models.Service, instance string, lines int64, ctx context.Context) (string, *ServiceError) {
-	m, f, errGet := s.GetService(*m.Name, *m.Ns, ctx)
+	m, f, errGet := s.GetService(*m.Name, m.Ns, ctx)
 	if errGet != nil {
 		return "", errGet
 	}
@@ -190,14 +201,14 @@ func NewServiceStore(clientset *kubernetes.Clientset, restClient *rest.RESTClien
 }
 
 func (s *ServiceStore) NewServiceObject(name, namespace string) *models.Service {
-	return &models.Service{Name: &name, Ns: &namespace}
+	return &models.Service{Name: &name, Ns: namespace}
 }
 
 func (s *ServiceStore) kuberLogicToService(kls *kuberlogicv1.KuberLogicService, ctx context.Context) (*models.Service, error) {
 	ret := new(models.Service)
 	s.log.Debugw("converting kuberlogic to service", "kuberlogic service", kls)
 	ret.Name = strAsPointer(kls.Name)
-	ret.Ns = strAsPointer(kls.Namespace)
+	ret.Ns = kls.Namespace
 	ret.Type = strAsPointer(kls.Spec.Type)
 	ret.Replicas = int64AsPointer(int64(kls.Spec.Replicas - 1)) // 1 - master
 	ret.Masters = 1                                             // always equals 1
@@ -259,7 +270,7 @@ func (s *ServiceStore) serviceToKuberLogic(svc *models.Service) (*kuberlogicv1.K
 	c := &kuberlogicv1.KuberLogicService{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      *svc.Name,
-			Namespace: *svc.Ns,
+			Namespace: svc.Ns,
 		},
 	}
 
@@ -308,4 +319,28 @@ func (s *ServiceStore) serviceToKuberLogic(svc *models.Service) (*kuberlogicv1.K
 	}
 
 	return c, nil
+}
+
+func (s *ServiceStore) ensureTenant(p *models.Principal, ctx context.Context) error {
+	t := &kuberlogicv1.KuberLogicTenant{
+		ObjectMeta: v1.ObjectMeta{
+			Name: p.Namespace,
+		},
+		Spec: kuberlogicv1.KuberLogicTenantSpec{
+			OwnerEmail: p.Email,
+		},
+	}
+	err := s.restClient.Post().
+		Resource(tenantK8sResource).
+		Name(t.ObjectMeta.Name).
+		Body(t).
+		Do(ctx).
+		Error()
+	if err != nil && errors.IsAlreadyExists(err) {
+		s.log.Debugw("kuberlogic tenant already exists", "tenant", t.ObjectMeta.Namespace)
+		return nil
+	}
+	s.log.Debugw("kuberlogic tenant create request",
+		"tenant", t.ObjectMeta.Name, "email", t.Spec.OwnerEmail, "error", err)
+	return err
 }
