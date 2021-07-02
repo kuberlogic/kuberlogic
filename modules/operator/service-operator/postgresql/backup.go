@@ -35,8 +35,8 @@ func (p *Backup) SetBackupEnv(cm *kuberlogicv1.KuberLogicBackupSchedule) {
 			Value: p.Cluster.Operator.Name,
 		},
 		{
-			Name:      "CLUSTER_NAME_LABEL",
-			ValueFrom: util.FromConfigMap(operatorConfigMap, "cluster_name_label"),
+			Name:  "CLUSTER_NAME_LABEL",
+			Value: postgresPodLabelKey,
 		},
 		{
 			Name: "POD_NAMESPACE",

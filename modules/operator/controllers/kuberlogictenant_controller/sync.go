@@ -2,6 +2,7 @@ package kuberlogictenant_controller
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
@@ -29,6 +30,8 @@ type syncer struct {
 }
 
 const (
+	objectVersionAnno = "sync-klt.kuberlogic.com/last-applied"
+
 	saKey = iota
 	nsKey
 	imgPullSecretKey
@@ -42,7 +45,7 @@ func (s *syncer) withNamespace() *syncer {
 			Name: s.kt.GetTenantName(),
 		},
 	}
-	s.syncErr = s.sync(ns, nsKey)
+	s.syncErr = s.sync(ns, calcObjectVersion(ns), &corev1.Namespace{}, nsKey)
 	return s
 }
 
@@ -62,7 +65,7 @@ func (s *syncer) withImagePullSecret(parentName, parentNmespace string) *syncer 
 		Type: parentSecret.Type,
 		Data: parentSecret.Data,
 	}
-	s.syncErr = s.sync(clientSecret, imgPullSecretKey)
+	s.syncErr = s.sync(clientSecret, calcObjectVersion(clientSecret), &corev1.Secret{}, imgPullSecretKey)
 	return s
 }
 
@@ -73,7 +76,7 @@ func (s *syncer) withServiceAccount() *syncer {
 			Namespace: s.kt.GetTenantName(),
 		},
 	}
-	s.syncErr = s.sync(sa, saKey)
+	s.syncErr = s.sync(sa, calcObjectVersion(sa), &corev1.ServiceAccount{}, saKey)
 	return s
 }
 
@@ -91,7 +94,7 @@ func (s *syncer) withRole() *syncer {
 			},
 		},
 	}
-	s.syncErr = s.sync(r, roleKey)
+	s.syncErr = s.sync(r, calcObjectVersion(r), &rbacv1.Role{}, roleKey)
 	return s
 }
 
@@ -123,12 +126,12 @@ func (s *syncer) withRoleBinding() *syncer {
 			Name:     role.GetName(),
 		},
 	}
-	s.syncErr = s.sync(rb, roleBindingKey)
+	s.syncErr = s.sync(rb, calcObjectVersion(rb), &rbacv1.RoleBinding{}, roleBindingKey)
 	return s
 }
 
 // sync function creates or updates v1.Object in cluster
-func (s *syncer) sync(object client.Object, key int) error {
+func (s *syncer) sync(object client.Object, objectVersion string, current client.Object, key int) error {
 	if object == nil {
 		s.syncErr = fmt.Errorf("object can't be nil")
 	}
@@ -149,10 +152,22 @@ func (s *syncer) sync(object client.Object, key int) error {
 	log.Info("creating object")
 	err = s.client.Create(s.ctx, object)
 	if k8serrors.IsAlreadyExists(err) {
-		log.Info("object already exists. updating")
-		err = s.client.Patch(s.ctx, object, client.MergeFrom(object.DeepCopyObject()))
-	}
-	if err != nil {
+		log.Info("object already exists")
+		if err := s.client.Get(s.ctx, types.NamespacedName{Name: object.GetName(), Namespace: object.GetNamespace()}, current); err != nil {
+			log.Error(err, "error getting object")
+			return err
+		}
+		// after we get cluster version of object we need to verify that it's different from desired
+		if clusterVersion := getObjectVersion(current); objectVersion != clusterVersion {
+			log.Info("updating object", "currentVersion", clusterVersion, "desiredVersion", objectVersion)
+			// update last applied object version
+			setObjectVersion(object, objectVersion)
+			if err := s.client.Update(s.ctx, object); err != nil {
+				log.Error(err, "error updating object")
+				return err
+			}
+		}
+	} else if err != nil {
 		log.Error(err, "error syncing object")
 		return err
 	}
@@ -180,4 +195,22 @@ func newSyncer(ctx context.Context, log logr.Logger, c client.Client, s *runtime
 		log:     log,
 		ctx:     ctx,
 	}
+}
+
+func getObjectVersion(object client.Object) string {
+	annos := object.GetAnnotations()
+	return annos[objectVersionAnno]
+}
+
+func setObjectVersion(object client.Object, version string) {
+	object.SetAnnotations(map[string]string{
+		objectVersionAnno: version,
+	})
+}
+
+func calcObjectVersion(object interface{}) string {
+	h := sha256.New()
+	h.Write([]byte(fmt.Sprintf("%v", object)))
+
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
