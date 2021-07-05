@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	"github.com/prometheus/common/log"
 	"net/http"
 	"reflect"
@@ -102,6 +103,19 @@ func TestNotEnoughDefinedParameters(t *testing.T) {
 
 }
 
+func TestNotEnoughPermissions(t *testing.T) {
+	api := newApi(t)
+	api.setBearerToken()
+	api.setRequestBody(`{
+        "name": "cloudmanaged-pg",
+        "ns": "default",
+		"type": "postgresql",
+		"replicas": 2
+     }`)
+	api.sendRequestTo(http.MethodPost, "/services/")
+	api.responseCodeShouldBe(http.StatusForbidden)
+}
+
 func (s *tService) Create(t *testing.T) {
 	if !s.force && testing.Short() {
 		t.Skip("Skipping. Using -short flag")
@@ -192,9 +206,9 @@ func (s *tService) TryDecreaseVolumeSize(t *testing.T) {
 			"limits": map[string]string{"cpu": "250m", "memory": "512Mi", "volumeSize": "800Mi"},
 		})
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
-	api.responseCodeShouldBe(400) // 400 - apiserver validating error
+	api.responseCodeShouldBe(503)
 	api.encodeResponseToJson()
-	api.responseShouldMatchJson(`{"message": "error changing service: volume size can't be lowered"}`)
+	api.responseShouldMatchJson(`{"message": "error updating service"}`)
 }
 
 func (s *tService) EditReplicas(t *testing.T) {
@@ -227,9 +241,9 @@ func (s *tService) TryEditType(t *testing.T) {
 			"type": newType,
 		})
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
-	api.responseCodeShouldBe(400) // 400 - apiserver validating error
+	api.responseCodeShouldBe(503)
 	api.encodeResponseToJson()
-	api.responseShouldMatchJson(`{"message": "error changing service: type can't be changed"}`)
+	api.responseShouldMatchJson(`{"message": "error updating service"}`)
 }
 
 func (s *tService) EditBackAdvancedConf(t *testing.T) {
@@ -298,17 +312,33 @@ func (s *tService) DowngradeReplicasAndIncreaseAdvancedConf(t *testing.T) {
 	api.setBearerToken()
 	api.setJsonRequestBody(
 		map[string]interface{}{
-			"name":     s.name,
-			"ns":       s.ns,
-			"type":     s.type_,
-			"replicas": s.replicas,
-			"conf":     s.newConf,
+			"name":         s.name,
+			"ns":           s.ns,
+			"type":         s.type_,
+			"replicas":     s.replicas,
+			"advancedConf": s.newConf,
 		})
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
 	api.responseCodeShouldBe(200)
 	api.encodeResponseToJson()
 	api.fieldIs("replicas", s.replicas)
 	api.fieldIs("advancedConf", s.newConf)
+}
+
+func (s *tService) DowngradeReplicas(t *testing.T) {
+	api := newApi(t)
+	api.setBearerToken()
+	api.setJsonRequestBody(
+		map[string]interface{}{
+			"name":     s.name,
+			"ns":       s.ns,
+			"type":     s.type_,
+			"replicas": s.replicas,
+		})
+	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
+	api.responseCodeShouldBe(200)
+	api.encodeResponseToJson()
+	api.fieldIs("replicas", s.replicas)
 }
 
 func (s *tService) CreateSecondOneWithSameName(t *testing.T) {
@@ -395,6 +425,59 @@ func (s *tService) WaitForStatus(status string, delay, timeout int64) func(t *te
 	}
 }
 
+func (s *tService) WaitForRole(role, status string, delay, timeout int64) func(t *testing.T) {
+	return func(t *testing.T) {
+		begin := time.Now().Unix()
+		left := timeout
+		for {
+			currentTime := time.Now().Unix()
+			if currentTime-begin > timeout {
+				log.Fatalf("Timeout %d is expired", timeout)
+				return
+			}
+
+			api := newApi(t)
+			api.setBearerToken()
+			api.sendRequestTo(http.MethodGet, fmt.Sprintf("/services/%s:%s", s.ns, s.name))
+			api.responseCodeShouldBe(200)
+
+			var service models.Service
+			api.encodeResponseTo(&service)
+
+			for _, i := range service.Instances {
+				if i.Role == role && i.Status.Status == status {
+					t.Logf("Service %s:%s is reached the running role %s", s.ns, s.name, role)
+					return
+				}
+			}
+
+			log.Infof("Waiting role %s for %s:%s. Left %d seconds", role, s.ns, s.name, left)
+			time.Sleep(time.Duration(delay) * time.Second)
+			left = left - delay
+		}
+	}
+}
+
+func (s *tService) CheckRole(name, role, status string) func(t *testing.T) {
+	return func(t *testing.T) {
+
+		api := newApi(t)
+		api.setBearerToken()
+		api.sendRequestTo(http.MethodGet, fmt.Sprintf("/services/%s:%s", s.ns, s.name))
+		api.responseCodeShouldBe(200)
+
+		var service models.Service
+		api.encodeResponseTo(&service)
+
+		for _, i := range service.Instances {
+			if i.Role == role && i.Status.Status == status && i.Name == name {
+				return
+			}
+		}
+		t.Errorf("%s not found with role %s and status %s", name, role, status)
+	}
+}
+
 func (s *tService) Delete(t *testing.T) {
 	if !s.force && testing.Short() {
 		t.Skip("Skipping. Using -short flag")
@@ -420,7 +503,7 @@ func makeTestService(ts tService) func(t *testing.T) {
 
 			ts.CheckRecordCount(1),
 			ts.IncorrectName,
-			ts.WaitForStatus("Ready", 5, 2*60),
+			ts.WaitForStatus("Ready", 5, 5*60),
 
 			ts.CheckField("limits", ts.limits),
 			ts.CheckField("replicas", ts.replicas),

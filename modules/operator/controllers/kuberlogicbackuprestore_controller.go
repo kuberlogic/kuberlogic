@@ -104,6 +104,13 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 		return ctrl.Result{}, nil
 	}
 
+	// get tenant information first
+	kt := &kuberlogicv1.KuberLogicTenant{}
+	if err := r.Get(ctx, types.NamespacedName{Name: klr.Namespace}, kt); err != nil {
+		log.Error(err, "error searching for kuberlogic tenant", "name", klr.Namespace)
+		return ctrl.Result{}, err
+	}
+
 	op, err := serviceOperator.GetOperator(kl.Spec.Type)
 	if err != nil {
 		log.Error(err, "Could not define the base operator")
@@ -127,6 +134,7 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 	backupRestore := op.GetBackupRestore()
 	backupRestore.SetRestoreImage()
 	backupRestore.SetRestoreEnv(klr)
+	backupRestore.SetServiceAccount(kt.GetServiceAccountName())
 
 	job := backupRestore.GetJob()
 	err = r.Get(ctx,
@@ -157,7 +165,7 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 	}
 	backupRestore.InitFrom(job)
 
-	if running := backupRestore.IsRunning(); running {
+	if backupRestore.IsRunning() { // restore job is running
 		klr.MarkRunning()
 
 		// also notify corresponding kls that it is running
@@ -166,17 +174,17 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 			log.Error(err, "error updating kuberlogicservice restore condition")
 			return ctrl.Result{}, err
 		}
-	} else {
+	} else if backupRestore.IsSuccessful() != backupRestore.IsFailed() { // restore job can be either failed or successful
 		kl.RestoreFinished()
 		if err := r.Status().Update(ctx, kl); err != nil {
 			log.Error(err, "error updating kuberlogicservice restore condition")
 			return ctrl.Result{}, err
 		}
-	}
-	if successful := backupRestore.IsSuccessful(); successful {
-		klr.MarkSuccessfulFinish()
-	} else {
-		klr.MarkFailed()
+		if backupRestore.IsSuccessful() {
+			klr.MarkSuccessfulFinish()
+		} else {
+			klr.MarkFailed()
+		}
 	}
 
 	err = r.Status().Update(ctx, klr)
@@ -190,7 +198,6 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 }
 
 func (r *KuberLogicBackupRestoreReconciler) defineJob(op interfaces.BackupRestore, cr *kuberlogicv1.KuberLogicBackupRestore) (*v1.Job, error) {
-
 	op.Init(cr)
 
 	// Set kuberlogic restore instance as the owner and controller

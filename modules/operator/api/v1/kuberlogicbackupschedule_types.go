@@ -31,7 +31,7 @@ type KuberLogicBackupScheduleStatus struct {
 // +kubebuilder:printcolumn:name="Cluster name",type=string,JSONPath=`.spec.name`,description="The cluster name"
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`,description="The backup type"
 // +kubebuilder:printcolumn:name="Schedule",type=string,JSONPath=`.spec.schedule`,description="The backup schedule"
-// +kubebuilder:resource:shortName=klb
+// +kubebuilder:resource:shortName=klb,categories=kuberlogic
 // +kubebuilder:subresource:status
 type KuberLogicBackupSchedule struct {
 	metav1.TypeMeta   `json:",inline"`

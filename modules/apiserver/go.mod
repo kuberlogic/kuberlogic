@@ -17,6 +17,7 @@ require (
 	github.com/go-openapi/strfmt v0.19.11
 	github.com/go-openapi/swag v0.19.12
 	github.com/go-openapi/validate v0.19.15
+	github.com/jackc/pgx/v4 v4.10.1
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210702150708-b6541d26936a // indirect
 	github.com/kuberlogic/zapsentry v1.6.2

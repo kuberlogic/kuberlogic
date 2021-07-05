@@ -7,7 +7,7 @@ import (
 )
 
 func (srv *Service) ServiceEditHandler(params apiService.ServiceEditParams, principal *models.Principal) middleware.Responder {
-	m, errUpdate := srv.serviceStore.UpdateService(params.ServiceItem, params.HTTPRequest.Context())
+	service, errUpdate := srv.serviceStore.UpdateService(params.ServiceItem, principal, params.HTTPRequest.Context())
 	if errUpdate != nil {
 		srv.log.Errorw("error updating service", "error", errUpdate.Err)
 		if errUpdate.Client {
@@ -16,5 +16,5 @@ func (srv *Service) ServiceEditHandler(params apiService.ServiceEditParams, prin
 			return apiService.NewServiceEditServiceUnavailable().WithPayload(&models.Error{Message: errUpdate.ClientMsg})
 		}
 	}
-	return apiService.NewServiceEditOK().WithPayload(m)
+	return apiService.NewServiceEditOK().WithPayload(service)
 }

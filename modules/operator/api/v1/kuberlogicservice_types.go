@@ -55,7 +55,7 @@ type KuberLogicServiceStatus struct {
 // +kubebuilder:printcolumn:name="CPU Request",type=string,JSONPath=`.spec.resources.requests.cpu`,description="CPU request"
 // +kubebuilder:printcolumn:name="Memory Request",type=string,JSONPath=`.spec.resources.requests.memory`,description="Memory request"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
-// +kubebuilder:resource:shortName=kls
+// +kubebuilder:resource:shortName=kls,categories=kuberlogic
 // +kubebuilder:subresource:status
 type KuberLogicService struct {
 	metav1.TypeMeta   `json:",inline"`

@@ -10,6 +10,7 @@ rules:
       - kuberlogicservices
       - kuberlogicbackupschedules
       - kuberlogicbackuprestores
+      - kuberlogictenants
     verbs:
       - create
       - delete
@@ -48,6 +49,7 @@ rules:
       - kuberlogicservices/status
       - kuberlogicbackupschedules/status
       - kuberlogicbackuprestores/status
+      - kuberlogictenants/status
     verbs:
       - get
       - patch
@@ -101,3 +103,37 @@ rules:
       - patch
       - update
       - watch
+  # for kuberlogictenants
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+      - serviceaccounts
+      - secrets
+    verbs:
+      - create
+      - patch
+      - update
+      - list
+      - watch
+      - get
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - roles
+      - rolebindings
+    verbs:
+      - create
+      - patch
+      - update
+      - list
+      - watch
+      - get
+  # permissions operator will grant to tenant service accounts
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list

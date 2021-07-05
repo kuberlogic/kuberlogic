@@ -28,7 +28,7 @@ func BackupConfigCreateWrapper(srv Service, next BackupConfigCreateHandlerFunc) 
 
 		// check auth
 		authProvider := srv.GetAuthProvider()
-		if authorized, err := authProvider.Authorize(principal.Token, security.BackupConfigCreatePermission, params.ServiceID); err != nil {
+		if authorized, err := authProvider.Authorize(principal, security.BackupConfigCreatePermission, params.ServiceID); err != nil {
 			msg := "auth bad request"
 			log.Errorw(msg, "permission", security.BackupConfigCreatePermission, "serviceId", params.ServiceID, "error", err)
 			return NewBackupConfigCreateBadRequest().WithPayload(&models.Error{

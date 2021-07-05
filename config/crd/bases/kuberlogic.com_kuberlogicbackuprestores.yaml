@@ -10,6 +10,8 @@ metadata:
 spec:
   group: kuberlogic.com
   names:
+    categories:
+    - kuberlogic
     kind: KuberLogicBackupRestore
     listKind: KuberLogicBackupRestoreList
     plural: kuberlogicbackuprestores
@@ -24,8 +26,8 @@ spec:
       name: Finished
       type: string
     - description: Restore description
-      jsonPath: .status.conditions[?(@.type == 'Finished')].reason
-      name: Status
+      jsonPath: .status.conditions[?(@.type == 'Successful')].status
+      name: Successful
       type: string
     - description: The cluster name
       jsonPath: .spec.name

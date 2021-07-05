@@ -124,7 +124,7 @@ func (tb *tBackupRestore) CheckSuccesfulRestore(t *testing.T) {
 		}
 	}
 	if found == nil {
-		t.Errorf("no restore found for service %s:%s", tb.service.ns, tb.service.name)
+		t.Errorf("no succesful restore found for service %s:%s", tb.service.ns, tb.service.name)
 	}
 }
 
@@ -164,7 +164,7 @@ func makeTestBackupRestore(tb tBackupRestore) func(t *testing.T) {
 
 		steps := []func(t *testing.T){
 			tb.service.Create,
-			tb.service.WaitForStatus("Ready", 5, 2*60),
+			tb.service.WaitForStatus("Ready", 5, 5*60),
 			tb.EnsureClearConfig,
 			tb.EnsureClearDB,
 

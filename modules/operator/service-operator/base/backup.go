@@ -13,8 +13,9 @@ import (
 type BaseBackup struct {
 	CronJob v1beta1.CronJob
 
-	Image  string
-	EnvVar []corev1.EnvVar
+	Image          string
+	ServiceAccount string
+	EnvVar         []corev1.EnvVar
 }
 
 func (p *BaseBackup) IsSuccessful(j *v1.Job) bool {
@@ -52,6 +53,7 @@ func (p *BaseBackup) NewCronJob(name, ns, schedule string) v1beta1.CronJob {
 					BackoffLimit: &backOffLimit,
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
+							ServiceAccountName: p.ServiceAccount,
 							Containers: []corev1.Container{
 								{
 									Name:            name,
@@ -127,4 +129,8 @@ func (p *BaseBackup) UpdateSchedule(cm *kuberlogicv1.KuberLogicBackupSchedule) {
 
 func (p *BaseBackup) UpdateTemplate(cm *kuberlogicv1.KuberLogicBackupSchedule) {
 	p.CronJob.Spec.JobTemplate = p.New(cm).Spec.JobTemplate
+}
+
+func (p *BaseBackup) SetServiceAccount(name string) {
+	p.ServiceAccount = name
 }

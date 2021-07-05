@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/cache"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/config"
+	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/security"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/security/auth/provider/keycloak"
@@ -11,9 +12,9 @@ import (
 )
 
 type AuthProvider interface {
-	GetAuthenticationSecret(username, password string) (string, error) // returns secret, error
-	Authenticate(secret string) (string, string, error)                // returns username, secret, error
-	Authorize(username, action, object string) (bool, error)           // return authorization success, error
+	GetAuthenticationSecret(username, password string) (string, error)          // returns secret, error
+	Authenticate(secret string) (string, string, error)                         // returns username, secret, error
+	Authorize(principal *models.Principal, action, object string) (bool, error) // return authorization success, error
 	CreatePermissionResource(obj string) error
 	DeletePermissionResource(obj string) error
 }
