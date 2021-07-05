@@ -249,10 +249,10 @@ func (tf *tFailover) RemovePersistentVolumeClaim(t *testing.T) {
 	}
 
 	// kill the pvc, we'll check the failover and replication
-	tf.ExecCommand("kubectl", "delete", "pvc", tf.pvcName, "--wait=false")(t)
+	tf.ExecCommand("kubectl", "-n", testNs, "delete", "pvc", tf.pvcName, "--wait=false")(t)
 
 	// kill the master replica by masterPodName
-	tf.ExecCommand("kubectl", "delete", "pod", tf.masterPodName)(t)
+	tf.ExecCommand("kubectl", "-n", testNs, "delete", "pod", tf.masterPodName)(t)
 
 	// wait Pending state, pod can not be Ready due to "pvc not found"
 	wait(30)(t)
@@ -293,7 +293,7 @@ func makeTestFailover(tf tFailover) func(t *testing.T) {
 
 			tf.RemovePersistentVolumeClaim, // skipped for the mysql
 
-			tf.ExecCommand("kubectl", "delete", "pod", tf.masterPodName),
+			tf.ExecCommand("kubectl", "-n", testNs, "delete", "pod", tf.masterPodName),
 
 			// wait for the failover
 			wait(30),
