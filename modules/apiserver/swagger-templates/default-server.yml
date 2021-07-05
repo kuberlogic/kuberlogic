@@ -6,11 +6,6 @@ layout:
       file_name: "app.go"
       skip_exists: true
 
-    - name: cfgPackage
-      source: serverConfig
-      target: "./internal/config/"
-      file_name: "config.go"
-
     - name: main
       source: serverMain
       target: "./cmd/"

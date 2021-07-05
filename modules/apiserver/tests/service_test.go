@@ -106,13 +106,7 @@ func TestNotEnoughDefinedParameters(t *testing.T) {
 func TestNotEnoughPermissions(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
-	api.setRequestBody(`{
-        "name": "cloudmanaged-pg",
-        "ns": "default",
-		"type": "postgresql",
-		"replicas": 2
-     }`)
-	api.sendRequestTo(http.MethodPost, "/services/")
+	api.sendRequestTo(http.MethodGet, "/services/default:cloudmanaged-pg")
 	api.responseCodeShouldBe(http.StatusForbidden)
 }
 
