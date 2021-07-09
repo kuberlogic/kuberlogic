@@ -32,7 +32,8 @@ type KuberLogicTenantList struct {
 }
 
 const (
-	activeCondType = "Active"
+	activeCondType   = "Active"
+	ktSyncedCondType = "Synced"
 )
 
 func (kt KuberLogicTenant) GetServiceAccountName() string {
@@ -49,6 +50,14 @@ func (kt *KuberLogicTenant) SetActive() {
 
 func (kt KuberLogicTenant) IsActive() bool {
 	return meta.IsStatusConditionTrue(kt.Status.Conditions, activeCondType)
+}
+
+func (kt *KuberLogicTenant) SetSynced() {
+	kt.setConditionStatus(ktSyncedCondType, true, "Tenant is synced", ktSyncedCondType)
+}
+
+func (kt *KuberLogicTenant) SyncFailed(msg string) {
+	kt.setConditionStatus(ktSyncedCondType, false, msg, ktSyncedCondType)
 }
 
 func (kt *KuberLogicTenant) setConditionStatus(cond string, status bool, msg, reason string) {
