@@ -60,6 +60,10 @@ func (kt *KuberLogicTenant) SyncFailed(msg string) {
 	kt.setConditionStatus(ktSyncedCondType, false, msg, ktSyncedCondType)
 }
 
+func (kt *KuberLogicTenant) IsSynced() bool {
+	return meta.IsStatusConditionTrue(kt.Status.Conditions, ktSyncedCondType)
+}
+
 func (kt *KuberLogicTenant) setConditionStatus(cond string, status bool, msg, reason string) {
 	c := metav1.Condition{
 		Type:    cond,
