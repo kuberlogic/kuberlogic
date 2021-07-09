@@ -11,6 +11,7 @@ rules:
       - kuberlogicbackupschedules
       - kuberlogicbackuprestores
       - kuberlogictenants
+      - kuberlogicalerts
     verbs:
       - create
       - delete
@@ -50,6 +51,7 @@ rules:
       - kuberlogicbackupschedules/status
       - kuberlogicbackuprestores/status
       - kuberlogictenants/status
+      - kuberlogicalerts/status
     verbs:
       - get
       - patch
