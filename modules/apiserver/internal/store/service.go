@@ -347,7 +347,7 @@ func (s *ServiceStore) ensureTenant(p *models.Principal, ctx context.Context) er
 	s.log.Debugw("kuberlogic tenant create request",
 		"tenant", t.ObjectMeta.Name, "email", t.Spec.OwnerEmail, "error", err)
 
-	// wait until it's ready with 30 seconds timeout
+	// wait until it's ready with 60 seconds timeout
 	maxWait := 60
 	for i := 2; i < maxWait; i = i + i {
 		if err = s.restClient.Get().Resource(tenantK8sResource).Name(t.ObjectMeta.Name).Do(ctx).Into(t); err != nil {
