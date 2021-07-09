@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.24
+VERSION ?= 0.0.26
 
 # private repo for images
 IMG_REPO = quay.io/kuberlogic

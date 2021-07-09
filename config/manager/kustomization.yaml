@@ -3,13 +3,13 @@ kind: Kustomization
 images:
 - name: apiserver
   newName: quay.io/kuberlogic/apiserver
-  newTag: 0.0.24
+  newTag: 0.0.26
 - name: controller
   newName: quay.io/kuberlogic/operator
-  newTag: 0.0.24
+  newTag: 0.0.26
 - name: operator
   newName: quay.io/kuberlogic/operator
-  newTag: 0.0.24
+  newTag: 0.0.26
 patchesStrategicMerge:
 - env.yaml
 resources:

@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: integration-tests
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      containers:
+        - name: integration-tests
+          image: quay.io/kuberlogic/integration-tests:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - -test.short
+            - -test.v
+            - -test.failfast
+            - -test.timeout
+            - 60m
+          env:
+            - name: REMOTE_HOST
+              value: cm-kuberlogic-apiserver:8001
+            - name: KUBERLOGIC_AUTH_PROVIDER
+              value: $KUBERLOGIC_AUTH_PROVIDER
+            - name: MINIO_ACCESS_KEY
+              value: $MINIO_ACCESS_KEY
+            - name: MINIO_SECRET_KEY
+              value: $MINIO_SECRET_KEY
+            - name: MINIO_ENDPOINT
+              value: http://minio:9000
+            - name: BUCKET
+              value: $BUCKET
+            - name: SENTRY_DSN
+              value: $SENTRY_DSN
+      restartPolicy: Never
