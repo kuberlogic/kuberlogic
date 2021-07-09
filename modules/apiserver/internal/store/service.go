@@ -361,5 +361,8 @@ func (s *ServiceStore) ensureTenant(p *models.Principal, ctx context.Context) er
 		}
 		time.Sleep(time.Second * time.Duration(i))
 	}
+	if !t.IsSynced() {
+		return fmt.Errorf("tenant is not synced")
+	}
 	return err
 }
