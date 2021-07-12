@@ -87,6 +87,15 @@ func (r *KuberlogicTenantReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		withRoleBinding()
 	log.Info("reconciliation finished", "error", s.syncErr)
 
+	if s.syncErr == nil {
+		kt.SetSynced()
+		log.Info("setting object status to synced")
+		return ctrl.Result{}, r.Client.Status().Update(ctx, kt)
+	} else {
+		kt.SyncFailed(s.syncErr.Error())
+		log.Info("object sync failed", "error", s.syncErr)
+	}
+
 	return ctrl.Result{}, s.syncErr
 }
 

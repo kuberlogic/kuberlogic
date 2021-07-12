@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"time"
 )
 
 const (
@@ -339,8 +340,29 @@ func (s *ServiceStore) ensureTenant(p *models.Principal, ctx context.Context) er
 	if err != nil && errors.IsAlreadyExists(err) {
 		s.log.Debugw("kuberlogic tenant already exists", "tenant", t.ObjectMeta.Namespace)
 		return nil
+	} else if err != nil {
+		s.log.Debugw("error getting kuberlogic tenant",
+			"tenant", t.ObjectMeta.Name, "email", t.Spec.OwnerEmail, "error", err)
 	}
 	s.log.Debugw("kuberlogic tenant create request",
 		"tenant", t.ObjectMeta.Name, "email", t.Spec.OwnerEmail, "error", err)
+
+	// wait until it's ready with 60 seconds timeout
+	maxWait := 60
+	for i := 2; i < maxWait; i = i + i {
+		if err = s.restClient.Get().Resource(tenantK8sResource).Name(t.ObjectMeta.Name).Do(ctx).Into(t); err != nil {
+			s.log.Warnw("error getting kuberlogic tenant",
+				"tenant", t.ObjectMeta.Name, "email", t.Spec.OwnerEmail, "error", err)
+		}
+		if t.IsSynced() {
+			s.log.Infow("kuberlogic tenant is created",
+				"tenant", t.ObjectMeta.Name, "email", t.Spec.OwnerEmail, "error", err)
+			break
+		}
+		time.Sleep(time.Second * time.Duration(i))
+	}
+	if !t.IsSynced() {
+		return fmt.Errorf("tenant is not synced")
+	}
 	return err
 }
