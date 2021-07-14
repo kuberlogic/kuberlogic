@@ -1,0 +1,9 @@
+apiVersion: v2
+name: apiserver
+description: A Helm chart for Kuberlogic apiserver
+
+type: application
+
+version: 0.1.0
+
+appVersion: 0.0.24
