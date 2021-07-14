@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.24
+VERSION ?= 0.0.25
 
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
@@ -74,7 +74,7 @@ deploy-requirements: kustomize
 	# it can not configured with kustomization due to tight integrate with namespace=cert-manager
 	# (see cert-manager.yaml for the details)
 	for module in config/certmanager/cert-manager.yaml \
-				  config/keycloak/crd.yaml; do \
+				  config/keycloak/keycloak*.yaml; do \
   		kubectl apply -f $${module} ;\
   	done; \
   	# waiting for cert-manager-webhook endpoint assign an ip address \
