@@ -34,8 +34,6 @@ spec:
     eventsListeners:
       - "metrics-listener"
     userManagedAccessAllowed: true
-    defaultRoles:
-      - "uma_protection"
     users:
       - username: "realm_admin"
         firstName: "John"
@@ -110,6 +108,8 @@ spec:
         config:
           included.client.audience: "apiserver"
           access.token.claim: "true"
+    defaultRoles:
+      - "uma_protection"
 ---
 apiVersion: keycloak.org/v1alpha1
 kind: KeycloakUser
