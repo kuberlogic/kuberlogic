@@ -36,8 +36,6 @@ spec:
     eventsListeners:
       - "metrics-listener"
     userManagedAccessAllowed: true
-      defaultRoles:
-      - "uma_protection"
     users:
       - username: "{{ .Values.realm.name }}"
         firstName: "Kuberlogic"
@@ -111,3 +109,5 @@ spec:
         config:
           included.client.audience: "{{ .Values.clientId }}"
           access.token.claim: "true"
+    defaultRoles:
+    - "uma_protection"
