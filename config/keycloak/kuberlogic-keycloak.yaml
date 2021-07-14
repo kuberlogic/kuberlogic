@@ -24,13 +24,18 @@ metadata:
     app: sso
 spec:
   realm:
-    unamanaged: true
     id: "kuberlogic_realm"
     realm: "kuberlogic_realm"
-    enabled: True
+    accessTokenLifespan: 3600
+    accessTokenLifespanForImplicitFlow: 3600
+    registrationAllowed: false
+    enabled: true
     displayName: "Kuberlogic"
     eventsListeners:
       - "metrics-listener"
+    userManagedAccessAllowed: true
+    defaultRoles:
+      - "uma_protection"
     users:
       - username: "realm_admin"
         firstName: "John"
@@ -45,6 +50,7 @@ spec:
         realmRoles:
           - "offline_access"
           - "uma_authorization"
+          - "uma_protection"
         clientRoles:
           account:
             - "manage-account"
@@ -81,7 +87,6 @@ spec:
       resources:
         - name: "a0c394e31c9740376635c8878cf5889e:*"
           type: kuberlogicservice
-          uri: "/blah"
           scopes:
             - name: "service:*"
       policies:
