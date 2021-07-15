@@ -4,19 +4,34 @@ import (
 	"context"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/config"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
-	k8s2 "github.com/kuberlogic/operator/modules/apiserver/util/k8s"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/util"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
-func Connect(ns, name string) (*kubernetes.Clientset, *kuberlogicv1.KuberLogicService, error) {
-	internalCfg, err := config.InitConfig("kuberlogic", logging.WithComponentLogger("config"))
-	if err != nil {
-		return nil, nil, err
+func getConfig() (*rest.Config, error) {
+	// check in-cluster usage
+	if cfg, err := rest.InClusterConfig(); err == nil {
+		return cfg, nil
 	}
 
-	cfg, err := k8s2.GetConfig(internalCfg)
+	internalCfg, err := config.InitConfig("kuberlogic", logging.WithComponentLogger("config"))
+	if err != nil {
+		return nil, err
+	}
+
+	// use the current context in kubeconfig
+	conf, err := clientcmd.BuildConfigFromFlags("", internalCfg.KubeconfigPath)
+	if err != nil {
+		return nil, err
+	}
+	return conf, nil
+}
+
+func Connect(ns, name string) (*kubernetes.Clientset, *kuberlogicv1.KuberLogicService, error) {
+	cfg, err := getConfig()
 	if err != nil {
 		return nil, nil, err
 	}
