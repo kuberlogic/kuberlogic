@@ -26,6 +26,10 @@ COPY util/ util/
 COPY main.go main.go
 COPY tests/ tests/
 
+# Copy kubectl
+RUN curl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/bin/kubectl
+RUN chmod +x /usr/bin/kubectl
+
 # Build
 WORKDIR /workspace/tests
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go test -c -o integration.tests
@@ -33,8 +37,10 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go test -c -o integrati
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
+#FROM golang:1.16
 WORKDIR /
 COPY --from=builder /workspace/tests/integration.tests .
+COPY --from=builder /usr/bin/kubectl /usr/bin/kubectl
 USER nonroot:nonroot
 
 ENTRYPOINT ["/integration.tests"]

@@ -59,6 +59,17 @@ html-report: coverage-report
 test-in-cluster:
 	envsubst < config/in-cluster/job.yaml | kubectl apply -f -
 
+watch-test-in-cluster:
+	while :; do \
+  		kubectl logs -l job-name=integration-tests -f; \
+  		sleep 1; \
+  	done;
+
+clear-test-in-cluster:
+	kubectl delete kls --all --all-namespaces && \
+	kubectl delete klt --all && \
+	kubectl delete job integration-tests
+
 build-minio:
 	docker build minio/ \
 		-t $(IMG) \

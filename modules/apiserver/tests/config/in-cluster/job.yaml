@@ -3,19 +3,27 @@ kind: Job
 metadata:
   name: integration-tests
 spec:
-  backoffLimit: 1
+  backoffLimit: 0
   template:
     spec:
+      # configuring below
+      serviceAccountName: kuberlogic-integration-tests
       containers:
         - name: integration-tests
           image: quay.io/kuberlogic/integration-tests:latest
           imagePullPolicy: IfNotPresent
+          #          command:
+          #            - "sh"
+          #            - "-c"
+          #            - "tail -f /dev/null"
           args:
             - -test.short
             - -test.v
             - -test.failfast
             - -test.timeout
             - 60m
+            - -test.run
+            - "$RUN"
           env:
             - name: REMOTE_HOST
               value: cm-kuberlogic-apiserver:8001
@@ -26,9 +34,67 @@ spec:
             - name: MINIO_SECRET_KEY
               value: $MINIO_SECRET_KEY
             - name: MINIO_ENDPOINT
-              value: http://minio:9000
+              value: $MINIO_ENDPOINT
             - name: BUCKET
               value: $BUCKET
             - name: SENTRY_DSN
               value: $SENTRY_DSN
+            - name: RUN
+              value: "$RUN"
       restartPolicy: Never
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kuberlogic-integration-tests
+subjects:
+  - kind: ServiceAccount
+    name: kuberlogic-integration-tests
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: kuberlogic-integration-tests
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kuberlogic-integration-tests
+  labels:
+    k8s-app: kuberlogic-integration-tests
+rules:
+  # resources and actions use in tests
+  - apiGroups:
+      - kuberlogic.com
+    resources:
+      - kuberlogicservices
+    verbs:
+      - list
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - persistentvolumeclaims
+    verbs:
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kuberlogic-integration-tests
+  labels:
+    k8s-app: kuberlogic-integration-tests
+---

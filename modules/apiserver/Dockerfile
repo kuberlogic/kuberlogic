@@ -3,16 +3,14 @@ FROM golang:1.16 as builder
 WORKDIR /workspace
 
 # create credetials for private repo
-#ADD build-data/ssh-config /root/.ssh/config
-#ADD build-data/git-config /root/.gitconfig
-#ADD build-data/.github.key /root/.ssh/id_rsa
-#RUN chmod 600 /root/.ssh/id_rsa
+ADD build-data/ssh-config /root/.ssh/config
+ADD build-data/git-config /root/.gitconfig
+ADD build-data/.github.key /root/.ssh/id_rsa
+RUN chmod 600 /root/.ssh/id_rsa
 
 # Copy the Go Modules manifests
 COPY go.mod go.mod
 COPY go.sum go.sum
-
-COPY modules/operator /workspace/operator
 
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer

@@ -80,6 +80,7 @@ rules:
       - list
       - get
       - watch
+      - delete
   - apiGroups:
       - ""
     resources:
