@@ -3,8 +3,9 @@ apiVersion: keycloak.org/v1alpha1
 kind: Keycloak
 metadata:
   name: kuberlogic-keycloak
+  namespace: {{ .Release.Namespace }}
   labels:
-    app: sso
+  {{ toYaml .Values.labels | nindent 4 }}
 spec:
   instances: 1
   extensions:
@@ -20,12 +21,13 @@ apiVersion: keycloak.org/v1alpha1
 kind: KeycloakRealm
 metadata:
   name: kuberlogic
+  namespace: {{ .Release.Namespace }}
   labels:
-    app: sso
+  {{ toYaml .Values.labels | nindent 4 }}
 spec:
   realm:
-    id: "kuberlogic_realm"
-    realm: "kuberlogic_realm"
+    id: "{{ .Values.realm.id }}"
+    realm: "{{ .Values.realm.name }}"
     accessTokenLifespan: 3600
     accessTokenLifespanForImplicitFlow: 3600
     registrationAllowed: false
@@ -35,11 +37,10 @@ spec:
       - "metrics-listener"
     userManagedAccessAllowed: true
     users:
-      - username: "realm_admin"
-        firstName: "John"
-        lastName: "Doe"
-        email: "admin@example.com"
-        enabled: True
+      - username: "{{ .Values.realm.name }}"
+        firstName: "Kuberlogic"
+        lastName: "Realm"
+        email: "realm@kuberlogic.com"
         emailVerified: False
         credentials:
           - type: password
@@ -48,7 +49,6 @@ spec:
         realmRoles:
           - "offline_access"
           - "uma_authorization"
-          - "uma_protection"
         clientRoles:
           account:
             - "manage-account"
@@ -60,82 +60,54 @@ spec:
             - "create-client"
   instanceSelector:
     matchLabels:
-      app: sso
+  {{ toYaml .Values.labels | nindent 6 }}
 ---
 apiVersion: keycloak.org/v1alpha1
 kind: KeycloakClient
 metadata:
   name: apiserver
+  namespace: {{ .Release.Namespace }}
   labels:
-    app: sso
+  {{ toYaml .Values.labels | nindent 4 }}
 spec:
   realmSelector:
     matchLabels:
-      app: sso
+  {{ toYaml .Values.labels | nindent 6 }}
   client:
-    clientId: apiserver
-    secret: apiserver-secret
+    clientId: {{ .Values.clientId }}
+    secret: {{ .Values.clientSecret }}
     clientAuthenticatorType: client-secret
     protocol: openid-connect
     directAccessGrantsEnabled: true
     serviceAccountsEnabled: true
-    authorizationServicesEnabled: true
+    authorizationServicesEnabled: {{ .Values.authorization.enabled }}
     authorizationSettings:
       allowRemoteResourceManagement: true
       resources:
-        - name: "a0c394e31c9740376635c8878cf5889e:*"
+        - name: "*"
           type: kuberlogicservice
           scopes:
             - name: "service:*"
       policies:
-        - name: kuberlogic-test-allow
+        - name: kuberlogic-system-allow
           type: user
           logic: POSITIVE
           config:
-            users: '["kuberlogic-test-user"]'
-        - name: test-ns-full
+            users: '["{{ .Values.realm.name }}"]'
+        - name: kuberlogic-system-full
           type: scope
           decisionStrategy: UNANIMOUS
           config:
-            applyPolicies: '["kuberlogic-test-allow"]'
+            applyPolicies: '["kuberlogic-system-allow"]'
             scopes: '["service:*"]'
-            resources: '["a0c394e31c9740376635c8878cf5889e:*"]'
+            resources: '["*"]'
     protocolMappers:
       - name: "apiserver-aud"
         protocol: "openid-connect"
         consentRequired: false
         protocolMapper: "oidc-audience-mapper"
         config:
-          included.client.audience: "apiserver"
+          included.client.audience: "{{ .Values.clientId }}"
           access.token.claim: "true"
     defaultRoles:
-      - "uma_protection"
----
-apiVersion: keycloak.org/v1alpha1
-kind: KeycloakUser
-metadata:
-  name: kuberlogic-test-user
-  labels:
-    app: sso
-spec:
-  realmSelector:
-    matchLabels:
-      app: sso
-  user:
-    credentials:
-    - type: password
-      value: secret
-      temporary: false
-    email: none@example.com
-    id: kuberlogic-test-user
-    username: kuberlogic-test-user
-    enabled: true
-    firstName: kuberlogic
-    lastName: system
-    realmRoles:
-      - "offline_access"
-      - "uma_authorization"
-    clientRoles:
-      account:
-        - manage-account
-        - view-profile
+    - "uma_protection"

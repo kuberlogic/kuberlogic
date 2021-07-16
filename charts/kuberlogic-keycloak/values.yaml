@@ -1,0 +1,10 @@
+---
+realm:
+  name: "keycloak"
+  id: "keycloak"
+
+authorization:
+  enabled: true
+
+labels:
+  component.kuberlogic.com/name: keycloak
