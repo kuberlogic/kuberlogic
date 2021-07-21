@@ -19,13 +19,18 @@ func (srv *Service) UserListHandler(params apiService.UserListParams, principal 
 
 	users, err := session.GetUser().List()
 	if err != nil {
-		srv.log.Errorw("error receiving databases", "error", err)
+		srv.log.Errorw("error receiving users", "error", err)
 		return util.BadRequestFromError(err)
 	}
 
 	var payload []*models.User
-	for _, dbUser := range users {
-		userName := dbUser
+	for user, permission := range users {
+		var permissions []models.Permission
+		for _, perm := range permission {
+			permissions = append(permissions, models.Permission{
+				Database: perm,
+			})
+		}
 
 		if protected := session.GetUser().IsProtected(userName); !protected {
 			payload = append(payload, &models.User{

@@ -88,8 +88,21 @@ type Database interface {
 	IsProtected(name string) bool
 }
 
+type PrivilegeType int
+
+const (
+	ReadOnly PrivilegeType = 0
+	Full     PrivilegeType = 1
+)
+
+type Permission struct {
+	Database  string
+	Privilege PrivilegeType
+}
+type Users map[string][]Permission
+
 type User interface {
-	List() ([]string, error)
+	List() (Users, error)
 	Create(name, password string) error
 	Delete(name string) error
 	Edit(name, password string) error

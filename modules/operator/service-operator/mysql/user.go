@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
+	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 )
 
 var protectedUsers = map[string]bool{
@@ -19,6 +20,17 @@ var protectedUsers = map[string]bool{
 type User struct {
 	session *Session
 }
+
+type dbUserPermission struct {
+	username           string
+	database           string
+	amountOfPrivileges int
+}
+
+const (
+	readOnly   = 2
+	fullAccess = 18
+)
 
 func (usr *User) IsProtected(name string) bool {
 	_, ok := protectedUsers[name]
@@ -93,8 +105,8 @@ func (usr *User) Edit(name, password string) error {
 	return nil
 }
 
-func (usr *User) List() ([]string, error) {
-	var users []string
+func (usr *User) List() (interfaces.Users, error) {
+	var users = make(interfaces.Users)
 	conn, err := sql.Open("mysql", usr.session.ConnectionString(usr.session.MasterIP, ""))
 	if err != nil {
 		return users, err
@@ -102,7 +114,11 @@ func (usr *User) List() ([]string, error) {
 	defer conn.Close()
 
 	rows, err := conn.Query(`
-SELECT user FROM mysql.user;
+SELECT u.user as name, sp.table_schema, COUNT(sp.privilege_type) as amount 
+FROM mysql.user AS u 
+LEFT JOIN information_schema.schema_privileges AS sp ON sp.grantee = concat('\'', u.user, '\'@\'', u.host, '\'') 
+-- WHERE sp.table_schema IS NOT NULL 
+GROUP BY u.user, sp.table_schema;
 `)
 	if err != nil {
 		return users, err
@@ -110,12 +126,23 @@ SELECT user FROM mysql.user;
 	defer rows.Close()
 
 	for rows.Next() {
-		var name string
-		err = rows.Scan(&name)
+		var permission dbUserPermission
+		err = rows.Scan(&permission)
 		if err != nil {
 			return users, err
 		}
-		users = append(users, name)
+		if !usr.IsProtected(permission.username) {
+			var privType interfaces.PrivilegeType
+			if permission.amountOfPrivileges == fullAccess {
+				privType = interfaces.Full
+			} else if permission.amountOfPrivileges == readOnly {
+				privType = interfaces.ReadOnly
+			}
+			users[permission.username] = append(users[permission.username], interfaces.Permission{
+				Database:  permission.database,
+				Privilege: privType,
+			})
+		}
 	}
 	return users, nil
 }

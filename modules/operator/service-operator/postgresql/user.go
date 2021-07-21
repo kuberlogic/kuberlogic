@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v4"
+	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 )
 
 type User struct {
@@ -67,13 +68,13 @@ ALTER USER %s WITH PASSWORD '%s';
 	return err
 }
 
-func (usr *User) List() ([]string, error) {
-	var items []string
+func (usr *User) List() (interfaces.Users, error) {
+	var users = make(interfaces.Users)
 
 	ctx := context.TODO()
 	conn, err := pgx.Connect(ctx, usr.session.ConnectionString(usr.session.MasterIP, "postgres"))
 	if err != nil {
-		return items, err
+		return users, err
 	}
 	defer conn.Close(ctx)
 
@@ -82,7 +83,7 @@ SELECT usename
 FROM pg_catalog.pg_user;
 `)
 	if err != nil {
-		return items, err
+		return users, err
 	}
 	defer rows.Close()
 
@@ -90,10 +91,10 @@ FROM pg_catalog.pg_user;
 		var name string
 		err = rows.Scan(&name)
 		if err != nil {
-			return items, err
+			return users, err
 		}
-		items = append(items, name)
+		users[name] = append(users[name], interfaces.Permission{})
 	}
 
-	return items, nil
+	return users, nil
 }

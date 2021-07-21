@@ -75,7 +75,7 @@ func setup() {
 		parallelFunc(createService)
 	}
 
-	//wait(60 * 60)(&testing.T{}) // for the manual tests
+	wait(12 * 60 * 60)(&testing.T{}) // for the manual tests
 }
 
 func tearDown() {

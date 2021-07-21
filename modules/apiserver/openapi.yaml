@@ -1009,6 +1009,18 @@ definitions:
           - Failed
           - Pending
 
+  Permission:
+    type: object
+    properties:
+      database:
+        type: object
+        $ref: '#/definitions/Database'
+      type:
+        type: string
+        enum:
+          - read
+          - all
+
   User:
     type: object
     required:
@@ -1018,6 +1030,10 @@ definitions:
         type: string
       password:
         type: string
+      permissions:
+        type: array
+        items:
+          $ref: "#/definitions/Permission"
 
   Database:
     type: object

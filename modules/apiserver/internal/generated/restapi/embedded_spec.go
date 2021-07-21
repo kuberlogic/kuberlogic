@@ -1505,6 +1505,22 @@ func init() {
         }
       }
     },
+    "Permission": {
+      "type": "object",
+      "properties": {
+        "database": {
+          "type": "object",
+          "$ref": "#/definitions/Database"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "read",
+            "all"
+          ]
+        }
+      }
+    },
     "Principal": {
       "properties": {
         "email": {
@@ -1675,6 +1691,12 @@ func init() {
         },
         "password": {
           "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Permission"
+          }
         }
       }
     },
@@ -3359,6 +3381,22 @@ func init() {
         }
       }
     },
+    "Permission": {
+      "type": "object",
+      "properties": {
+        "database": {
+          "type": "object",
+          "$ref": "#/definitions/Database"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "read",
+            "all"
+          ]
+        }
+      }
+    },
     "Principal": {
       "properties": {
         "email": {
@@ -3553,6 +3591,12 @@ func init() {
         },
         "password": {
           "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Permission"
+          }
         }
       }
     },
