@@ -127,7 +127,7 @@ GROUP BY u.user, sp.table_schema;
 
 	for rows.Next() {
 		var username string
-		var db string // dbUserPermission
+		var db *string // dbUserPermission
 		var amountOfPrivileges int
 		err = rows.Scan(&username, &db, &amountOfPrivileges)
 		if err != nil {
@@ -142,8 +142,13 @@ GROUP BY u.user, sp.table_schema;
 				privType = interfaces.ReadOnly
 			}
 
+			database := ""
+			if db != nil {
+				database = *db
+			}
+
 			users[username] = append(users[username], interfaces.Permission{
-				Database:  db,
+				Database:  database,
 				Privilege: privType,
 			})
 		}
