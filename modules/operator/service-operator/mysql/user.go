@@ -137,20 +137,21 @@ GROUP BY u.user, sp.table_schema;
 			var privType interfaces.PrivilegeType
 			switch amountOfPrivileges {
 			case fullAccess:
-				privType = interfaces.Full
+				privType = interfaces.FullPrivilege
 			case readOnly:
-				privType = interfaces.ReadOnly
+				privType = interfaces.ReadOnlyPrivilege
+			default:
+				privType = interfaces.UnknownPrivilege
 			}
 
-			database := ""
-			if db != nil {
-				database = *db
+			// escape NULL values and using only grants which we could specified
+			if db != nil && privType != interfaces.UnknownPrivilege {
+				users[username] = append(users[username], interfaces.Permission{
+					Database:  *db,
+					Privilege: privType,
+				})
 			}
 
-			users[username] = append(users[username], interfaces.Permission{
-				Database:  database,
-				Privilege: privType,
-			})
 		}
 	}
 	return users, nil

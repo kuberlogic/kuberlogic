@@ -91,8 +91,9 @@ type Database interface {
 type PrivilegeType int
 
 const (
-	ReadOnly PrivilegeType = 0
-	Full     PrivilegeType = 1
+	UnknownPrivilege  PrivilegeType = 0
+	ReadOnlyPrivilege PrivilegeType = 1
+	FullPrivilege     PrivilegeType = 2
 )
 
 type Permission struct {
