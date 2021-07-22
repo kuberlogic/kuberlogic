@@ -144,15 +144,17 @@ GROUP BY u.user, sp.table_schema;
 				privType = interfaces.UnknownPrivilege
 			}
 
-			permission := interfaces.Permission{}
 			// escape NULL values and using only grants which we could specified
 			if db != nil && privType != interfaces.UnknownPrivilege {
-				permission = interfaces.Permission{
+				users[username] = append(users[username], interfaces.Permission{
 					Database:  *db,
 					Privilege: privType,
-				}
+				})
+			} else if db == nil {
+				// user without any permissions
+				users[username] = []interfaces.Permission{}
 			}
-			users[username] = append(users[username], permission)
+
 		}
 	}
 	return users, nil
