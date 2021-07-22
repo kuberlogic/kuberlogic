@@ -127,7 +127,7 @@ GROUP BY u.user, sp.table_schema;
 
 	for rows.Next() {
 		var username string
-		var db *string // dbUserPermission
+		var db *string
 		var amountOfPrivileges int
 		err = rows.Scan(&username, &db, &amountOfPrivileges)
 		if err != nil {
@@ -144,15 +144,15 @@ GROUP BY u.user, sp.table_schema;
 				privType = interfaces.UnknownPrivilege
 			}
 
+			permission := interfaces.Permission{}
 			// escape NULL values and using only grants which we could specified
 			if db != nil && privType != interfaces.UnknownPrivilege {
-				database := *db
-				users[username] = append(users[username], interfaces.Permission{
-					Database:  database,
+				permission = interfaces.Permission{
+					Database:  *db,
 					Privilege: privType,
-				})
+				}
 			}
-
+			users[username] = append(users[username], permission)
 		}
 	}
 	return users, nil
