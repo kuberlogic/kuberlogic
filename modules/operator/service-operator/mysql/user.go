@@ -21,11 +21,11 @@ type User struct {
 	session *Session
 }
 
-type dbUserPermission struct {
-	username           string
-	database           string
-	amountOfPrivileges int
-}
+//type dbUserPermission struct {
+//	username           string
+//	database           string
+//	amountOfPrivileges int
+//}
 
 const (
 	readOnly   = 2
@@ -126,20 +126,24 @@ GROUP BY u.user, sp.table_schema;
 	defer rows.Close()
 
 	for rows.Next() {
-		var permission dbUserPermission
-		err = rows.Scan(&permission)
+		var username string
+		var db string // dbUserPermission
+		var amountOfPrivileges int
+		err = rows.Scan(&username, &db, &amountOfPrivileges)
 		if err != nil {
 			return users, err
 		}
-		if !usr.IsProtected(permission.username) {
+		if !usr.IsProtected(username) {
 			var privType interfaces.PrivilegeType
-			if permission.amountOfPrivileges == fullAccess {
+			switch amountOfPrivileges {
+			case fullAccess:
 				privType = interfaces.Full
-			} else if permission.amountOfPrivileges == readOnly {
+			case readOnly:
 				privType = interfaces.ReadOnly
 			}
-			users[permission.username] = append(users[permission.username], interfaces.Permission{
-				Database:  permission.database,
+
+			users[username] = append(users[username], interfaces.Permission{
+				Database:  db,
 				Privilege: privType,
 			})
 		}

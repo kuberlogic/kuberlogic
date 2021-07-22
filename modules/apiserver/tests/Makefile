@@ -27,11 +27,13 @@ SENTRY_DSN = https://50ec3b92240a4b4d97dbee02a07fc54f@kl.sentry.cloudlinux.com/5
 
 POSTHOG_API_KEY =
 
-KUBERLOGIC_AUTH_PROVIDER = keycloak
-KUBERLOGIC_AUTH_KEYCLOAK_CLIENTID = apiserver
-KUBERLOGIC_AUTH_KEYCLOAK_CLIENT_SECRET = apiserver-secret
-KUBERLOGIC_AUTH_KEYCLOAK_REALM_NAME = kuberlogic_realm
-KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(shell kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443
+KUBERLOGIC_AUTH_PROVIDER = none
+
+#KUBERLOGIC_AUTH_PROVIDER = keycloak
+#KUBERLOGIC_AUTH_KEYCLOAK_CLIENTID = apiserver
+#KUBERLOGIC_AUTH_KEYCLOAK_CLIENT_SECRET = apiserver-secret
+#KUBERLOGIC_AUTH_KEYCLOAK_REALM_NAME = kuberlogic_realm
+#KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(shell kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443
 
 test:
 	POD_NAMESPACE=default go test -v \
