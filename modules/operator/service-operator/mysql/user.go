@@ -21,23 +21,65 @@ type User struct {
 	session *Session
 }
 
-//type dbUserPermission struct {
-//	username           string
-//	database           string
-//	amountOfPrivileges int
-//}
-
 const (
 	readOnly   = 2
 	fullAccess = 18
 )
+
+func execQueries(conn *sql.DB, queries ...string) error {
+	for _, query := range queries {
+		_, err := conn.Exec(query) // multistatement queries do not allowed due to possible sql injections
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func changePermissions(conn *sql.DB, name string, permissions []interfaces.Permission) error {
+	var queries []string
+
+	queries = append(
+		queries,
+		// FIXME: possible sql injection, need to use args
+		fmt.Sprintf("REVOKE ALL PRIVILEGES, GRANT OPTION FROM '%s'@'%';", name),
+	)
+
+	for _, perm := range permissions {
+		var type_ string
+		switch perm.Privilege {
+		case interfaces.ReadOnlyPrivilege:
+			type_ = "SELECT, SHOW VIEW"
+		case interfaces.FullPrivilege:
+			type_ = "ALL PRIVILEGES"
+		}
+		queries = append(
+			queries,
+			// FIXME: possible sql injection, need to use args
+			fmt.Sprintf("GRANT %s on %s.* to %s;", type_, perm.Database, name),
+		)
+	}
+
+	queries = append(
+		queries,
+		"FLUSH PRIVILEGES;",
+	)
+	return execQueries(conn, queries...)
+}
+
+func editPassword(conn *sql.DB, name, password string) error {
+	return execQueries(conn,
+		fmt.Sprintf("ALTER USER '%s'@'%' IDENTIFIED BY '%s';", name, password),
+		"FLUSH PRIVILEGES;",
+	)
+}
 
 func (usr *User) IsProtected(name string) bool {
 	_, ok := protectedUsers[name]
 	return ok
 }
 
-func (usr *User) Create(name, password string) error {
+func (usr *User) Create(name, password string, permissions []interfaces.Permission) error {
 	conn, err := sql.Open("mysql", usr.session.ConnectionString(usr.session.MasterIP, ""))
 	if err != nil {
 		return err
@@ -49,19 +91,13 @@ func (usr *User) Create(name, password string) error {
 		return err
 	}
 
-	queries := []string{
-		fmt.Sprintf("CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';", name, password),
-		fmt.Sprintf("GRANT ALL PRIVILEGES ON *.* TO '%s'@'localhost';", name),
-		"FLUSH PRIVILEGES;",
+	if err = execQueries(
+		conn,
+		fmt.Sprintf("CREATE USER '%s'@'%' IDENTIFIED BY '%s';", name, password),
+	); err == nil {
+		return err
 	}
-
-	for _, query := range queries {
-		_, err = conn.Exec(query) // multistatement queries do not allowed due to possible sql injections
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return changePermissions(conn, name, permissions)
 }
 
 func (usr *User) Delete(name string) error {
@@ -79,7 +115,7 @@ func (usr *User) Delete(name string) error {
 	return err
 }
 
-func (usr *User) Edit(name, password string) error {
+func (usr *User) Edit(name, password string, permissions []interfaces.Permission) error {
 	conn, err := sql.Open("mysql", usr.session.ConnectionString(usr.session.MasterIP, ""))
 	if err != nil {
 		return err
@@ -91,18 +127,13 @@ func (usr *User) Edit(name, password string) error {
 		return err
 	}
 
-	queries := []string{
-		fmt.Sprintf("ALTER USER '%s'@'localhost' IDENTIFIED BY '%s';", name, password),
-		"FLUSH PRIVILEGES;",
-	}
-
-	for _, query := range queries {
-		_, err = conn.Exec(query) // multistatement queries do not allowed due to possible sql injections
+	if password != "" {
+		err = editPassword(conn, name, password)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
+	return changePermissions(conn, name, permissions)
 }
 
 func (usr *User) List() (interfaces.Users, error) {

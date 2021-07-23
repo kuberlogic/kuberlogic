@@ -106,6 +106,6 @@ type User interface {
 	List() (Users, error)
 	Create(name, password string) error
 	Delete(name string) error
-	Edit(name, password string) error
+	Edit(name, password string, permissions []Permission) error
 	IsProtected(name string) bool
 }
