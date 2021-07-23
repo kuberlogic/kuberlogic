@@ -104,7 +104,7 @@ type Users map[string][]Permission
 
 type User interface {
 	List() (Users, error)
-	Create(name, password string) error
+	Create(name, password string, permissions []Permission) error
 	Delete(name string) error
 	Edit(name, password string, permissions []Permission) error
 	IsProtected(name string) bool
