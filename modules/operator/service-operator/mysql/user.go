@@ -28,6 +28,8 @@ const (
 
 func execQueries(conn *sql.DB, queries ...string) error {
 	for _, query := range queries {
+		fmt.Println("-----------------")
+		fmt.Println(query)
 		_, err := conn.Exec(query) // multistatement queries do not allowed due to possible sql injections
 		if err != nil {
 			return err
@@ -93,7 +95,7 @@ func (usr *User) Create(name, password string, permissions []interfaces.Permissi
 
 	if err = execQueries(
 		conn,
-		fmt.Sprintf("CREATE USER '%s'@'%' IDENTIFIED BY '%s';", name, password),
+		fmt.Sprintf("CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';", name, password),
 	); err == nil {
 		return err
 	}
