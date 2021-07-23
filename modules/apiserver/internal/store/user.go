@@ -9,7 +9,7 @@ type PermissionStore struct{}
 
 const (
 	ReadOnlyPrivileges = "read"
-	FullPrivileges     = "full"
+	FullPrivileges     = "all"
 )
 
 func NewPermissionStore() *PermissionStore {
