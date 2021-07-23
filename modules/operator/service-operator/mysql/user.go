@@ -96,7 +96,7 @@ func (usr *User) Create(name, password string, permissions []interfaces.Permissi
 	if err = execQueries(
 		conn,
 		fmt.Sprintf("CREATE USER '%s'@'%%' IDENTIFIED BY '%s';", name, password),
-	); err == nil {
+	); err != nil {
 		return err
 	}
 	return changePermissions(conn, name, permissions)
