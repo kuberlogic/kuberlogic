@@ -44,7 +44,7 @@ func changePermissions(conn *sql.DB, name string, permissions []interfaces.Permi
 	queries = append(
 		queries,
 		// FIXME: possible sql injection, need to use args
-		fmt.Sprintf("REVOKE ALL PRIVILEGES, GRANT OPTION FROM '%s'@'%';", name),
+		fmt.Sprintf("REVOKE ALL PRIVILEGES, GRANT OPTION FROM '%s'@'\\%';", name),
 	)
 
 	for _, perm := range permissions {
@@ -71,7 +71,7 @@ func changePermissions(conn *sql.DB, name string, permissions []interfaces.Permi
 
 func editPassword(conn *sql.DB, name, password string) error {
 	return execQueries(conn,
-		fmt.Sprintf("ALTER USER '%s'@'%' IDENTIFIED BY '%s';", name, password),
+		fmt.Sprintf("ALTER USER '%s'@'\\%' IDENTIFIED BY '%s';", name, password),
 		"FLUSH PRIVILEGES;",
 	)
 }
@@ -95,7 +95,7 @@ func (usr *User) Create(name, password string, permissions []interfaces.Permissi
 
 	if err = execQueries(
 		conn,
-		fmt.Sprintf("CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';", name, password),
+		fmt.Sprintf("CREATE USER '%s'@'\\%' IDENTIFIED BY '%s';", name, password),
 	); err == nil {
 		return err
 	}
