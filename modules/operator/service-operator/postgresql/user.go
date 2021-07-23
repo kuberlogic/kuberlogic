@@ -22,7 +22,7 @@ func (usr *User) IsProtected(name string) bool {
 	return ok
 }
 
-func (usr *User) Create(name, password string) error {
+func (usr *User) Create(name, password string, permissions []interfaces.Permission) error {
 	ctx := context.TODO()
 	conn, err := pgx.Connect(ctx, usr.session.ConnectionString(usr.session.MasterIP, "postgres"))
 	if err != nil {
@@ -53,7 +53,7 @@ DROP USER %s;
 	return err
 }
 
-func (usr *User) Edit(name, password string) error {
+func (usr *User) Edit(name, password string, permissions []interfaces.Permission) error {
 	ctx := context.TODO()
 	conn, err := pgx.Connect(ctx, usr.session.ConnectionString(usr.session.MasterIP, "postgres"))
 	if err != nil {
