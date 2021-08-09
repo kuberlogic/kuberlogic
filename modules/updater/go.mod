@@ -1,6 +1,10 @@
 module github.com/kuberlogic/operator/modules/updater
 
-go 1.13
+go 1.16
+
+replace (
+	github.com/kuberlogic/operator/modules/operator => ../operator/
+)
 
 require (
 	github.com/coreos/go-semver v0.3.0

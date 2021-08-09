@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.27
+VERSION ?= 0.0.28
 
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
@@ -11,13 +11,20 @@ IMG_PULL_SECRET = kuberlogic-registry
 
 # Image URL to use all building/pushing image targets
 OPERATOR_NAME = operator
-IMG ?= $(IMG_REPO)/$(OPERATOR_NAME):$(VERSION)
+OPERATOR_IMG ?= $(IMG_REPO)/$(OPERATOR_NAME):$(VERSION)
+OPERATOR_IMG_LATEST ?= $(IMG_REPO)/$(OPERATOR_NAME):latest
 # updater image name
 UPDATER_NAME = updater
 UPDATER_IMG ?= $(IMG_REPO)/$(UPDATER_NAME):$(VERSION)
+UPDATER_IMG_LATEST ?= $(IMG_REPO)/$(UPDATER_NAME):latest
  # alert receiver image name
 ALERT_RECEIVER_NAME = alert-receiver
 ALERT_RECEIVER_IMG ?= $(IMG_REPO)/$(ALERT_RECEIVER_NAME):$(VERSION)
+ALERT_RECEIVER_IMG_LATEST ?= $(IMG_REPO)/$(ALERT_RECEIVER_NAME):latest
+# tests
+IMG_TESTS ?= $(IMG_REPO)/integration-tests:$(VERSION)
+IMG_TESTS_LATEST ?= $(IMG_REPO)/integration-tests:latest
+
 # backup image prefix
 BACKUP_PREFIX = backup
 # restore from backup image prefix
@@ -25,6 +32,15 @@ RESTORE_PREFIX = backup-restore
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
+
+# apiserver section
+KUBERLOGIC_AUTH_PROVIDER = none
+
+APISERVER_NAME = apiserver
+IMG_APISERVER = $(IMG_REPO)/$(APISERVER_NAME):$(VERSION)
+IMG_APISERVER_LATEST = $(IMG_REPO)/$(APISERVER_NAME):latest
+IMG_TESTS ?= $(IMG_REPO)/integration-tests:$(VERSION)
+IMG_TESTS_LATEST ?= $(IMG_REPO)/integration-tests:latest
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -62,7 +78,7 @@ uninstall: manifests kustomize
 
 # Deploy kuberlogic-operator in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests kustomize
-	cd config/manager && $(KUSTOMIZE) edit set image operator=$(IMG)
+	cd config/manager && $(KUSTOMIZE) edit set image operator=$(OPERATOR_IMG)
 	cd config/updater && $(KUSTOMIZE) edit set image updater=$(UPDATER_IMG)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
@@ -93,13 +109,17 @@ manifests: controller-gen
 
 # Run go fmt against code
 fmt:
-	cd modules/operator ;\
-	go fmt ./... ;\
+	for module in operator apiserver; do \
+		cd ./modules/$${module}; \
+		go fmt ./... ;\
+	done
 
 # Run go vet against code
 vet:
-	cd modules/operator ; \
-	go vet ./... ; \
+	for module in operator apiserver; do \
+		cd ./modules/$${module}; \
+		go vet ./... ; \
+	done
 
 
 # Generate code
@@ -107,18 +127,53 @@ generate: controller-gen
 	cd modules/operator ;\
 	$(CONTROLLER_GEN) object paths="./..." output:dir="./api/v1"
 
-# Build the operator images
+# Build the  images
 operator-build:
 	echo "Building images"
-	docker build modules/operator -t $(IMG)
-	docker build modules/updater -t $(UPDATER_IMG)
-	docker build modules/alert-receiver -t $(ALERT_RECEIVER_IMG)
+	docker build modules/operator -t $(OPERATOR_IMG) -t $(OPERATOR_IMG_LATEST)
 
-# Push operator images
+updater-build:
+	docker build -f updater.Dockerfile -t $(UPDATER_IMG) -t $(UPDATER_IMG_LATEST) .
+
+alert-receiver-build:
+	docker build -f alert-receiver.Dockerfile -t $(ALERT_RECEIVER_IMG) -t $(ALERT_RECEIVER_IMG_LATEST) .
+
+apiserver-build:
+	echo "Building apiserver image"
+	docker build -f apiserver.Dockerfile -t $(IMG_APISERVER) -t $(IMG_APISERVER_LATEST) .
+
+build-tests: gen test
+	echo "Building tests image"
+	docker build . -f Dockerfile.tests -t $(IMG_TESTS) -t $(IMG_TESTS_LATEST) .
+
+push-tests:
+	docker push $(IMG_TESTS)
+	docker push $(IMG_TESTS_LATEST)
+
+# Push images
 operator-push:
-	docker push $(IMG)
+	docker push $(OPERATOR_IMG)
+	docker push $(OPERATOR_IMG_LATEST)
+
+updater-push:
 	docker push $(UPDATER_IMG)
+	docker push $(UPDATER_IMG_LATEST)
+
+alert-receiver-push:
 	docker push $(ALERT_RECEIVER_IMG)
+	docker push $(ALERT_RECEIVER_IMG_LATEST)
+
+apiserver-push:
+	docker push $(IMG_APISERVER)
+	docker push $(IMG_APISERVER_LATEST)
+
+tests-build: apiserver-gen
+	echo "Building tests image"
+	docker build . -f tests.Dockerfile -t $(IMG_TESTS) -t $(IMG_TESTS_LATEST)
+
+tests-push:
+	docker push $(IMG_TESTS)
+	docker push $(IMG_TESTS_LATEST)
 
 mark-executable:
 	chmod +x $(shell find backup/ -iname *.sh | xargs)
@@ -147,10 +202,10 @@ restore-push:
 	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:$(VERSION)
 	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:latest
 
-docker-build: operator-build backup-build restore-build
+docker-build: operator-build apiserver-build updater-build alert-receiver-build backup-build restore-build
 	#
 
-docker-push: operator-push backup-push restore-push
+docker-push: operator-push apiserver-push updater-push alert-receiver-push backup-push restore-push
 	#
 
 refresh-go-sum:
@@ -170,6 +225,24 @@ bump-operator-version:
   		go get github.com/kuberlogic/operator/modules/operator@${BRANCH}; \
   		cd -; \
 	done
+
+apiserver-clean:
+	@cd modules/apiserver
+	@rm -rf ./cmd internal/generated
+	@mkdir -p cmd
+	@mkdir -p internal/generated
+	@mkdir -p internal/app
+	@mkdir -p internal/config
+
+apiserver-gen: apiserver-clean
+	cd modules/apiserver; \
+	swagger generate server \
+		-f openapi.yaml \
+		-t internal/generated \
+		-C swagger-templates/default-server.yml \
+		-P models.Principal \
+		--template-dir swagger-templates/templates \
+		--name kuberlogic
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.

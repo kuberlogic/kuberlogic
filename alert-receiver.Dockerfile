@@ -1,26 +1,21 @@
 FROM golang:1.16 as builder
 
-WORKDIR /workspace
+# Copy the operator sources
+WORKDIR /workspace/operator/
+COPY modules/operator ./
 
-# create credetials for private repo
-ADD data/ssh-config /root/.ssh/config
-ADD data/git-config /root/.gitconfig
-ADD data/.github.key /root/.ssh/id_rsa
-RUN chmod 600 /root/.ssh/id_rsa
+WORKDIR /workspace/alert-receiver/
 
 # Copy the Go Modules manifests
-COPY go.mod go.mod
-COPY go.sum go.sum
+COPY modules/alert-receiver/go.mod go.mod
+COPY modules/alert-receiver/go.sum go.sum
 
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
 RUN go mod download
 
-# remove credentials for private repo
-RUN rm -rf /root/.ssh/ /root/.gitconfig
-
 # Copy the go source
-COPY *.go ./
+COPY modules/alert-receiver/*.go ./
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o alert-receiver .

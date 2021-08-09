@@ -9,7 +9,6 @@ This step is responsible for deploy operators:
 - kuberlogic
 - postgresql by [Zalando](https://github.com/zalando/postgres-operator)
 - mysql by [Presslabs](https://github.com/presslabs/mysql-operator)
-- redis by [spotathome.com](https://github.com/spotahome/redis-operator)
 
 1. Clone the repo
     ```shell script
@@ -31,6 +30,7 @@ This step is responsible for deploy operators:
     ```
 4. Deploy operators
     ```shell script
+   make deploy-requirements
    make deploy
     ```
 5. For the dev usage access to the apiserver is available via http://localhost:30007
@@ -47,10 +47,3 @@ kubectl create kuberlogic/src/cm-operator/config/samle/cm-postgresql.yaml
 kubectl apply -f https://raw.githubusercontent.com/presslabs/mysql-operator/master/examples/example-cluster-secret.yaml
 kubectl create kuberlogic/src/cm-operator/config/samle/cm-mysql.yaml
 ```
-
-### Create Redis cluster
-
-```
-kubectl create kuberlogic/src/cm-operator/config/samle/cm-redis.yaml
-```
-

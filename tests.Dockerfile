@@ -1,37 +1,32 @@
 FROM golang:1.16 as builder
 
-WORKDIR /workspace
+# Copy the operator sources
+WORKDIR /workspace/operator/
+COPY modules/operator ./
 
-# create credetials for private repo
-ADD build-data/ssh-config /root/.ssh/config
-ADD build-data/git-config /root/.gitconfig
-ADD build-data/.github.key /root/.ssh/id_rsa
-RUN chmod 600 /root/.ssh/id_rsa
+WORKDIR /workspace/apiserver
 
 # Copy the Go Modules manifests
-COPY go.mod go.mod
-COPY go.sum go.sum
+COPY modules/apiserver/go.mod go.mod
+COPY modules/apiserver/go.sum go.sum
 
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
 RUN go mod download
 
-# remove credentials for private repo
-RUN rm -rf /root/.ssh/ /root/.gitconfig
-
 # Copy the go source
-COPY cmd/ cmd/
-COPY internal/ internal/
-COPY util/ util/
-COPY main.go main.go
-COPY tests/ tests/
+COPY modules/apiserver/cmd/ cmd/
+COPY modules/apiserver/internal/ internal/
+COPY modules/apiserver/util/ util/
+COPY modules/apiserver/main.go main.go
+COPY modules/apiserver/tests/ tests/
 
 # Copy kubectl
 RUN curl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/bin/kubectl
 RUN chmod +x /usr/bin/kubectl
 
 # Build
-WORKDIR /workspace/tests
+WORKDIR /workspace/apiserver/tests
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go test -c -o integration.tests
 
 # Use distroless as minimal base image to package the manager binary
@@ -39,7 +34,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go test -c -o integrati
 FROM gcr.io/distroless/static:nonroot
 #FROM golang:1.16
 WORKDIR /
-COPY --from=builder /workspace/tests/integration.tests .
+COPY --from=builder /workspace/apiserver/tests/integration.tests .
 COPY --from=builder /usr/bin/kubectl /usr/bin/kubectl
 USER nonroot:nonroot
 

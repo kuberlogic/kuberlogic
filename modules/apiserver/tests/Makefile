@@ -70,8 +70,8 @@ watch-test-in-cluster:
   	done;
 
 clear-test-in-cluster:
-	kubectl delete kls --all --all-namespaces && \
-	kubectl delete klt --all && \
+	kubectl delete kls --all --all-namespaces
+	kubectl delete klt --all
 	kubectl delete job integration-tests
 
 build-minio:
