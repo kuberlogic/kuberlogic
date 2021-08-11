@@ -220,7 +220,7 @@ spec:
       serviceAccountName: kube-state-metrics
       containers:
         - name: kube-state-metrics
-          image: quay.io/kuberlogic/kube-state-metrics:1.9.7-debian-10-r73
+          image: quay.io/kuberlogic/kube-state-metrics:2.1.0
           imagePullPolicy: IfNotPresent
           args:
             - --collectors=certificatesigningrequests

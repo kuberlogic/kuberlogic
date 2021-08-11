@@ -1,8 +1,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  # - keycloak.org_keycloakbackups_crd.yaml
+  # - keycloak.org_keycloakclients_crd.yaml
+  # - keycloak.org_keycloakrealms_crd.yaml
+  # - keycloak.org_keycloaks_crd.yaml
+  # - keycloak.org_keycloakusers_crd.yaml
   - deployment.yaml
-#  - crd.yaml
   - rbac.yaml
   - kuberlogic-keycloak.yaml
 

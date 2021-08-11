@@ -1,0 +1,62 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "operator.fullname" . }}-klb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "operator.fullname" . }}-klb
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "operator.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "operator.fullname" . }}-klb
+rules:
+  - apiGroups:
+      - kuberlogic.com
+    resources:
+      - kuberlogicbackupschedules
+      - kuberlogicbackupschedules/status
+      - kuberlogicbackupschedules/finalizer
+    verbs:
+      - get
+      - list
+      - watch
+      - patch
+      - update
+  - apiGroups:
+      - batch
+    resources:
+      - cronjobs
+    verbs:
+      - list
+      - get
+      - watch
+      - create
+      - update
+  - apiGroups:
+      - kuberlogic.com
+    resources:
+      - kuberlogicservices
+      - kuberlogicservices/status
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - mysql.presslabs.org
+    resources:
+      - mysqlclusters
+    verbs:
+      - get
+  - apiGroups:
+      - acid.zalan.do
+    resources:
+      - postgresqls
+    verbs:
+      - get

@@ -16,9 +16,9 @@ spec:
       containers:
         - name: keycloak-operator
           # Replace this with the built image name
-          image: quay.io/kuberlogic/keycloak-operator:master-23-04-2021
+          image: quay.io/kuberlogic/keycloak-operator:14.0.0
           command:
-            - keycloak-operator
+          - keycloak-operator
           imagePullPolicy: IfNotPresent
           env:
             - name: WATCH_NAMESPACE
@@ -31,7 +31,3 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "keycloak-operator"
-            - name: RELATED_IMAGE_KEYCLOAK_INIT_CONTAINER
-              value: quay.io/kuberlogic/keycloak-init-container:master
-            - name: RELATED_IMAGE_POSTGRESQL
-              value: quay.io/kuberlogic/keycloak-postgresql-10-rhel7:1
