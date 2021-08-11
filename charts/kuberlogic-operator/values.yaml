@@ -1,0 +1,44 @@
+---
+sentryDsn: https://369afa8d72cb4772b46936f7291218b7@kl.sentry.cloudlinux.com/2
+
+monitoring:
+  internalPort: 8080
+  externalPort: 8443
+
+image:
+  name: operator
+  repository: quay.io/kuberlogic
+  tag: 0.0.24
+  pullPolicy: IfNotPresent
+
+imagePullSecret: kuberlogic-registry
+
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 64Mi
+  requests:
+    cpu: 100m
+    memory: 20Mi
+
+service:
+  type: ClusterIP
+
+serviceAccount:
+  create: true
+
+webhook:
+  enabled: true
+  port: 9443
+
+  cert:
+    issuer: kuberlogic-selfsigned
+    name: kuberlogic-webhook-cert
+    secretName: kuberlogic-webhook-cert
+  service:
+    name: kuberlogic-webhook-svc
+    port: 443

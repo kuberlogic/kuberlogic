@@ -1,0 +1,95 @@
+{{ if .Values.webhook.enabled }}
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ .Values.webhook.cert.issuer }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.webhook.cert.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  dnsNames:
+    - {{ .Values.webhook.service.name }}
+    - {{ .Values.webhook.service.name }}.{{ .Release.Namespace }}.svc
+    - {{ .Values.webhook.service.name }}.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: {{ .Values.webhook.cert.issuer }}
+  secretName: {{ .Values.webhook.cert.secretName }}
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ .Values.webhook.cert.name }}
+  name: kuberlogic-mutating-webhook-configuration
+webhooks:
+  - admissionReviewVersions:
+      - v1
+      - v1beta1
+    clientConfig:
+      service:
+        name: {{ .Values.webhook.service.name }}
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-kuberlogic-com-v1-kuberlogicservice
+    failurePolicy: Fail
+    name: mkuberlogicservice.kuberlogic.com
+    rules:
+      - apiGroups:
+          - kuberlogic.com
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - kuberlogicservices
+    sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ .Values.webhook.cert.name }}
+  name: kuberlogic-validating-webhook-configuration
+webhooks:
+  - admissionReviewVersions:
+      - v1
+      - v1beta1
+    clientConfig:
+      service:
+        name: {{ .Values.webhook.service.name }}
+        namespace: {{ .Release.Namespace }}
+        path: /validate-kuberlogic-com-v1-kuberlogicservice
+    failurePolicy: Fail
+    name: vkuberlogicservice.kuberlogic.com
+    rules:
+      - apiGroups:
+          - kuberlogic.com
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - kuberlogicservices
+    sideEffects: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.webhook.service.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+    - port: {{ .Values.webhook.service.port }}
+      targetPort: {{ .Values.webhook.port }}
+  selector:
+    {{ include "operator.selectorLabels" . | nindent 4 }}
+{{ end }}

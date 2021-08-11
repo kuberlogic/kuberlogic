@@ -1,0 +1,75 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "apiserver.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{ include "apiserver.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{ include "apiserver.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - args:
+            - --scheme=http
+          command:
+            - /apiserver
+          env:
+            - name: KUBERLOGIC_BIND_HOST
+              value: "0.0.0.0"
+            - name: KUBERLOGIC_HTTP_BIND_PORT
+              value: "{{ .Values.config.port }}"
+            - name: KUBERLOGIC_AUTH_PROVIDER
+              value: "{{ required "auth provider must be set!" .Values.config.auth.provider }}"
+            {{- if eq .Values.config.auth.provider "keycloak" }}
+            {{- with .Values.config.auth.keycloak }}
+            - name: KUBERLOGIC_AUTH_KEYCLOAK_CLIENT_ID # KUBERLOGIC_AUTH_KEYCLOAK_
+              value: {{ required "all keycloak parameters must be set!" .clientId }}
+            - name: KUBERLOGIC_AUTH_KEYCLOAK_CLIENT_SECRET
+              value: {{ required "all keycloak parameters must be set!" .clientSecret }}
+            - name: KUBERLOGIC_AUTH_KEYCLOAK_REALM_NAME
+              value: {{ required "all keycloak parameters must be set!" .realmName }}
+            - name: KUBERLOGIC_AUTH_KEYCLOAK_URL
+              value: {{ required "all keycloak parameters must be set!" .URL }}
+            {{ end }}
+            {{ end }}
+            - name: KUBERLOGIC_KUBECONFIG_PATH
+              value: "{{ .Values.config.kubeconfig }}"
+            - name: KUBERLOGIC_DEBUG_LOGS
+              value: "{{ .Values.config.debugLogs }}"
+            - name: SENTRY_DSN
+              value: "{{ .Values.config.sentryDsn }}"
+            - name: POSTHOG_API_KEY
+              value: "{{ .Values.config.posthogKey }}"
+            - name: KUBERLOGIC_CORS_ALLOWED_ORIGINGS
+              value: "{{ .Values.config.cors.allowedOrigins }}"
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.config.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.config.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 5
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+          name: apiserver
+          ports:
+            - containerPort: {{ .Values.config.port }}
+          {{ with .Values.resources }}
+          resources:
+            {{ toYaml . | nindent 14 }}
+          {{ end }}
+      {{ with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{ toYaml . | nindent 8 }}
+      {{ end }}
+      terminationGracePeriodSeconds: 10
+      serviceAccountName: {{ include "apiserver.serviceAccountName" . }}

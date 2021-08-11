@@ -1,0 +1,34 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: "kuberlogic-updater"
+    {{- include "operator.labels" . | nindent 4 }}
+  name: kuberlogic-updater
+rules:
+  - apiGroups:
+      - kuberlogic.com
+    resources:
+      - kuberlogicservices
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: "kuberlogic-update"
+    {{- include "operator.labels" . | nindent 4 }}
+  name: cm-kuberlogic-updater
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kuberlogic-updater
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "operator.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
