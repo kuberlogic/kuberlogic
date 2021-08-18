@@ -110,6 +110,18 @@ spec:
           access.token.claim: "true"
     defaultRoles:
       - "uma_protection"
+    defaultClientScopes:
+      - email
+      - profile
+      - roles
+      - offline_access
+      - web-origins
+    optionalClientScopes:
+      - email
+      - profile
+      - roles
+      - offline_access
+      - web-origins
 ---
 apiVersion: keycloak.org/v1alpha1
 kind: KeycloakUser
@@ -126,7 +138,7 @@ spec:
     - type: password
       value: secret
       temporary: false
-    email: none@example.com
+    email: keycloak@example.com
     id: kuberlogic-test-user
     username: kuberlogic-test-user
     enabled: true
