@@ -114,7 +114,6 @@ spec:
       - email
       - profile
       - roles
-      - offline_access
       - web-origins
     optionalClientScopes:
       - email
