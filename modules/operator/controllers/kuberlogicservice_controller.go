@@ -150,7 +150,19 @@ func (r *KuberLogicServiceReconciler) create(ctx context.Context, kls *kuberlogi
 }
 
 func (r *KuberLogicServiceReconciler) update(ctx context.Context, kls *kuberlogicv1.KuberLogicService, op interfaces.OperatorInterface, log logr.Logger) (reconcile.Result, error) {
-	// sync status first
+	log.Info("Save service to a kuberlogictenant")
+	kt := new(kuberlogicv1.KuberLogicTenant)
+	if err := r.Get(ctx, types.NamespacedName{Name: kls.Namespace, Namespace: ""}, kt); err != nil {
+		log.Error(err, "Failed to get kuberlogictenant")
+		return ctrl.Result{}, err
+	}
+	kt.SaveTenantServiceInfo(kls)
+	if err := r.Status().Update(ctx, kt); err != nil {
+		log.Error(err, "Error updating kuberlogictenant status")
+		return ctrl.Result{}, err
+	}
+
+	// sync service operator status to kls and check if reconciliation is allowed in this state
 	syncStatus(kls, op)
 	if err := r.Status().Update(ctx, kls); err != nil {
 		log.Error(err, "error updating status")

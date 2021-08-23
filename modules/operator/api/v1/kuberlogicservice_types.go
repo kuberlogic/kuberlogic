@@ -144,6 +144,10 @@ func (kls *KuberLogicService) GetAlertEmail() string {
 	return ""
 }
 
+func (kls KuberLogicService) GetServiceType() string {
+	return kls.Spec.Type
+}
+
 // TODO: Figure out workaround in https://github.com/kubernetes-sigs/kubebuilder/issues/1501, not it's a blocker
 // for implementation default values based on webhook (https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html)
 func (kls *KuberLogicService) InitDefaults(defaults Defaults) bool {
