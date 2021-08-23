@@ -48,12 +48,27 @@ coverage-report: test
 		cat coverage.out | grep "github.com/kuberlogic/operator/modules/$${pkg}" >> $$covfile; \
 	done; \
 
+
 html-report: coverage-report
 	mkdir -p html/ ;\
 	for pkg in apiserver operator; do \
 	  	covfile=coverage-$${pkg}.out; \
 		go tool cover -html=$$covfile -o=html/$${pkg}.html; \
 	done;
+
+test-in-cluster:
+	envsubst < config/in-cluster/job.yaml | kubectl apply -f -
+
+watch-test-in-cluster:
+	while :; do \
+  		kubectl logs -l job-name=integration-tests -f; \
+  		sleep 1; \
+  	done;
+
+clear-test-in-cluster:
+	kubectl delete kls --all --all-namespaces && \
+	kubectl delete klt --all && \
+	kubectl delete job integration-tests
 
 build-minio:
 	docker build minio/ \
@@ -97,4 +112,4 @@ undeploy-operator:
 	kubectl wait pod -l control-plane=kuberlogic-operator --for=delete --timeout=2m
 
 configure-logs:
-	envsubst  < config/logz.io/logzio-daemonset-rbac.yaml | kubectl apply -f -
+	envsubst < config/logz.io/logzio-daemonset-rbac.yaml | kubectl apply -f -

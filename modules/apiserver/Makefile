@@ -3,12 +3,16 @@
 KUBERLOGIC_AUTH_PROVIDER = none
 
 #  Current apiserver version
-VERSION ?= 0.0.24
+VERSION ?= 0.0.26
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
 NAME = apiserver
 # Image URL to use all building/pushing image targets
 IMG ?= $(IMG_REPO)/$(NAME):$(VERSION)
+IMG_LATEST = $(IMG_REPO)/$(NAME):latest
+IMG_TESTS ?= $(IMG_REPO)/integration-tests:$(VERSION)
+IMG_TESTS_LATEST ?= $(IMG_REPO)/integration-tests:latest
+
 
 KUBERLOGIC_DEBUGLOGS=True
 SENTRY_DSN =
@@ -44,7 +48,16 @@ run: test
 
 build: gen test
 	echo "Building apiserver image"
-	docker build . -t ${IMG}
+	docker build . -t ${IMG} -t ${IMG_LATEST}
 
 push:
 	docker push ${IMG}
+	docker push ${IMG_LATEST}
+
+build-tests: gen test
+	echo "Building tests image"
+	docker build . -f Dockerfile.tests -t ${IMG_TESTS} -t ${IMG_TESTS_LATEST}
+
+push-tests:
+	docker push ${IMG_TESTS}
+	docker push ${IMG_TESTS_LATEST}
