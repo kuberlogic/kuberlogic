@@ -16,7 +16,10 @@ type organizationCreated struct {
 	Message string `json:"message"`
 }
 
-const VIEWER = "Viewer"
+const (
+	VIEWER_ROLE = "Viewer"
+	EDITOR_ROLE = "Editor"
+)
 
 func (gr *grafana) DeleteOrganizationAndUsers(orgName string) error {
 	org, err := gr.getOrganization(orgName)
@@ -29,7 +32,7 @@ func (gr *grafana) DeleteOrganizationAndUsers(orgName string) error {
 		return err
 	}
 	for _, usr := range users {
-		if usr.Role == VIEWER {
+		if usr.Role == VIEWER_ROLE || usr.Role == EDITOR_ROLE {
 			if err := gr.deleteUser(usr.UserId); err != nil {
 				return err
 			}
@@ -59,7 +62,7 @@ func (gr *grafana) getOrganization(orgName string) (*organization, error) {
 		// something was wrong
 		var result interface{}
 		err = gr.api.encodeResponseTo(resp.Body, &result)
-		return nil, fmt.Errorf("grafana: something was wrong with request %gr, status: %d, result: %v, err: %v",
+		return nil, fmt.Errorf("grafana: something was wrong with request %s, status: %d, result: %v, err: %v",
 			endpoint, resp.StatusCode, result, err)
 	}
 }
@@ -86,7 +89,7 @@ func (gr *grafana) createOrganization(orgName string) (int, error) {
 	default:
 		var result interface{}
 		err = gr.api.encodeResponseTo(resp.Body, &result)
-		return 0, fmt.Errorf("grafana: something was wrong with request %gr, status: %d, result: %v, err: %v",
+		return 0, fmt.Errorf("grafana: something was wrong with request %s, status: %d, result: %v, err: %v",
 			endpoint, resp.StatusCode, result, err)
 	}
 }
@@ -105,7 +108,7 @@ func (gr *grafana) deleteOrganization(orgId int) error {
 	default:
 		var result interface{}
 		err = gr.api.encodeResponseTo(resp.Body, &result)
-		return fmt.Errorf("grafana: something was wrong with request %gr, status: %d, result: %v, err: %v",
+		return fmt.Errorf("grafana: something was wrong with request %s, status: %d, result: %v, err: %v",
 			endpoint, resp.StatusCode, result, err)
 	}
 }
@@ -133,17 +136,18 @@ func (gr *grafana) ensureOrganization(orgName string) (int, error) {
 		// something was wrong
 		var result interface{}
 		err = gr.api.encodeResponseTo(resp.Body, &result)
-		return 0, fmt.Errorf("grafana: something was wrong with request %gr, status: %d, result: %v, err: %v",
+		return 0, fmt.Errorf("grafana: something was wrong with request %s, status: %d, result: %v, err: %v",
 			endpoint, resp.StatusCode, result, err)
 	}
 }
 
-func (gr *grafana) appendUserToOrganization(user user, orgId int) error {
+// appendUserToOrganization adds a user to an organization with identified by orgId with role orgRole
+func (gr *grafana) appendUserToOrganization(user user, orgRole string, orgId int) error {
 	endpoint := fmt.Sprintf("/api/orgs/%d/users", orgId)
 	resp, err := gr.api.sendRequestTo(http.MethodPost,
 		endpoint,
 		map[string]interface{}{
-			"role":         VIEWER,
+			"role":         orgRole,
 			"loginOrEmail": user.Email,
 		})
 	if err != nil {
@@ -152,14 +156,14 @@ func (gr *grafana) appendUserToOrganization(user user, orgId int) error {
 	switch resp.StatusCode {
 	case http.StatusOK:
 		gr.log.Info("grafana: user added to organization",
-			"name", gr.kt.Spec.OwnerEmail, "email", user.Email, "orgId", orgId)
+			"name", user.Username, "email", user.Email, "orgId", orgId, "role", orgRole)
 		return nil
 
 	default:
 		// something was wrong
 		var result interface{}
 		err = gr.api.encodeResponseTo(resp.Body, &result)
-		return fmt.Errorf("grafana: something was wrong with request %gr, status: %d, result: %v, err: %v",
+		return fmt.Errorf("grafana: something was wrong with request %s, status: %d, result: %v, err: %v",
 			endpoint, resp.StatusCode, result, err)
 	}
 }
@@ -182,7 +186,7 @@ func (gr *grafana) usersInOrg(orgId int) ([]*userOrganization, error) {
 		// something was wrong
 		var result interface{}
 		err = gr.api.encodeResponseTo(resp.Body, &result)
-		return nil, fmt.Errorf("grafana: something was wrong with request %gr, status: %d, result: %v, err: %v",
+		return nil, fmt.Errorf("grafana: something was wrong with request %s, status: %d, result: %v, err: %v",
 			endpoint, resp.StatusCode, result, err)
 	}
 }

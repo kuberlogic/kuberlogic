@@ -2,7 +2,6 @@ package grafana
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"net/http"
 	"net/url"
 )
@@ -13,14 +12,16 @@ type userCreated struct {
 }
 
 type user struct {
-	Id    int    `json:"id"`
-	OrgId int    `json:"orgId"`
-	Email string `json:"email"`
+	Id       int    `json:"id"`
+	OrgId    int    `json:"orgId"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
 }
 
 type usersOrganization struct {
 	OrgId int    `json:"orgId"`
 	Name  string `json:"name"`
+	Role  string `json:"role"`
 }
 
 type userOrganization struct {
@@ -31,23 +32,34 @@ type userOrganization struct {
 	Role   string `json:"role"`
 }
 
-func (gr *grafana) ensureUser(orgId int) error {
+// ensureUser creates Grafana user if it does not exist
+// and appends it to the org identified by orgId
+func (gr *grafana) ensureUser(email, username, password, orgRole string, orgId int) error {
 	endpoint := "/api/users/lookup"
+	if len(email) == 0 {
+		email = username
+	}
+	if len(email) == 0 {
+		username = email
+	}
+	if len(email) == 0 && len(username) == 0 {
+		return fmt.Errorf("email or username must be set")
+	}
 
 	resp, err := gr.api.sendRequestTo(http.MethodGet, endpoint, &url.Values{
-		"loginOrEmail": []string{gr.kt.Spec.OwnerEmail},
+		"loginOrEmail": []string{email},
 	})
 	if err != nil {
 		return err
 	}
 	switch resp.StatusCode {
 	case http.StatusOK:
-		gr.log.Info("grafana: user exists", "name", gr.kt.Spec.OwnerEmail)
+		gr.log.Info("grafana: user exists", "username", username, "email", email)
 		var usr user
 		if err := gr.api.encodeResponseTo(resp.Body, &usr); err != nil {
 			return err
 		}
-		if err := gr.ensureUserInOrganization(usr, orgId); err != nil {
+		if err := gr.ensureUserInOrganization(usr, orgRole, orgId); err != nil {
 			return err
 		}
 
@@ -55,7 +67,7 @@ func (gr *grafana) ensureUser(orgId int) error {
 
 	case http.StatusNotFound:
 		gr.log.Info("grafana: creating a new user", "name", gr.kt.Spec.OwnerEmail)
-		return gr.createUser(gr.kt.Spec.OwnerEmail, orgId)
+		return gr.createUser(email, username, password, orgId)
 
 	default:
 		// something was wrong
@@ -66,7 +78,9 @@ func (gr *grafana) ensureUser(orgId int) error {
 	}
 }
 
-func (gr *grafana) ensureUserInOrganization(user user, orgId int) error {
+// ensureUserInOrganization checks if a user is added to the organization with id: orgId
+// and has orgRole role in this organization
+func (gr *grafana) ensureUserInOrganization(user user, orgRole string, orgId int) error {
 	endpoint := fmt.Sprintf("/api/users/%d/orgs", user.Id)
 	resp, err := gr.api.sendRequestTo(http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -79,16 +93,16 @@ func (gr *grafana) ensureUserInOrganization(user user, orgId int) error {
 			return err
 		}
 		for _, item := range result {
-			if item.OrgId == orgId {
+			if item.OrgId == orgId && item.Role == orgRole {
 				// user is in the organization
 				gr.log.Info("grafana: user already in organization",
-					"email", user.Email, "orgId", orgId)
+					"email", user.Email, "username", user.Username, "orgId", orgId, "role", orgRole)
 
 				return nil
 			}
 		}
 
-		return gr.appendUserToOrganization(user, orgId)
+		return gr.appendUserToOrganization(user, orgRole, orgId)
 
 	default:
 		// something was wrong
@@ -99,15 +113,16 @@ func (gr *grafana) ensureUserInOrganization(user user, orgId int) error {
 	}
 }
 
-func (gr *grafana) createUser(email string, orgId int) error {
+// creates Grafana user
+func (gr *grafana) createUser(email, username, password string, orgId int) error {
 	endpoint := "/api/admin/users"
 	resp, err := gr.api.sendRequestTo(http.MethodPost,
 		endpoint,
 		map[string]interface{}{
-			"name":     email,
+			"name":     username,
 			"email":    email,
 			"login":    email,
-			"password": uuid.New().String(),
+			"password": password,
 			"OrgId":    orgId,
 		})
 	if err != nil {
