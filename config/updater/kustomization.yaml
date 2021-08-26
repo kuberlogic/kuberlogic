@@ -3,7 +3,8 @@ kind: Kustomization
 images:
 - name: updater
   newName: quay.io/kuberlogic/updater
-  newTag: 0.0.27
+  newTag: 0.0.28
+
 patchesStrategicMerge:
 - patches/regcred.yaml
 - patches/gitlab-env.yaml

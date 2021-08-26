@@ -42,9 +42,10 @@ var (
 	apiPort = 8001
 )
 
+// these values are related to keycloak values in config/keycloak manifests
 const (
-	testUser     = "none@example.com"
-	testNs       = "a0c394e31c9740376635c8878cf5889e"
+	testUser     = "keycloak@example.com"
+	testNs       = "4f6b97e729327473139acd2748457f44" // md5 hashed testUser email
 	testPassword = "secret"
 )
 
@@ -70,13 +71,10 @@ func setup() {
 		apiPort = p
 	}
 
-	wait(12 * 60 * 60)(&testing.T{}) // for the manual tests
-
 	flag.Parse()
 	if testing.Short() {
 		parallelFunc(createService)
 	}
-
 }
 
 func tearDown() {

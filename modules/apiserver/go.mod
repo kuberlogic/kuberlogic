@@ -2,9 +2,7 @@ module github.com/kuberlogic/operator/modules/apiserver
 
 go 1.16
 
-replace (
-	github.com/kuberlogic/operator/modules/operator => ../operator/
-)
+replace github.com/kuberlogic/operator/modules/operator => ../operator/
 
 require (
 	github.com/aws/aws-sdk-go v1.36.29

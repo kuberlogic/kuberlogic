@@ -63,11 +63,6 @@ jobs:
         env:
           PRIVATE_GITHUB_TOKEN: ${{ secrets.PRIVATE_GITHUB_TOKEN }}
 
-      - name: Updating modules onto current operator version
-        run: |
-          make bump-operator-version BRANCH=${{ github.event.pull_request.head.sha }}
-        if: github.event_name == 'pull_request'
-
       - name: Get dependencies for the apiserver
         working-directory: ./modules/apiserver
         env:
@@ -171,9 +166,12 @@ jobs:
           kubectl logs -l app=mysql-operator -c mysql-operator --tail=-1 > mysql-operator.log
           kubectl describe pod -l name=postgres-operator > postgres-operator.describe.log
           kubectl describe pod -l app=mysql-operator > mysql-operator.describe.log
+          kubectl describe pod -l app=alertmanager > alertmanager.describe.log
           kubectl get pod > pods-status.log
           kubectl get endpoints > endpoints.log
           kubectl get services > services.log
+          kubectl logs -l app.kubernetes.io/name=kube-state-metrics -c kube-state-metrics > kube-state-metrics.logs
+          kubectl logs -l app.kubernetes.io/name=kube-state-metrics -c kube-rbac-proxy > kube-rbac-proxy.kube-state-metrics.logs
           kubectl get kuberlogicservice,kuberlogicbackupschedules,kuberlogicbackuprestores > kuberlogics-services.log
           kubectl describe pod -l app.kubernetes.io/name=mysql > mysql-cluster.describe.log
           kubectl describe pod -l application=spilo > pg-cluster.describe.log
