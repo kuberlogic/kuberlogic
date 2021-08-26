@@ -223,33 +223,9 @@ spec:
           image: quay.io/kuberlogic/kube-state-metrics:2.1.0
           imagePullPolicy: IfNotPresent
           args:
-            - --collectors=certificatesigningrequests
-            - --collectors=configmaps
-            - --collectors=cronjobs
-            - --collectors=daemonsets
-            - --collectors=deployments
-            - --collectors=endpoints
-            - --collectors=horizontalpodautoscalers
-            - --collectors=ingresses
-            - --collectors=jobs
-            - --collectors=limitranges
-            - --collectors=mutatingwebhookconfigurations
-            - --collectors=namespaces
-            - --collectors=networkpolicies
-            - --collectors=nodes
-            - --collectors=persistentvolumeclaims
-            - --collectors=persistentvolumes
-            - --collectors=poddisruptionbudgets
-            - --collectors=pods
-            - --collectors=replicasets
-            - --collectors=replicationcontrollers
-            - --collectors=resourcequotas
-            - --collectors=secrets
-            - --collectors=services
-            - --collectors=statefulsets
-            - --collectors=storageclasses
-            - --collectors=volumeattachments
+            - --resources=certificatesigningrequests,configmaps,cronjobs,daemonsets,deployments,endpoints,ingresses,jobs,limitranges,mutatingwebhookconfigurations,namespaces,networkpolicies,nodes,persistentvolumeclaims,persistentvolumes,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets,storageclasses,volumeattachments
             - --host=127.0.0.1
+            - --port=8080
           resources:
             limits:
               cpu: 50m
