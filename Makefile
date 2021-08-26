@@ -216,13 +216,12 @@ refresh-go-sum:
   		cd -; \
 	done
 
-bump-operator-version:
+go-mod-tidy:
 	set -o errexit; \
-	for module in updater alert-receiver apiserver; do \
+	for module in operator updater alert-receiver apiserver; do \
   		echo "Entering into" $${module}; \
 	  	cd ./modules/$${module}; \
-	  	go mod edit -droprequire github.com/kuberlogic/operator/modules/operator go.mod; \
-  		go get github.com/kuberlogic/operator/modules/operator@${BRANCH}; \
+	  	go mod tidy ; \
   		cd -; \
 	done
 
