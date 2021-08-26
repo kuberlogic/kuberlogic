@@ -2,15 +2,7 @@ module github.com/kuberlogic/operator/modules/apiserver
 
 go 1.16
 
-<<<<<<< HEAD
-replace (
-	github.com/kuberlogic/operator/modules/operator => ../operator/
-)
-=======
-//replace (
-//	github.com/kuberlogic/operator/modules/operator => ../operator/
-//)
->>>>>>> master
+replace github.com/kuberlogic/operator/modules/operator => ../operator/
 
 require (
 	github.com/aws/aws-sdk-go v1.36.29
@@ -29,11 +21,7 @@ require (
 	github.com/go-openapi/validate v0.19.15
 	github.com/jackc/pgx/v4 v4.10.1
 	github.com/jessevdk/go-flags v1.4.0
-<<<<<<< HEAD
 	github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210723121420-ca52ca2c92ab
-=======
-	github.com/kuberlogic/operator/modules/operator v0.0.21-0.20210709150852-c26569dcc3c3
->>>>>>> master
 	github.com/kuberlogic/zapsentry v1.6.2
 	github.com/pkg/errors v0.9.1
 	github.com/posthog/posthog-go v0.0.0-20210111202400-c80159165cb6

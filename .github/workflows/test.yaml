@@ -63,11 +63,6 @@ jobs:
         env:
           PRIVATE_GITHUB_TOKEN: ${{ secrets.PRIVATE_GITHUB_TOKEN }}
 
-      - name: Updating modules onto current operator version
-        run: |
-          make bump-operator-version BRANCH=${{ github.event.pull_request.head.sha }}
-        if: github.event_name == 'pull_request'
-
       - name: Get dependencies for the apiserver
         working-directory: ./modules/apiserver
         env:

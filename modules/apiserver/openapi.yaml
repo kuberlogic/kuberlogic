@@ -11,7 +11,7 @@ tags:
     description: Everything about service resource
   - name: auth
     description: Everything about authentication/authorization
-
+  Permission
 host: localhost:8001
 basePath: /api/v1/
 schemes:
@@ -1009,18 +1009,6 @@ definitions:
           - Failed
           - Pending
 
-  Permission:
-    type: object
-    properties:
-      database:
-        type: object
-        $ref: '#/definitions/Database'
-      type:
-        type: string
-        enum:
-          - read
-          - all
-
   User:
     type: object
     required:
@@ -1030,10 +1018,6 @@ definitions:
         type: string
       password:
         type: string
-      permissions:
-        type: array
-        items:
-          $ref: "#/definitions/Permission"
 
   Database:
     type: object
