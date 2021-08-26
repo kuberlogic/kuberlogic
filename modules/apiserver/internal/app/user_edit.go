@@ -4,7 +4,6 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/store"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/util/kuberlogic"
@@ -25,8 +24,7 @@ func (srv *Service) UserEditHandler(params apiService.UserEditParams, principal 
 		return util.BadRequestFromError(e)
 	}
 
-	permissions := store.NewPermissionStore().ModelToDb(params.User.Permissions)
-	err = session.GetUser().Edit(*params.User.Name, params.User.Password, permissions)
+	err = session.GetUser().Edit(*params.User.Name, params.User.Password)
 	if err != nil {
 		srv.log.Errorw("error editing user", "error", err)
 		return util.BadRequestFromError(err)

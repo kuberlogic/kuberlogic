@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v4"
-	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 )
 
 type User struct {
@@ -22,7 +21,7 @@ func (usr *User) IsProtected(name string) bool {
 	return ok
 }
 
-func (usr *User) Create(name, password string, permissions []interfaces.Permission) error {
+func (usr *User) Create(name, password string) error {
 	ctx := context.TODO()
 	conn, err := pgx.Connect(ctx, usr.session.ConnectionString(usr.session.MasterIP, "postgres"))
 	if err != nil {
@@ -53,7 +52,7 @@ DROP USER %s;
 	return err
 }
 
-func (usr *User) Edit(name, password string, permissions []interfaces.Permission) error {
+func (usr *User) Edit(name, password string) error {
 	ctx := context.TODO()
 	conn, err := pgx.Connect(ctx, usr.session.ConnectionString(usr.session.MasterIP, "postgres"))
 	if err != nil {
@@ -68,13 +67,13 @@ ALTER USER %s WITH PASSWORD '%s';
 	return err
 }
 
-func (usr *User) List() (interfaces.Users, error) {
-	var users = make(interfaces.Users)
+func (usr *User) List() ([]string, error) {
+	var items []string
 
 	ctx := context.TODO()
 	conn, err := pgx.Connect(ctx, usr.session.ConnectionString(usr.session.MasterIP, "postgres"))
 	if err != nil {
-		return users, err
+		return items, err
 	}
 	defer conn.Close(ctx)
 
@@ -83,7 +82,7 @@ SELECT usename
 FROM pg_catalog.pg_user;
 `)
 	if err != nil {
-		return users, err
+		return items, err
 	}
 	defer rows.Close()
 
@@ -91,10 +90,10 @@ FROM pg_catalog.pg_user;
 		var name string
 		err = rows.Scan(&name)
 		if err != nil {
-			return users, err
+			return items, err
 		}
-		users[name] = append(users[name], interfaces.Permission{})
+		items = append(items, name)
 	}
 
-	return users, nil
+	return items, nil
 }
