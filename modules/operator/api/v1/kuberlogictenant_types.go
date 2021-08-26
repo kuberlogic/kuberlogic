@@ -79,11 +79,18 @@ func (kt *KuberLogicTenant) setConditionStatus(cond string, status bool, msg, re
 }
 
 // SaveTenantServiceInfo saves kls name and type into a Kuberlogictenant
-func (kt KuberLogicTenant) SaveTenantServiceInfo(kls *KuberLogicService) {
+func (kt *KuberLogicTenant) SaveTenantServiceInfo(kls *KuberLogicService) {
 	if len(kt.Status.Services) == 0 {
 		kt.Status.Services = make(map[string]string, 1)
 	}
 	kt.Status.Services[kls.Name] = kls.GetServiceType()
+}
+
+// ForgetTenantServiceInfo removes kls name and type from Status
+func (kt *KuberLogicTenant) ForgetTenantServiceInfo(kls *KuberLogicService) {
+	if _, found := kt.Status.Services[kls.Name]; found {
+		delete(kt.Status.Services, kls.Name)
+	}
 }
 
 func init() {

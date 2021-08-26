@@ -74,12 +74,12 @@ type KuberLogicCollector struct {
 	klr map[string]*kuberlogicv1.KuberLogicBackupRestore
 }
 
-func (c *KuberLogicCollector) MonitorKuberlogicService(key string, kls *kuberlogicv1.KuberLogicService) error {
-	return c.monitorResource(key, kls)
+func (c *KuberLogicCollector) MonitorKuberlogicService(kls *kuberlogicv1.KuberLogicService) error {
+	return c.monitorResource(kls.Name+kls.Namespace, kls)
 }
 
-func (c *KuberLogicCollector) ForgetKuberlogicService(key string) {
-	delete(c.kls, key)
+func (c *KuberLogicCollector) ForgetKuberlogicService(kls *kuberlogicv1.KuberLogicService) {
+	delete(c.kls, kls.Name+kls.Namespace)
 }
 
 func (c *KuberLogicCollector) MonitorKuberlogicBackup(key string, klb *kuberlogicv1.KuberLogicBackupSchedule) error {
