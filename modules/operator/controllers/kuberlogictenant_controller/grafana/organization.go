@@ -19,6 +19,7 @@ type organizationCreated struct {
 const (
 	VIEWER_ROLE = "Viewer"
 	EDITOR_ROLE = "Editor"
+	DEFAULT_ORG = 0
 )
 
 func (gr *grafana) DeleteOrganizationAndUsers(orgName string) error {
@@ -46,7 +47,7 @@ func (gr *grafana) DeleteOrganizationAndUsers(orgName string) error {
 
 func (gr *grafana) getOrganization(orgName string) (*organization, error) {
 	endpoint := fmt.Sprintf("/api/orgs/name/%s", url.QueryEscape(orgName))
-	resp, err := gr.api.sendRequestTo(http.MethodGet, endpoint, nil)
+	resp, err := gr.api.sendRequestTo(http.MethodGet, endpoint, DEFAULT_ORG, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -71,6 +72,7 @@ func (gr *grafana) createOrganization(orgName string) (int, error) {
 	endpoint := "/api/orgs"
 	resp, err := gr.api.sendRequestTo(http.MethodPost,
 		endpoint,
+		DEFAULT_ORG,
 		map[string]interface{}{
 			"name": orgName,
 		})
@@ -96,7 +98,7 @@ func (gr *grafana) createOrganization(orgName string) (int, error) {
 
 func (gr *grafana) deleteOrganization(orgId int) error {
 	endpoint := fmt.Sprintf("/api/orgs/%d", orgId)
-	resp, err := gr.api.sendRequestTo(http.MethodDelete, endpoint, nil)
+	resp, err := gr.api.sendRequestTo(http.MethodDelete, endpoint, DEFAULT_ORG, nil)
 	if err != nil {
 		return err
 	}
@@ -115,7 +117,7 @@ func (gr *grafana) deleteOrganization(orgId int) error {
 
 func (gr *grafana) ensureOrganization(orgName string) (int, error) {
 	endpoint := fmt.Sprintf("/api/orgs/name/%s", url.QueryEscape(orgName))
-	resp, err := gr.api.sendRequestTo(http.MethodGet, endpoint, nil)
+	resp, err := gr.api.sendRequestTo(http.MethodGet, endpoint, DEFAULT_ORG, nil)
 	if err != nil {
 		return 0, err
 	}
@@ -146,6 +148,7 @@ func (gr *grafana) appendUserToOrganization(user user, orgRole string, orgId int
 	endpoint := fmt.Sprintf("/api/orgs/%d/users", orgId)
 	resp, err := gr.api.sendRequestTo(http.MethodPost,
 		endpoint,
+		DEFAULT_ORG,
 		map[string]interface{}{
 			"role":         orgRole,
 			"loginOrEmail": user.Email,
@@ -170,7 +173,7 @@ func (gr *grafana) appendUserToOrganization(user user, orgRole string, orgId int
 
 func (gr *grafana) usersInOrg(orgId int) ([]*userOrganization, error) {
 	endpoint := fmt.Sprintf("/api/orgs/%d/users", orgId)
-	resp, err := gr.api.sendRequestTo(http.MethodGet, endpoint, nil)
+	resp, err := gr.api.sendRequestTo(http.MethodGet, endpoint, DEFAULT_ORG, nil)
 	if err != nil {
 		return nil, err
 	}

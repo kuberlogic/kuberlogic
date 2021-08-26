@@ -46,7 +46,7 @@ func (gr *grafana) ensureUser(email, username, password, orgRole string, orgId i
 		return fmt.Errorf("email or username must be set")
 	}
 
-	resp, err := gr.api.sendRequestTo(http.MethodGet, endpoint, &url.Values{
+	resp, err := gr.api.sendRequestTo(http.MethodGet, endpoint, DEFAULT_ORG, &url.Values{
 		"loginOrEmail": []string{email},
 	})
 	if err != nil {
@@ -82,7 +82,7 @@ func (gr *grafana) ensureUser(email, username, password, orgRole string, orgId i
 // and has orgRole role in this organization
 func (gr *grafana) ensureUserInOrganization(user user, orgRole string, orgId int) error {
 	endpoint := fmt.Sprintf("/api/users/%d/orgs", user.Id)
-	resp, err := gr.api.sendRequestTo(http.MethodGet, endpoint, nil)
+	resp, err := gr.api.sendRequestTo(http.MethodGet, endpoint, DEFAULT_ORG, nil)
 	if err != nil {
 		return err
 	}
@@ -118,6 +118,7 @@ func (gr *grafana) createUser(email, username, password string, orgId int) error
 	endpoint := "/api/admin/users"
 	resp, err := gr.api.sendRequestTo(http.MethodPost,
 		endpoint,
+		DEFAULT_ORG,
 		map[string]interface{}{
 			"name":     username,
 			"email":    email,
@@ -147,7 +148,7 @@ func (gr *grafana) createUser(email, username, password string, orgId int) error
 
 func (gr *grafana) deleteUser(userId int) error {
 	endpoint := fmt.Sprintf("/api/admin/users/%d", userId)
-	resp, err := gr.api.sendRequestTo(http.MethodDelete, endpoint, nil)
+	resp, err := gr.api.sendRequestTo(http.MethodDelete, endpoint, DEFAULT_ORG, nil)
 	if err != nil {
 		return err
 	}
