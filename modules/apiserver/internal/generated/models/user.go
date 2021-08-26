@@ -6,8 +6,6 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"strconv"
-
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
@@ -25,9 +23,6 @@ type User struct {
 
 	// password
 	Password string `json:"password,omitempty"`
-
-	// permissions
-	Permissions []*Permission `json:"permissions"`
 }
 
 // Validate validates this user
@@ -35,10 +30,6 @@ func (m *User) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateName(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validatePermissions(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -52,31 +43,6 @@ func (m *User) validateName(formats strfmt.Registry) error {
 
 	if err := validate.Required("name", "body", m.Name); err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (m *User) validatePermissions(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Permissions) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Permissions); i++ {
-		if swag.IsZero(m.Permissions[i]) { // not required
-			continue
-		}
-
-		if m.Permissions[i] != nil {
-			if err := m.Permissions[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("permissions" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
 	}
 
 	return nil

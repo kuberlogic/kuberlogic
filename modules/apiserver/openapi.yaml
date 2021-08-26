@@ -11,7 +11,7 @@ tags:
     description: Everything about service resource
   - name: auth
     description: Everything about authentication/authorization
-  Permission
+
 host: localhost:8001
 basePath: /api/v1/
 schemes:
