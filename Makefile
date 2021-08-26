@@ -90,7 +90,7 @@ deploy-requirements: kustomize
 	# it can not configured with kustomization due to tight integrate with namespace=cert-manager
 	# (see cert-manager.yaml for the details)
 	for module in config/certmanager/cert-manager.yaml \
-				  config/keycloak/keycloak*.yaml; do \
+				  config/keycloak/crd/*.yaml; do \
   		kubectl apply -f $${module} ;\
   	done; \
   	# waiting for cert-manager-webhook endpoint assign an ip address \
@@ -98,7 +98,7 @@ deploy-requirements: kustomize
 
 undeploy-requirements: kustomize
 	for module in config/certmanager/cert-manager.yaml \
-				  config/keycloak/crd.yaml; do \
+					  config/keycloak/; do \
   		kubectl delete -f $${module} ;\
   	done
 
