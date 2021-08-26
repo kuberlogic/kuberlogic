@@ -16,7 +16,7 @@ import (
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
 )
 
-//go:generate swagger generate server --target ../../generated --name Kuberlogic --spec ../../../openapi.yaml --template-dir ./swagger-templates/templates --principal models.Principal
+//go:generate swagger generate server --target ../../generated --name Kuberlogic --spec ../../../openapi.yaml --template-dir swagger-templates/templates --principal models.Principal
 
 func configureFlags(api *operations.KuberlogicAPI) {
 	// api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{ ... }
