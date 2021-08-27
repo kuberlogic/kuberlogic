@@ -33,6 +33,11 @@ KUBERLOGIC_AUTH_KEYCLOAK_CLIENT_SECRET = apiserver-secret
 KUBERLOGIC_AUTH_KEYCLOAK_REALM_NAME = kuberlogic_realm
 KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(shell kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443
 
+INTERNAL_GRAFANA_IP=$(shell kubectl get pod -l app=grafana -o go-template="{{range .items}}{{.status.podIP}}{{end}}")
+
+GRAFANA_ENABLED = true
+GRAFANA_ENDPOINT = http://$(INTERNAL_GRAFANA_IP):3000/
+
 test:
 	POD_NAMESPACE=default go test -v \
 		-coverprofile=coverage.out \

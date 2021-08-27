@@ -21,12 +21,11 @@ import (
 type syncer struct {
 	kt *kuberlogicv1.KuberLogicTenant
 
-	synced  map[int]client.Object
-	syncErr error
-	client  client.Client
-	scheme  *runtime.Scheme
-	log     logr.Logger
-	ctx     context.Context
+	synced map[int]client.Object
+	client client.Client
+	scheme *runtime.Scheme
+	log    logr.Logger
+	ctx    context.Context
 }
 
 const (
@@ -39,22 +38,39 @@ const (
 	roleBindingKey
 )
 
-func (s *syncer) withNamespace() *syncer {
+func (s *syncer) Sync(parentName, parentNamespace string) error {
+	if err := s.withNamespace(); err != nil {
+		return err
+	}
+	if err := s.withImagePullSecret(parentName, parentNamespace); err != nil {
+		return err
+	}
+	if err := s.withServiceAccount(); err != nil {
+		return err
+	}
+	if err := s.withRole(); err != nil {
+		return err
+	}
+	if err := s.withRoleBinding(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *syncer) withNamespace() error {
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: s.kt.GetTenantName(),
 		},
 	}
-	s.syncErr = s.sync(ns, calcObjectVersion(ns), &corev1.Namespace{}, nsKey)
-	return s
+	return s.sync(ns, calcObjectVersion(ns), &corev1.Namespace{}, nsKey)
 }
 
-func (s *syncer) withImagePullSecret(parentName, parentNmespace string) *syncer {
+func (s *syncer) withImagePullSecret(parentName, parentNamespace string) error {
 	parentSecret := &corev1.Secret{}
-	err := s.client.Get(s.ctx, types.NamespacedName{Name: parentName, Namespace: parentNmespace}, parentSecret)
+	err := s.client.Get(s.ctx, types.NamespacedName{Name: parentName, Namespace: parentNamespace}, parentSecret)
 	if err != nil {
-		s.syncErr = err
-		return s
+		return err
 	}
 
 	clientSecret := &corev1.Secret{
@@ -65,22 +81,20 @@ func (s *syncer) withImagePullSecret(parentName, parentNmespace string) *syncer 
 		Type: parentSecret.Type,
 		Data: parentSecret.Data,
 	}
-	s.syncErr = s.sync(clientSecret, calcObjectVersion(clientSecret), &corev1.Secret{}, imgPullSecretKey)
-	return s
+	return s.sync(clientSecret, calcObjectVersion(clientSecret), &corev1.Secret{}, imgPullSecretKey)
 }
 
-func (s *syncer) withServiceAccount() *syncer {
+func (s *syncer) withServiceAccount() error {
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      s.kt.GetTenantName(),
 			Namespace: s.kt.GetTenantName(),
 		},
 	}
-	s.syncErr = s.sync(sa, calcObjectVersion(sa), &corev1.ServiceAccount{}, saKey)
-	return s
+	return s.sync(sa, calcObjectVersion(sa), &corev1.ServiceAccount{}, saKey)
 }
 
-func (s *syncer) withRole() *syncer {
+func (s *syncer) withRole() error {
 	r := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      s.kt.GetTenantName(),
@@ -94,17 +108,15 @@ func (s *syncer) withRole() *syncer {
 			},
 		},
 	}
-	s.syncErr = s.sync(r, calcObjectVersion(r), &rbacv1.Role{}, roleKey)
-	return s
+	return s.sync(r, calcObjectVersion(r), &rbacv1.Role{}, roleKey)
 }
 
-func (s *syncer) withRoleBinding() *syncer {
+func (s *syncer) withRoleBinding() error {
 	role := s.getSyncedObj(roleKey)
 	sa := s.getSyncedObj(saKey)
 
 	if role == nil || sa == nil {
-		s.syncErr = fmt.Errorf("role or service account must not be nil for rolebinding")
-		return s
+		return fmt.Errorf("role or service account must not be nil for rolebinding")
 	}
 
 	rb := &rbacv1.RoleBinding{
@@ -126,18 +138,13 @@ func (s *syncer) withRoleBinding() *syncer {
 			Name:     role.GetName(),
 		},
 	}
-	s.syncErr = s.sync(rb, calcObjectVersion(rb), &rbacv1.RoleBinding{}, roleBindingKey)
-	return s
+	return s.sync(rb, calcObjectVersion(rb), &rbacv1.RoleBinding{}, roleBindingKey)
 }
 
 // sync function creates or updates v1.Object in cluster
 func (s *syncer) sync(object client.Object, objectVersion string, current client.Object, key int) error {
 	if object == nil {
-		s.syncErr = fmt.Errorf("object can't be nil")
-	}
-	if s.syncErr != nil {
-		s.log.Error(s.syncErr, "error happened, sync stopped")
-		return s.syncErr
+		return fmt.Errorf("object can't be nil")
 	}
 
 	// guess the type of the object using reflection
@@ -185,15 +192,14 @@ func (s *syncer) addSyncedObj(key int, obj client.Object) {
 }
 
 // newSyncer function sync object that will contain all sync information
-func newSyncer(ctx context.Context, log logr.Logger, c client.Client, s *runtime.Scheme, kt *kuberlogicv1.KuberLogicTenant, err error) *syncer {
+func newSyncer(ctx context.Context, log logr.Logger, c client.Client, s *runtime.Scheme, kt *kuberlogicv1.KuberLogicTenant) *syncer {
 	return &syncer{
-		kt:      kt,
-		synced:  make(map[int]client.Object),
-		syncErr: err,
-		client:  c,
-		scheme:  s,
-		log:     log,
-		ctx:     ctx,
+		kt:     kt,
+		synced: make(map[int]client.Object),
+		client: c,
+		scheme: s,
+		log:    log,
+		ctx:    ctx,
 	}
 }
 

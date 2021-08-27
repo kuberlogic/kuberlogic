@@ -19,13 +19,6 @@ spec:
           ports:
             - name: grafana
               containerPort: 3000
-          resources:
-            limits:
-              memory: "2Gi"
-              cpu: "1000m"
-            requests:
-              memory: "1Gi"
-              cpu: "500m"
 
 ---
 apiVersion: v1

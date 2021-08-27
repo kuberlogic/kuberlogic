@@ -4,6 +4,13 @@ import (
 	"github.com/vrischmann/envconfig"
 )
 
+type Grafana struct {
+	Enabled  bool   `envconfig:"default=false,optional"`
+	Endpoint string `envconfig:"optional"`
+	Login    string `envconfig:"default=admin,optional"`
+	Password string `envconfig:"default=admin,optional"`
+}
+
 type Config struct {
 	MetricsAddr          string `envconfig:"default=:8080,optional"`
 	EnableLeaderElection bool   `envconfig:"default=false,optional"`
@@ -18,6 +25,8 @@ type Config struct {
 		EmailEnabled bool                           `json:"default=false,optional"`
 		Email        EmailNotificationChannelConfig `json:"optional"`
 	} `envconfig:"optional"`
+
+	Grafana Grafana `envconfig:"optional"`
 }
 
 type EmailNotificationChannelConfig struct {

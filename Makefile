@@ -216,16 +216,6 @@ refresh-go-sum:
   		cd -; \
 	done
 
-bump-operator-version:
-	set -o errexit; \
-	for module in updater alert-receiver apiserver; do \
-  		echo "Entering into" $${module}; \
-	  	cd ./modules/$${module}; \
-	  	go mod edit -droprequire github.com/kuberlogic/operator/modules/operator go.mod; \
-  		go get github.com/kuberlogic/operator/modules/operator@${BRANCH}; \
-  		cd -; \
-	done
-
 apiserver-clean:
 	@cd modules/apiserver
 	@rm -rf ./cmd internal/generated

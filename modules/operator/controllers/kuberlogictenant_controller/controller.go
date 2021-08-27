@@ -5,6 +5,7 @@ import (
 	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/cfg"
+	grafana "github.com/kuberlogic/operator/modules/operator/controllers/kuberlogictenant_controller/grafana"
 	"github.com/kuberlogic/operator/modules/operator/util"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -31,7 +32,10 @@ const (
 )
 
 func (r *KuberlogicTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithValues("kuberlogictenant", req.NamespacedName)
+	log := r.Log.WithValues("kuberlogictenant", req.NamespacedName)//"enabled", r.Config.Grafana.Enabled,
+	//"login", r.Config.Grafana.Login,
+	//"password", r.Config.Grafana.Password,
+	//"endpoint", r.Config.Grafana.Endpoint,
 
 	defer util.HandlePanic(log)
 
@@ -56,7 +60,7 @@ func (r *KuberlogicTenantReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	if kt.DeletionTimestamp != nil {
 		log.Info("kuberlogicalert is pending for deletion")
 		if controllerutil.ContainsFinalizer(kt, ktFinalizer) {
-			if err := finalize(ctx, r.Client, kt, log); err != nil {
+			if err := finalize(ctx, r.Config, r.Client, kt, log); err != nil {
 				log.Error(err, "error finalizing kuberlogicalert")
 				return ctrl.Result{}, err
 			}
@@ -78,25 +82,28 @@ func (r *KuberlogicTenantReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, err
 	}
 
-	var syncErr error
-	s := newSyncer(ctx, log, r.Client, r.Scheme, kt, syncErr).
-		withNamespace().
-		withImagePullSecret(r.Config.ImagePullSecretName, r.Config.Namespace).
-		withServiceAccount().
-		withRole().
-		withRoleBinding()
-	log.Info("reconciliation finished", "error", s.syncErr)
+	if r.Config.Grafana.Enabled {
+		if err := grafana.NewGrafanaSyncer(kt, log, r.Config.Grafana).Sync(); err != nil {
+			kt.SyncFailed(err.Error())
+			log.Info("grafana sync failed", "error", err)
+			return ctrl.Result{}, err
+		}
+	}
 
-	if s.syncErr == nil {
+	err := newSyncer(ctx, log, r.Client, r.Scheme, kt).Sync(
+		r.Config.ImagePullSecretName, r.Config.Namespace)
+	log.Info("reconciliation finished", "error", err)
+
+	if err == nil {
 		kt.SetSynced()
 		log.Info("setting object status to synced")
 		return ctrl.Result{}, r.Client.Status().Update(ctx, kt)
 	} else {
-		kt.SyncFailed(s.syncErr.Error())
-		log.Info("object sync failed", "error", s.syncErr)
+		kt.SyncFailed(err.Error())
+		log.Info("object sync failed", "error", err)
 	}
 
-	return ctrl.Result{}, s.syncErr
+	return ctrl.Result{}, err
 }
 
 func (r *KuberlogicTenantReconciler) SetupWithManager(mgr ctrl.Manager) error {
