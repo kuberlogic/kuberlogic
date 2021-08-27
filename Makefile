@@ -216,15 +216,6 @@ refresh-go-sum:
   		cd -; \
 	done
 
-go-mod-tidy:
-	set -o errexit; \
-	for module in operator updater alert-receiver apiserver; do \
-  		echo "Entering into" $${module}; \
-	  	cd ./modules/$${module}; \
-	  	go mod tidy ; \
-  		cd -; \
-	done
-
 apiserver-clean:
 	@cd modules/apiserver
 	@rm -rf ./cmd internal/generated
