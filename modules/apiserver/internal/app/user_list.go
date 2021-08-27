@@ -4,7 +4,6 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/store"
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/util/kuberlogic"
@@ -20,17 +19,19 @@ func (srv *Service) UserListHandler(params apiService.UserListParams, principal 
 
 	users, err := session.GetUser().List()
 	if err != nil {
-		srv.log.Errorw("error receiving users", "error", err)
+		srv.log.Errorw("error receiving databases", "error", err)
 		return util.BadRequestFromError(err)
 	}
 
 	var payload []*models.User
-	for user, permission := range users {
-		usr := user
-		payload = append(payload, &models.User{
-			Name:        &usr,
-			Permissions: store.NewPermissionStore().DbToModel(permission),
-		})
+	for _, dbUser := range users {
+		userName := dbUser
+
+		if protected := session.GetUser().IsProtected(userName); !protected {
+			payload = append(payload, &models.User{
+				Name: &userName,
+			})
+		}
 	}
 
 	return apiService.NewUserListOK().WithPayload(payload)
