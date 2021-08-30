@@ -129,8 +129,12 @@ generate: controller-gen
 
 # Build the  images
 operator-build:
-	echo "Building images"
-	docker build modules/operator -t $(OPERATOR_IMG) -t $(OPERATOR_IMG_LATEST)
+	docker build modules/operator \
+		-t $(OPERATOR_IMG) \
+		-t $(OPERATOR_IMG_LATEST) \
+		--build-arg VERSION=$(VERSION) \
+		--build-arg BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
+		--build-arg REVISION=$(shell git rev-parse HEAD)
 
 updater-build:
 	docker build -f updater.Dockerfile -t $(UPDATER_IMG) -t $(UPDATER_IMG_LATEST) .
@@ -140,7 +144,12 @@ alert-receiver-build:
 
 apiserver-build:
 	echo "Building apiserver image"
-	docker build -f apiserver.Dockerfile -t $(IMG_APISERVER) -t $(IMG_APISERVER_LATEST) .
+	docker build . -f apiserver.Dockerfile \
+	-t $(IMG_APISERVER) \
+	-t $(IMG_APISERVER_LATEST) \
+	--build-arg VERSION=$(VERSION) \
+	--build-arg BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
+	--build-arg REVISION=$(shell git rev-parse HEAD)
 
 build-tests: gen test
 	echo "Building tests image"
