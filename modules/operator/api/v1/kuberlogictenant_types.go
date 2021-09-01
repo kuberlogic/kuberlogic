@@ -88,9 +88,7 @@ func (kt *KuberLogicTenant) SaveTenantServiceInfo(kls *KuberLogicService) {
 
 // ForgetTenantServiceInfo removes kls name and type from Status
 func (kt *KuberLogicTenant) ForgetTenantServiceInfo(kls *KuberLogicService) {
-	if _, found := kt.Status.Services[kls.Name]; found {
-		delete(kt.Status.Services, kls.Name)
-	}
+	delete(kt.Status.Services, kls.Name)
 }
 
 func init() {

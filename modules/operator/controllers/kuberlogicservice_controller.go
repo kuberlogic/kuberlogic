@@ -221,8 +221,9 @@ func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *KuberLogicServiceReconciler) finalize(ctx context.Context, kt *kuberlogicv1.KuberLogicTenant, kls *kuberlogicv1.KuberLogicService, log logr.Logger) error {
+	log.Info("Finalizing service")
 	kt.ForgetTenantServiceInfo(kls)
-	if err := r.Update(ctx, kt); err != nil {
+	if err := r.Status().Update(ctx, kt); err != nil {
 		return err
 	}
 	r.MonitoringCollector.ForgetKuberlogicService(kls)
