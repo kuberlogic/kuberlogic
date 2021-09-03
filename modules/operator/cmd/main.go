@@ -20,8 +20,11 @@ import (
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme = runtime.NewScheme()
+
+	ver       string // version of package
+	sha1ver   string // sha1 revision used to build the program
+	buildTime string // when the executable was built
 )
 
 func init() {
@@ -33,6 +36,8 @@ func init() {
 }
 
 func Main(args []string) {
+	setupLog := ctrl.Log.WithName("setup")
+
 	cfg, err := operatorConfig.NewConfig()
 	if err != nil {
 		setupLog.Error(err, "unable to get required config")
@@ -54,6 +59,7 @@ func Main(args []string) {
 		setupLog.Info("sentry for operator was initialized")
 	}
 	ctrl.SetLogger(logger)
+	setupLog.Info("using version", "ver", ver, "date", buildTime, "hash", sha1ver)
 
 	metricsAddr := cfg.MetricsAddr
 	enableLeaderElection := cfg.EnableLeaderElection

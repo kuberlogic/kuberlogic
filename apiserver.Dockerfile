@@ -1,5 +1,9 @@
 FROM golang:1.16 as builder
 
+ARG VERSION
+ARG REVISION
+ARG BUILD_TIME
+
 # Copy the operator sources
 WORKDIR /workspace/operator/
 COPY modules/operator ./
@@ -22,7 +26,16 @@ COPY modules/apiserver/util util/
 COPY modules/apiserver/main.go main.go
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o apiserver main.go
+RUN CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64 \
+    GO111MODULE=on \
+    go build \
+    -ldflags " \
+    -X github.com/kuberlogic/operator/modules/apiserver/cmd.sha1ver=$REVISION \
+    -X github.com/kuberlogic/operator/modules/apiserver/cmd.buildTime=$BUILD_TIME \
+    -X github.com/kuberlogic/operator/modules/apiserver/cmd.ver=$VERSION"  \
+    -a -o apiserver main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details

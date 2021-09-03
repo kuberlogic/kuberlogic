@@ -1,6 +1,10 @@
 # Build the manager binary
 FROM golang:1.16 as builder
 
+ARG VERSION
+ARG REVISION
+ARG BUILD_TIME
+
 WORKDIR /workspace
 # Copy the Go Modules manifests
 COPY go.mod go.mod
@@ -13,7 +17,16 @@ RUN go mod download
 COPY . ./
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o operator main.go
+RUN CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64 \
+    GO111MODULE=on \
+    go build \
+    -ldflags " \
+    -X github.com/kuberlogic/operator/modules/operator/cmd.sha1ver=$REVISION \
+    -X github.com/kuberlogic/operator/modules/operator/cmd.buildTime=$BUILD_TIME \
+    -X github.com/kuberlogic/operator/modules/operator/cmd.ver=$VERSION"  \
+    -a -o operator main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details

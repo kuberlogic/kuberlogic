@@ -31,6 +31,12 @@ import (
 	k8scheme "k8s.io/client-go/kubernetes/scheme"
 )
 
+var (
+	ver       string // version of package
+	sha1ver   string // sha1 revision used to build the program
+	buildTime string // when the executable was built
+)
+
 func Main(args []string) {
 	mainLog := logging.WithComponentLogger("main")
 	cfg, err := config.InitConfig("kuberlogic", logging.WithComponentLogger("config"))
@@ -38,6 +44,7 @@ func Main(args []string) {
 		mainLog.Fatalw("", "error", err)
 		os.Exit(1)
 	}
+	mainLog.Infow("using version", "ver", ver, "date", buildTime, "hash", sha1ver)
 
 	// init sentry
 	if dsn := cfg.Sentry.Dsn; dsn != "" {
