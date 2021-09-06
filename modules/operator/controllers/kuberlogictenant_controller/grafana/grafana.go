@@ -1,11 +1,11 @@
 package grafana
 
 import (
-	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	"github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/cfg"
+	"github.com/pkg/errors"
 )
 
 type grafana struct {
@@ -27,16 +27,16 @@ func (gr *grafana) Sync() error {
 	// ensure that there is a dedicated Grafana Organization for this tenant
 	orgId, err := gr.ensureOrganization(gr.kt.Name)
 	if err != nil {
-		return fmt.Errorf("error creating grafana organization: %v", err)
+		return errors.Wrap(err, "error creating grafana organization")
 	}
 	// ensure that there is a user with Viewer role for this organization
 	// this user is used by the Kuberlogic tenant user to access dashboards
 	if err := gr.ensureUser(gr.kt.Spec.OwnerEmail, "", uuid.New().String(), VIEWER_ROLE, orgId); err != nil {
-		return fmt.Errorf("error creating grafana viewer user: %v", err)
+		return errors.Wrap(err, "error creating grafana viewer user")
 	}
 	// create Grafana dashboards
 	if err := gr.ensureDashboards(gr.kt.Status.Services, orgId); err != nil {
-		return fmt.Errorf("error creating grafana dashboards: %v", err)
+		return errors.Wrap(err, "error creating grafana dashboards")
 	}
 	return nil
 }

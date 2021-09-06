@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	dashdata "github.com/kuberlogic/operator/modules/operator/controllers/kuberlogictenant_controller/grafana/templates"
+	"github.com/pkg/errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -25,12 +26,12 @@ type dashboard struct {
 func (d dashboard) generateDashboardSpec() (string, error) {
 	t, err := template.New("dashboard").Parse(d.data)
 	if err != nil {
-		return "", fmt.Errorf("error creating dashboard template: %s", err.Error())
+		return "", errors.Wrap(err, "error creating dashboard template")
 	}
 
 	var rendered bytes.Buffer
 	if err := t.Execute(&rendered, d); err != nil {
-		return "", fmt.Errorf("error parsing dashboard template: %s", err.Error())
+		return "", errors.Wrap(err, "error parsing dashboard template")
 	}
 	return rendered.String(), nil
 }
@@ -43,7 +44,7 @@ func newDashboard(orgId int, serviceType string, tenant string, services []strin
 	case "postgresql":
 		tmpl = dashdata.PostgresqlDashboard
 	default:
-		return nil, fmt.Errorf("unknown dashboard type")
+		return nil, errors.New("unknown dashboard type")
 	}
 
 	uid := md5.Sum([]byte(serviceType + strconv.Itoa(orgId)))
@@ -79,7 +80,7 @@ func (gr *grafana) updateDashboard(d *dashboard, orgId int) error {
 
 	dashboardString, err := d.generateDashboardSpec()
 	if err != nil {
-		return fmt.Errorf("error generating dashboard spec: %v", err)
+		return errors.Wrap(err, "error generating dashboard spec")
 	}
 	dashboardJson := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(dashboardString), &dashboardJson); err != nil {
@@ -97,11 +98,11 @@ func (gr *grafana) updateDashboard(d *dashboard, orgId int) error {
 		// something was wrong
 		var result interface{}
 		err = gr.api.encodeResponseTo(resp.Body, &result)
-		gr.log.Error(fmt.Errorf("error updating Grafana dashboard"), "Grafana API call is failed",
+		gr.log.Error(errors.Wrap(err, "error updating Grafana dashboard"), "Grafana API call is failed",
 			"dashboard", dashboardString,
 			"statusCode", strconv.Itoa(resp.StatusCode),
 			"response", fmt.Sprintf("%v", result))
-		return fmt.Errorf("unexpected Grafana API error")
+		return errors.Wrap(err, "unexpected Grafana API error")
 	}
 	return nil
 }
@@ -113,7 +114,7 @@ func (gr *grafana) ensureDashboards(services map[string]string, orgId int) error
 	for svcType, svcList := range servicesByType {
 		d, err := newDashboard(orgId, svcType, gr.kt.GetTenantName(), svcList)
 		if err != nil {
-			return fmt.Errorf("error creating dashboard: %v", err)
+			return errors.Wrap(err, "error creating dashboard")
 		}
 
 		if err := gr.updateDashboard(d, orgId); err != nil {

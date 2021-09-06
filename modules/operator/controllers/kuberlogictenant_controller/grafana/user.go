@@ -2,6 +2,7 @@ package grafana
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"net/http"
 	"net/url"
 )
@@ -43,7 +44,7 @@ func (gr *grafana) ensureUser(email, username, password, orgRole string, orgId i
 		username = email
 	}
 	if len(email) == 0 && len(username) == 0 {
-		return fmt.Errorf("email or username must be set")
+		return errors.New("email or username must be set")
 	}
 
 	resp, err := gr.api.sendRequestTo(http.MethodGet, endpoint, DEFAULT_ORG, &url.Values{
