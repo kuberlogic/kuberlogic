@@ -19,16 +19,17 @@ type Limits struct {
 
 	// cpu
 	// Required: true
+	// Pattern: ^([0-9]+$)|([0-9]+.[0-9]+$)
 	CPU *string `json:"cpu"`
 
 	// memory
 	// Required: true
-	// Pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+	// Pattern: ^([0-9]+$)|([0-9]+.[0-9]+$)
 	Memory *string `json:"memory"`
 
 	// volume size
 	// Required: true
-	// Pattern: ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$
+	// Pattern: ^([0-9]+$)|([0-9]+.[0-9]+$)
 	VolumeSize *string `json:"volumeSize"`
 }
 
@@ -60,6 +61,10 @@ func (m *Limits) validateCPU(formats strfmt.Registry) error {
 		return err
 	}
 
+	if err := validate.Pattern("cpu", "body", string(*m.CPU), `^([0-9]+$)|([0-9]+.[0-9]+$)`); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -69,7 +74,7 @@ func (m *Limits) validateMemory(formats strfmt.Registry) error {
 		return err
 	}
 
-	if err := validate.Pattern("memory", "body", string(*m.Memory), `^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$`); err != nil {
+	if err := validate.Pattern("memory", "body", string(*m.Memory), `^([0-9]+$)|([0-9]+.[0-9]+$)`); err != nil {
 		return err
 	}
 
@@ -82,7 +87,7 @@ func (m *Limits) validateVolumeSize(formats strfmt.Registry) error {
 		return err
 	}
 
-	if err := validate.Pattern("volumeSize", "body", string(*m.VolumeSize), `^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$`); err != nil {
+	if err := validate.Pattern("volumeSize", "body", string(*m.VolumeSize), `^([0-9]+$)|([0-9]+.[0-9]+$)`); err != nil {
 		return err
 	}
 

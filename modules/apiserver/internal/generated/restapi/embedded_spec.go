@@ -1457,15 +1457,16 @@ func init() {
       ],
       "properties": {
         "cpu": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^([0-9]+$)|([0-9]+.[0-9]+$)"
         },
         "memory": {
           "type": "string",
-          "pattern": "^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$"
+          "pattern": "^([0-9]+$)|([0-9]+.[0-9]+$)"
         },
         "volumeSize": {
           "type": "string",
-          "pattern": "^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$"
+          "pattern": "^([0-9]+$)|([0-9]+.[0-9]+$)"
         }
       }
     },
@@ -3310,15 +3311,16 @@ func init() {
       ],
       "properties": {
         "cpu": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^([0-9]+$)|([0-9]+.[0-9]+$)"
         },
         "memory": {
           "type": "string",
-          "pattern": "^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$"
+          "pattern": "^([0-9]+$)|([0-9]+.[0-9]+$)"
         },
         "volumeSize": {
           "type": "string",
-          "pattern": "^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$"
+          "pattern": "^([0-9]+$)|([0-9]+.[0-9]+$)"
         }
       }
     },

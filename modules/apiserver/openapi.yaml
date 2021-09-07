@@ -908,18 +908,18 @@ definitions:
     properties:
       cpu:
         type: string
-        pattern: "^([0-9]+$)|([0-9]+\.[0-9]+)$"
+        pattern: "^([0-9]+$)|([0-9]+.[0-9]+$)"
         # cpu is measured in # of cores: 1, 1.5, 2, etc
 
       memory:
         type: string
-        pattern: "^([0-9]+$)|([0-9]+\.[0-9]+)$"
+        pattern: "^([0-9]+$)|([0-9]+.[0-9]+$)"
         # memory is measured in Gi
         # 1.5, 1, 2, 0.5
 
       volumeSize:
         type: string
-        pattern: "^([0-9]+$)|([0-9]+\.[0-9]+)$"
+        pattern: "^([0-9]+$)|([0-9]+.[0-9]+$)"
         # disk is measured in Gi
         # 1, 1.5, 1, 2
 
