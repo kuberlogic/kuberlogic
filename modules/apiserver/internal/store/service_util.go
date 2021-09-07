@@ -9,8 +9,10 @@ import (
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	util "github.com/kuberlogic/operator/modules/operator/service-operator/util/kuberlogic"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"strconv"
 )
 
 func getServiceExternalConnection(c *kubernetes.Clientset, log logging.Logger, kls *kuberlogicv1.KuberLogicService) (*models.ServiceExternalConnection, error) {
@@ -197,6 +199,20 @@ func getServiceInstanceLogs(c *kubernetes.Clientset, kls *kuberlogicv1.KuberLogi
 		}
 	}
 	return logs, false, nil
+}
+
+// memoryQuantityAsGi returns a string representation of a resource.Quantity
+// converted to a Gi representation
+// e.g, 512Mi = 0.5Gi, 1Gi = 1Gi
+func memoryQuantityAsGi(m resource.Quantity) string {
+	return strconv.FormatFloat(float64(m.Value())/float64(1024*1024*1025), 'f', -1, 64)
+}
+
+// cpuQuantityAsCoreShares returns a string representation of a resource.Quantity
+// converted to a number of CPU cores assigned
+// e.g. 100m = 0.1. 1 = 1
+func cpuQuantityAsCoreShares(m resource.Quantity) string {
+	return strconv.FormatFloat(float64(m.MilliValue())/float64(1000), 'f', -1, 64)
 }
 
 func int64AsPointer(x int64) *int64 {
