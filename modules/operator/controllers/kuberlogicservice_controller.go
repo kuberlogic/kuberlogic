@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/monitoring"
@@ -17,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sync"
 	"time"
@@ -24,6 +24,8 @@ import (
 
 const (
 	klsServiceNotReadyDelaySec = 300
+
+	klsFinalizer = kuberlogicv1.Group + "/service-finalizer"
 )
 
 // KuberLogicServiceReconciler reconciles a KuberLogicServices object
@@ -46,9 +48,6 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	mu.Lock()
 	defer mu.Unlock()
 
-	// metrics key
-	monitoringKey := fmt.Sprintf(req.String())
-
 	// Fetch the KuberLogicServices instance
 	kls := &kuberlogicv1.KuberLogicService{}
 	err := r.Get(ctx, req.NamespacedName, kls)
@@ -58,14 +57,46 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
 			log.Info(req.Namespace, req.Name, " has been deleted")
-			r.MonitoringCollector.ForgetKuberlogicService(monitoringKey)
+
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
 		log.Error(err, "Failed to get KuberLogicService")
 		return ctrl.Result{}, err
 	}
-	defer r.MonitoringCollector.MonitorKuberlogicService(monitoringKey, kls)
+	defer r.MonitoringCollector.MonitorKuberlogicService(kls)
+
+	// fetch tenant information
+	kt := new(kuberlogicv1.KuberLogicTenant)
+	if err := r.Get(ctx, types.NamespacedName{Name: kls.Namespace, Namespace: ""}, kt); err != nil {
+		log.Error(err, "Failed to get kuberlogictenant")
+		return ctrl.Result{}, err
+	}
+
+	if kls.DeletionTimestamp != nil {
+		log.Info("kuberlogicservice is pending for deletion")
+		if controllerutil.ContainsFinalizer(kls, klsFinalizer) {
+			if err := r.finalize(ctx, kt, kls, log); err != nil {
+				log.Error(err, "error finalizing kuberlogicservice")
+				return ctrl.Result{}, err
+			}
+			controllerutil.RemoveFinalizer(kls, klsFinalizer)
+			if err := r.Update(ctx, kls); err != nil {
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{}, nil
+		}
+	}
+
+	if !controllerutil.ContainsFinalizer(kls, klsFinalizer) {
+		log.Info("adding finalizer", "finalizer", klsFinalizer)
+		controllerutil.AddFinalizer(kls, klsFinalizer)
+		err := r.Update(ctx, kls)
+		if err != nil {
+			log.Error(err, "error adding finalizer")
+		}
+		return ctrl.Result{}, err
+	}
 
 	op, err := serviceOperator.GetOperator(kls.Spec.Type)
 	if err != nil {
@@ -91,7 +122,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	op.InitFrom(serviceObj)
-	return r.update(ctx, kls, op, log)
+	return r.update(ctx, kt, kls, op, log)
 }
 
 func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op interfaces.OperatorInterface, kls *kuberlogicv1.KuberLogicService, ctx context.Context) error {
@@ -149,8 +180,16 @@ func (r *KuberLogicServiceReconciler) create(ctx context.Context, kls *kuberlogi
 	return ctrl.Result{}, nil
 }
 
-func (r *KuberLogicServiceReconciler) update(ctx context.Context, kls *kuberlogicv1.KuberLogicService, op interfaces.OperatorInterface, log logr.Logger) (reconcile.Result, error) {
-	// sync status first
+func (r *KuberLogicServiceReconciler) update(ctx context.Context, kt *kuberlogicv1.KuberLogicTenant, kls *kuberlogicv1.KuberLogicService, op interfaces.OperatorInterface, log logr.Logger) (reconcile.Result, error) {
+	log.Info("Save service to a kuberlogictenant")
+
+	kt.SaveTenantServiceInfo(kls)
+	if err := r.Status().Update(ctx, kt); err != nil {
+		log.Error(err, "Error updating kuberlogictenant status")
+		return ctrl.Result{}, err
+	}
+
+	// sync service operator status to kls and check if reconciliation is allowed in this state
 	syncStatus(kls, op)
 	if err := r.Status().Update(ctx, kls); err != nil {
 		log.Error(err, "error updating status")
@@ -179,6 +218,16 @@ func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&postgresv1.Postgresql{}).
 		Owns(&corev1.Secret{}).
 		Complete(r)
+}
+
+func (r *KuberLogicServiceReconciler) finalize(ctx context.Context, kt *kuberlogicv1.KuberLogicTenant, kls *kuberlogicv1.KuberLogicService, log logr.Logger) error {
+	log.Info("Finalizing service")
+	kt.ForgetTenantServiceInfo(kls)
+	if err := r.Status().Update(ctx, kt); err != nil {
+		return err
+	}
+	r.MonitoringCollector.ForgetKuberlogicService(kls)
+	return nil
 }
 
 func syncStatus(kls *kuberlogicv1.KuberLogicService, op interfaces.OperatorInterface) {

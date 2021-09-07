@@ -11,6 +11,7 @@ type KuberLogicTenantSpec struct {
 
 type KuberLogicTenantStatus struct {
 	Conditions []metav1.Condition `json:"conditions"`
+	Services   map[string]string  `json:"services,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -75,6 +76,19 @@ func (kt *KuberLogicTenant) setConditionStatus(cond string, status bool, msg, re
 		c.Status = metav1.ConditionTrue
 	}
 	meta.SetStatusCondition(&kt.Status.Conditions, c)
+}
+
+// SaveTenantServiceInfo saves kls name and type into a Kuberlogictenant
+func (kt *KuberLogicTenant) SaveTenantServiceInfo(kls *KuberLogicService) {
+	if len(kt.Status.Services) == 0 {
+		kt.Status.Services = make(map[string]string, 1)
+	}
+	kt.Status.Services[kls.Name] = kls.GetServiceType()
+}
+
+// ForgetTenantServiceInfo removes kls name and type from Status
+func (kt *KuberLogicTenant) ForgetTenantServiceInfo(kls *KuberLogicService) {
+	delete(kt.Status.Services, kls.Name)
 }
 
 func init() {

@@ -10,16 +10,20 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"sync"
 )
 
 type API struct {
-	query    *url.Values
-	baseUrl  string
-	username string
-	password string
+	query      *url.Values
+	baseUrl    string
+	username   string
+	password   string
+	defaultOrg int
 
-	log logr.Logger
+	apiMu sync.Mutex
+	log   logr.Logger
 }
 
 func newHttpClient() *http.Client {
@@ -34,14 +38,15 @@ func buildUrl(baseUrl, endpoint string) string {
 
 func newGrafanaApi(log logr.Logger, cfg cfg.Grafana) *API {
 	return &API{
-		baseUrl:  cfg.Endpoint,
-		username: cfg.Login,
-		password: cfg.Password,
-		log:      log,
+		baseUrl:    cfg.Endpoint,
+		username:   cfg.Login,
+		password:   cfg.Password,
+		defaultOrg: DEFAULT_ORG,
+		log:        log,
 	}
 }
 
-func (api *API) sendRequestTo(method, endpoint string, params interface{}) (*http.Response, error) {
+func (api *API) sendRequestTo(method, endpoint string, orgId int, params interface{}) (*http.Response, error) {
 	var jsonBody []byte
 	var err error
 	if params != nil && method != http.MethodGet {
@@ -71,6 +76,7 @@ func (api *API) sendRequestTo(method, endpoint string, params interface{}) (*htt
 	}()
 
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Grafana-Org-Id", strconv.Itoa(orgId))
 	req.SetBasicAuth(api.username, api.password)
 
 	client := newHttpClient()
