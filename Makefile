@@ -78,7 +78,7 @@ after-deploy:
 	kubectl get secret kuberlogic-registry --namespace=default -o yaml --export | kubectl apply -f -
 
 # Deploy kuberlogic-operator in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests kustomize deploy-certmanager
+deploy: kustomize manifests deploy-certmanager
 	cd config/manager && $(KUSTOMIZE) edit set image operator=$(OPERATOR_IMG)
 	cd config/updater && $(KUSTOMIZE) edit set image updater=$(UPDATER_IMG)
 	$(KUSTOMIZE) build config/default | envsubst | kubectl apply -f -
@@ -91,7 +91,7 @@ undeploy: kustomize undeploy-certmanager
 	$(KUSTOMIZE) build config/default | envsubst | kubectl delete -f -
 
 # Install CRDs into a cluster
-install:
+install: kustomize
 	kubectl apply -f config/certmanager/cert-manager-crd.yaml \
 	 -f config/keycloak/crd/ \
 	 -f config/crd/bases/mysql/presslabs/ \
@@ -99,7 +99,7 @@ install:
 	 $(KUSTOMIZE) build config/crd | kubectl apply -f -
 
 # Uninstall CRDs into a cluster
-uninstall:
+uninstall: kustomize
 	kubectl delete -f config/certmanager/cert-manager-crd.yaml \
 	 -f config/keycloak/crd/ \
 	 -f config/crd/bases/mysql/presslabs/ \
