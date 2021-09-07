@@ -75,7 +75,9 @@ show-resources:
 
 after-deploy:
 	kubectl config set-context --current --namespace=$(NAMESPACE)
-	kubectl get secret kuberlogic-registry --namespace=default -o yaml --export | kubectl apply -f -
+	kubectl get secret kuberlogic-registry --namespace=default -o json \
+	| jq 'del(.metadata["namespace","creationTimestamp","resourceVersion","selfLink","uid"])' \
+	| kubectl apply -f -
 
 # Deploy kuberlogic-operator in the configured Kubernetes cluster in ~/.kube/config
 deploy: kustomize manifests deploy-certmanager
