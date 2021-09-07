@@ -13,7 +13,7 @@ import (
 // finalize function "resolves" an alert when kuberlogictenant is deleted.
 func finalize(ctx context.Context, cfg *cfg.Config, c client.Client, kt *kuberlogicv1.KuberLogicTenant, log logr.Logger) error {
 	log.Info("processing finalizer")
-	if !kt.Spec.GrafanaDisabled && cfg.Grafana.Enabled {
+	if cfg.Grafana.Enabled {
 		log.Info("processing grafana organizations and users")
 		if err := grafana.NewGrafanaSyncer(kt, log, cfg.Grafana).DeleteOrganizationAndUsers(kt.Name); err != nil {
 			return err

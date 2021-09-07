@@ -82,7 +82,7 @@ func (r *KuberlogicTenantReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, err
 	}
 
-	if !kt.Spec.GrafanaDisabled && r.Config.Grafana.Enabled {
+	if r.Config.Grafana.Enabled {
 		if err := grafana.NewGrafanaSyncer(kt, log, r.Config.Grafana).Sync(); err != nil {
 			kt.SyncFailed(err.Error())
 			log.Info("grafana sync failed", "error", err)
