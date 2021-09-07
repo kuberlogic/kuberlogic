@@ -12,7 +12,7 @@ const (
 	backupImage = "backup-postgresql"
 	backupTag   = "latest"
 
-	operatorConfigMap = "cm-postgres-operator"
+	operatorConfigMap = "postgres-operator"
 	postgreSuperUser  = "postgres" // TODO: Could be grabbed from config map ^
 )
 
