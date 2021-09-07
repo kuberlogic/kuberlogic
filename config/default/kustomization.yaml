@@ -10,10 +10,9 @@ resources:
   - ../monitoring
   - ../operators/postgresql/zalando
   - ../operators/mysql/presslabs
-  - ../operators/redis/spotahome
   - ../keycloak
 # Adds namespace to all resources.
-namespace: default
+namespace: kuberlogic
 
 # Value of this field is prepended to the
 # names of all resources, e.g. a deployment named

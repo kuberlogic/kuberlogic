@@ -1,0 +1,7 @@
+apiVersion: kuberlogic.com/v1
+kind: KuberLogicService
+metadata:
+  name: grafana
+spec:
+  type: mysql
+  replicas: 1

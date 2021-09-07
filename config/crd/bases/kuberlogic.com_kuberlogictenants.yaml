@@ -34,6 +34,8 @@ spec:
             type: object
           spec:
             properties:
+              grafanaDisabled:
+                type: boolean
               ownerEmail:
                 type: string
             required:

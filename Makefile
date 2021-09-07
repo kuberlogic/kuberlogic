@@ -83,7 +83,12 @@ deploy: manifests kustomize
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 undeploy: kustomize
+	kubectl delete keycloakusers --all-namespaces --all; \
+	kubectl delete keycloakclients --all-namespaces --all; \
+	kubectl delete keycloakrealms --all-namespaces --all; \
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
+
+
 
 deploy-requirements: kustomize
 	# cert-manager included non-crd resources
@@ -98,9 +103,15 @@ deploy-requirements: kustomize
 
 undeploy-requirements: kustomize
 	for module in config/certmanager/cert-manager.yaml \
-					  config/keycloak/; do \
+					  config/keycloak/crd/*.yaml; do \
   		kubectl delete -f $${module} ;\
   	done
+
+deploy-grafana:
+	$(KUSTOMIZE) build config/monitoring/grafana | kubectl apply -f -
+
+undeploy-grafana:
+	$(KUSTOMIZE) build config/monitoring/grafana | kubectl delete -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen

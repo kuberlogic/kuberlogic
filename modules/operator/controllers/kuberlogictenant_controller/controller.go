@@ -32,7 +32,7 @@ const (
 )
 
 func (r *KuberlogicTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithValues("kuberlogictenant", req.NamespacedName)//"enabled", r.Config.Grafana.Enabled,
+	log := r.Log.WithValues("kuberlogictenant", req.NamespacedName) //"enabled", r.Config.Grafana.Enabled,
 	//"login", r.Config.Grafana.Login,
 	//"password", r.Config.Grafana.Password,
 	//"endpoint", r.Config.Grafana.Endpoint,
@@ -82,7 +82,7 @@ func (r *KuberlogicTenantReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, err
 	}
 
-	if r.Config.Grafana.Enabled {
+	if !kt.Spec.GrafanaDisabled && r.Config.Grafana.Enabled {
 		if err := grafana.NewGrafanaSyncer(kt, log, r.Config.Grafana).Sync(); err != nil {
 			kt.SyncFailed(err.Error())
 			log.Info("grafana sync failed", "error", err)

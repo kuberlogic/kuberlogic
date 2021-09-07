@@ -6,7 +6,8 @@ import (
 )
 
 type KuberLogicTenantSpec struct {
-	OwnerEmail string `json:"ownerEmail"`
+	OwnerEmail      string `json:"ownerEmail"`
+	GrafanaDisabled bool   `json:"grafanaDisabled,omitempty"`
 }
 
 type KuberLogicTenantStatus struct {
