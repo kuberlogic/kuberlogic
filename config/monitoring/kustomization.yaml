@@ -5,4 +5,4 @@ resources:
 - kube-state-metrics.yaml
 - victoriametrics.yaml
 - alertmanager.yml
-#- grafan
+- grafana

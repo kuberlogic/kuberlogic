@@ -173,7 +173,7 @@ spec:
             - -datasource.url=http://localhost:8428
             - -remoteWrite.url=http://localhost:8428
             - -remoteRead.url=http://localhost:8428
-            - -notifier.url=http://cm-alertmanager-service:9093
+            - -notifier.url=http://alertmanager-service:9093
             - -rule=/etc/vmalert/alert.rules
           volumeMounts:
             - mountPath: /etc/vmalert

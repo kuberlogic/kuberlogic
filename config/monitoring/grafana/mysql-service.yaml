@@ -1,7 +1,7 @@
-apiVersion: kuberlogic.com/v1
-kind: KuberLogicService
+apiVersion: mysql.presslabs.org/v1alpha1
+kind: MysqlCluster
 metadata:
   name: grafana
 spec:
-  type: mysql
   replicas: 1
+  secretName: grafana-mysql

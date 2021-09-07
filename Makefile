@@ -51,6 +51,7 @@ endif
 GOPRIVATE=github.com/kuberlogic
 
 SENTRY_DSN =
+NAMESPACE ?= kuberlogic
 
 all: manager
 
@@ -66,52 +67,52 @@ manager: generate fmt vet
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet manifests
 	cd modules/operator ;\
-	go run main.go ;\
+	go run main.go
 
-# Install CRDs into a cluster
-install: manifests kustomize
-	$(KUSTOMIZE) build config/crd | kubectl apply -f -
+show-resources:
+	kubectl api-resources --verbs=list --namespaced -o name \
+      | xargs -n 1 kubectl get --show-kind --ignore-not-found -n $(NAMESPACE)
 
-# Uninstall CRDs from a cluster
-uninstall: manifests kustomize
-	$(KUSTOMIZE) build config/crd | kubectl delete -f -
+after-deploy:
+	kubectl config set-context --current --namespace=$(NAMESPACE)
+	kubectl get secret kuberlogic-registry --namespace=default -o yaml --export | kubectl apply -f -
 
 # Deploy kuberlogic-operator in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests kustomize
+deploy: manifests kustomize deploy-certmanager
 	cd config/manager && $(KUSTOMIZE) edit set image operator=$(OPERATOR_IMG)
 	cd config/updater && $(KUSTOMIZE) edit set image updater=$(UPDATER_IMG)
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	$(KUSTOMIZE) build config/default | envsubst | kubectl apply -f -
+	$(MAKE) after-deploy
 
-undeploy: kustomize
+undeploy: kustomize undeploy-certmanager
 	kubectl delete keycloakusers --all-namespaces --all; \
 	kubectl delete keycloakclients --all-namespaces --all; \
 	kubectl delete keycloakrealms --all-namespaces --all; \
-	$(KUSTOMIZE) build config/default | kubectl delete -f -
+	$(KUSTOMIZE) build config/default | envsubst | kubectl delete -f -
 
+# Install CRDs into a cluster
+install:
+	kubectl apply -f config/certmanager/cert-manager-crd.yaml \
+	 -f config/keycloak/crd/ \
+	 -f config/crd/bases/mysql/presslabs/ \
+	 -f config/crd/bases/postgresql/zalando/
+	 $(KUSTOMIZE) build config/crd | kubectl apply -f -
 
+# Uninstall CRDs into a cluster
+uninstall:
+	kubectl delete -f config/certmanager/cert-manager-crd.yaml \
+	 -f config/keycloak/crd/ \
+	 -f config/crd/bases/mysql/presslabs/ \
+	 -f config/crd/bases/postgresql/zalando/
+	 $(KUSTOMIZE) build config/crd | kubectl delete -f -
 
-deploy-requirements: kustomize
-	# cert-manager included non-crd resources
-	# it can not configured with kustomization due to tight integrate with namespace=cert-manager
-	# (see cert-manager.yaml for the details)
-	for module in config/certmanager/cert-manager.yaml \
-				  config/keycloak/crd/*.yaml; do \
-  		kubectl apply -f $${module} ;\
-  	done; \
-  	# waiting for cert-manager-webhook endpoint assign an ip address \
-  	kubectl wait -n cert-manager --for=condition=Ready pods --all --timeout=5m
+deploy-certmanager:
+	kubectl apply -f config/certmanager/cert-manager.yaml
+	kubectl wait -n cert-manager --for=condition=Ready pods --all --timeout=5m
+	sleep 10 # need to wait cert-manager deployments
 
-undeploy-requirements: kustomize
-	for module in config/certmanager/cert-manager.yaml \
-					  config/keycloak/crd/*.yaml; do \
-  		kubectl delete -f $${module} ;\
-  	done
-
-deploy-grafana:
-	$(KUSTOMIZE) build config/monitoring/grafana | kubectl apply -f -
-
-undeploy-grafana:
-	$(KUSTOMIZE) build config/monitoring/grafana | kubectl delete -f -
+undeploy-certmanager:
+	kubectl delete -f config/certmanager/cert-manager.yaml
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen

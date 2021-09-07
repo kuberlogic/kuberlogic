@@ -41,6 +41,6 @@ spec:
             - name: GF_DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: grafana-cred
+                  name: grafana-mysql
                   key: ROOT_PASSWORD
 
