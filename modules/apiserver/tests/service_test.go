@@ -33,8 +33,8 @@ var pgTestService = tService{
 	replicas:    0,
 	newConf:     map[string]string{"shared_buffers": "16MB", "max_connections": "50"},
 	conf:        map[string]string{"shared_buffers": "32MB", "max_connections": "10"},
-	limits:      map[string]string{"cpu": "250m", "memory": "512Mi", "volumeSize": "1Gi"},
-	newLimits:   map[string]string{"cpu": "300m", "memory": "512Mi", "volumeSize": "1Gi"},
+	limits:      map[string]string{"cpu": "0.25", "memory": "0.5", "volumeSize": "1"},
+	newLimits:   map[string]string{"cpu": "0.3", "memory": "0.5", "volumeSize": "1"},
 	force:       false, // do not create a service
 	//version:     "12.1.3",
 }
@@ -47,8 +47,8 @@ var mysqlTestService = tService{
 	replicas:    0,
 	newConf:     map[string]string{"max_allowed_packet": "64Mb"},
 	conf:        map[string]string{"max_allowed_packet": "32Mb"},
-	limits:      map[string]string{"cpu": "250m", "memory": "512Mi", "volumeSize": "1Gi"},
-	newLimits:   map[string]string{"cpu": "300m", "memory": "512Mi", "volumeSize": "1Gi"},
+	limits:      map[string]string{"cpu": "0.25", "memory": "0.5", "volumeSize": "1"},
+	newLimits:   map[string]string{"cpu": "0.3", "memory": "0.5", "volumeSize": "1"},
 	force:       false, // do not create a service
 	//version:     "5.7.26",
 }
@@ -144,7 +144,7 @@ func (s *tService) TryCreateWithSmallCPULimits(t *testing.T) {
 		"type":     s.type_,
 		"replicas": s.replicas,
 		// min: 250m
-		"limits": map[string]string{"cpu": "200m", "memory": "512Mi", "volumeSize": "1Gi"},
+		"limits": map[string]string{"cpu": "0.2", "memory": "0.5", "volumeSize": "1"},
 	}
 	api.setJsonRequestBody(params)
 	api.sendRequestTo(http.MethodPost, "/services/")
@@ -162,7 +162,7 @@ func (s *tService) TryCreateWithSmallMemoryLimits(t *testing.T) {
 		"type":     s.type_,
 		"replicas": s.replicas,
 		// min: 512Mi
-		"limits": map[string]string{"cpu": "250m", "memory": "500Mi", "volumeSize": "1Gi"},
+		"limits": map[string]string{"cpu": "0.25", "memory": "0.4", "volumeSize": "1"},
 	}
 	api.setJsonRequestBody(params)
 	api.sendRequestTo(http.MethodPost, "/services/")
@@ -180,7 +180,7 @@ func (s *tService) TryCreateWithSmallDiskLimits(t *testing.T) {
 		"type":     s.type_,
 		"replicas": s.replicas,
 		// min: 1Gi
-		"limits": map[string]string{"cpu": "250m", "memory": "512Mi", "volumeSize": "900Mi"},
+		"limits": map[string]string{"cpu": "0.25", "memory": "0.5", "volumeSize": "0.9"},
 	}
 	api.setJsonRequestBody(params)
 	api.sendRequestTo(http.MethodPost, "/services/")
@@ -197,10 +197,26 @@ func (s *tService) TryDecreaseVolumeSize(t *testing.T) {
 			"name":   s.name,
 			"ns":     s.ns,
 			"type":   s.type_,
-			"limits": map[string]string{"cpu": "250m", "memory": "512Mi", "volumeSize": "800Mi"},
+			"limits": map[string]string{"cpu": "0.25", "memory": "0.5", "volumeSize": "0.8"},
 		})
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
 	api.responseCodeShouldBe(503)
+	api.encodeResponseToJson()
+	api.responseShouldMatchJson(`{"message": "error updating service"}`)
+}
+
+func (s *tService) TryKubernetesResourceSyntax(t *testing.T) {
+	api := newApi(t)
+	api.setBearerToken()
+	api.setJsonRequestBody(
+		map[string]interface{}{
+			"name":   s.name,
+			"ns":     s.ns,
+			"type":   s.type_,
+			"limits": map[string]string{"cpu": "250mi", "memory": "512Mi", "volumeSize": "1Gi"},
+		})
+	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/", s.ns, s.name))
+	api.responseCodeShouldBe(400)
 	api.encodeResponseToJson()
 	api.responseShouldMatchJson(`{"message": "error updating service"}`)
 }
