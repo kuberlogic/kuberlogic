@@ -3,9 +3,10 @@
 
 ## Kuberlogic operator
 
-### Deploy operators 
+### Deploy operators
 
 This step is responsible for deploy operators:
+
 - kuberlogic
 - postgresql by [Zalando](https://github.com/zalando/postgres-operator)
 - mysql by [Presslabs](https://github.com/presslabs/mysql-operator)
@@ -21,7 +22,8 @@ This step is responsible for deploy operators:
     minikube status
     ```
 4. Make sure you have Go installed (https://golang.org/doc/install).
-4. Create a secret in kubernetes to access gitlab registry (learn more here https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#inspecting-the-secret-regcred)
+4. Create a secret in kubernetes to access gitlab registry (learn more
+   here https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#inspecting-the-secret-regcred)
     ```shell script
     DOCKER_REGISTRY_SERVER=https://quay.io
     DOCKER_USER=<username, the one that was given to you during the onboarding>
@@ -32,7 +34,7 @@ This step is responsible for deploy operators:
     ```shell script
    make install
     ```
-   
+
 4. Deploy operators
     ```shell script
    make deploy
