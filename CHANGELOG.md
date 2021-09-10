@@ -1,4 +1,4 @@
-## [v0.0.21] - 2021-09-10
+## [v0.0.22] - 2021-09-10
 ### Added
 - Mysql and Postgresql are supported
 - Monitoring and grafana integrations
