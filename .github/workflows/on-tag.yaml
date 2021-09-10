@@ -20,9 +20,7 @@ jobs:
         uses: docker://antonyurchenko/git-release:v4.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DRAFT_RELEASE: true
           PRE_RELEASE: true
-          ALLOW_EMPTY_CHANGELOG: true
         with:
           args: |
             linux-amd64.zip
