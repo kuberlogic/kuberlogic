@@ -26,7 +26,7 @@ spec:
             - "$RUN"
           env:
             - name: REMOTE_HOST
-              value: cm-kuberlogic-apiserver:8001
+              value: kuberlogic-apiserver:8001
             - name: KUBERLOGIC_AUTH_PROVIDER
               value: $KUBERLOGIC_AUTH_PROVIDER
             - name: MINIO_ACCESS_KEY

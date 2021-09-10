@@ -100,7 +100,7 @@ jobs:
 
       - name: Deploy operator
         run: |
-          make deploy-requirements
+          make install
           make deploy
 
       - name: Setup minio for backup storage

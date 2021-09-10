@@ -35,8 +35,8 @@ KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(shell kubectl get svc keycloak -o jsonpat
 
 INTERNAL_GRAFANA_IP=$(shell kubectl get pod -l app=grafana -o go-template="{{range .items}}{{.status.podIP}}{{end}}")
 
-GRAFANA_ENABLED = true
-GRAFANA_ENDPOINT = http://$(INTERNAL_GRAFANA_IP):3000/
+KUBERLOGIC_GRAFANA_ENABLED = true
+KUBERLOGIC_GRAFANA_ENDPOINT = http://$(INTERNAL_GRAFANA_IP):3000/
 
 test:
 	POD_NAMESPACE=default go test -v \

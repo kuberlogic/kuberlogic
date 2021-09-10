@@ -32,7 +32,7 @@ const (
 )
 
 func (r *KuberlogicTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithValues("kuberlogictenant", req.NamespacedName)//"enabled", r.Config.Grafana.Enabled,
+	log := r.Log.WithValues("kuberlogictenant", req.NamespacedName) //"enabled", r.Config.Grafana.Enabled,
 	//"login", r.Config.Grafana.Login,
 	//"password", r.Config.Grafana.Password,
 	//"endpoint", r.Config.Grafana.Endpoint,

@@ -3,5 +3,4 @@ kind: Kustomization
 resources:
   - deployment.yaml
 
-namespace: default
 namePrefix: kl-

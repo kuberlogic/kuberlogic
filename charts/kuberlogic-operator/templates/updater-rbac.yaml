@@ -23,7 +23,7 @@ metadata:
   labels:
     app.kubernetes.io/name: "kuberlogic-update"
     {{- include "operator.labels" . | nindent 4 }}
-  name: cm-kuberlogic-updater
+  name: kuberlogic-updater
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
