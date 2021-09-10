@@ -22,6 +22,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DRAFT_RELEASE: true
           PRE_RELEASE: true
+          ALLOW_EMPTY_CHANGELOG: true
         with:
           args: |
             linux-amd64.zip
