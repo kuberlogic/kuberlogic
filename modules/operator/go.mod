@@ -11,6 +11,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/jackc/pgx/v4 v4.10.1
 	github.com/kuberlogic/zapsentry v1.6.2
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pkg/errors v0.9.1
 	github.com/presslabs/mysql-operator v0.5.0-rc.2
 	github.com/prometheus/client_golang v1.7.1

@@ -11,15 +11,17 @@ import (
 type grafana struct {
 	kt *v1.KuberLogicTenant
 
-	api *API
-	log logr.Logger
+	datasourceAddress string
+	api               *API
+	log               logr.Logger
 }
 
 func NewGrafanaSyncer(kt *v1.KuberLogicTenant, log logr.Logger, cfg cfg.Grafana) *grafana {
 	return &grafana{
-		kt:  kt,
-		api: newGrafanaApi(log, cfg),
-		log: log,
+		kt:                kt,
+		api:               newGrafanaApi(log, cfg),
+		datasourceAddress: cfg.DefaultDatasourceEndpoint,
+		log:               log,
 	}
 }
 
@@ -33,6 +35,10 @@ func (gr *grafana) Sync() error {
 	// this user is used by the Kuberlogic tenant user to access dashboards
 	if err := gr.ensureUser(gr.kt.Spec.OwnerEmail, "", uuid.New().String(), VIEWER_ROLE, orgId); err != nil {
 		return errors.Wrap(err, "error creating grafana viewer user")
+	}
+	// ensure that Kuberlogic datasource exists
+	if err := gr.ensureDatasource(orgId); err != nil {
+		return errors.Wrap(err, "error managing Grafana datasource")
 	}
 	// create Grafana dashboards
 	if err := gr.ensureDashboards(gr.kt.Status.Services, orgId); err != nil {
