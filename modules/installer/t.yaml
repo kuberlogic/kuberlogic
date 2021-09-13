@@ -1,0 +1,11 @@
+---
+debugLogs: true
+kubeconfigPath: ~/.kube/config
+
+# required values
+namespace: kuberlogic
+registry:
+  server: https://quay.io
+  username: ynnt
+  password: D1pQ+L889NzoLUVtluN8iQJbm/SPYXfvPXQP47ePULonOw40ifFWcPvZNLHWSUA1
+
