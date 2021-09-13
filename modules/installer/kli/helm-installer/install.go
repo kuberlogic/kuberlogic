@@ -27,42 +27,49 @@ func (i *HelmInstaller) Install(args []string) error {
 		return errors.Wrap(err, "error creating image pull secret")
 	}
 
-	// install CRDs into cluster
-	i.Log.Infof("Installing CRDs")
-	if err := deployCRDs(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
-		return errors.Wrap(err, "error installing CRDs")
+	err := func() error {
+		// install CRDs into cluster
+		i.Log.Infof("Installing CRDs")
+		if err := deployCRDs(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+			return errors.Wrap(err, "error installing CRDs")
+		}
+
+		if installPhase == "all" || installPhase == "dependencies" {
+			i.Log.Infof("Installing authentication component")
+			if err := deployAuth(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+				return errors.Wrap(err, "error installing keycloak")
+			}
+
+			i.Log.Infof("Installing service operators")
+			if err := deployServiceOperators(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+				return errors.Wrap(err, "error installing service operators")
+			}
+
+			i.Log.Infof("Installing monitoring component")
+			if err := deployMonitoring(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+				return errors.Wrap(err, "error installing monitoring component")
+			}
+		}
+
+		if installPhase == "all" || installPhase == "kuberlogic" {
+			i.Log.Infof("Installing operator")
+			if err := deployOperator(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+				return errors.Wrap(err, "error installing operator")
+			}
+
+			i.Log.Infof("Installing apiserver")
+			if err := deployApiserver(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+				return errors.Wrap(err, "error installing apiserver")
+			}
+		}
+		return nil
+	}()
+	if err != nil {
+		i.Log.Infof("Installation failed: %v", err)
+		internal.FailRelease(i.ReleaseNamespace, i.ClientSet)
+		return err
 	}
-
-	if installPhase == "all" || installPhase == "dependencies" {
-		i.Log.Infof("Installing authentication component")
-		if err := deployAuth(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
-			return errors.Wrap(err, "error installing keycloak")
-		}
-
-		i.Log.Infof("Installing service operators")
-		if err := deployServiceOperators(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
-			return errors.Wrap(err, "error installing service operators")
-		}
-
-		i.Log.Infof("Installing monitoring component")
-		if err := deployMonitoring(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
-			return errors.Wrap(err, "error installing monitoring component")
-		}
-	}
-
-	if installPhase == "all" || installPhase == "kuberlogic" {
-		i.Log.Infof("Installing operator")
-		if err := deployOperator(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
-			return errors.Wrap(err, "error installing operator")
-		}
-
-		i.Log.Infof("Installing apiserver")
-		if err := deployApiserver(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
-			return errors.Wrap(err, "error installing apiserver")
-		}
-	}
-
-	_, err := internal.FinishRelease(i.ReleaseNamespace, i.ClientSet)
+	_, err = internal.FinishRelease(i.ReleaseNamespace, i.ClientSet)
 	i.Log.Infof("Installation completed successfully!")
 	return err
 }

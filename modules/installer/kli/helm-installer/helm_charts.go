@@ -4,7 +4,9 @@ import (
 	"embed"
 	"fmt"
 	logger "github.com/kuberlogic/operator/modules/installer/log"
+	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/release"
 	"io"
@@ -89,7 +91,9 @@ func findHelmRelease(name string, c *action.Configuration) (*release.Release, er
 	return nil, nil
 }
 
-func installHelmChart(name, ns string, chartReader io.Reader, locals, globals map[string]interface{}, c *action.Configuration, log logger.Logger) error {
+// releaseHelmChart computes values for Helm Chart and upgrades it if it is already installed
+// otherwise it installs it
+func releaseHelmChart(name, ns string, chartReader io.Reader, locals, globals map[string]interface{}, c *action.Configuration, log logger.Logger) error {
 	// load chart
 	chart, err := loader.LoadArchive(chartReader)
 	if err != nil {
@@ -100,18 +104,55 @@ func installHelmChart(name, ns string, chartReader io.Reader, locals, globals ma
 	if err != nil {
 		return fmt.Errorf("error computing values for a chart: %v", err)
 	}
+	log.Debugf("Releasing %s with values", name, resultVals)
 
+	// search for already installed release
+	r, err := findHelmRelease(name, c)
+	if err != nil {
+		return errors.Wrap(err, "error releasing chart")
+	}
+	if r == nil {
+		return installHelmChart(name, ns, chart, resultVals, c, log)
+	} else {
+		return upgradeHelmChart(name, ns, chart, resultVals, c, log)
+	}
+}
+
+// upgradeHelmChart upgrades a Helm chart with given values
+func upgradeHelmChart(name, ns string, chart *chart.Chart, values map[string]interface{}, c *action.Configuration, log logger.Logger) error {
 	// create install action
-	installAction := action.NewUpgrade(c)
+	action := action.NewUpgrade(c)
+	action.Force = true
+	action.Install = false
+	action.Namespace = ns
+	action.SkipCRDs = false
+	action.Timeout = time.Second * helmActionTimeoutSec
+	action.Wait = true
+	log.Debugf("Upgrade action configuration: %+v", action)
+
+	rel, err := action.Run(name, chart, values)
+	log.Debugf("Upgrade error for chart %s release %+v: %+v", name, rel, err)
+	if err != nil {
+		return fmt.Errorf("error upgrading %s:  %v", name, err)
+	}
+	log.Infof("%s successfully upgraded. Status: %+v\n", name, rel.Info.Status)
+	return nil
+}
+
+// installHelmChart installs a Helm chart with name `name` into a namespace `ns`
+func installHelmChart(name, ns string, chart *chart.Chart, values map[string]interface{}, c *action.Configuration, log logger.Logger) error {
+	// create install action
+	installAction := action.NewInstall(c)
 	installAction.Wait = true
 	installAction.Timeout = time.Second * helmActionTimeoutSec
 	installAction.Namespace = ns
-	installAction.Install = true
+	installAction.CreateNamespace = true
+	installAction.ReleaseName = name
+
 	installAction.SkipCRDs = false
 	log.Debugf("Install action configuration: %+v", installAction)
 
-	log.Debugf("Installing %s with values", name, resultVals)
-	rel, installErr := installAction.Run(name, chart, resultVals)
+	rel, installErr := installAction.Run(chart, values)
 	log.Debugf("installation error for chart %s release %+v: %+v", name, rel, installErr)
 	if installErr != nil {
 		return fmt.Errorf("error installing %s:  %v", name, installErr)
@@ -120,6 +161,7 @@ func installHelmChart(name, ns string, chartReader io.Reader, locals, globals ma
 	return nil
 }
 
+// uninstallHelmChart uninstalls a Helm Release with name `name`
 func uninstallHelmChart(name string, force bool, actConfig *action.Configuration, log logger.Logger) error {
 	release, err := findHelmRelease(name, actConfig)
 	if err != nil {
