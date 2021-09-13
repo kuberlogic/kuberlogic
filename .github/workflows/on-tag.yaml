@@ -16,6 +16,11 @@ jobs:
         run: |
           cat README.md > linux-amd64.zip
 
+      # create installer
+      # deploy cluster locally with installer
+      # run in-cluster tests
+      # release
+
       - name: Release
         uses: docker://antonyurchenko/git-release:v4.1.0
         env:
