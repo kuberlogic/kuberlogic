@@ -1,5 +1,7 @@
 package helm_installer
 
+import "github.com/kuberlogic/operator/modules/installer/internal"
+
 // helm_values.go contains various installation parameters that are later referenced during installation phase
 const (
 	// registry information for installation
@@ -36,7 +38,7 @@ const (
 var (
 	globalValues = map[string]interface{}{
 		"imagePullSecrets": []map[string]interface{}{
-			{"name": pullSecretName},
+			{"name": internal.ImagePullSecret},
 		},
 		"monitoringSelector": map[string]interface{}{
 			"key":   "core.kuberlogic.com/scrape",

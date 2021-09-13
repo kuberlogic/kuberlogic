@@ -54,14 +54,18 @@ func StartRelease(namespace string, clientSet *kubernetes.Clientset) (*ReleaseIn
 	if _, f, err := DiscoverReleaseInfo(namespace, clientSet); err != nil {
 		return nil, errors.Wrap(err, "error checking for release")
 	} else if f {
-		return nil, errors.New("release already exists: %v")
+		return nil, errors.New("release already exists")
 	}
 	cm := &v12.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      releaseConfigMapName,
 			Namespace: namespace,
 		},
+		Data: map[string]string{
+			cmStateKey: releaseStartedPhase,
+		},
 	}
+
 	cm, err := clientSet.CoreV1().ConfigMaps(namespace).Create(context.TODO(), cm, v1.CreateOptions{})
 	if err != nil {
 		return nil, err
@@ -72,7 +76,6 @@ func StartRelease(namespace string, clientSet *kubernetes.Clientset) (*ReleaseIn
 		Namespace: namespace,
 		cm:        cm,
 	}
-	err = r.updateState(releaseStartedPhase, clientSet)
 	return r, err
 }
 
