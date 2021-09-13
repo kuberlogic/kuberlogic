@@ -26,7 +26,8 @@ func PrepareEnvironment(namespace string, regServer, regPassword, regUser string
 		return errors.Wrap(err, "error creating a release namespace")
 	}
 
-	if err = createPullSecret(ImagePullSecret, namespace, regServer, regUser, regPassword, clientSet); err != nil {
+	err = createPullSecret(ImagePullSecret, namespace, regServer, regUser, regPassword, clientSet)
+	if err != nil && !k8serrors.IsNotFound(err) {
 		return errors.Wrap(err, "error creating image pull secret")
 	}
 
