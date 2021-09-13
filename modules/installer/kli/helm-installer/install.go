@@ -19,12 +19,12 @@ func (i *HelmInstaller) Install(args []string) error {
 		return errors.Wrap(err, "pre-install checks are failed")
 	}
 
-	// create metadata: release information and image pull secret
-	if _, err := internal.StartRelease(i.ReleaseNamespace, i.ClientSet); err != nil {
-		return errors.Wrap(err, "error starting release")
-	}
+	// prepare environment for release and start release process
 	if err := internal.PrepareEnvironment(i.ReleaseNamespace, i.Registry.Server, i.Registry.Password, i.Registry.Username, i.ClientSet); err != nil {
 		return errors.Wrap(err, "error creating image pull secret")
+	}
+	if _, err := internal.StartRelease(i.ReleaseNamespace, i.ClientSet); err != nil {
+		return errors.Wrap(err, "error starting release")
 	}
 
 	err := func() error {
