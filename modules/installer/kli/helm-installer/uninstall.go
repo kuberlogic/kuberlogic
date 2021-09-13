@@ -38,8 +38,8 @@ func (i *HelmInstaller) Uninstall(args []string) error {
 		}
 	}
 
-	i.Log.Infof("cleaning up installation metadata")
-	if err := deletePullSecret(pullSecretName, i.ReleaseNamespace, force, i.ClientSet); err != nil {
+	i.Log.Infof("cleaning up environment")
+	if err := internal.CleanupEnvironment(i.ReleaseNamespace, i.ClientSet); err != nil {
 		return errors.Wrap(err, "error deleting image pull secret")
 	}
 	if err := internal.CleanupReleaseInfo(i.ReleaseNamespace, i.ClientSet); err != nil {

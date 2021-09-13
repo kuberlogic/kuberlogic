@@ -23,7 +23,7 @@ func (i *HelmInstaller) Install(args []string) error {
 	if _, err := internal.StartRelease(i.ReleaseNamespace, i.ClientSet); err != nil {
 		return errors.Wrap(err, "error starting release")
 	}
-	if err := createPullSecret(pullSecretName, i.ReleaseNamespace, i.Registry.Server, i.Registry.Username, i.Registry.Password, i.ClientSet, i.Log); err != nil {
+	if err := internal.PrepareEnvironment(i.ReleaseNamespace, i.Registry.Server, i.Registry.Password, i.Registry.Username, i.ClientSet); err != nil {
 		return errors.Wrap(err, "error creating image pull secret")
 	}
 
