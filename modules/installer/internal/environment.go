@@ -22,12 +22,12 @@ func PrepareEnvironment(namespace string, regServer, regPassword, regUser string
 		},
 	}
 	_, err := clientSet.CoreV1().Namespaces().Create(context.TODO(), ns, v1.CreateOptions{})
-	if err != nil && !k8serrors.IsNotFound(err) {
+	if err != nil && !k8serrors.IsAlreadyExists(err) {
 		return errors.Wrap(err, "error creating a release namespace")
 	}
 
 	err = createPullSecret(ImagePullSecret, namespace, regServer, regUser, regPassword, clientSet)
-	if err != nil && !k8serrors.IsNotFound(err) {
+	if err != nil && !k8serrors.IsAlreadyExists(err) {
 		return errors.Wrap(err, "error creating image pull secret")
 	}
 
