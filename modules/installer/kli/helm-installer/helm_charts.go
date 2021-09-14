@@ -27,7 +27,7 @@ const (
 	helmApiserverChart = "apiserver"
 	helmUIChart        = "ui"
 
-	helmActionTimeoutSec = 600
+	helmActionTimeoutSec = 300
 )
 
 var (
@@ -68,21 +68,30 @@ func postgresOperatorChartReader() (io.Reader, error) {
 }
 
 func operatorChartReader() (io.Reader, error) {
-	return helmFs.Open("operator-0.1.0.tgz")
+	return helmFs.Open("kuberlogic-operator-0.1.0.tgz")
 }
 
 func apiserverChartReader() (io.Reader, error) {
-	return helmFs.Open("apiserver-0.1.0.tgz")
+	return helmFs.Open("kuberlogic-apiserver-0.1.0.tgz")
 }
 
-func findHelmRelease(name string, c *action.Configuration) (*release.Release, error) {
+func findHelmRelease(name string, c *action.Configuration, log logger.Logger) (*release.Release, error) {
 	list := action.NewList(c)
 	list.All = true
+	list.StateMask =
+		action.ListDeployed |
+			action.ListUninstalling |
+			action.ListPendingInstall |
+			action.ListPendingUpgrade |
+			action.ListPendingRollback |
+			action.ListFailed
 
 	releases, err := list.Run()
 	if err != nil {
 		return nil, err
 	}
+
+	log.Debugf("List of installed Helm releases: %v", releases)
 	for _, r := range releases {
 		if r.Name == name {
 			return r, nil
@@ -107,7 +116,7 @@ func releaseHelmChart(name, ns string, chartReader io.Reader, locals, globals ma
 	log.Debugf("Releasing %s with values", name, resultVals)
 
 	// search for already installed release
-	r, err := findHelmRelease(name, c)
+	r, err := findHelmRelease(name, c, log)
 	if err != nil {
 		return errors.Wrap(err, "error releasing chart")
 	}
@@ -122,8 +131,8 @@ func releaseHelmChart(name, ns string, chartReader io.Reader, locals, globals ma
 func upgradeHelmChart(name, ns string, chart *chart.Chart, values map[string]interface{}, c *action.Configuration, log logger.Logger) error {
 	// create install action
 	action := action.NewUpgrade(c)
-	action.Force = true
-	action.Install = false
+	action.Force = false
+	action.Install = true
 	action.Namespace = ns
 	action.SkipCRDs = false
 	action.Timeout = time.Second * helmActionTimeoutSec
@@ -148,7 +157,7 @@ func installHelmChart(name, ns string, chart *chart.Chart, values map[string]int
 	installAction.Namespace = ns
 	installAction.CreateNamespace = true
 	installAction.ReleaseName = name
-
+	installAction.IncludeCRDs = true
 	installAction.SkipCRDs = false
 	log.Debugf("Install action configuration: %+v", installAction)
 
@@ -163,7 +172,7 @@ func installHelmChart(name, ns string, chart *chart.Chart, values map[string]int
 
 // uninstallHelmChart uninstalls a Helm Release with name `name`
 func uninstallHelmChart(name string, force bool, actConfig *action.Configuration, log logger.Logger) error {
-	release, err := findHelmRelease(name, actConfig)
+	release, err := findHelmRelease(name, actConfig, log)
 	if err != nil {
 		return err
 	}

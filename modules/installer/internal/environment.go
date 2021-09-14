@@ -62,7 +62,7 @@ func createPullSecret(name, ns, server, username, password string, clientset *ku
 	}
 	for _, s := range sl.Items {
 		if s.Name == name && s.Namespace == ns {
-			return fmt.Errorf("secret with the same name already exists: %s/%s", ns, name)
+			return nil // ignore secret that is already exists
 		}
 	}
 	_, err = clientset.CoreV1().Secrets(ns).Create(context.TODO(), sec, v1.CreateOptions{})

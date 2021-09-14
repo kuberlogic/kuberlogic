@@ -1,9 +1,10 @@
 package helm_installer
 
 import (
-	"fmt"
 	logger "github.com/kuberlogic/operator/modules/installer/log"
+	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"
+	"k8s.io/client-go/kubernetes"
 )
 
 func deployCRDs(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger) error {
@@ -11,24 +12,24 @@ func deployCRDs(ns string, globals map[string]interface{}, actConfig *action.Con
 
 	chart, err := crdsChartReader()
 	if err != nil {
-		return fmt.Errorf("error loading CRDs chart: %v", err)
+		return errors.Wrap(err, "error loading CRDs chart")
 	}
 
 	return releaseHelmChart(helmCRDsChart, ns, chart, values, globals, actConfig, log)
 }
 
-func deployAuth(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger) error {
+func deployAuth(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger, clientset *kubernetes.Clientset) error {
 	keycloakLocalValues := map[string]interface{}{
 		"installCRDs": false,
 	}
 
 	operatorChart, err := keycloakOperatorChartReader()
 	if err != nil {
-		return fmt.Errorf("error loading keycloak-operator chart: %vv", err)
+		return errors.Wrap(err, "error loading keycloak-operator chart")
 	}
 
 	if err := releaseHelmChart(helmKeycloakOperatorChart, ns, operatorChart, keycloakLocalValues, globals, actConfig, log); err != nil {
-		return fmt.Errorf("error installing keycloak-operator: %vv", err)
+		return errors.Wrap(err, "error installing keycloak-operator")
 	}
 
 	kuberlogicKeycloakValues := map[string]interface{}{
@@ -44,10 +45,13 @@ func deployAuth(ns string, globals map[string]interface{}, actConfig *action.Con
 
 	kuberlogicKeycloakChart, err := kuberlogicKeycloakChartReader()
 	if err != nil {
-		return fmt.Errorf("error loading kuberlogic-keycloak chart: %v", err)
+		return errors.Wrap(err, "error loading kuberlogic-keycloak chart")
 	}
 	if err := releaseHelmChart(helmKuberlogicKeycloakCHart, ns, kuberlogicKeycloakChart, kuberlogicKeycloakValues, globals, actConfig, log); err != nil {
-		return fmt.Errorf("error installing kuberlogic-keycloak: %v", err)
+		return errors.Wrap(err, "error installing kuberlogic-keycloak")
+	}
+	if err := waitForKeycloakResources(ns, clientset); err != nil {
+		return errors.Wrap(err, "keycloak provisioning error")
 	}
 	return nil
 }
@@ -74,7 +78,7 @@ func deployApiserver(ns string, globals map[string]interface{}, actConfig *actio
 
 	chart, err := apiserverChartReader()
 	if err != nil {
-		return fmt.Errorf("error loading apiserver chart: %v", err)
+		return errors.Wrap(err, "error loading apiserver chart")
 	}
 
 	return releaseHelmChart(helmApiserverChart, ns, chart, values, globals, actConfig, log)
@@ -91,7 +95,7 @@ func deployOperator(ns string, globals map[string]interface{}, actConfig *action
 
 	chart, err := operatorChartReader()
 	if err != nil {
-		return fmt.Errorf("error loading operator chart: %v", err)
+		return errors.Wrap(err, "error loading operator chart")
 	}
 
 	return releaseHelmChart(helmOperatorChart, ns, chart, values, globals, actConfig, log)
@@ -102,7 +106,7 @@ func deployMonitoring(ns string, globals map[string]interface{}, actConfig *acti
 
 	chart, err := monitoringChartReader()
 	if err != nil {
-		return fmt.Errorf("error loading monitoring chart: %v", err)
+		return errors.Wrap(err, "error loading monitoring chart")
 	}
 
 	return releaseHelmChart(helmMonitoringChart, ns, chart, values, globals, actConfig, log)
@@ -128,11 +132,11 @@ func deployServiceOperators(ns string, globals map[string]interface{}, actConfig
 
 	pgChart, err := postgresOperatorChartReader()
 	if err != nil {
-		return fmt.Errorf("error loading postgres chart: %v", err)
+		return errors.Wrap(err, "error loading postgres chart")
 	}
 
 	if err := releaseHelmChart(postgresOperatorChart, ns, pgChart, pgValues, globals, actConfig, log); err != nil {
-		return fmt.Errorf("error installing postgres chart: %v", err)
+		return errors.Wrap(err, "error installing postgres chart")
 	}
 
 	mysqlValues := map[string]interface{}{
@@ -157,7 +161,7 @@ func deployServiceOperators(ns string, globals map[string]interface{}, actConfig
 
 	mysqlChart, err := mysqlOperatorChartReader()
 	if err != nil {
-		return fmt.Errorf("error loading mysql chart: %v", err)
+		return errors.Wrap(err, "error loading mysql chart")
 	}
 
 	if err := releaseHelmChart(mysqlOperatorChart, ns, mysqlChart, mysqlValues, globals, actConfig, log); err != nil {
