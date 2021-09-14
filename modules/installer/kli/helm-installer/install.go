@@ -21,7 +21,7 @@ func (i *HelmInstaller) Install(args []string) error {
 
 	// prepare environment for release and start release process
 	if err := internal.PrepareEnvironment(i.ReleaseNamespace, i.Registry.Server, i.Registry.Password, i.Registry.Username, i.ClientSet); err != nil {
-		return errors.Wrap(err, "error creating image pull secret")
+		return errors.Wrap(err, "error preparing environment")
 	}
 	if _, err := internal.StartRelease(i.ReleaseNamespace, i.ClientSet); err != nil {
 		return errors.Wrap(err, "error starting release")
@@ -36,7 +36,7 @@ func (i *HelmInstaller) Install(args []string) error {
 
 		if installPhase == "all" || installPhase == "dependencies" {
 			i.Log.Infof("Installing authentication component")
-			if err := deployAuth(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+			if err := deployAuth(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log, i.ClientSet); err != nil {
 				return errors.Wrap(err, "error installing keycloak")
 			}
 
