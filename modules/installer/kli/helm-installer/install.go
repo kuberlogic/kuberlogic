@@ -35,6 +35,11 @@ func (i *HelmInstaller) Install(args []string) error {
 		}
 
 		if installPhase == "all" || installPhase == "dependencies" {
+			i.Log.Infof("Installing cert-manager dependency")
+			if err := deployCertManager(globalValues, i.HelmActionConfig, i.Log); err != nil {
+				return errors.Wrap(err, "error installing cert-manager")
+			}
+
 			i.Log.Infof("Installing authentication component")
 			if err := deployAuth(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log, i.ClientSet); err != nil {
 				return errors.Wrap(err, "error installing keycloak")

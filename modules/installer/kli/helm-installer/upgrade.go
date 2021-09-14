@@ -31,6 +31,11 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 		}
 
 		if upgradePhase == "all" || upgradePhase == "dependencies" {
+			i.Log.Infof("Upgrading cert-manager dependency")
+			if err := deployCertManager(globalValues, i.HelmActionConfig, i.Log); err != nil {
+				return errors.Wrap(err, "error installing cert-manager")
+			}
+
 			i.Log.Infof("Upgrading authentication component")
 			if err := deployAuth(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log, i.ClientSet); err != nil {
 				return errors.Wrap(err, "error upgrading keycloak")
