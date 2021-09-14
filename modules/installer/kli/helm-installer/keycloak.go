@@ -42,10 +42,10 @@ func uninstallKuberlogicKeycloak(ns string, force bool, act *action.Configuratio
 }
 
 func waitForSecretCreation(name, ns string, clientset *kubernetes.Clientset) error {
-	const minutesWait = 6
+	const waitTimeoutSec = 300
 
-	for i := 1; i < minutesWait*2; i += 1 {
-		time.Sleep(30 * time.Second)
+	for i := 1; i < waitTimeoutSec; i += 1 {
+		time.Sleep(time.Second)
 		_, err := clientset.CoreV1().Secrets(ns).Get(context.TODO(), name, v1.GetOptions{})
 		if err != nil {
 			continue
@@ -56,10 +56,10 @@ func waitForSecretCreation(name, ns string, clientset *kubernetes.Clientset) err
 }
 
 func waitForSecretDeletion(name, ns string, clientset *kubernetes.Clientset) error {
-	const minutesWait = 6
+	const waitTimeoutSec = 300
 
-	for i := 1; i < minutesWait*2; i *= 2 {
-		time.Sleep(30 * time.Second)
+	for i := 1; i < waitTimeoutSec; i += 1 {
+		time.Sleep(time.Second)
 		_, err := clientset.CoreV1().Secrets(ns).Get(context.TODO(), name, v1.GetOptions{})
 		if k8serrors.IsNotFound(err) {
 			return nil
