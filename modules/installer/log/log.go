@@ -9,11 +9,15 @@ type Logger interface {
 	Fatalf(string, ...interface{})
 }
 
-func NewLogger() Logger {
+func NewLogger(debug bool) Logger {
 	l := logrus.New()
-	l.SetLevel(logrus.DebugLevel)
+	if debug {
+		l.SetLevel(logrus.DebugLevel)
+	}
 
 	timeFormatter := new(logrus.TextFormatter)
+	timeFormatter.ForceColors = true
+	timeFormatter.FullTimestamp = true
 	timeFormatter.TimestampFormat = "2006-01-02 15:04:05"
 	l.SetFormatter(timeFormatter)
 
