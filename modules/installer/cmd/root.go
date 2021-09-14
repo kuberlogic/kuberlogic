@@ -42,8 +42,8 @@ func Execute() {
 
 func initState() {
 	var err error
-	// initialize logger
-	log = logger.NewLogger()
+	// initialize logger with debug logs by default
+	log = logger.NewLogger(true)
 	log.Infof("Reading config from %s", cfgFile)
 
 	// get config
@@ -51,6 +51,7 @@ func initState() {
 	if err != nil {
 		log.Fatalf("Error reading config file: %+v", err)
 	}
+	log = logger.NewLogger(*config.DebugLogs)
 	log.Debugf("Config is %+v", config)
 
 	kuberlogicInstaller, err = kli.NewInstaller(config, log)
