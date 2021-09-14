@@ -197,25 +197,9 @@ spec:
           image: "{{ .Values.kubeStateMetrics.image.repository }}:{{ .Values.kubeStateMetrics.image.tag }}"
           imagePullPolicy: IfNotPresent
           args:
-            - --collectors=configmaps
-            - --collectors=cronjobs
-            - --collectors=daemonsets
-            - --collectors=deployments
-            - --collectors=endpoints
-            - --collectors=jobs
-            - --collectors=nodes
-            - --collectors=persistentvolumeclaims
-            - --collectors=persistentvolumes
-            - --collectors=pods
-            - --collectors=replicasets
-            - --collectors=replicationcontrollers
-            - --collectors=resourcequotas
-            - --collectors=secrets
-            - --collectors=services
-            - --collectors=statefulsets
-            - --collectors=storageclasses
-            - --collectors=volumeattachments
-            - --host=127.0.0.1
+          - --resources=certificatesigningrequests,configmaps,cronjobs,daemonsets,deployments,endpoints,ingresses,jobs,limitranges,mutatingwebhookconfigurations,namespaces,networkpolicies,nodes,persistentvolumeclaims,persistentvolumes,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets,storageclasses,volumeattachments
+          - --host=127.0.0.1
+          - --port=8080
           resources:
             limits:
               cpu: 50m
