@@ -16,6 +16,8 @@ import (
 const (
 	helmCRDsChart = "crds"
 
+	helmCertManagerChart = "cert-manager"
+
 	helmKeycloakOperatorChart   = "keycloak-operator"
 	helmKuberlogicKeycloakCHart = "kuberlogic-keycloak"
 	helmMonitoringChart         = "monitoring"
@@ -39,9 +41,13 @@ var (
 	//go:embed postgres-operator-1.6.2.tgz
 	//go:embed kuberlogic-operator-0.1.0.tgz
 	//go:embed kuberlogic-apiserver-0.1.0.tgz
-	// //go:embed ui-0.1.0.tgz
+	//go:embed cert-manager-v1.3.1.tgz
 	helmFs embed.FS
 )
+
+func certManagerChartReader() (io.Reader, error) {
+	return helmFs.Open("cert-manager-v1.3.1.tgz")
+}
 
 func crdsChartReader() (io.Reader, error) {
 	return helmFs.Open("crds-0.1.0.tgz")

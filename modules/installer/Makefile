@@ -18,6 +18,7 @@ helm-lint:
 helm-package: helm-deps helm-lint
 	cd $(CHARTS_DIR) && find . -name "*.tgz" -delete ; \
 	helm package crds && \
+	helm package cert-manager && \
 	helm package kuberlogic-apiserver && \
 	helm package keycloak-operator && \
 	helm package kuberlogic-keycloak && \

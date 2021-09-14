@@ -18,6 +18,17 @@ func deployCRDs(ns string, globals map[string]interface{}, actConfig *action.Con
 	return releaseHelmChart(helmCRDsChart, ns, chart, values, globals, actConfig, log)
 }
 
+func deployCertManager(globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger) error {
+	values := make(map[string]interface{}, 0)
+
+	chart, err := certManagerChartReader()
+	if err != nil {
+		errors.Wrap(err, "error loading cert-manager chart")
+	}
+
+	return releaseHelmChart(helmCertManagerChart, certManagerNs, chart, values, globals, actConfig, log)
+}
+
 func deployAuth(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger, clientset *kubernetes.Clientset) error {
 	keycloakLocalValues := map[string]interface{}{
 		"installCRDs": false,

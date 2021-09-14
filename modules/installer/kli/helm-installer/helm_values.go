@@ -4,6 +4,8 @@ import "github.com/kuberlogic/operator/modules/installer/internal"
 
 // helm_values.go contains various installation parameters that are later referenced during installation phase
 const (
+	certManagerNs = "cert-manager"
+
 	// registry information for installation
 	registryName = "quay.io"
 	registryOrg  = "kuberlogic"
