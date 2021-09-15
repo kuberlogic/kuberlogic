@@ -98,15 +98,15 @@ jobs:
 
       - name: build installer
         working-directory: ./modules/installer
-        run:
-          - make build
+        run: |
+          make build
 
       - name: run installer
         working-directory: ./modules/installer
-        run:
-          - ./kuberlogic-installer install all -c t.yaml
-          - ./kuberlogic-installer status -c t.yaml
-          - ./kuberlogic-installer uninstall force -c t.yaml
+        run: |
+          ./kuberlogic-installer install all -c t.yaml
+          ./kuberlogic-installer status -c t.yaml
+          ./kuberlogic-installer uninstall force -c t.yaml
 
 #      - name: Create secret of operator
 #        run: |
