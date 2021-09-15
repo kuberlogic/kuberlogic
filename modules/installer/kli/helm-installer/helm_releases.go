@@ -126,6 +126,10 @@ func deployApiserver(ns string, globals map[string]interface{}, actConfig *actio
 				},
 			},
 		},
+		"ingress": map[string]interface{}{
+			"enabled": true,
+			"host":    apiserverIngressHost,
+		},
 	}
 
 	chart, err := apiserverChartReader()
@@ -143,7 +147,6 @@ func deployOperator(ns string, globals map[string]interface{}, actConfig *action
 			"tag":        operatorTag,
 			"repository": operatorRepository,
 		},
-		"installCRDs": false,
 	}
 
 	chart, err := operatorChartReader()

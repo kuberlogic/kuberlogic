@@ -28,13 +28,14 @@ const (
 
 	// operator
 	operatorTag        = "0.0.28"
-	operatorRepository = registryName + "/" + registryOrg + "/operator"
+	operatorRepository = registryName + "/" + registryOrg
 
 	// apiserver
 	apiserverTag               = "0.0.28"
 	apiserverPort              = 8001
 	apiserverDebuglLogsEnabled = "TRUE"
 	apiserverAuthProvider      = "keycloak"
+	apiserverIngressHost       = "api.kuberlogic.com"
 )
 
 var (
