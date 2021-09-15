@@ -78,7 +78,9 @@ func deployAuth(ns string, globals map[string]interface{}, actConfig *action.Con
 
 func deployNginxIC(ns string, globals map[string]interface{}, actConfig *action.Configuration, clientset *kubernetes.Clientset, log logger.Logger) error {
 	values := map[string]interface{}{
-		"defaultBackend": false,
+		"defaultBackend": map[string]interface{}{
+			"enabled": false,
+		},
 	}
 	chart, err := nginxIngressControllerChartReader()
 	if err != nil {
