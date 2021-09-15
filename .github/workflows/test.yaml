@@ -54,6 +54,9 @@ jobs:
 #         - type: mysql
 #            version: 8.0.20
     steps:
+      - uses: azure/setup-helm@v1
+        with:
+          version: v3.4.2
       - uses: actions/setup-go@v2
         with:
           go-version: '1.16.0'
@@ -66,8 +69,8 @@ jobs:
         env:
           PRIVATE_GITHUB_TOKEN: ${{ secrets.PRIVATE_GITHUB_TOKEN }}
 
-      - name: Get dependencies for the apiserver
-        working-directory: ./modules/apiserver
+      - name: Get dependencies for the installer
+        working-directory: ./modules/installer
         env:
           GOPRIVATE: github.com/kuberlogic/*
         run: |
@@ -93,100 +96,113 @@ jobs:
           LOGZ_IO_TOKEN: ${{ secrets.LOGZ_IO_TOKEN }}
           LOGZ_IO_LISTENER: ${{ secrets.LOGZ_IO_LISTENER }}
 
-      - name: Create secret of operator
-        run: |
-          kubectl create secret docker-registry kuberlogic-registry --docker-server=$REGISTRY_SERVER --docker-username=$REGISTRY_USER --docker-password=$REGISTRY_PASSWORD
-        env:
-          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
-          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
-          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: build installer
+        working-directory: ./modules/installer
+        run:
+          - make build
 
-      - name: Deploy operator
-        run: |
-          make install
-          make deploy
+      - name: run installer
+        working-directory: ./modules/installer
+        run:
+          - ./kuberlogic-installer install all -c t.yaml
+          - ./kuberlogic-installer status -c t.yaml
+          - ./kuberlogic-installer uninstall force -c t.yaml
 
-      - name: Setup minio for backup storage
-        working-directory: ./modules/apiserver/tests
-        run: |
-          make deploy-minio
-
-      - name: Waiting ready the pods
-        run: |
-          kubectl wait --for=condition=Ready pods --all --timeout=5m
-
-      - name: Show pod status
-        run: |
-          kubectl logs -l app=minio
-          docker images
-        if: ${{ failure() }}
-
-      - name: Create test bucket (backup storage)
-        working-directory: ./modules/apiserver/tests
-        run: |
-          make create-bucket
-
-      - name: PATCH - Remove operator, creating certs, change endpoint for ability using webhook locally in the tests
-        working-directory: ./modules/apiserver/tests
-        run: |
-          make undeploy-operator generate-local-webhook-certs patch-endpoint
-          kubectl get endpoints
-
-      - name: Ensure keycloak is ready
-        working-directory: ./modules/apiserver/tests/config
-        run: |
-          ./wait-for-keycloak.sh
-
-      - name: Run the tests with coverage
-        working-directory: ./modules/apiserver/tests
-        run: |
-          KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443 GODEBUG=x509ignoreCN=0 KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=/$TYPE
-        env:
-          KUBERLOGIC_AUTH_PROVIDER: keycloak
-          KUBERLOGIC_AUTH_KEYCLOAK_CLIENTID: apiserver
-          KUBERLOGIC_AUTH_KEYCLOAK_CLIENT_SECRET: apiserver-secret
-          KUBERLOGIC_AUTH_KEYCLOAK_REALM_NAME: kuberlogic_realm
-          PG_VERSION: ${{ matrix.pg_version }}
-          MY_VERSION: ${{ matrix.my_version }}
-          TYPE: ${{ matrix.type }}
-
-      - name: Upload coverage
-        run: |
-          bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-operator.out -F operator
-          bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-apiserver.out -F apiserver
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Show status
-        run: |
-          kubectl get pod,sts,deploy,svc,cj,job -o yaml
-        if: ${{ failure() }}
-
-      - name: Generating logs
-        working-directory: ./modules/apiserver/tests
-        run: |
-          kubectl logs -l name=postgres-operator --tail=-1 > postgres-operator.log
-          kubectl logs -l app=mysql-operator -c mysql-operator --tail=-1 > mysql-operator.log
-          kubectl describe pod -l name=postgres-operator > postgres-operator.describe.log
-          kubectl describe pod -l app=mysql-operator > mysql-operator.describe.log
-          kubectl describe pod -l app=alertmanager > alertmanager.describe.log
-          kubectl get pod > pods-status.log
-          kubectl get endpoints > endpoints.log
-          kubectl get services > services.log
-          kubectl logs -l app.kubernetes.io/name=kube-state-metrics -c kube-state-metrics > kube-state-metrics.logs
-          kubectl logs -l app.kubernetes.io/name=kube-state-metrics -c kube-rbac-proxy > kube-rbac-proxy.kube-state-metrics.logs
-          kubectl get kuberlogicservice,kuberlogicbackupschedules,kuberlogicbackuprestores > kuberlogics-services.log
-          kubectl describe pod -l app.kubernetes.io/name=mysql > mysql-cluster.describe.log
-          kubectl describe pod -l application=spilo > pg-cluster.describe.log
-          kubectl logs -l app.kubernetes.io/name=mysql -c mysql --tail=-1 > mysql-cluster.log
-          kubectl logs -l application=spilo -c postgres --tail=-1 > pg-cluster.log
-        if: ${{ always() }}
-        continue-on-error: true
-
-      - name: Archive logs
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ matrix.type }}-${{ matrix.pg_version }}${{ matrix.my_version }}-logs
-          path: |
-            ./modules/apiserver/tests/*.log
-        if: ${{ always() }}
+#      - name: Create secret of operator
+#        run: |
+#          kubectl create secret docker-registry kuberlogic-registry --docker-server=$REGISTRY_SERVER --docker-username=$REGISTRY_USER --docker-password=$REGISTRY_PASSWORD
+#        env:
+#          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
+#          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+#          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+#
+#      - name: Deploy operator
+#        run: |
+#          make install
+#          make deploy
+#
+#      - name: Setup minio for backup storage
+#        working-directory: ./modules/apiserver/tests
+#        run: |
+#          make deploy-minio
+#
+#      - name: Waiting ready the pods
+#        run: |
+#          kubectl wait --for=condition=Ready pods --all --timeout=5m
+#
+#      - name: Show pod status
+#        run: |
+#          kubectl logs -l app=minio
+#          docker images
+#        if: ${{ failure() }}
+#
+#      - name: Create test bucket (backup storage)
+#        working-directory: ./modules/apiserver/tests
+#        run: |
+#          make create-bucket
+#
+#      - name: PATCH - Remove operator, creating certs, change endpoint for ability using webhook locally in the tests
+#        working-directory: ./modules/apiserver/tests
+#        run: |
+#          make undeploy-operator generate-local-webhook-certs patch-endpoint
+#          kubectl get endpoints
+#
+#      - name: Ensure keycloak is ready
+#        working-directory: ./modules/apiserver/tests/config
+#        run: |
+#          ./wait-for-keycloak.sh
+#
+#      - name: Run the tests with coverage
+#        working-directory: ./modules/apiserver/tests
+#        run: |
+#          KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443 GODEBUG=x509ignoreCN=0 KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=/$TYPE
+#        env:
+#          KUBERLOGIC_AUTH_PROVIDER: keycloak
+#          KUBERLOGIC_AUTH_KEYCLOAK_CLIENTID: apiserver
+#          KUBERLOGIC_AUTH_KEYCLOAK_CLIENT_SECRET: apiserver-secret
+#          KUBERLOGIC_AUTH_KEYCLOAK_REALM_NAME: kuberlogic_realm
+#          PG_VERSION: ${{ matrix.pg_version }}
+#          MY_VERSION: ${{ matrix.my_version }}
+#          TYPE: ${{ matrix.type }}
+#
+#      - name: Upload coverage
+#        run: |
+#          bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-operator.out -F operator
+#          bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-apiserver.out -F apiserver
+#        env:
+#          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+#
+#      - name: Show status
+#        run: |
+#          kubectl get pod,sts,deploy,svc,cj,job -o yaml
+#        if: ${{ failure() }}
+#
+#      - name: Generating logs
+#        working-directory: ./modules/apiserver/tests
+#        run: |
+#          kubectl logs -l name=postgres-operator --tail=-1 > postgres-operator.log
+#          kubectl logs -l app=mysql-operator -c mysql-operator --tail=-1 > mysql-operator.log
+#          kubectl describe pod -l name=postgres-operator > postgres-operator.describe.log
+#          kubectl describe pod -l app=mysql-operator > mysql-operator.describe.log
+#          kubectl describe pod -l app=alertmanager > alertmanager.describe.log
+#          kubectl get pod > pods-status.log
+#          kubectl get endpoints > endpoints.log
+#          kubectl get services > services.log
+#          kubectl logs -l app.kubernetes.io/name=kube-state-metrics -c kube-state-metrics > kube-state-metrics.logs
+#          kubectl logs -l app.kubernetes.io/name=kube-state-metrics -c kube-rbac-proxy > kube-rbac-proxy.kube-state-metrics.logs
+#          kubectl get kuberlogicservice,kuberlogicbackupschedules,kuberlogicbackuprestores > kuberlogics-services.log
+#          kubectl describe pod -l app.kubernetes.io/name=mysql > mysql-cluster.describe.log
+#          kubectl describe pod -l application=spilo > pg-cluster.describe.log
+#          kubectl logs -l app.kubernetes.io/name=mysql -c mysql --tail=-1 > mysql-cluster.log
+#          kubectl logs -l application=spilo -c postgres --tail=-1 > pg-cluster.log
+#        if: ${{ always() }}
+#        continue-on-error: true
+#
+#      - name: Archive logs
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: ${{ matrix.type }}-${{ matrix.pg_version }}${{ matrix.my_version }}-logs
+#          path: |
+#            ./modules/apiserver/tests/*.log
+#        if: ${{ always() }}
+#
