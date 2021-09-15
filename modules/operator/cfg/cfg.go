@@ -9,6 +9,8 @@ type Grafana struct {
 	Endpoint string `envconfig:"optional"`
 	Login    string `envconfig:"default=admin,optional"`
 	Password string `envconfig:"default=admin,optional"`
+
+	DefaultDatasourceEndpoint string `envconfig:"optional"`
 }
 
 type Config struct {
