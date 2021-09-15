@@ -42,6 +42,7 @@ var (
 	//go:embed postgres-operator-1.6.2.tgz
 	//go:embed kuberlogic-operator-0.1.0.tgz
 	//go:embed kuberlogic-apiserver-0.1.0.tgz
+	//go:embed kuberlogic-ui-0.1.0.tgz
 	//go:embed cert-manager-v1.3.1.tgz
 	//go:embed nginx-ingress-controller-7.6.18.tgz
 	helmFs embed.FS
@@ -85,6 +86,10 @@ func operatorChartReader() (io.Reader, error) {
 
 func apiserverChartReader() (io.Reader, error) {
 	return helmFs.Open("kuberlogic-apiserver-0.1.0.tgz")
+}
+
+func uiChartReader() (io.Reader, error) {
+	return helmFs.Open("kuberlogic-ui.0.1.0.tgz")
 }
 
 func findHelmRelease(name string, c *action.Configuration, log logger.Logger) (*release.Release, error) {

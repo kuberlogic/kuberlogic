@@ -8,6 +8,7 @@ helm-lint:
 	cd $(CHARTS_DIR) && \
 	helm lint crds && \
 	helm lint nginx-ingress-controller && \
+	helm lint kuberlogic-ui && \
 	helm lint kuberlogic-apiserver && \
 	helm lint keycloak-operator && \
 	helm lint kuberlogic-keycloak && \
@@ -21,6 +22,7 @@ helm-package: helm-deps helm-lint
 	helm package crds && \
 	helm package nginx-ingress-controller && \
 	helm package cert-manager && \
+	helm package kuberlogic-ui && \
 	helm package kuberlogic-apiserver && \
 	helm package keycloak-operator && \
 	helm package kuberlogic-keycloak && \

@@ -16,7 +16,7 @@ func (i *HelmInstaller) Uninstall(args []string) error {
 	i.Log.Debugf("entering uninstall phase with args: %+v", args)
 	err := func() error {
 		i.Log.Infof("uninstalling core components")
-		for _, c := range []string{helmApiserverChart, helmOperatorChart} {
+		for _, c := range []string{helmApiserverChart, helmOperatorChart, helmUIChart} {
 			if err := uninstallHelmChart(c, force, i.HelmActionConfig, i.Log); err != nil {
 				return errors.Wrap(err, "error uninstalling "+c)
 			}

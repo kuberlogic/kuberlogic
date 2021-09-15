@@ -65,6 +65,10 @@ func (i *HelmInstaller) Install(args []string) error {
 			if err := deployApiserver(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
 				return errors.Wrap(err, "error installing apiserver")
 			}
+
+			if err := deployUI(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+				return errors.Wrap(err, "error installing UI")
+			}
 		}
 		return nil
 	}()

@@ -108,6 +108,29 @@ func deployNginxIC(ns string, globals map[string]interface{}, actConfig *action.
 	return errors.New("failed to obtain an Ingress IP address for nginx-ingress-controller")
 }
 
+func deployUI(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger) error {
+	values := map[string]interface{}{
+		"config": map[string]interface{}{
+			"apiEndpoint": apiserverIngressHost,
+		},
+		"image": map[string]interface{}{
+			"tag": uiImageTag,
+		},
+		"ingress": map[string]interface{}{
+			"enabled": true,
+			"host":    uiIngressHost,
+		},
+	}
+
+	chart, err := uiChartReader()
+	if err != nil {
+		errors.Wrap(err, "error loading ui chart")
+	}
+
+	log.Infof("Deploying Kuberlogic UI...")
+	return releaseHelmChart(helmUIChart, ns, chart, values, globals, actConfig, log)
+}
+
 func deployApiserver(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger) error {
 	values := map[string]interface{}{
 		"image": map[string]interface{}{

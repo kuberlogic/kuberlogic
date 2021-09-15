@@ -67,6 +67,11 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 			if err := deployApiserver(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
 				return errors.Wrap(err, "error upgrading apiserver")
 			}
+
+			i.Log.Infof("Upgrading UI")
+			if err := deployUI(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+				return errors.Wrap(err, "error upgrading UI")
+			}
 		}
 
 		return nil

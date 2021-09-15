@@ -36,6 +36,10 @@ const (
 	apiserverDebuglLogsEnabled = "TRUE"
 	apiserverAuthProvider      = "keycloak"
 	apiserverIngressHost       = "api.kuberlogic.com"
+
+	// kuberlogic UI
+	uiImageTag    = "demo-009"
+	uiIngressHost = "kuberlogic.com"
 )
 
 var (
