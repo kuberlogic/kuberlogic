@@ -9,6 +9,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"strings"
+	"time"
 )
 
 var (
@@ -91,6 +92,7 @@ func checkLoadBalancerServiceType(clientset *kubernetes.Clientset, log logger.Lo
 	}()
 
 	for i := 1; i < waitTimeoutSec; i += 1 {
+		time.Sleep(time.Second)
 		s, err := clientset.CoreV1().Services(testNamespace).Get(context.TODO(), testServiceName, v1.GetOptions{})
 		if err != nil {
 			return errors.Wrap(err, "error getting test service")
