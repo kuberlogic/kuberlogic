@@ -101,6 +101,11 @@ jobs:
         run: |
           make build
 
+      - name: fake loadbalancer service by installing metallb
+        run: |
+          helm repo add metallb https://metallb.github.io/metallb
+          helm install --set "configInline.address-pools[0].name=default,configInline.address-pools[0].protocol=layer2,configInline.address-pools[0].addresses[0]=198.51.100.0/24" metallb metallb/metallb
+
       - name: run installer
         working-directory: ./modules/installer
         run: |
