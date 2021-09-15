@@ -27,11 +27,11 @@ const (
 	mysqlImage = registryName + "/" + registryOrg + "/mysql-operator:v0.5.0-rc.2"
 
 	// operator
-	operatorTag        = "ap07"
-	operatorRepository = "myregistry.com/kuberlogic"
+	operatorTag        = "0.0.28"
+	operatorRepository = registryName + "/" + registryOrg + "/operator"
 
 	// apiserver
-	apiserverTag               = "sec009-demo"
+	apiserverTag               = "0.0.28"
 	apiserverPort              = 8001
 	apiserverDebuglLogsEnabled = "TRUE"
 	apiserverAuthProvider      = "keycloak"
