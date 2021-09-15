@@ -29,40 +29,36 @@ func (i *HelmInstaller) Install(args []string) error {
 
 	err := func() error {
 		// install CRDs into cluster
-		i.Log.Infof("Installing CRDs")
+		i.Log.Infof("Installing CRDs...")
 		if err := deployCRDs(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
 			return errors.Wrap(err, "error installing CRDs")
 		}
 
 		if installPhase == "all" || installPhase == "dependencies" {
-			i.Log.Infof("Installing cert-manager dependency")
+			i.Log.Infof("Installing Kuberlogic dependencies...")
 			if err := deployCertManager(globalValues, i.HelmActionConfig, i.Log); err != nil {
 				return errors.Wrap(err, "error installing cert-manager")
 			}
 
-			i.Log.Infof("Installing authentication component")
 			if err := deployAuth(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log, i.ClientSet); err != nil {
 				return errors.Wrap(err, "error installing keycloak")
 			}
 
-			i.Log.Infof("Installing service operators")
 			if err := deployServiceOperators(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
 				return errors.Wrap(err, "error installing service operators")
 			}
 
-			i.Log.Infof("Installing monitoring component")
 			if err := deployMonitoring(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
 				return errors.Wrap(err, "error installing monitoring component")
 			}
 		}
 
 		if installPhase == "all" || installPhase == "kuberlogic" {
-			i.Log.Infof("Installing operator")
+			i.Log.Infof("Installing Kuberlogic core components...")
 			if err := deployOperator(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
 				return errors.Wrap(err, "error installing operator")
 			}
 
-			i.Log.Infof("Installing apiserver")
 			if err := deployApiserver(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
 				return errors.Wrap(err, "error installing apiserver")
 			}
@@ -81,10 +77,13 @@ func (i *HelmInstaller) Install(args []string) error {
 
 func runInstallChecks(clientSet *kubernetes.Clientset, actionConfig *action.Configuration, log logger.Logger) error {
 	if err := checkKubernetesVersion(clientSet, log); err != nil {
-		return err
+		return errors.Wrap(err, "error checking Kubernetes version")
 	}
 	if err := checkDefaultStorageClass(clientSet, log); err != nil {
-		return err
+		return errors.Wrap(err, "error checking Kubernetes default StorageClass")
+	}
+	if err := checkLoadBalancerServiceType(clientSet, log); err != nil {
+		return errors.Wrap(err, "error checking Kubernetes LoadBalancer service")
 	}
 	return nil
 }

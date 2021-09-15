@@ -15,6 +15,7 @@ func deployCRDs(ns string, globals map[string]interface{}, actConfig *action.Con
 		return errors.Wrap(err, "error loading CRDs chart")
 	}
 
+	log.Infof("Deploying CRDs...")
 	return releaseHelmChart(helmCRDsChart, ns, chart, values, globals, actConfig, log)
 }
 
@@ -28,6 +29,7 @@ func deployCertManager(globals map[string]interface{}, actConfig *action.Configu
 		errors.Wrap(err, "error loading cert-manager chart")
 	}
 
+	log.Infof("Deploying cert-manager...")
 	return releaseHelmChart(helmCertManagerChart, certManagerNs, chart, values, globals, actConfig, log)
 }
 
@@ -41,6 +43,7 @@ func deployAuth(ns string, globals map[string]interface{}, actConfig *action.Con
 		return errors.Wrap(err, "error loading keycloak-operator chart")
 	}
 
+	log.Infof("Deploying keycloak-operator...")
 	if err := releaseHelmChart(helmKeycloakOperatorChart, ns, operatorChart, keycloakLocalValues, globals, actConfig, log); err != nil {
 		return errors.Wrap(err, "error installing keycloak-operator")
 	}
@@ -60,6 +63,7 @@ func deployAuth(ns string, globals map[string]interface{}, actConfig *action.Con
 	if err != nil {
 		return errors.Wrap(err, "error loading kuberlogic-keycloak chart")
 	}
+	log.Infof("Deploying Kuberlogic Keycloak resources...")
 	if err := releaseHelmChart(helmKuberlogicKeycloakCHart, ns, kuberlogicKeycloakChart, kuberlogicKeycloakValues, globals, actConfig, log); err != nil {
 		return errors.Wrap(err, "error installing kuberlogic-keycloak")
 	}
@@ -94,6 +98,7 @@ func deployApiserver(ns string, globals map[string]interface{}, actConfig *actio
 		return errors.Wrap(err, "error loading apiserver chart")
 	}
 
+	log.Infof("Deploying Kuberlogic apiserver...")
 	return releaseHelmChart(helmApiserverChart, ns, chart, values, globals, actConfig, log)
 }
 
@@ -111,6 +116,7 @@ func deployOperator(ns string, globals map[string]interface{}, actConfig *action
 		return errors.Wrap(err, "error loading operator chart")
 	}
 
+	log.Infof("Deploying Kuberlogic operator...")
 	return releaseHelmChart(helmOperatorChart, ns, chart, values, globals, actConfig, log)
 }
 
@@ -122,6 +128,7 @@ func deployMonitoring(ns string, globals map[string]interface{}, actConfig *acti
 		return errors.Wrap(err, "error loading monitoring chart")
 	}
 
+	log.Infof("Deploying Kuberlogic monitoring...")
 	return releaseHelmChart(helmMonitoringChart, ns, chart, values, globals, actConfig, log)
 }
 
@@ -148,6 +155,7 @@ func deployServiceOperators(ns string, globals map[string]interface{}, actConfig
 		return errors.Wrap(err, "error loading postgres chart")
 	}
 
+	log.Infof("Deploying postgres operator...")
 	if err := releaseHelmChart(postgresOperatorChart, ns, pgChart, pgValues, globals, actConfig, log); err != nil {
 		return errors.Wrap(err, "error installing postgres chart")
 	}
@@ -177,6 +185,7 @@ func deployServiceOperators(ns string, globals map[string]interface{}, actConfig
 		return errors.Wrap(err, "error loading mysql chart")
 	}
 
+	log.Infof("Deploying MySQL operator...")
 	if err := releaseHelmChart(mysqlOperatorChart, ns, mysqlChart, mysqlValues, globals, actConfig, log); err != nil {
 		return err
 	}
