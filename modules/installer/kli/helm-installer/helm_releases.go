@@ -19,7 +19,9 @@ func deployCRDs(ns string, globals map[string]interface{}, actConfig *action.Con
 }
 
 func deployCertManager(globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger) error {
-	values := make(map[string]interface{}, 0)
+	values := map[string]interface{}{
+		"installCRDs": true,
+	}
 
 	chart, err := certManagerChartReader()
 	if err != nil {
