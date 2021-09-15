@@ -115,4 +115,4 @@ spec:
       targetPort: {{ .Values.victoriametrics.vmserver.port }}
   selector:
     app.kubernetes.io/component: kuberlogic-victoriametrics
-  type: LoadBalancer
+  type: ClusterIP
