@@ -177,10 +177,11 @@ jobs:
 #        env:
 #          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 #
-#      - name: Show status
-#        run: |
-#          kubectl get pod,sts,deploy,svc,cj,job -o yaml
-#        if: ${{ failure() }}
+      - name: Show status
+        run: |
+          kubectl get pod,sts,deploy,svc,cj,job -o yaml --all-namespaces
+          helm ls --all-namespaces --all
+        if: ${{ failure() }}
 #
 #      - name: Generating logs
 #        working-directory: ./modules/apiserver/tests
