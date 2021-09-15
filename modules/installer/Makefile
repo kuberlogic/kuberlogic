@@ -7,6 +7,7 @@ helm-deps:
 helm-lint:
 	cd $(CHARTS_DIR) && \
 	helm lint crds && \
+	helm lint nginx-ingress-controller && \
 	helm lint kuberlogic-apiserver && \
 	helm lint keycloak-operator && \
 	helm lint kuberlogic-keycloak && \
@@ -18,6 +19,7 @@ helm-lint:
 helm-package: helm-deps helm-lint
 	cd $(CHARTS_DIR) && find . -name "*.tgz" -delete ; \
 	helm package crds && \
+	helm package nginx-ingress-controller && \
 	helm package cert-manager && \
 	helm package kuberlogic-apiserver && \
 	helm package keycloak-operator && \

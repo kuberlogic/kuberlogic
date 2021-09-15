@@ -16,7 +16,8 @@ import (
 const (
 	helmCRDsChart = "crds"
 
-	helmCertManagerChart = "cert-manager"
+	helmCertManagerChart  = "cert-manager"
+	helmNginxIngressChart = "nginx-ingress-controller"
 
 	helmKeycloakOperatorChart   = "keycloak-operator"
 	helmKuberlogicKeycloakCHart = "kuberlogic-keycloak"
@@ -25,9 +26,9 @@ const (
 	postgresOperatorChart = "postgres-operator"
 	mysqlOperatorChart    = "mysql-operator"
 
-	helmOperatorChart  = "operator"
-	helmApiserverChart = "apiserver"
-	helmUIChart        = "ui"
+	helmOperatorChart  = "kuberlogic-operator"
+	helmApiserverChart = "kuberlogic-apiserver"
+	helmUIChart        = "kuberlogic-ui"
 
 	helmActionTimeoutSec = 300
 )
@@ -42,8 +43,13 @@ var (
 	//go:embed kuberlogic-operator-0.1.0.tgz
 	//go:embed kuberlogic-apiserver-0.1.0.tgz
 	//go:embed cert-manager-v1.3.1.tgz
+	//go:embed nginx-ingress-controller-7.6.18.tgz
 	helmFs embed.FS
 )
+
+func nginxIngressControllerChartReader() (io.Reader, error) {
+	return helmFs.Open("nginx-ingress-controller-7.6.18.tgz")
+}
 
 func certManagerChartReader() (io.Reader, error) {
 	return helmFs.Open("cert-manager-v1.3.1.tgz")

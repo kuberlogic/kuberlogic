@@ -1,10 +1,13 @@
 package helm_installer
 
 import (
+	"context"
 	logger "github.com/kuberlogic/operator/modules/installer/log"
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"time"
 )
 
 func deployCRDs(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger) error {
@@ -45,7 +48,7 @@ func deployAuth(ns string, globals map[string]interface{}, actConfig *action.Con
 
 	log.Infof("Deploying keycloak-operator...")
 	if err := releaseHelmChart(helmKeycloakOperatorChart, ns, operatorChart, keycloakLocalValues, globals, actConfig, log); err != nil {
-		return errors.Wrap(err, "error installing keycloak-operator")
+		return errors.Wrap(err, "error deploying keycloak-operator")
 	}
 
 	kuberlogicKeycloakValues := map[string]interface{}{
@@ -65,12 +68,42 @@ func deployAuth(ns string, globals map[string]interface{}, actConfig *action.Con
 	}
 	log.Infof("Deploying Kuberlogic Keycloak resources...")
 	if err := releaseHelmChart(helmKuberlogicKeycloakCHart, ns, kuberlogicKeycloakChart, kuberlogicKeycloakValues, globals, actConfig, log); err != nil {
-		return errors.Wrap(err, "error installing kuberlogic-keycloak")
+		return errors.Wrap(err, "error deploying kuberlogic-keycloak")
 	}
 	if err := waitForKeycloakResources(ns, clientset); err != nil {
 		return errors.Wrap(err, "keycloak provisioning error")
 	}
 	return nil
+}
+
+func deployNginxIC(ns string, globals map[string]interface{}, actConfig *action.Configuration, clientset *kubernetes.Clientset, log logger.Logger) error {
+	values := map[string]interface{}{
+		"defaultBackend": false,
+	}
+	chart, err := nginxIngressControllerChartReader()
+	if err != nil {
+		return errors.Wrap(err, "error loading nginx-ingress-controller chart")
+	}
+	log.Infof("Deploying Nginx Ingress Controller...")
+	if err := releaseHelmChart(helmNginxIngressChart, ns, chart, values, globals, actConfig, log); err != nil {
+		return errors.Wrap(err, "error deploying nginx-ingress-controller")
+	}
+
+	// verify that Nginx Ingress Controller services is created and received Ingress IP address
+	// service name equals to the chart name
+	const waitTimeoutSec = 30
+	for i := 0; i < waitTimeoutSec; i += 1 {
+		time.Sleep(time.Second)
+		s, err := clientset.CoreV1().Services(ns).Get(context.TODO(), helmNginxIngressChart, v1.GetOptions{})
+		if err != nil {
+			continue // hope that the error is transient
+		}
+		if len(s.Status.LoadBalancer.Ingress) != 0 {
+			// success
+			return nil
+		}
+	}
+	return errors.New("failed to obtain an Ingress IP address for nginx-ingress-controller")
 }
 
 func deployApiserver(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger) error {
@@ -157,7 +190,7 @@ func deployServiceOperators(ns string, globals map[string]interface{}, actConfig
 
 	log.Infof("Deploying postgres operator...")
 	if err := releaseHelmChart(postgresOperatorChart, ns, pgChart, pgValues, globals, actConfig, log); err != nil {
-		return errors.Wrap(err, "error installing postgres chart")
+		return errors.Wrap(err, "error deploying postgres chart")
 	}
 
 	mysqlValues := map[string]interface{}{

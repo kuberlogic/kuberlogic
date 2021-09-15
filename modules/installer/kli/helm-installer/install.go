@@ -36,6 +36,9 @@ func (i *HelmInstaller) Install(args []string) error {
 
 		if installPhase == "all" || installPhase == "dependencies" {
 			i.Log.Infof("Installing Kuberlogic dependencies...")
+			if err := deployNginxIC(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.ClientSet, i.Log); err != nil {
+				return errors.Wrap(err, "error installing nginx-ingress-controller")
+			}
 			if err := deployCertManager(globalValues, i.HelmActionConfig, i.Log); err != nil {
 				return errors.Wrap(err, "error installing cert-manager")
 			}

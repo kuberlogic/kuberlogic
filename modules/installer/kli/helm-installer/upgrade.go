@@ -31,6 +31,10 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 		}
 
 		if upgradePhase == "all" || upgradePhase == "dependencies" {
+			i.Log.Infof("Upgrading dependencies...")
+			if err := deployNginxIC(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.ClientSet, i.Log); err != nil {
+				return errors.Wrap(err, "error upgrade nginx-ingress-controller")
+			}
 			i.Log.Infof("Upgrading cert-manager dependency")
 			if err := deployCertManager(globalValues, i.HelmActionConfig, i.Log); err != nil {
 				return errors.Wrap(err, "error installing cert-manager")
@@ -53,6 +57,7 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 		}
 
 		if upgradePhase == "all" || upgradePhase == "kuberlogic" {
+			i.Log.Infof("Upgrading Kuberlogic core components...")
 			i.Log.Infof("Upgrading operator")
 			if err := deployOperator(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
 				return errors.Wrap(err, "error upgrading operator")
