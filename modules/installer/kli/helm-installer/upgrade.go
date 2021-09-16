@@ -26,32 +26,32 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 	err = func() error {
 		// upgrade CRDs into cluster
 		i.Log.Infof("Upgrading CRDs")
-		if err := deployCRDs(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+		if err := deployCRDs(globalValues, i); err != nil {
 			return errors.Wrap(err, "error upgrading CRDs")
 		}
 
 		if upgradePhase == "all" || upgradePhase == "dependencies" {
 			i.Log.Infof("Upgrading dependencies...")
-			if err := deployNginxIC(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.ClientSet, i.Log, release); err != nil {
+			if err := deployNginxIC(globalValues, i, release); err != nil {
 				return errors.Wrap(err, "error upgrade nginx-ingress-controller")
 			}
 			i.Log.Infof("Upgrading cert-manager dependency")
-			if err := deployCertManager(globalValues, i.HelmActionConfig, i.Log); err != nil {
+			if err := deployCertManager(globalValues, i); err != nil {
 				return errors.Wrap(err, "error installing cert-manager")
 			}
 
 			i.Log.Infof("Upgrading authentication component")
-			if err := deployAuth(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log, i.ClientSet); err != nil {
+			if err := deployAuth(globalValues, i); err != nil {
 				return errors.Wrap(err, "error upgrading keycloak")
 			}
 
 			i.Log.Infof("Upgrading service operators")
-			if err := deployServiceOperators(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+			if err := deployServiceOperators(globalValues, i); err != nil {
 				return errors.Wrap(err, "error upgrading service operators")
 			}
 
 			i.Log.Infof("Upgrading monitoring component")
-			if err := deployMonitoring(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+			if err := deployMonitoring(globalValues, i); err != nil {
 				return errors.Wrap(err, "error upgrading monitoring component")
 			}
 		}
@@ -59,17 +59,17 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 		if upgradePhase == "all" || upgradePhase == "kuberlogic" {
 			i.Log.Infof("Upgrading Kuberlogic core components...")
 			i.Log.Infof("Upgrading operator")
-			if err := deployOperator(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+			if err := deployOperator(globalValues, i); err != nil {
 				return errors.Wrap(err, "error upgrading operator")
 			}
 
 			i.Log.Infof("Upgrading apiserver")
-			if err := deployApiserver(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log, release); err != nil {
+			if err := deployApiserver(globalValues, i, release); err != nil {
 				return errors.Wrap(err, "error upgrading apiserver")
 			}
 
 			i.Log.Infof("Upgrading UI")
-			if err := deployUI(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log, release); err != nil {
+			if err := deployUI(globalValues, i, release); err != nil {
 				return errors.Wrap(err, "error upgrading UI")
 			}
 		}

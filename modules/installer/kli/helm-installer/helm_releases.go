@@ -3,15 +3,12 @@ package helm_installer
 import (
 	"context"
 	"github.com/kuberlogic/operator/modules/installer/internal"
-	logger "github.com/kuberlogic/operator/modules/installer/log"
 	"github.com/pkg/errors"
-	"helm.sh/helm/v3/pkg/action"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"time"
 )
 
-func deployCRDs(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger) error {
+func deployCRDs(globals map[string]interface{}, i *HelmInstaller) error {
 	values := make(map[string]interface{}, 0)
 
 	chart, err := crdsChartReader()
@@ -19,11 +16,11 @@ func deployCRDs(ns string, globals map[string]interface{}, actConfig *action.Con
 		return errors.Wrap(err, "error loading CRDs chart")
 	}
 
-	log.Infof("Deploying CRDs...")
-	return releaseHelmChart(helmCRDsChart, ns, chart, values, globals, actConfig, log)
+	i.Log.Infof("Deploying CRDs...")
+	return releaseHelmChart(helmCRDsChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
-func deployCertManager(globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger) error {
+func deployCertManager(globals map[string]interface{}, i *HelmInstaller) error {
 	values := map[string]interface{}{
 		"installCRDs": true,
 	}
@@ -33,11 +30,11 @@ func deployCertManager(globals map[string]interface{}, actConfig *action.Configu
 		errors.Wrap(err, "error loading cert-manager chart")
 	}
 
-	log.Infof("Deploying cert-manager...")
-	return releaseHelmChart(helmCertManagerChart, certManagerNs, chart, values, globals, actConfig, log)
+	i.Log.Infof("Deploying cert-manager...")
+	return releaseHelmChart(helmCertManagerChart, certManagerNs, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
-func deployAuth(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger, clientset *kubernetes.Clientset) error {
+func deployAuth(globals map[string]interface{}, i *HelmInstaller) error {
 	keycloakLocalValues := map[string]interface{}{
 		"installCRDs": false,
 	}
@@ -47,8 +44,8 @@ func deployAuth(ns string, globals map[string]interface{}, actConfig *action.Con
 		return errors.Wrap(err, "error loading keycloak-operator chart")
 	}
 
-	log.Infof("Deploying keycloak-operator...")
-	if err := releaseHelmChart(helmKeycloakOperatorChart, ns, operatorChart, keycloakLocalValues, globals, actConfig, log); err != nil {
+	i.Log.Infof("Deploying keycloak-operator...")
+	if err := releaseHelmChart(helmKeycloakOperatorChart, i.ReleaseNamespace, operatorChart, keycloakLocalValues, globals, i.HelmActionConfig, i.Log); err != nil {
 		return errors.Wrap(err, "error deploying keycloak-operator")
 	}
 
@@ -60,44 +57,52 @@ func deployAuth(ns string, globals map[string]interface{}, actConfig *action.Con
 		"clientId":     keycloakClientId,
 		"clientSecret": keycloakClientSecret,
 
-		"apiserverId": oauthApiserverId,
+		"apiserverId":   oauthApiserverId,
+		"adminPassword": i.Auth.AdminPassword,
+	}
+	if i.Auth.TestUserPassword != "" {
+		kuberlogicKeycloakValues["testUser"] = map[string]interface{}{
+			"create":   true,
+			"password": i.Auth.TestUserPassword,
+		}
 	}
 
 	kuberlogicKeycloakChart, err := kuberlogicKeycloakChartReader()
 	if err != nil {
 		return errors.Wrap(err, "error loading kuberlogic-keycloak chart")
 	}
-	log.Infof("Deploying Kuberlogic Keycloak resources...")
-	if err := releaseHelmChart(helmKuberlogicKeycloakCHart, ns, kuberlogicKeycloakChart, kuberlogicKeycloakValues, globals, actConfig, log); err != nil {
+	i.Log.Infof("Deploying Kuberlogic Keycloak resources...")
+	if err := releaseHelmChart(helmKuberlogicKeycloakCHart, i.ReleaseNamespace, kuberlogicKeycloakChart, kuberlogicKeycloakValues, globals, i.HelmActionConfig, i.Log); err != nil {
 		return errors.Wrap(err, "error deploying kuberlogic-keycloak")
 	}
-	if err := waitForKeycloakResources(ns, clientset); err != nil {
+	if err := waitForKeycloakResources(i.ReleaseNamespace, i.ClientSet); err != nil {
 		return errors.Wrap(err, "keycloak provisioning error")
 	}
 	return nil
 }
 
-func deployNginxIC(ns string, globals map[string]interface{}, actConfig *action.Configuration, clientset *kubernetes.Clientset, log logger.Logger, releaseInfo *internal.ReleaseInfo) error {
+func deployNginxIC(globals map[string]interface{}, i *HelmInstaller, releaseInfo *internal.ReleaseInfo) error {
 	values := map[string]interface{}{
 		"defaultBackend": map[string]interface{}{
 			"enabled": false,
 		},
+		"ingressClass": ingressClass,
 	}
 	chart, err := nginxIngressControllerChartReader()
 	if err != nil {
 		return errors.Wrap(err, "error loading nginx-ingress-controller chart")
 	}
-	log.Infof("Deploying Nginx Ingress Controller...")
-	if err := releaseHelmChart(helmNginxIngressChart, ns, chart, values, globals, actConfig, log); err != nil {
+	i.Log.Infof("Deploying Nginx Ingress Controller...")
+	if err := releaseHelmChart(helmNginxIngressChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log); err != nil {
 		return errors.Wrap(err, "error deploying nginx-ingress-controller")
 	}
 
 	// verify that Nginx Ingress Controller services is created and received Ingress IP address
 	// service name equals to the chart name
 	const waitTimeoutSec = 30
-	for i := 0; i < waitTimeoutSec; i += 1 {
+	for x := 0; x < waitTimeoutSec; x += 1 {
 		time.Sleep(time.Second)
-		s, err := clientset.CoreV1().Services(ns).Get(context.TODO(), helmNginxIngressChart, v1.GetOptions{})
+		s, err := i.ClientSet.CoreV1().Services(i.ReleaseNamespace).Get(context.TODO(), helmNginxIngressChart, v1.GetOptions{})
 		if err != nil {
 			continue // hope that the error is transient
 		}
@@ -110,17 +115,18 @@ func deployNginxIC(ns string, globals map[string]interface{}, actConfig *action.
 	return errors.New("failed to obtain an Ingress IP address for nginx-ingress-controller")
 }
 
-func deployUI(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger, release *internal.ReleaseInfo) error {
+func deployUI(globals map[string]interface{}, i *HelmInstaller, release *internal.ReleaseInfo) error {
 	values := map[string]interface{}{
 		"config": map[string]interface{}{
-			"apiEndpoint": apiserverIngressHost,
+			"apiEndpoint": "http://" + i.Endpoints.API,
 		},
 		"image": map[string]interface{}{
 			"tag": uiImageTag,
 		},
 		"ingress": map[string]interface{}{
 			"enabled": true,
-			"host":    uiIngressHost,
+			"host":    i.Endpoints.UI,
+			"class":   ingressClass,
 		},
 	}
 
@@ -129,12 +135,12 @@ func deployUI(ns string, globals map[string]interface{}, actConfig *action.Confi
 		errors.Wrap(err, "error loading ui chart")
 	}
 
-	log.Infof("Deploying Kuberlogic UI...")
-	release.AddBannerLines("Kuberlogic Web UI endpoint: http://" + uiIngressHost)
-	return releaseHelmChart(helmUIChart, ns, chart, values, globals, actConfig, log)
+	i.Log.Infof("Deploying Kuberlogic UI...")
+	release.AddBannerLines("Kuberlogic Web UI endpoint: http://" + i.Endpoints.UI)
+	return releaseHelmChart(helmUIChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
-func deployApiserver(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger, release *internal.ReleaseInfo) error {
+func deployApiserver(globals map[string]interface{}, i *HelmInstaller, release *internal.ReleaseInfo) error {
 	values := map[string]interface{}{
 		"image": map[string]interface{}{
 			"tag": apiserverTag,
@@ -154,7 +160,8 @@ func deployApiserver(ns string, globals map[string]interface{}, actConfig *actio
 		},
 		"ingress": map[string]interface{}{
 			"enabled": true,
-			"host":    apiserverIngressHost,
+			"host":    i.Endpoints.API,
+			"class":   ingressClass,
 		},
 	}
 
@@ -163,12 +170,12 @@ func deployApiserver(ns string, globals map[string]interface{}, actConfig *actio
 		return errors.Wrap(err, "error loading apiserver chart")
 	}
 
-	log.Infof("Deploying Kuberlogic apiserver...")
-	release.AddBannerLines("Kuberlogic API endpoint: http://" + apiserverIngressHost)
-	return releaseHelmChart(helmApiserverChart, ns, chart, values, globals, actConfig, log)
+	i.Log.Infof("Deploying Kuberlogic apiserver...")
+	release.AddBannerLines("Kuberlogic API endpoint: http://" + i.Endpoints.API)
+	return releaseHelmChart(helmApiserverChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
-func deployOperator(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger) error {
+func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
 	values := map[string]interface{}{
 		"image": map[string]interface{}{
 			"tag":        operatorTag,
@@ -184,11 +191,11 @@ func deployOperator(ns string, globals map[string]interface{}, actConfig *action
 		return errors.Wrap(err, "error loading operator chart")
 	}
 
-	log.Infof("Deploying Kuberlogic operator...")
-	return releaseHelmChart(helmOperatorChart, ns, chart, values, globals, actConfig, log)
+	i.Log.Infof("Deploying Kuberlogic operator...")
+	return releaseHelmChart(helmOperatorChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
-func deployMonitoring(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger) error {
+func deployMonitoring(globals map[string]interface{}, i *HelmInstaller) error {
 	values := map[string]interface{}{}
 
 	chart, err := monitoringChartReader()
@@ -196,11 +203,11 @@ func deployMonitoring(ns string, globals map[string]interface{}, actConfig *acti
 		return errors.Wrap(err, "error loading monitoring chart")
 	}
 
-	log.Infof("Deploying Kuberlogic monitoring...")
-	return releaseHelmChart(helmMonitoringChart, ns, chart, values, globals, actConfig, log)
+	i.Log.Infof("Deploying Kuberlogic monitoring...")
+	return releaseHelmChart(helmMonitoringChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
-func deployServiceOperators(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger) error {
+func deployServiceOperators(globals map[string]interface{}, i *HelmInstaller) error {
 	// postgres first
 	pgValues := map[string]interface{}{
 		"crd": map[string]interface{}{
@@ -223,8 +230,8 @@ func deployServiceOperators(ns string, globals map[string]interface{}, actConfig
 		return errors.Wrap(err, "error loading postgres chart")
 	}
 
-	log.Infof("Deploying postgres operator...")
-	if err := releaseHelmChart(postgresOperatorChart, ns, pgChart, pgValues, globals, actConfig, log); err != nil {
+	i.Log.Infof("Deploying postgres operator...")
+	if err := releaseHelmChart(postgresOperatorChart, i.ReleaseNamespace, pgChart, pgValues, globals, i.HelmActionConfig, i.Log); err != nil {
 		return errors.Wrap(err, "error deploying postgres chart")
 	}
 
@@ -253,8 +260,8 @@ func deployServiceOperators(ns string, globals map[string]interface{}, actConfig
 		return errors.Wrap(err, "error loading mysql chart")
 	}
 
-	log.Infof("Deploying MySQL operator...")
-	if err := releaseHelmChart(mysqlOperatorChart, ns, mysqlChart, mysqlValues, globals, actConfig, log); err != nil {
+	i.Log.Infof("Deploying MySQL operator...")
+	if err := releaseHelmChart(mysqlOperatorChart, i.ReleaseNamespace, mysqlChart, mysqlValues, globals, i.HelmActionConfig, i.Log); err != nil {
 		return err
 	}
 	return err

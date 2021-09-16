@@ -27,6 +27,14 @@ type HelmInstaller struct {
 		Username string
 		Password string
 	}
+	Endpoints struct {
+		API string
+		UI  string
+	}
+	Auth struct {
+		AdminPassword    string
+		TestUserPassword string
+	}
 }
 
 func New(config *cfg.Config, log logger.Logger) (*HelmInstaller, error) {
@@ -54,7 +62,7 @@ func New(config *cfg.Config, log logger.Logger) (*HelmInstaller, error) {
 		return nil, fmt.Errorf("error building Helm cli: %v", err)
 	}
 
-	return &HelmInstaller{
+	i := &HelmInstaller{
 		Log: log,
 
 		ClientSet:        k8sclientset,
@@ -70,5 +78,20 @@ func New(config *cfg.Config, log logger.Logger) (*HelmInstaller, error) {
 			Username: *config.Registry.Username,
 			Password: *config.Registry.Password,
 		},
-	}, nil
+		Endpoints: struct {
+			API string
+			UI  string
+		}{API: config.Endpoints.API, UI: config.Endpoints.UI},
+		Auth: struct {
+			AdminPassword    string
+			TestUserPassword string
+		}{
+			AdminPassword: config.Auth.AdminPassword,
+		},
+	}
+	if config.Auth.TestUserPassword != nil {
+		i.Auth.TestUserPassword = *config.Auth.TestUserPassword
+	}
+
+	return i, nil
 }

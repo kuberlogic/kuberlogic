@@ -6,6 +6,9 @@ import "github.com/kuberlogic/operator/modules/installer/internal"
 const (
 	certManagerNs = "cert-manager"
 
+	// Nginx Ingress Controller
+	ingressClass = "kuberlogic-nginx"
+
 	// registry information for installation
 	registryName = "quay.io"
 	registryOrg  = "kuberlogic"
@@ -36,11 +39,9 @@ const (
 	apiserverPort              = 8001
 	apiserverDebuglLogsEnabled = "TRUE"
 	apiserverAuthProvider      = "keycloak"
-	apiserverIngressHost       = "api.kuberlogic.com"
 
 	// kuberlogic UI
-	uiImageTag    = "demo-v8"
-	uiIngressHost = "kuberlogic.com"
+	uiImageTag = "demo-v8"
 )
 
 var (
