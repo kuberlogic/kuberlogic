@@ -89,7 +89,7 @@ func apiserverChartReader() (io.Reader, error) {
 }
 
 func uiChartReader() (io.Reader, error) {
-	return helmFs.Open("kuberlogic-ui.0.1.0.tgz")
+	return helmFs.Open("kuberlogic-ui-0.1.0.tgz")
 }
 
 func findHelmRelease(name string, c *action.Configuration, log logger.Logger) (*release.Release, error) {

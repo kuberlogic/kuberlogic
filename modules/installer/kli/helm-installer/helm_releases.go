@@ -2,6 +2,7 @@ package helm_installer
 
 import (
 	"context"
+	"github.com/kuberlogic/operator/modules/installer/internal"
 	logger "github.com/kuberlogic/operator/modules/installer/log"
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"
@@ -76,7 +77,7 @@ func deployAuth(ns string, globals map[string]interface{}, actConfig *action.Con
 	return nil
 }
 
-func deployNginxIC(ns string, globals map[string]interface{}, actConfig *action.Configuration, clientset *kubernetes.Clientset, log logger.Logger) error {
+func deployNginxIC(ns string, globals map[string]interface{}, actConfig *action.Configuration, clientset *kubernetes.Clientset, log logger.Logger, releaseInfo *internal.ReleaseInfo) error {
 	values := map[string]interface{}{
 		"defaultBackend": map[string]interface{}{
 			"enabled": false,
@@ -101,14 +102,15 @@ func deployNginxIC(ns string, globals map[string]interface{}, actConfig *action.
 			continue // hope that the error is transient
 		}
 		if len(s.Status.LoadBalancer.Ingress) != 0 {
-			// success
+			// success. append to the release banner
+			releaseInfo.AddBannerLines("Connection endpoint address: " + s.Status.LoadBalancer.Ingress[0].IP)
 			return nil
 		}
 	}
 	return errors.New("failed to obtain an Ingress IP address for nginx-ingress-controller")
 }
 
-func deployUI(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger) error {
+func deployUI(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger, release *internal.ReleaseInfo) error {
 	values := map[string]interface{}{
 		"config": map[string]interface{}{
 			"apiEndpoint": apiserverIngressHost,
@@ -128,10 +130,11 @@ func deployUI(ns string, globals map[string]interface{}, actConfig *action.Confi
 	}
 
 	log.Infof("Deploying Kuberlogic UI...")
+	release.AddBannerLines("Kuberlogic Web UI endpoint: http://" + uiIngressHost)
 	return releaseHelmChart(helmUIChart, ns, chart, values, globals, actConfig, log)
 }
 
-func deployApiserver(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger) error {
+func deployApiserver(ns string, globals map[string]interface{}, actConfig *action.Configuration, log logger.Logger, release *internal.ReleaseInfo) error {
 	values := map[string]interface{}{
 		"image": map[string]interface{}{
 			"tag": apiserverTag,
@@ -161,6 +164,7 @@ func deployApiserver(ns string, globals map[string]interface{}, actConfig *actio
 	}
 
 	log.Infof("Deploying Kuberlogic apiserver...")
+	release.AddBannerLines("Kuberlogic API endpoint: http://" + apiserverIngressHost)
 	return releaseHelmChart(helmApiserverChart, ns, chart, values, globals, actConfig, log)
 }
 
@@ -169,6 +173,9 @@ func deployOperator(ns string, globals map[string]interface{}, actConfig *action
 		"image": map[string]interface{}{
 			"tag":        operatorTag,
 			"repository": operatorRepository,
+		},
+		"grafana": map[string]interface{}{
+			"enabled": false,
 		},
 	}
 

@@ -7,6 +7,7 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"strings"
 )
 
 const (
@@ -21,9 +22,10 @@ const (
 )
 
 type ReleaseInfo struct {
-	Name      string
-	Namespace string
-	Status    string
+	Name        string
+	Namespace   string
+	Status      string
+	bannerLines []string
 
 	cm *v12.ConfigMap
 }
@@ -48,6 +50,18 @@ func (r *ReleaseInfo) updateState(state string, clientSet *kubernetes.Clientset)
 	}
 	r.cm = cm
 	return nil
+}
+
+func (r *ReleaseInfo) AddBannerLines(lines ...string) {
+	r.bannerLines = append(r.bannerLines, lines...)
+}
+
+func (r ReleaseInfo) Banner() string {
+	return strings.Join(r.bannerLines, "\n")
+}
+
+func (r ReleaseInfo) ShowBanner() bool {
+	return len(r.bannerLines) != 0
 }
 
 func StartRelease(namespace string, clientSet *kubernetes.Clientset) (*ReleaseInfo, error) {
@@ -99,6 +113,7 @@ func FinishRelease(namespace string, clientSet *kubernetes.Clientset) (*ReleaseI
 	if err != nil {
 		return nil, errors.Wrap(err, "error finding release")
 	}
+
 	err = rel.updateState(releaseSuccessfulPhase, clientSet)
 
 	return rel, err
@@ -118,8 +133,9 @@ func FailRelease(namespace string, clientSet *kubernetes.Clientset) (*ReleaseInf
 
 func DiscoverReleaseInfo(namespace string, clientSet *kubernetes.Clientset) (*ReleaseInfo, bool, error) {
 	r := &ReleaseInfo{
-		Name:      releaseName,
-		Namespace: namespace,
+		Name:        releaseName,
+		Namespace:   namespace,
+		bannerLines: make([]string, 0),
 	}
 	var err error
 	r.cm, err = clientSet.CoreV1().ConfigMaps(namespace).Get(context.TODO(), releaseConfigMapName, v1.GetOptions{})

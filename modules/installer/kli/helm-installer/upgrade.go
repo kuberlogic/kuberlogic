@@ -9,7 +9,7 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 	i.Log.Debugf("entering upgrade phase with args: %+v", args)
 
 	// check if release is installed
-	_, err := internal.UpgradeRelease(i.ReleaseNamespace, i.ClientSet)
+	release, err := internal.UpgradeRelease(i.ReleaseNamespace, i.ClientSet)
 	if err != nil {
 		i.Log.Errorf("Error searching for the release: %v", err)
 		return err
@@ -32,7 +32,7 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 
 		if upgradePhase == "all" || upgradePhase == "dependencies" {
 			i.Log.Infof("Upgrading dependencies...")
-			if err := deployNginxIC(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.ClientSet, i.Log); err != nil {
+			if err := deployNginxIC(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.ClientSet, i.Log, release); err != nil {
 				return errors.Wrap(err, "error upgrade nginx-ingress-controller")
 			}
 			i.Log.Infof("Upgrading cert-manager dependency")
@@ -64,12 +64,12 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 			}
 
 			i.Log.Infof("Upgrading apiserver")
-			if err := deployApiserver(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+			if err := deployApiserver(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log, release); err != nil {
 				return errors.Wrap(err, "error upgrading apiserver")
 			}
 
 			i.Log.Infof("Upgrading UI")
-			if err := deployUI(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+			if err := deployUI(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log, release); err != nil {
 				return errors.Wrap(err, "error upgrading UI")
 			}
 		}
@@ -79,6 +79,10 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 	if err != nil {
 		i.Log.Errorf("Upgrade failed")
 		return err
+	}
+
+	if release.ShowBanner() {
+		i.Log.Infof(release.Banner())
 	}
 
 	i.Log.Infof("Upgrade completed successfully!")

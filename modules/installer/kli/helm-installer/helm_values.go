@@ -24,21 +24,22 @@ const (
 	postgresSecretTemplate = "{username}.{cluster}.credentials"
 
 	// mysql operator values
-	mysqlImage = registryName + "/" + registryOrg + "/mysql-operator:v0.5.0-rc.2-1ef93d3"
+	// mysqlImage = registryName + "/" + registryOrg + "/mysql-operator:v0.5.0-rc.2-1ef93d3"
+	mysqlImage = registryName + "/" + registryOrg + "/mysql-operator:v0.5.0-rc.2-2-g1ef93"
 
 	// operator
 	operatorTag        = "0.0.28"
 	operatorRepository = registryName + "/" + registryOrg
 
 	// apiserver
-	apiserverTag               = "0.0.28"
+	apiserverTag               = "latest"
 	apiserverPort              = 8001
 	apiserverDebuglLogsEnabled = "TRUE"
 	apiserverAuthProvider      = "keycloak"
 	apiserverIngressHost       = "api.kuberlogic.com"
 
 	// kuberlogic UI
-	uiImageTag    = "demo-009"
+	uiImageTag    = "demo-v8"
 	uiIngressHost = "kuberlogic.com"
 )
 

@@ -23,11 +23,12 @@ func (i *HelmInstaller) Install(args []string) error {
 	if err := internal.PrepareEnvironment(i.ReleaseNamespace, i.Registry.Server, i.Registry.Password, i.Registry.Username, i.ClientSet); err != nil {
 		return errors.Wrap(err, "error preparing environment")
 	}
-	if _, err := internal.StartRelease(i.ReleaseNamespace, i.ClientSet); err != nil {
+	release, err := internal.StartRelease(i.ReleaseNamespace, i.ClientSet)
+	if err != nil {
 		return errors.Wrap(err, "error starting release")
 	}
 
-	err := func() error {
+	err = func() error {
 		// install CRDs into cluster
 		i.Log.Infof("Installing CRDs...")
 		if err := deployCRDs(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
@@ -36,7 +37,7 @@ func (i *HelmInstaller) Install(args []string) error {
 
 		if installPhase == "all" || installPhase == "dependencies" {
 			i.Log.Infof("Installing Kuberlogic dependencies...")
-			if err := deployNginxIC(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.ClientSet, i.Log); err != nil {
+			if err := deployNginxIC(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.ClientSet, i.Log, release); err != nil {
 				return errors.Wrap(err, "error installing nginx-ingress-controller")
 			}
 			if err := deployCertManager(globalValues, i.HelmActionConfig, i.Log); err != nil {
@@ -62,11 +63,11 @@ func (i *HelmInstaller) Install(args []string) error {
 				return errors.Wrap(err, "error installing operator")
 			}
 
-			if err := deployApiserver(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+			if err := deployApiserver(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log, release); err != nil {
 				return errors.Wrap(err, "error installing apiserver")
 			}
 
-			if err := deployUI(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log); err != nil {
+			if err := deployUI(i.ReleaseNamespace, globalValues, i.HelmActionConfig, i.Log, release); err != nil {
 				return errors.Wrap(err, "error installing UI")
 			}
 		}
@@ -77,7 +78,10 @@ func (i *HelmInstaller) Install(args []string) error {
 		internal.FailRelease(i.ReleaseNamespace, i.ClientSet)
 		return err
 	}
-	_, err = internal.FinishRelease(i.ReleaseNamespace, i.ClientSet)
+	release, err = internal.FinishRelease(i.ReleaseNamespace, i.ClientSet)
+	if release.ShowBanner() {
+		i.Log.Infof(release.Banner())
+	}
 	i.Log.Infof("Installation completed successfully!")
 	return err
 }
