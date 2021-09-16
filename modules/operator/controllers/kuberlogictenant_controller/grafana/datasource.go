@@ -43,7 +43,7 @@ func (gr *grafana) ensureDatasource(orgId int) error {
 
 	d := newDatasource(uid, gr.datasourceAddress)
 
-	ds, err := gr.getDatasource(uid, orgId)
+	ds, err := gr.getDatasource(d.Name, orgId)
 	if err != nil {
 		return errors.Wrap(err, "error getting Grafana datasource")
 	}
