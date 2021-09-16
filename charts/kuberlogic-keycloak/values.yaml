@@ -8,3 +8,6 @@ authorization:
 
 labels:
   component.kuberlogic.com/name: keycloak
+
+testUser:
+  create: false
