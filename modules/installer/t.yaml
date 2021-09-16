@@ -9,3 +9,10 @@ registry:
   username: ynnt
   password: D1pQ+L889NzoLUVtluN8iQJbm/SPYXfvPXQP47ePULonOw40ifFWcPvZNLHWSUA1
 
+endpoints:
+  api: api.kuberlogic.com
+  ui: ui.kuberlogic.com
+
+auth:
+  testUserPassword: adasfsdgsd
+  adminPassword: secret

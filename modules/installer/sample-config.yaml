@@ -9,3 +9,10 @@ registry:
   username: quayusername
   password: quaypassword
 
+endpoints:
+  api: api.kuberlogic.com
+  ui: ui.kuberlogic.com
+
+auth:
+  testUserPassword: testPassword
+  adminPassword: secret
