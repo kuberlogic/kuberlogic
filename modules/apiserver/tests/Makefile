@@ -38,6 +38,7 @@ INTERNAL_GRAFANA_IP=$(shell kubectl get pod -l app=grafana -o go-template="{{ran
 KUBERLOGIC_GRAFANA_ENABLED = true
 KUBERLOGIC_GRAFANA_ENDPOINT = http://$(INTERNAL_GRAFANA_IP):3000/
 
+
 test:
 	POD_NAMESPACE=default go test -v \
 		-coverprofile=coverage.out \
@@ -47,6 +48,10 @@ test:
 		-timeout 60m \
 		-failfast \
 		$(ARGS) ./...
+
+remote-test:
+	REMOTE_HOST=$(shell kubectl get pod -l control-plane=kuberlogic-operator -o jsonpath='{.items[].status.podIP}'):8001 \
+	$(MAKE) test
 
 coverage-report: test
 	for pkg in apiserver operator; do \
@@ -120,3 +125,9 @@ undeploy-operator:
 
 configure-logs:
 	envsubst < config/logz.io/logzio-daemonset-rbac.yaml | kubectl apply -f -
+
+follow-apiserver-logs:
+	kubectl logs -l control-plane=kuberlogic-operator -c apiserver -f
+
+follow-operator-logs:
+	kubectl logs -l control-plane=kuberlogic-operator -c manager -f

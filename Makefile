@@ -81,7 +81,10 @@ after-deploy:
 
 # Deploy kuberlogic-operator in the configured Kubernetes cluster in ~/.kube/config
 deploy: kustomize manifests deploy-certmanager
-	cd config/manager && $(KUSTOMIZE) edit set image operator=$(OPERATOR_IMG)
+	cd config/manager && \
+	$(KUSTOMIZE) edit set image operator=$(OPERATOR_IMG) && \
+	$(KUSTOMIZE) edit set image controller=$(OPERATOR_IMG) && \
+	$(KUSTOMIZE) edit set image apiserver=$(OPERATOR_IMG)
 	cd config/updater && $(KUSTOMIZE) edit set image updater=$(UPDATER_IMG)
 	$(KUSTOMIZE) build config/default | envsubst | kubectl apply -f -
 	$(MAKE) after-deploy
@@ -173,7 +176,6 @@ push-tests:
 	docker push $(IMG_TESTS)
 	docker push $(IMG_TESTS_LATEST)
 
-# Push images
 operator-push:
 	docker push $(OPERATOR_IMG)
 	docker push $(OPERATOR_IMG_LATEST)

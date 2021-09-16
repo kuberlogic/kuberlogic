@@ -2,30 +2,95 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+    branches:
+      - KL-137
+#  push:
+#    tags:
+#      - "v[0-9]+.[0-9]+.[0-9]+"
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.16.0'
+
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Create installer
-        run: |
-          cat README.md > linux-amd64.zip
-
-      # create installer
-      # deploy cluster locally with installer
-      # run in-cluster tests
-      # release
-
-      - name: Release
-        uses: docker://antonyurchenko/git-release:v4.1.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PRE_RELEASE: true
+      - name: Setup Minikube
+        uses: manusa/actions-setup-minikube@v2.3.0
         with:
-          args: |
-            linux-amd64.zip
+          minikube version: 'v1.19.0'
+          kubernetes version: 'v1.20.5'
+          github token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure logs
+        working-directory: ./modules/apiserver/tests
+        run: |
+          echo Your testid label value is $GITHUB_RUN_ID
+          make configure-logs
+        env:
+          LOGZ_IO_TOKEN: ${{ secrets.LOGZ_IO_TOKEN }}
+          LOGZ_IO_LISTENER: ${{ secrets.LOGZ_IO_LISTENER }}
+
+      - name: Create secret of operator
+        run: |
+          kubectl create secret docker-registry kuberlogic-registry --docker-server=$REGISTRY_SERVER --docker-username=$REGISTRY_USER --docker-password=$REGISTRY_PASSWORD
+        env:
+          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
+          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build the new images
+        run: |
+          make docker-build
+
+      - name: Deploy operator
+        run: |
+          make install
+          make deploy
+
+      - name: Setup minio for backup storage
+        working-directory: ./modules/apiserver/tests
+        run: |
+          make deploy-minio
+
+      - name: Waiting ready the pods
+        run: |
+          kubectl wait --for=condition=Ready pods --all --timeout=5m
+
+      - name: Show pod status
+        run: |
+          kubectl logs -l app=minio
+          docker images
+        if: ${{ failure() }}
+
+      - name: Create test bucket (backup storage)
+        working-directory: ./modules/apiserver/tests
+        run: |
+          make create-bucket
+
+      - name: Ensure keycloak is ready
+        working-directory: ./modules/apiserver/tests/config
+        run: |
+          ./wait-for-keycloak.sh
+
+      - name: Run the remote tests
+        working-directory: ./modules/apiserver/tests
+        run: |
+          make remote-test
+
+      - name: Push the new images
+        run: |
+          make docker-push
+
+#      - name: Release
+#        uses: docker://antonyurchenko/git-release:v4.1.0
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          PRE_RELEASE: true
+#        with:
+#          args: |
+#            linux-amd64.zip
