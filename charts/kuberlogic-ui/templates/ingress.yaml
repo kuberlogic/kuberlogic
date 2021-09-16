@@ -5,6 +5,7 @@ kind: Ingress
 metadata:
   name: "{{ include "kuberlogic-ui.fullname" . }}"
 spec:
+  ingressClassName: {{ .Values.ingress.class }}
   rules:
     - host: {{ .Values.ingress.host }}
       http:
