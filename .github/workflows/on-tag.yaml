@@ -80,7 +80,7 @@ jobs:
       - name: Run the remote tests
         working-directory: ./modules/apiserver/tests
         run: |
-          make remote-test RUN=TestService/postgresql
+          make remote-test RUN=TestService/mysql
 
       - name: Push the new images
         run: |
