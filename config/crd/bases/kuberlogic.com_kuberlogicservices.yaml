@@ -73,14 +73,17 @@ spec:
               maintenanceWindow:
                 properties:
                   duration:
+                    default: 4
                     description: window duration in hours
                     type: integer
                   start:
+                    default: 0
                     description: start hour, UTC zone is assumed
                     maximum: 23
                     minimum: 0
                     type: integer
                   weekday:
+                    default: Sunday
                     description: day of the week
                     enum:
                     - Monday
