@@ -80,8 +80,6 @@ jobs:
       - name: Run the remote tests
         working-directory: ./modules/apiserver/tests
         run: |
-#         fails when it runs with mysql & pg at the same time.
-#         pg clusters pod hangs on pending state
           make remote-test RUN=/mysql
 
       - name: Push the new images
