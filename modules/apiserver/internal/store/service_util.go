@@ -205,14 +205,14 @@ func getServiceInstanceLogs(c *kubernetes.Clientset, kls *kuberlogicv1.KuberLogi
 // converted to a Gi representation
 // e.g, 512Mi = 0.5Gi, 1Gi = 1Gi
 func memoryQuantityAsGi(m resource.Quantity) string {
-	return strconv.FormatFloat(float64(m.Value())/float64(1024*1024*1025), 'f', -1, 64)
+	return strconv.FormatFloat(float64(m.Value())/float64(1024*1024*1024), 'f', 2, 64)
 }
 
 // cpuQuantityAsCoreShares returns a string representation of a resource.Quantity
 // converted to a number of CPU cores assigned
 // e.g. 100m = 0.1. 1 = 1
 func cpuQuantityAsCoreShares(m resource.Quantity) string {
-	return strconv.FormatFloat(float64(m.MilliValue())/float64(1000), 'f', -1, 64)
+	return strconv.FormatFloat(float64(m.MilliValue())/float64(1000), 'f', 2, 64)
 }
 
 func int64AsPointer(x int64) *int64 {
