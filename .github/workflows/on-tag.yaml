@@ -84,7 +84,12 @@ jobs:
 
       - name: Push the new images
         run: |
+          docker login --username=$REGISTRY_USER --password=$REGISTRY_PASSWORD $REGISTRY_SERVER
           make docker-push
+        env:
+          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
+          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
 #      - name: Release
 #        uses: docker://antonyurchenko/git-release:v4.1.0
@@ -94,3 +99,40 @@ jobs:
 #        with:
 #          args: |
 #            linux-amd64.zip
+
+      - name: Show status
+        run: |
+          kubectl get pod,sts,deploy,svc,cj,job -o yaml
+        if: ${{ failure() }}
+
+      - name: Generating logs
+        working-directory: ./modules/apiserver/tests
+        run: |
+          kubectl logs -l control-plane=kuberlogic-operator -c manager --tail=-1 > kuberlogic-operator.log
+          kubectl logs -l control-plane=kuberlogic-operator -c apiserver --tail=-1 > kuberlogic-apiserver.log
+
+          kubectl logs -l name=postgres-operator --tail=-1 > postgres-operator.log
+          kubectl logs -l app=mysql-operator -c mysql-operator --tail=-1 > mysql-operator.log
+          kubectl describe pod -l name=postgres-operator > postgres-operator.describe.log
+          kubectl describe pod -l app=mysql-operator > mysql-operator.describe.log
+          kubectl describe pod -l app=alertmanager > alertmanager.describe.log
+          kubectl get pod > pods-status.log
+          kubectl get endpoints > endpoints.log
+          kubectl get services > services.log
+          kubectl logs -l app.kubernetes.io/name=kube-state-metrics -c kube-state-metrics > kube-state-metrics.logs
+          kubectl logs -l app.kubernetes.io/name=kube-state-metrics -c kube-rbac-proxy > kube-rbac-proxy.kube-state-metrics.logs
+          kubectl get kuberlogicservice,kuberlogicbackupschedules,kuberlogicbackuprestores > kuberlogics-services.log
+          kubectl describe pod -l app.kubernetes.io/name=mysql > mysql-cluster.describe.log
+          kubectl describe pod -l application=spilo > pg-cluster.describe.log
+          kubectl logs -l app.kubernetes.io/name=mysql -c mysql --tail=-1 > mysql-cluster.log
+          kubectl logs -l application=spilo -c postgres --tail=-1 > pg-cluster.log
+        if: ${{ always() }}
+        continue-on-error: true
+
+      - name: Archive logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs
+          path: |
+            ./modules/apiserver/tests/*.log
+        if: ${{ always() }}
