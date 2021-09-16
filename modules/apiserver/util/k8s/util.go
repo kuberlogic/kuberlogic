@@ -77,14 +77,19 @@ func GetServiceExternalIP(c *kubernetes.Clientset, log logging.Logger, name, ns 
 		return
 	}
 
-	switch len(s.Spec.ExternalIPs) {
-	case 0:
-		return
-	default:
+	if extIPs := s.Spec.ExternalIPs; len(extIPs) != 0 {
 		found = true
-		ip = s.Spec.ExternalIPs[0]
+		ip = extIPs[0]
 		return
 	}
+	log.Debugw("service has no ExternalIPs. Checking LoadBalancers")
+
+	if lbIPs := s.Status.LoadBalancer.Ingress; len(lbIPs) != 0 {
+		found = true
+		ip = lbIPs[0].IP
+		return
+	}
+	return
 }
 
 func GetSecretFieldDecoded(c *kubernetes.Clientset, log logging.Logger, secret, ns, field string) (string, error) {

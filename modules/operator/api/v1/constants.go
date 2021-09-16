@@ -19,6 +19,6 @@ const (
 	RestoreUnknownStatus = "Unknown"
 
 	Group                = "kuberlogic.com"
-	apiAnnotationsGroup  = "api." + Group
+	apiAnnotationsGroup  = "internal." + Group
 	alertEmailAnnotation = apiAnnotationsGroup + "/" + "alert-email"
 )
