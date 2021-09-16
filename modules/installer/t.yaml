@@ -1,6 +1,6 @@
 ---
 debugLogs: true
-kubeconfigPath: ~/.kube/config
+# kubeconfigPath: ~/.kube/config # must be full path to Kubeconfig
 
 # required values
 namespace: kuberlogic
