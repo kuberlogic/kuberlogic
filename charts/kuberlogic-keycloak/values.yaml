@@ -11,3 +11,6 @@ labels:
 
 testUser:
   create: false
+  tenantId: 9bc95d62ccd8616642c07437226e3117
+  email: user@kuberlogic.com
+  username: kuberlogic-user

@@ -90,25 +90,25 @@ spec:
           scopes:
             - name: "service:*"
 {{ if .Values.testUser.create }}
-        - name: "4f6b97e729327473139acd2748457f44:*"
+        - name: "{{ .Values.testUser.tenantId }}:*"
           type: kuberlogicservice
           scopes:
             - name: "service:*"
 {{ end }}
       policies:
 {{ if .Values.testUser.create }}
-        - name: kuberlogic-test-user-allow
+        - name: {{ .Values.testUser.username }}
           type: user
           logic: POSITIVE
           config:
-            users: '["kuberlogic-test-user"]'
-        - name: kuberlogic-test-user-full
+            users: '["{{ .Values.testUser.username }}"]'
+        - name: sample-user-full
           type: scope
           decisionStrategy: UNANIMOUS
           config:
-            applyPolicies: '["kuberlogic-test-user-allow"]'
+            applyPolicies: '["{{ .Values.testUser.username }}"]'
             scopes: '["service:*"]'
-            resources: '["4f6b97e729327473139acd2748457f44:*"]'
+            resources: '["{{ .Values.testUser.tenantId }}:*"]'
 {{ end }}
         - name: kuberlogic-system-allow
           type: user
@@ -148,7 +148,7 @@ spec:
 apiVersion: keycloak.org/v1alpha1
 kind: KeycloakUser
 metadata:
-  name: kuberlogic-test-user
+  name: {{ .Values.testUser.username }}
   labels:
   {{ toYaml .Values.labels | nindent 4 }}
 spec:
@@ -160,11 +160,11 @@ spec:
       - type: password
         value: {{ .Values.testUser.password }}
         temporary: false
-    email: keycloak@example.com
-    id: kuberlogic-test-user
-    username: kuberlogic-test-user
+    email: {{ .Values.testUser.email }}
+    id: {{ .Values.testUser.username }}
+    username: {{ .Values.testUser.username }}
     enabled: true
-    firstName: Sample
+    firstName: Test
     lastName: User
     realmRoles:
       - "offline_access"

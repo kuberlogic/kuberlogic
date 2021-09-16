@@ -27,8 +27,7 @@ const (
 	postgresSecretTemplate = "{username}.{cluster}.credentials"
 
 	// mysql operator values
-	// mysqlImage = registryName + "/" + registryOrg + "/mysql-operator:v0.5.0-rc.2-1ef93d3"
-	mysqlImage = registryName + "/" + registryOrg + "/mysql-operator:v0.5.0-rc.2-2-g1ef93"
+	mysqlImage = registryName + "/" + registryOrg + "/mysql-operator:v0.5.0-rc.2-1ef93d3"
 
 	// operator
 	operatorTag        = "0.0.29"

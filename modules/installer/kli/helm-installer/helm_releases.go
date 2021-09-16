@@ -51,14 +51,14 @@ func deployAuth(globals map[string]interface{}, i *HelmInstaller) error {
 
 	kuberlogicKeycloakValues := map[string]interface{}{
 		"realm": map[string]interface{}{
-			"id":   keycloakRealmName,
-			"name": keycloakRealmName,
+			"id":            keycloakRealmName,
+			"name":          keycloakRealmName,
+			"adminPassword": i.Auth.AdminPassword,
 		},
 		"clientId":     keycloakClientId,
 		"clientSecret": keycloakClientSecret,
 
-		"apiserverId":   oauthApiserverId,
-		"adminPassword": i.Auth.AdminPassword,
+		"apiserverId": oauthApiserverId,
 	}
 	if i.Auth.TestUserPassword != "" {
 		kuberlogicKeycloakValues["testUser"] = map[string]interface{}{
