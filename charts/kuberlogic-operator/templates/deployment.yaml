@@ -39,6 +39,22 @@ spec:
             value: {{ .Values.imagePullSecret }}
           - name: SENTRY_DSN
             value: {{ .Values.sentryDsn }}
+          - name: GRAFANA_ENABLED
+            value: "{{ .Values.config.grafana.enabled }}"
+          {{ if .Values.config.grafana.enabled }}
+          - name: GRAFANA_ENDPOINT
+            value: "{{ .Values.config.grafana.endpoint }}"
+          - name: GRAFANA_LOGIN
+            valueFrom:
+              secretKeyRef:
+                key: login
+                name: {{ .Values.config.grafana.secret }}
+          - name: GRAFANA_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: password
+                name: {{ .Values.config.grafana.secret }}
+          {{ end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
