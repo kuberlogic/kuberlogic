@@ -31,11 +31,11 @@ const (
 	mysqlImage = registryName + "/" + registryOrg + "/mysql-operator:v0.5.0-rc.2-2-g1ef93"
 
 	// operator
-	operatorTag        = "0.0.28"
+	operatorTag        = "0.0.29"
 	operatorRepository = registryName + "/" + registryOrg
 
 	// apiserver
-	apiserverTag               = "latest"
+	apiserverTag               = "0.0.29"
 	apiserverPort              = 8001
 	apiserverDebuglLogsEnabled = "TRUE"
 	apiserverAuthProvider      = "keycloak"
