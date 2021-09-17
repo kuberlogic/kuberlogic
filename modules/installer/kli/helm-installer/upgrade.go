@@ -86,5 +86,5 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 	}
 
 	i.Log.Infof("Upgrade completed successfully!")
-	return nil
+	return release.FinishRelease(i.ClientSet)
 }

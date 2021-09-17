@@ -101,7 +101,8 @@ func findHelmRelease(name string, c *action.Configuration, log logger.Logger) (*
 			action.ListPendingInstall |
 			action.ListPendingUpgrade |
 			action.ListPendingRollback |
-			action.ListFailed
+			action.ListFailed |
+			action.ListAll
 
 	releases, err := list.Run()
 	if err != nil {
@@ -137,18 +138,24 @@ func releaseHelmChart(name, ns string, chartReader io.Reader, locals, globals ma
 	if err != nil {
 		return errors.Wrap(err, "error releasing chart")
 	}
-	if r == nil {
-		return installHelmChart(name, ns, chart, resultVals, c, log)
-	} else {
-		return upgradeHelmChart(name, ns, chart, resultVals, c, log)
+
+	// release exists and it is in pending state
+	if r != nil && r.Info.Status.IsPending() {
+		uninstallHelmChart(name, true, c, log)
+		r = nil
 	}
+
+	if r == nil {
+		installHelmChart(name, ns, chart, resultVals, c, log)
+	}
+	return upgradeHelmChart(name, ns, chart, resultVals, false, c, log)
 }
 
 // upgradeHelmChart upgrades a Helm chart with given values
-func upgradeHelmChart(name, ns string, chart *chart.Chart, values map[string]interface{}, c *action.Configuration, log logger.Logger) error {
+func upgradeHelmChart(name, ns string, chart *chart.Chart, values map[string]interface{}, force bool, c *action.Configuration, log logger.Logger) error {
 	// create install action
 	action := action.NewUpgrade(c)
-	action.Force = false
+	action.Force = force
 	action.Install = true
 	action.Namespace = ns
 	action.SkipCRDs = false
