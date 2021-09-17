@@ -37,10 +37,10 @@ CRD_OPTIONS ?= "crd:trivialVersions=true"
 KUBERLOGIC_AUTH_PROVIDER = none
 
 APISERVER_NAME = apiserver
-IMG_APISERVER = $(IMG_REPO)/$(APISERVER_NAME):$(VERSION)
-IMG_APISERVER_LATEST = $(IMG_REPO)/$(APISERVER_NAME):latest
-IMG_TESTS ?= $(IMG_REPO)/integration-tests:$(VERSION)
-IMG_TESTS_LATEST ?= $(IMG_REPO)/integration-tests:latest
+APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME):$(VERSION)
+APISERVER_IMG_LATEST = $(IMG_REPO)/$(APISERVER_NAME):latest
+TESTS_IMG ?= $(IMG_REPO)/integration-tests:$(VERSION)
+TESTS_IMG_LATEST ?= $(IMG_REPO)/integration-tests:latest
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -81,7 +81,10 @@ after-deploy:
 
 # Deploy kuberlogic-operator in the configured Kubernetes cluster in ~/.kube/config
 deploy: kustomize manifests deploy-certmanager
-	cd config/manager && $(KUSTOMIZE) edit set image operator=$(OPERATOR_IMG)
+	cd config/manager && \
+	$(KUSTOMIZE) edit set image operator=$(OPERATOR_IMG) && \
+	$(KUSTOMIZE) edit set image controller=$(OPERATOR_IMG) && \
+	$(KUSTOMIZE) edit set image apiserver=$(APISERVER_IMG)
 	cd config/updater && $(KUSTOMIZE) edit set image updater=$(UPDATER_IMG)
 	$(KUSTOMIZE) build config/default | envsubst | kubectl apply -f -
 	$(MAKE) after-deploy
@@ -159,21 +162,20 @@ alert-receiver-build:
 apiserver-build:
 	echo "Building apiserver image"
 	docker build . -f apiserver.Dockerfile \
-	-t $(IMG_APISERVER) \
-	-t $(IMG_APISERVER_LATEST) \
+	-t $(APISERVER_IMG) \
+	-t $(APISERVER_IMG_LATEST) \
 	--build-arg VERSION=$(VERSION) \
 	--build-arg BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
 	--build-arg REVISION=$(shell git rev-parse HEAD)
 
 build-tests: gen test
 	echo "Building tests image"
-	docker build . -f Dockerfile.tests -t $(IMG_TESTS) -t $(IMG_TESTS_LATEST) .
+	docker build . -f Dockerfile.tests -t $(TESTS_IMG) -t $(TESTS_IMG_LATEST) .
 
 push-tests:
-	docker push $(IMG_TESTS)
-	docker push $(IMG_TESTS_LATEST)
+	docker push $(TESTS_IMG)
+	docker push $(TESTS_IMG_LATEST)
 
-# Push images
 operator-push:
 	docker push $(OPERATOR_IMG)
 	docker push $(OPERATOR_IMG_LATEST)
@@ -187,16 +189,16 @@ alert-receiver-push:
 	docker push $(ALERT_RECEIVER_IMG_LATEST)
 
 apiserver-push:
-	docker push $(IMG_APISERVER)
-	docker push $(IMG_APISERVER_LATEST)
+	docker push $(APISERVER_IMG)
+	docker push $(APISERVER_IMG_LATEST)
 
 tests-build: apiserver-gen
 	echo "Building tests image"
-	docker build . -f tests.Dockerfile -t $(IMG_TESTS) -t $(IMG_TESTS_LATEST)
+	docker build . -f tests.Dockerfile -t $(TESTS_IMG) -t $(TESTS_IMG_LATEST)
 
 tests-push:
-	docker push $(IMG_TESTS)
-	docker push $(IMG_TESTS_LATEST)
+	docker push $(TESTS_IMG)
+	docker push $(TESTS_IMG_LATEST)
 
 mark-executable:
 	chmod +x $(shell find backup/ -iname *.sh | xargs)
