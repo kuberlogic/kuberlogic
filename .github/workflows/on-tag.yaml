@@ -2,11 +2,8 @@ name: Release
 
 on:
   push:
-    branches:
-      - KL-137
-#  push:
-#    tags:
-#      - "v[0-9]+.[0-9]+.[0-9]+"
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
 jobs:
   build:
     name: Build images
@@ -186,11 +183,6 @@ jobs:
       - name: Push the new images
         run: |
           make docker-push
-#        env:
-#          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
-#          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
-#          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-    #          docker login --username=$REGISTRY_USER --password=$REGISTRY_PASSWORD $REGISTRY_SERVER
 
     #      - name: Release
     #        uses: docker://antonyurchenko/git-release:v4.1.0
@@ -199,4 +191,4 @@ jobs:
     #          PRE_RELEASE: true
     #        with:
     #          args: |
-    #            linux-amd64.zip
+    #            installer.zip
