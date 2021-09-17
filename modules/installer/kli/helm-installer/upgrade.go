@@ -9,19 +9,19 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 	i.Log.Debugf("entering upgrade phase with args: %+v", args)
 
 	// check if release is installed
-	release, err := internal.UpgradeRelease(i.ReleaseNamespace, i.ClientSet)
+	release, found, err := internal.DiscoverReleaseInfo(i.ReleaseNamespace, i.ClientSet)
 	if err != nil {
-		i.Log.Errorf("Error searching for the release: %v", err)
-		return err
+		return errors.Wrap(err, "error searching for the release")
+	}
+	if !found {
+		return errors.New("release not found")
+	}
+	if err := release.UpgradeRelease(i.ClientSet); err != nil {
+		return errors.Wrap(err, "error starting upgrade")
 	}
 
 	// for now we only expect single arg = see cmd/install.go
 	upgradePhase := args[0]
-
-	// set release state to upgrading
-	if _, err := internal.UpgradeRelease(i.ReleaseNamespace, i.ClientSet); err != nil {
-		return errors.Wrap(err, "error starting upgrade")
-	}
 
 	err = func() error {
 		// upgrade CRDs into cluster

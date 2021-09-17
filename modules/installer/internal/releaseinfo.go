@@ -14,6 +14,7 @@ const (
 	releaseName          = "kuberlogic"
 	releaseConfigMapName = "kuberlogic-metadata"
 	cmStateKey           = "Status"
+	cmBannerKey          = "Banner"
 
 	releaseStartedPhase    = "started"
 	releaseUpgradePhase    = "upgrading"
@@ -43,6 +44,7 @@ func (r ReleaseInfo) getState() (string, error) {
 
 func (r *ReleaseInfo) updateState(state string, clientSet *kubernetes.Clientset) error {
 	r.cm.Data[cmStateKey] = state
+	r.cm.Data[cmBannerKey] = r.Banner()
 
 	cm, err := clientSet.CoreV1().ConfigMaps(r.Namespace).Update(context.TODO(), r.cm, v1.UpdateOptions{})
 	if err != nil {
@@ -62,6 +64,16 @@ func (r ReleaseInfo) Banner() string {
 
 func (r ReleaseInfo) ShowBanner() bool {
 	return len(r.bannerLines) != 0
+}
+
+func (r *ReleaseInfo) UpgradeRelease(clientSet *kubernetes.Clientset) error {
+	err := r.updateState(releaseUpgradePhase, clientSet)
+	return err
+}
+
+func (r *ReleaseInfo) FinishRelease(clientSet *kubernetes.Clientset) error {
+	err := r.updateState(releaseSuccessfulPhase, clientSet)
+	return err
 }
 
 func StartRelease(namespace string, clientSet *kubernetes.Clientset) (*ReleaseInfo, error) {
@@ -93,32 +105,6 @@ func StartRelease(namespace string, clientSet *kubernetes.Clientset) (*ReleaseIn
 	return r, err
 }
 
-func UpgradeRelease(namespace string, clientSet *kubernetes.Clientset) (*ReleaseInfo, error) {
-	rel, found, err := DiscoverReleaseInfo(namespace, clientSet)
-	if !found {
-		return nil, errors.New("release is not found")
-	}
-	if err != nil {
-		return nil, errors.Wrap(err, "error finding release")
-	}
-	err = rel.updateState(releaseUpgradePhase, clientSet)
-	return rel, err
-}
-
-func FinishRelease(namespace string, clientSet *kubernetes.Clientset) (*ReleaseInfo, error) {
-	rel, found, err := DiscoverReleaseInfo(namespace, clientSet)
-	if !found {
-		return nil, errors.New("release is not found")
-	}
-	if err != nil {
-		return nil, errors.Wrap(err, "error finding release")
-	}
-
-	err = rel.updateState(releaseSuccessfulPhase, clientSet)
-
-	return rel, err
-}
-
 func FailRelease(namespace string, clientSet *kubernetes.Clientset) (*ReleaseInfo, error) {
 	rel, found, err := DiscoverReleaseInfo(namespace, clientSet)
 	if !found {
@@ -147,6 +133,7 @@ func DiscoverReleaseInfo(namespace string, clientSet *kubernetes.Clientset) (*Re
 	}
 
 	r.Status, err = r.getState()
+	r.bannerLines = strings.Split(r.cm.Data[cmBannerKey], "\n")
 	return r, true, nil
 }
 

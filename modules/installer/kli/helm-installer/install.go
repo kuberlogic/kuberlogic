@@ -78,11 +78,12 @@ func (i *HelmInstaller) Install(args []string) error {
 		internal.FailRelease(i.ReleaseNamespace, i.ClientSet)
 		return err
 	}
-	release, err = internal.FinishRelease(i.ReleaseNamespace, i.ClientSet)
 	i.Log.Debugf("release banner: %s", release.Banner())
 	if release.ShowBanner() {
 		i.Log.Infof(release.Banner())
 	}
+
+	err = release.FinishRelease(i.ClientSet)
 	i.Log.Infof("Installation completed successfully!")
 	return err
 }
