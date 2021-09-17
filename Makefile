@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.29
+VERSION ?= 0.0.25
 
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
@@ -90,6 +90,9 @@ deploy: kustomize manifests deploy-certmanager
 	$(MAKE) after-deploy
 
 undeploy: kustomize undeploy-certmanager
+	# need to remove several resources before their operators were removed
+	kubectl delete mysqldatabase grafana; \
+	kubectl delete mysql grafana; \
 	kubectl delete keycloakusers --all-namespaces --all; \
 	kubectl delete keycloakclients --all-namespaces --all; \
 	kubectl delete keycloakrealms --all-namespaces --all; \
