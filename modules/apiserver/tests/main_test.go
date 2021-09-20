@@ -44,8 +44,8 @@ var (
 
 // these values are related to keycloak values in config/keycloak manifests
 const (
-	testUser     = "keycloak@example.com"
-	testNs       = "4f6b97e729327473139acd2748457f44" // md5 hashed testUser email
+	testUser     = "user@kuberlogic.com"
+	testNs       = "ad7fa60af4d66b8aaa4c693a92a7ff87" // md5 hashed testUser email
 	testPassword = "secret"
 )
 
