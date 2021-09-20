@@ -83,7 +83,7 @@ spec:
     authorizationSettings:
       allowRemoteResourceManagement: true
       resources:
-        - name: "4f6b97e729327473139acd2748457f44:*"
+        - name: "ad7fa60af4d66b8aaa4c693a92a7ff87:*"
           type: kuberlogicservice
           scopes:
             - name: "service:*"
@@ -99,7 +99,7 @@ spec:
           config:
             applyPolicies: '["kuberlogic-test-allow"]'
             scopes: '["service:*"]'
-            resources: '["4f6b97e729327473139acd2748457f44:*"]'
+            resources: '["ad7fa60af4d66b8aaa4c693a92a7ff87:*"]'
     protocolMappers:
       - name: "apiserver-aud"
         protocol: "openid-connect"
@@ -137,7 +137,7 @@ spec:
     - type: password
       value: secret
       temporary: false
-    email: keycloak@example.com
+    email: user@kuberlogic.com
     id: kuberlogic-test-user
     username: kuberlogic-test-user
     enabled: true
