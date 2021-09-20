@@ -2,6 +2,7 @@ package helm_installer
 
 import (
 	"context"
+	"fmt"
 	"github.com/kuberlogic/operator/modules/installer/internal"
 	"github.com/pkg/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -181,8 +182,13 @@ func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
 			"tag":        operatorTag,
 			"repository": operatorRepository,
 		},
-		"grafana": map[string]interface{}{
-			"enabled": false,
+		"config": map[string]interface{}{
+			"grafana": map[string]interface{}{
+				"enabled":                   true,
+				"endpoint":                  fmt.Sprintf("http://%s:%d/", grafanaServiceName, grafanaServicePort),
+				"secret":                    grafanaSecretName,
+				"defaultDatasourceEndpoint": "http://" + victoriaMetricsServiceName,
+			},
 		},
 	}
 
@@ -196,7 +202,32 @@ func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
 }
 
 func deployMonitoring(globals map[string]interface{}, i *HelmInstaller) error {
-	values := map[string]interface{}{}
+	values := map[string]interface{}{
+		"victoriametrics": map[string]interface{}{
+			"service": map[string]interface{}{
+				"name": victoriaMetricsServiceName,
+			},
+		},
+		"grafana": map[string]interface{}{
+			"image": map[string]interface{}{
+				"repository": grafanaImageRepo,
+				"tag":        grafanaImageTag,
+			},
+			"service": map[string]interface{}{
+				"name": grafanaServiceName,
+			},
+			"secretName": grafanaSecretName,
+			"admin": map[string]interface{}{
+				"user":     grafanaAdminUser,
+				"password": grafanaAdminPassword,
+			},
+			"mysql": map[string]interface{}{
+				"enabled":      true,
+				"rootPassword": grafanaMysqlRootPassword,
+			},
+			"port": grafanaServicePort,
+		},
+	}
 
 	chart, err := monitoringChartReader()
 	if err != nil {

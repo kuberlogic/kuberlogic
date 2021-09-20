@@ -29,6 +29,19 @@ const (
 	// mysql operator values
 	mysqlImage = registryName + "/" + registryOrg + "/mysql-operator:v0.5.0-rc.2-3-gac1ec"
 
+	// monitoring grafana values
+	grafanaImageRepo         = registryName + "/" + registryOrg + "/grafana"
+	grafanaImageTag          = "8.1.4"
+	grafanaServiceName       = "kuberlogic-grafana"
+	grafanaServicePort       = 3000
+	grafanaSecretName        = "kuberlogic-grafana-credentials"
+	grafanaAdminUser         = "kuberlogic"
+	grafanaAdminPassword     = "6182ec23cc345656d"
+	grafanaMysqlRootPassword = "84fb81edcc1b35"
+
+	// monitoring victoriametrics values
+	victoriaMetricsServiceName = "kuberlogic-victoriametrics"
+
 	// operator
 	operatorTag        = "0.0.29"
 	operatorRepository = registryName + "/" + registryOrg

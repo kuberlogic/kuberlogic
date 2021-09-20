@@ -145,10 +145,23 @@ func releaseHelmChart(name, ns string, chartReader io.Reader, locals, globals ma
 		r = nil
 	}
 
+	var releaseErr error
 	if r == nil {
-		installHelmChart(name, ns, chart, resultVals, c, log)
+		if releaseErr = installHelmChart(name, ns, chart, resultVals, c, log); releaseErr == nil {
+			return nil
+		}
 	}
-	return upgradeHelmChart(name, ns, chart, resultVals, false, c, log)
+
+	// retry in case of errors
+	maxRetries := 3
+	for i := 0; i < maxRetries; i += 1 {
+		if releaseErr = upgradeHelmChart(name, ns, chart, resultVals, false, c, log); releaseErr == nil {
+			return nil
+		}
+		log.Debugf("Error happened: %s. Retries left: %d", releaseErr.Error(), i)
+		time.Sleep(time.Second * time.Duration(i))
+	}
+	return releaseErr
 }
 
 // upgradeHelmChart upgrades a Helm chart with given values

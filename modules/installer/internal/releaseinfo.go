@@ -44,6 +44,16 @@ func (r ReleaseInfo) getState() (string, error) {
 
 func (r *ReleaseInfo) updateState(state string, clientSet *kubernetes.Clientset) error {
 	r.cm.Data[cmStateKey] = state
+
+	cm, err := clientSet.CoreV1().ConfigMaps(r.Namespace).Update(context.TODO(), r.cm, v1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+	r.cm = cm
+	return nil
+}
+
+func (r *ReleaseInfo) updateBanner(clientSet *kubernetes.Clientset) error {
 	r.cm.Data[cmBannerKey] = r.Banner()
 
 	cm, err := clientSet.CoreV1().ConfigMaps(r.Namespace).Update(context.TODO(), r.cm, v1.UpdateOptions{})
@@ -68,11 +78,13 @@ func (r ReleaseInfo) ShowBanner() bool {
 
 func (r *ReleaseInfo) UpgradeRelease(clientSet *kubernetes.Clientset) error {
 	err := r.updateState(releaseUpgradePhase, clientSet)
+	r.cm.Data[cmBannerKey] = ""
 	return err
 }
 
 func (r *ReleaseInfo) FinishRelease(clientSet *kubernetes.Clientset) error {
-	err := r.updateState(releaseSuccessfulPhase, clientSet)
+	err := r.updateBanner(clientSet)
+	err = r.updateState(releaseSuccessfulPhase, clientSet)
 	return err
 }
 
