@@ -47,13 +47,15 @@ spec:
           - name: GRAFANA_LOGIN
             valueFrom:
               secretKeyRef:
-                key: login
+                key: "USER"
                 name: {{ .Values.config.grafana.secret }}
           - name: GRAFANA_PASSWORD
             valueFrom:
               secretKeyRef:
-                key: password
+                key: "PASSWORD"
                 name: {{ .Values.config.grafana.secret }}
+          - name: GRAFANA_DEFAULT_DATASOURCE_ENDPOINT
+            value: {{ .Values.config.grafana.defaultDatasourceEndpoint }}
           {{ end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}

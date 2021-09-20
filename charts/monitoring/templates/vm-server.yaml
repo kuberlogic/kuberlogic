@@ -105,7 +105,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kuberlogic-victoriametrics
+  name: {{ .Values.victoriametrics.service.name }}
   namespace: {{ .Release.Namespace }}
 spec:
   ports:
