@@ -13,18 +13,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Restore docker layers
-        uses: satackey/action-docker-layer-caching@v0.0.11
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
-        with:
-          key: docker-cache-${{ github.sha }}
-          restore-keys: |
-            docker-cache-
-
-      - name: Build the new images
-        run: |
-          make docker-build
+#      - name: Restore docker layers
+#        uses: satackey/action-docker-layer-caching@v0.0.11
+#        # Ignore the failure of a step and avoid terminating the job.
+#        continue-on-error: true
+#        with:
+#          key: docker-cache-${{ github.sha }}
+#          restore-keys: |
+#            docker-cache-
+#
+#      - name: Build the new images
+#        run: |
+#          make docker-build
 
   setup_and_test:
     name: Setup and test
