@@ -8,3 +8,9 @@ authorization:
 
 labels:
   component.kuberlogic.com/name: keycloak
+
+testUser:
+  create: false
+  tenantId: ad7fa60af4d66b8aaa4c693a92a7ff87
+  email: user@kuberlogic.com
+  username: kuberlogic-user

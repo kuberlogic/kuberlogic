@@ -20,10 +20,10 @@ securityContext:
 resources:
   limits:
     cpu: 100m
-    memory: 64Mi
+    memory: 128Mi
   requests:
     cpu: 100m
-    memory: 20Mi
+    memory: 64Mi
 
 service:
   type: ClusterIP
@@ -42,3 +42,11 @@ webhook:
   service:
     name: kuberlogic-webhook-svc
     port: 443
+
+
+config:
+  grafana:
+    enabled: false
+    endpoint: http://127.0.0.1
+
+    secret: secret

@@ -44,11 +44,12 @@ spec:
         emailVerified: False
         credentials:
           - type: password
-            value: secret
+            value: {{ .Values.realm.adminPassword }}
             temporary: false
         realmRoles:
           - "offline_access"
           - "uma_authorization"
+          - "uma_protection"
         clientRoles:
           account:
             - "manage-account"
@@ -88,7 +89,27 @@ spec:
           type: kuberlogicservice
           scopes:
             - name: "service:*"
+{{ if .Values.testUser.create }}
+        - name: "{{ .Values.testUser.tenantId }}:*"
+          type: kuberlogicservice
+          scopes:
+            - name: "service:*"
+{{ end }}
       policies:
+{{ if .Values.testUser.create }}
+        - name: {{ .Values.testUser.username }}
+          type: user
+          logic: POSITIVE
+          config:
+            users: '["{{ .Values.testUser.username }}"]'
+        - name: sample-user-full
+          type: scope
+          decisionStrategy: UNANIMOUS
+          config:
+            applyPolicies: '["{{ .Values.testUser.username }}"]'
+            scopes: '["service:*"]'
+            resources: '["{{ .Values.testUser.tenantId }}:*"]'
+{{ end }}
         - name: kuberlogic-system-allow
           type: user
           logic: POSITIVE
@@ -111,3 +132,45 @@ spec:
           access.token.claim: "true"
     defaultRoles:
     - "uma_protection"
+    defaultClientScopes:
+      - email
+      - profile
+      - roles
+      - web-origins
+    optionalClientScopes:
+      - email
+      - profile
+      - roles
+      - offline_access
+      - web-origins
+{{ if .Values.testUser.create }}
+---
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakUser
+metadata:
+  name: {{ .Values.testUser.username }}
+  labels:
+  {{ toYaml .Values.labels | nindent 4 }}
+spec:
+  realmSelector:
+    matchLabels:
+  {{ toYaml .Values.labels | nindent 6 }}
+  user:
+    credentials:
+      - type: password
+        value: {{ .Values.testUser.password }}
+        temporary: false
+    email: {{ .Values.testUser.email }}
+    id: {{ .Values.testUser.username }}
+    username: {{ .Values.testUser.username }}
+    enabled: true
+    firstName: Test
+    lastName: User
+    realmRoles:
+      - "offline_access"
+      - "uma_authorization"
+    clientRoles:
+      account:
+        - manage-account
+        - view-profile
+{{ end }}

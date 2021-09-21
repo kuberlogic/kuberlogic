@@ -71,8 +71,8 @@ spec:
               path: /health
               port: {{ .Values.victoriametrics.vmserver.port }}
               scheme: HTTP
-            initialDelaySeconds: 300
-            periodSeconds: 5
+            initialDelaySeconds: 180
+            periodSeconds: 15
             successThreshold: 1
             timeoutSeconds: 30
       dnsPolicy: ClusterFirst
@@ -105,7 +105,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kuberlogic-victoriametrics
+  name: {{ .Values.victoriametrics.service.name }}
   namespace: {{ .Release.Namespace }}
 spec:
   ports:
@@ -115,4 +115,4 @@ spec:
       targetPort: {{ .Values.victoriametrics.vmserver.port }}
   selector:
     app.kubernetes.io/component: kuberlogic-victoriametrics
-  type: LoadBalancer
+  type: ClusterIP

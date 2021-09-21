@@ -19,12 +19,12 @@ spec:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
               of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/internal-conventions.md#resources'
             type: string
           kind:
             description: 'Kind is a string value representing the REST resource this
               object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/internal-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -181,7 +181,7 @@ spec:
                   clientScopeMappings:
                     additionalProperties:
                       items:
-                        description: https://www.keycloak.org/docs-api/11.0/rest-api/index.html#_scopemappingrepresentation
+                        description: https://www.keycloak.org/docs-internal/11.0/rest-internal/index.html#_scopemappingrepresentation
                         properties:
                           client:
                             description: Client
@@ -297,7 +297,7 @@ spec:
                             policies:
                               description: Policies.
                               items:
-                                description: https://www.keycloak.org/docs-api/12.0/rest-api/index.html#_policyrepresentation
+                                description: https://www.keycloak.org/docs-internal/12.0/rest-internal/index.html#_policyrepresentation
                                 properties:
                                   config:
                                     additionalProperties:
@@ -353,7 +353,7 @@ spec:
                                   resourcesData:
                                     description: Resources Data.
                                     items:
-                                      description: https://www.keycloak.org/docs-api/12.0/rest-api/index.html#_resourcerepresentation
+                                      description: https://www.keycloak.org/docs-internal/12.0/rest-internal/index.html#_resourcerepresentation
                                       properties:
                                         _id:
                                           description: ID.
@@ -431,7 +431,7 @@ spec:
                             resources:
                               description: Resources.
                               items:
-                                description: https://www.keycloak.org/docs-api/12.0/rest-api/index.html#_resourcerepresentation
+                                description: https://www.keycloak.org/docs-internal/12.0/rest-internal/index.html#_resourcerepresentation
                                 properties:
                                   _id:
                                     description: ID.
@@ -482,7 +482,7 @@ spec:
                             scopes:
                               description: Authorization Scopes.
                               items:
-                                description: https://www.keycloak.org/docs-api/12.0/rest-api/index.html#_scoperepresentation
+                                description: https://www.keycloak.org/docs-internal/12.0/rest-internal/index.html#_scoperepresentation
                                 properties:
                                   displayName:
                                     description: A unique name for this scope. The
@@ -503,7 +503,7 @@ spec:
                                   policies:
                                     description: Policies.
                                     items:
-                                      description: https://www.keycloak.org/docs-api/12.0/rest-api/index.html#_policyrepresentation
+                                      description: https://www.keycloak.org/docs-internal/12.0/rest-internal/index.html#_policyrepresentation
                                       properties:
                                         config:
                                           additionalProperties:
@@ -562,7 +562,7 @@ spec:
                                         resourcesData:
                                           description: Resources Data.
                                           items:
-                                            description: https://www.keycloak.org/docs-api/12.0/rest-api/index.html#_resourcerepresentation
+                                            description: https://www.keycloak.org/docs-internal/12.0/rest-internal/index.html#_resourcerepresentation
                                             properties:
                                               _id:
                                                 description: ID.
@@ -632,7 +632,7 @@ spec:
                                   resources:
                                     description: Resources.
                                     items:
-                                      description: https://www.keycloak.org/docs-api/12.0/rest-api/index.html#_resourcerepresentation
+                                      description: https://www.keycloak.org/docs-internal/12.0/rest-internal/index.html#_resourcerepresentation
                                       properties:
                                         _id:
                                           description: ID.
@@ -964,7 +964,7 @@ spec:
                       client:
                         additionalProperties:
                           items:
-                            description: https://www.keycloak.org/docs-api/11.0/rest-api/index.html#_rolerepresentation
+                            description: https://www.keycloak.org/docs-internal/11.0/rest-internal/index.html#_rolerepresentation
                             properties:
                               attributes:
                                 additionalProperties:
@@ -1016,7 +1016,7 @@ spec:
                       realm:
                         description: Realm Roles
                         items:
-                          description: https://www.keycloak.org/docs-api/11.0/rest-api/index.html#_rolerepresentation
+                          description: https://www.keycloak.org/docs-internal/11.0/rest-internal/index.html#_rolerepresentation
                           properties:
                             attributes:
                               additionalProperties:
@@ -1067,7 +1067,7 @@ spec:
                   scopeMappings:
                     description: Scope Mappings
                     items:
-                      description: https://www.keycloak.org/docs-api/11.0/rest-api/index.html#_scopemappingrepresentation
+                      description: https://www.keycloak.org/docs-internal/11.0/rest-internal/index.html#_scopemappingrepresentation
                       properties:
                         client:
                           description: Client
@@ -1103,7 +1103,7 @@ spec:
                       by the user federation at various points.
                     items:
                       description: https://www.keycloak.org/docs/11.0/server_admin/#_ldap_mappers
-                        https://www.keycloak.org/docs-api/11.0/rest-api/index.html#_userfederationmapperrepresentation
+                        https://www.keycloak.org/docs-internal/11.0/rest-internal/index.html#_userfederationmapperrepresentation
                       properties:
                         config:
                           additionalProperties:
@@ -1126,7 +1126,7 @@ spec:
                     description: Point keycloak to an external user provider to validate
                       credentials or pull in identity information.
                     items:
-                      description: https://www.keycloak.org/docs-api/10.0/rest-api/index.html#_userfederationproviderrepresentation
+                      description: https://www.keycloak.org/docs-internal/10.0/rest-internal/index.html#_userfederationproviderrepresentation
                       properties:
                         config:
                           additionalProperties:

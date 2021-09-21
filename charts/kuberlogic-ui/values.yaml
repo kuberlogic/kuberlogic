@@ -1,0 +1,30 @@
+replicas: 1
+
+config:
+  apiEndpoint: http://127.0.0.1:8080
+  grafanaEndpoint: http://127.0.0.1:8080
+
+image:
+  repository: quay.io/kuberlogic/kl-ui
+  tag: latest
+
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  host: kuberlogic.com
+  enabled: false

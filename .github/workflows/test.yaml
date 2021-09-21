@@ -54,6 +54,9 @@ jobs:
 #         - type: mysql
 #            version: 8.0.20
     steps:
+      - uses: azure/setup-helm@v1
+        with:
+          version: v3.4.2
       - uses: actions/setup-go@v2
         with:
           go-version: '1.16.0'
@@ -66,8 +69,8 @@ jobs:
         env:
           PRIVATE_GITHUB_TOKEN: ${{ secrets.PRIVATE_GITHUB_TOKEN }}
 
-      - name: Get dependencies for the apiserver
-        working-directory: ./modules/apiserver
+      - name: Get dependencies for the installer
+        working-directory: ./modules/installer
         env:
           GOPRIVATE: github.com/kuberlogic/*
         run: |
@@ -92,6 +95,16 @@ jobs:
         env:
           LOGZ_IO_TOKEN: ${{ secrets.LOGZ_IO_TOKEN }}
           LOGZ_IO_LISTENER: ${{ secrets.LOGZ_IO_LISTENER }}
+
+      - name: build installer
+        working-directory: ./modules/installer
+        run: |
+          make build
+
+      - name: fake loadbalancer service by installing metallb
+        run: |
+          helm repo add metallb https://metallb.github.io/metallb
+          helm install --set "configInline.address-pools[0].name=default,configInline.address-pools[0].protocol=layer2,configInline.address-pools[0].addresses[0]=198.51.100.0/24" metallb metallb/metallb
 
       - name: Create secret of operator
         run: |
@@ -159,7 +172,8 @@ jobs:
 
       - name: Show status
         run: |
-          kubectl get pod,sts,deploy,svc,cj,job -o yaml
+          kubectl get pod,sts,deploy,svc,cj,job -o yaml --all-namespaces
+          helm ls --all-namespaces --all
         if: ${{ failure() }}
 
       - name: Generating logs

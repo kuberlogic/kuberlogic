@@ -30,6 +30,7 @@ victoriametrics:
       tag: "v1.62.0"
     port: 8428
   service:
+    name: kuberlogic-victoriametrics
     port: 80
   serviceAccount:
     name: kuberlogic-victoriametrics
@@ -49,3 +50,32 @@ alertreceiver:
   image:
     repository: "quay.io/kuberlogic/alert-receiver"
     tag: "0.0.18"
+
+grafana:
+  enabled: true
+
+  serviceAccountName: kuberlogic-grafana
+  replicas: 1
+
+  image:
+    repository: grafana/grafana
+    tag: latest
+
+  port: 3000
+
+  service:
+    name: kuberlogic-grafana
+
+  secretName: grafana-credentials
+  admin:
+    user: kuberlogic-admin
+    password: ""
+
+  mysql:
+    name: grafana
+    secretName: grafana-mysql-credentials
+    db: grafana
+
+    rootPassword: ""
+
+    enabled: true

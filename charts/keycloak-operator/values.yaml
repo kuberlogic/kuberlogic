@@ -6,7 +6,7 @@ replicaCount: 1
 image:
   repository: quay.io/kuberlogic/keycloak-operator
   pullPolicy: IfNotPresent
-  tag: 14.0.0.0
+  tag: 14.0.0
 
 nameOverride: ""
 fullnameOverride: ""

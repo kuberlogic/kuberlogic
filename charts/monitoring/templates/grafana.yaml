@@ -1,0 +1,123 @@
+{{ if .Values.grafana.enabled }}
+{{ if .Values.grafana.mysql.enabled }}
+---
+apiVersion: mysql.presslabs.org/v1alpha1
+kind: MysqlCluster
+metadata:
+  name: {{ .Values.grafana.mysql.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  secretName: {{ .Values.grafana.mysql.secretName }}
+  volumeSpec:
+    persistentVolumeClaim:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 2Gi
+---
+apiVersion: mysql.presslabs.org/v1alpha1
+kind: MysqlDatabase
+metadata:
+  name: {{ .Values.grafana.mysql.db }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  database: {{ .Values.grafana.mysql.db }}
+  clusterRef:
+    name: {{ .Values.grafana.mysql.name }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.grafana.mysql.secretName }}
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+data:
+  ROOT_PASSWORD: {{ .Values.grafana.mysql.rootPassword | b64enc }}
+{{ end }}
+---
+apiVersion: v1
+data:
+  PASSWORD: {{ .Values.grafana.admin.password | b64enc }}
+  USER: {{ .Values.grafana.admin.user | b64enc }}
+kind: Secret
+metadata:
+  name: {{ .Values.grafana.secretName }}
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.grafana.service.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+    - name: http
+      port: {{ .Values.grafana.port }}
+      targetPort: {{ .Values.grafana.port }}
+  selector:
+    app.kubernetes.io/component: grafana
+    {{- include "monitoring.labels" . | nindent 4 }}
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "monitoring.fullname" . }}-grafana
+spec:
+  replicas: {{ .Values.grafana.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: grafana
+      {{- include "monitoring.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: grafana
+        {{- include "monitoring.labels" . | nindent 8 }}
+    spec:
+      {{ with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8  }}
+      {{ end }}
+      serviceAccountName: {{ .Values.grafana.serviceAccountName }}
+      containers:
+        - name: grafana
+          image: {{ .Values.grafana.image.repository }}:{{ .Values.grafana.image.tag }}
+          ports:
+            - name: grafana
+              containerPort: {{ .Values.grafana.port }}
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.grafana.secretName }}
+                  key: USER
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.grafana.secretName }}
+                  key: PASSWORD
+            {{ if .Values.grafana.mysql.enabled }}
+            - name: GF_DATABASE_TYPE
+              value: mysql
+            - name: GF_DATABASE_HOST
+              value: grafana-mysql:3306
+            - name: GF_DATABASE_NAME
+              value: {{ .Values.grafana.mysql.db }}
+            - name: GF_DATABASE_USER
+              value: root
+            - name: GF_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.grafana.mysql.secretName }}
+                  key: ROOT_PASSWORD
+            {{ end }}
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: {{ .Values.grafana.serviceAccountName }}
+  namespace: {{ .Release.Namespace }}
+{{ end }}
