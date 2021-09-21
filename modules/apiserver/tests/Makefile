@@ -116,12 +116,14 @@ patch-endpoint:
 
 generate-local-webhook-certs:
 	mkdir -p /tmp/k8s-webhook-server/serving-certs/; \
-	kubectl get secret webhook-server-cert -o=jsonpath="{.data['tls\.key']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.key
-	kubectl get secret webhook-server-cert -o=jsonpath="{.data['tls\.crt']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.crt
+	kubectl get secret kuberlogic-webhook-cert -o=jsonpath="{.data['tls\.key']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.key
+	kubectl get secret kuberlogic-webhook-cert -o=jsonpath="{.data['tls\.crt']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.crt
 
 undeploy-operator:
-	kubectl delete deployment -l control-plane=kuberlogic-operator
-	kubectl wait pod -l control-plane=kuberlogic-operator --for=delete --timeout=2m
+	kubectl delete deployment kuberlogic-operator
+	kubectl delete deployment kuberlogic-apiserver
+	kubectl wait pod kuberlogic-operator --for=delete --timeout=2m
+	kubectl wait pod kuberlogic-apiserver --for=delete --timeout=2m
 
 configure-logs:
 	envsubst < config/logz.io/logzio-daemonset-rbac.yaml | kubectl apply -f -

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Endpoints
 metadata:
-  name: webhook-service
+  name: kuberlogic-webhook-svc
 subsets:
   - addresses:
       - ip: $MINIKUBE_IP

@@ -3,6 +3,10 @@
 # Current Operator version
 VERSION ?= 0.0.29
 
+ifeq ($(USE_BUILD),true)
+VERSION := $(VERSION)-$(shell git rev-list --count master)
+endif
+
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
 # default secrets with credentials to private repo (using for mysql/redis)

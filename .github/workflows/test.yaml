@@ -96,43 +96,48 @@ jobs:
           LOGZ_IO_TOKEN: ${{ secrets.LOGZ_IO_TOKEN }}
           LOGZ_IO_LISTENER: ${{ secrets.LOGZ_IO_LISTENER }}
 
-      - name: build installer
-        working-directory: ./modules/installer
-        run: |
-          make build
-
       - name: fake loadbalancer service by installing metallb
         run: |
           helm repo add metallb https://metallb.github.io/metallb
           helm install --set "configInline.address-pools[0].name=default,configInline.address-pools[0].protocol=layer2,configInline.address-pools[0].addresses[0]=198.51.100.0/24" metallb metallb/metallb
 
-      - name: Create secret of operator
+      - name: Set kuberlogic context
         run: |
-          kubectl create secret docker-registry kuberlogic-registry --docker-server=$REGISTRY_SERVER --docker-username=$REGISTRY_USER --docker-password=$REGISTRY_PASSWORD
-        env:
-          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
-          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
-          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+          kubectl config set-context --current --namespace=kuberlogic
 
-      - name: Deploy operator
+      - name: Build & Run installer
+        working-directory: ./modules/installer
         run: |
-          make install
-          make deploy
+          make build
+          ./kuberlogic-installer install all -c t.yaml
+
+#      - name: Create secret of operator
+#        run: |
+#          kubectl create secret docker-registry kuberlogic-registry --docker-server=$REGISTRY_SERVER --docker-username=$REGISTRY_USER --docker-password=$REGISTRY_PASSWORD
+#        env:
+#          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
+#          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+#          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+
+#      - name: Deploy operator
+#        run: |
+#          make install
+#          make deploy
 
       - name: Setup minio for backup storage
         working-directory: ./modules/apiserver/tests
         run: |
           make deploy-minio
 
-      - name: Waiting ready the pods
-        run: |
-          kubectl wait --for=condition=Ready pods --all --timeout=5m
+#      - name: Waiting ready the pods
+#        run: |
+#          kubectl wait --for=condition=Ready pods --all --timeout=5m
 
-      - name: Show pod status
-        run: |
-          kubectl logs -l app=minio
-          docker images
-        if: ${{ failure() }}
+#      - name: Show pod status
+#        run: |
+#          kubectl logs -l app=minio
+#          docker images
+#        if: ${{ failure() }}
 
       - name: Create test bucket (backup storage)
         working-directory: ./modules/apiserver/tests
@@ -145,10 +150,10 @@ jobs:
           make undeploy-operator generate-local-webhook-certs patch-endpoint
           kubectl get endpoints
 
-      - name: Ensure keycloak is ready
-        working-directory: ./modules/apiserver/tests/config
-        run: |
-          ./wait-for-keycloak.sh
+#      - name: Ensure keycloak is ready
+#        working-directory: ./modules/apiserver/tests/config
+#        run: |
+#          ./wait-for-keycloak.sh
 
       - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
