@@ -13,10 +13,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Simple run
-        run: |
-          git rev-list --count KL-146
-
       - name: Restore docker layers
         uses: satackey/action-docker-layer-caching@v0.0.11
         # Ignore the failure of a step and avoid terminating the job.
@@ -68,14 +64,6 @@ jobs:
           LOGZ_IO_TOKEN: ${{ secrets.LOGZ_IO_TOKEN }}
           LOGZ_IO_LISTENER: ${{ secrets.LOGZ_IO_LISTENER }}
 
-#      - name: Create secret of operator
-#        run: |
-#          kubectl create secret docker-registry kuberlogic-registry --docker-server=$REGISTRY_SERVER --docker-username=$REGISTRY_USER --docker-password=$REGISTRY_PASSWORD
-#        env:
-#          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
-#          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
-#          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-
       - name: Restore docker layers
         uses: satackey/action-docker-layer-caching@v0.0.11
         # Ignore the failure of a step and avoid terminating the job.
@@ -101,19 +89,6 @@ jobs:
           make build
           ./kuberlogic-installer install all -c t.yaml
 
-#      - name: Deploy operator
-#        run: |
-#          make install deploy
-#
-#      - name: Setup minio for backup storage
-#        working-directory: ./modules/apiserver/tests
-#        run: |
-#          make deploy-minio
-#
-#      - name: Waiting ready the pods
-#        run: |
-#          kubectl wait --for=condition=Ready pods --all --timeout=5m
-
       - name: Show pod status
         run: |
           kubectl logs -l app=minio
@@ -124,11 +99,6 @@ jobs:
         working-directory: ./modules/apiserver/tests
         run: |
           make create-bucket
-
-#      - name: Ensure keycloak is ready
-#        working-directory: ./modules/apiserver/tests/config
-#        run: |
-#          ./wait-for-keycloak.sh
 
       - name: Run tests against ready environment
         working-directory: ./modules/apiserver/tests

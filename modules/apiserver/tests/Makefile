@@ -50,7 +50,7 @@ test:
 		$(ARGS) ./...
 
 remote-test:
-	REMOTE_HOST=$(shell kubectl get pod -l control-plane=kuberlogic-operator -o jsonpath='{.items[].status.podIP}'):8001 \
+	REMOTE_HOST=$(shell kubectl get pod kuberlogic-apiserver -o jsonpath='{.items[].status.podIP}'):8001 \
 	$(MAKE) test
 
 coverage-report: test
