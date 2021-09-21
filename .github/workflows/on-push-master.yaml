@@ -117,8 +117,8 @@ jobs:
       - name: Generating logs
         working-directory: ./modules/apiserver/tests
         run: |
-          kubectl logs kuberlogic-operator --tail=-1 > kuberlogic-operator.log
-          kubectl logs kuberlogic-apiserver --tail=-1 > kuberlogic-apiserver.log
+          kubectl logs -l app.kubernetes.io/instance=kuberlogic-operator --tail=-1 -c manager > kuberlogic-operator.log
+          kubectl logs -l app.kubernetes.io/instance=kuberlogic-apiserver --tail=-1 > kuberlogic-apiserver.log
 
           kubectl logs -l name=postgres-operator --tail=-1 > postgres-operator.log
           kubectl logs -l app=mysql-operator -c mysql-operator --tail=-1 > mysql-operator.log
