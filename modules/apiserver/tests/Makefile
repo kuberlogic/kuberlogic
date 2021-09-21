@@ -33,7 +33,7 @@ KUBERLOGIC_AUTH_KEYCLOAK_CLIENT_SECRET = apiserver-secret
 KUBERLOGIC_AUTH_KEYCLOAK_REALM_NAME = kuberlogic_realm
 KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(shell kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443
 
-INTERNAL_GRAFANA_IP=$(shell kubectl get pod -l app=grafana -o go-template="{{range .items}}{{.status.podIP}}{{end}}")
+INTERNAL_GRAFANA_IP=$(shell kubectl get pod -l app.kubernetes.io/component=grafana -o go-template="{{range .items}}{{.status.podIP}}{{end}}")
 
 KUBERLOGIC_GRAFANA_ENABLED = true
 KUBERLOGIC_GRAFANA_ENDPOINT = http://$(INTERNAL_GRAFANA_IP):3000/
@@ -50,7 +50,7 @@ test:
 		$(ARGS) ./...
 
 remote-test:
-	REMOTE_HOST=$(shell kubectl get pod kuberlogic-apiserver -o jsonpath='{.items[].status.podIP}'):8001 \
+	REMOTE_HOST=$(shell kubectl get pod -l app.kubernetes.io/instance=kuberlogic-operator -o jsonpath='{.items[].status.podIP}'):8001 \
 	$(MAKE) test
 
 coverage-report: test
@@ -122,14 +122,14 @@ generate-local-webhook-certs:
 undeploy-operator:
 	kubectl delete deployment kuberlogic-operator
 	kubectl delete deployment kuberlogic-apiserver
-	kubectl wait pod kuberlogic-operator --for=delete --timeout=2m
-	kubectl wait pod kuberlogic-apiserver --for=delete --timeout=2m
+	kubectl wait pod -l app.kubernetes.io/instance=kuberlogic-operator --for=delete --timeout=2m
+	kubectl wait pod -l app.kubernetes.io/instance=kuberlogic-apiserver --for=delete --timeout=2m
 
 configure-logs:
 	envsubst < config/logz.io/logzio-daemonset-rbac.yaml | kubectl apply -f -
 
 follow-apiserver-logs:
-	kubectl logs -l control-plane=kuberlogic-operator -c apiserver -f
+	kubectl logs -l app.kubernetes.io/instance=kuberlogic-apiserver -f
 
 follow-operator-logs:
-	kubectl logs -l control-plane=kuberlogic-operator -c manager -f
+	kubectl logs -l app.kubernetes.io/instance=kuberlogic-operator -c manager -f
