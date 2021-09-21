@@ -15,7 +15,7 @@ jobs:
 
       - name: Simple run
         run: |
-          git rev-list --count master
+          git rev-list --count KL-146
 
       - name: Restore docker layers
         uses: satackey/action-docker-layer-caching@v0.0.11

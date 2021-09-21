@@ -4,7 +4,7 @@
 VERSION ?= 0.0.29
 
 ifeq ($(USE_BUILD),true)
-	VERSION := $(VERSION)-$(shell git rev-list --count master)
+	VERSION := $(VERSION)-$(shell git rev-list --count KL-146)
 endif
 
 # private repo for images
