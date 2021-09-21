@@ -60,6 +60,10 @@ func deployAuth(globals map[string]interface{}, i *HelmInstaller) error {
 		"clientSecret": keycloakClientSecret,
 
 		"apiserverId": oauthApiserverId,
+
+		"nodePortService": map[string]interface{}{
+			"name": keycloakNodePortServiceName,
+		},
 	}
 	if i.Auth.TestUserPassword != "" {
 		kuberlogicKeycloakValues["testUser"] = map[string]interface{}{

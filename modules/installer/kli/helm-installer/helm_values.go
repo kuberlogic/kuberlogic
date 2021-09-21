@@ -19,6 +19,8 @@ const (
 	keycloakRealmName    = "kuberlogic_realm"
 	keycloakURL          = "https://keycloak:8443"
 
+	keycloakNodePortServiceName = "keycloak-nodeport"
+
 	oauthApiserverId = "kuberlogic_apiserver"
 
 	// postgres operator values

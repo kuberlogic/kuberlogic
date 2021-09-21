@@ -1,4 +1,7 @@
 ---
+nodePortService:
+  name: keycloak-nodeport
+
 realm:
   name: "keycloak"
   id: "keycloak"
