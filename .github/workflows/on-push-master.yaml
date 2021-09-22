@@ -2,7 +2,7 @@ name: On push master
 
 on:
   push:
-    branches: [ KL-146 ]
+    branches: [ master ]
 jobs:
   build:
     name: Build images
