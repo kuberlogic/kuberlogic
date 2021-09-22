@@ -14,5 +14,5 @@ endpoints:
   ui: ui.kuberlogic.com
 
 auth:
-  testUserPassword: adasfsdgsd
+  testUserPassword: secret
   adminPassword: secret
