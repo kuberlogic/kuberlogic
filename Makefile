@@ -248,7 +248,7 @@ docker-push: operator-push apiserver-push updater-push alert-receiver-push backu
 	#
 
 refresh-go-sum:
-	for module in operator updater alert-receiver watcher apiserver; do \
+	for module in operator updater alert-receiver apiserver installer; do \
   		cd ./modules/$${module}; \
   		go clean -modcache; \
   		go mod tidy; \
