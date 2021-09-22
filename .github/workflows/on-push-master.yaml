@@ -83,6 +83,11 @@ jobs:
         run: |
           kubectl config set-context --current --namespace=kuberlogic
 
+      - name: Setup minio for backup storage
+        working-directory: ./modules/apiserver/tests
+        run: |
+          make deploy-minio
+
       - name: Build & Run installer
         working-directory: ./modules/installer
         run: |
