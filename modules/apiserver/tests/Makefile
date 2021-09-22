@@ -93,6 +93,7 @@ push-minio:
 
 deploy-minio:
 	kubectl apply -f config/minio/deployment.yaml
+	kubectl wait pods --for=condition=Ready  -l app=minio --timeout=5m
 
 endpoint-minio:
 	@echo $(MINIO_ENDPOINT)

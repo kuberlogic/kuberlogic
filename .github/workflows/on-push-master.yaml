@@ -83,27 +83,22 @@ jobs:
         run: |
           kubectl config set-context --current --namespace=kuberlogic
 
-      - name: Setup minio for backup storage
-        working-directory: ./modules/apiserver/tests
-        run: |
-          make deploy-minio
-
       - name: Build & Run installer
         working-directory: ./modules/installer
         run: |
           make build
           ./kuberlogic-installer install all -c t.yaml
 
+      - name: Setup minio & create test backet for backup storage
+        working-directory: ./modules/apiserver/tests
+        run: |
+          make deploy-minio create-bucket
+
       - name: Show pod status
         run: |
           kubectl logs -l app=minio
           docker images
         if: ${{ failure() }}
-
-      - name: Create test bucket (backup storage)
-        working-directory: ./modules/apiserver/tests
-        run: |
-          make create-bucket
 
       - name: Run tests against ready environment
         working-directory: ./modules/apiserver/tests
