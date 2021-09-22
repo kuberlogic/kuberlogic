@@ -25,6 +25,10 @@ var (
 	log                 logger.Logger
 	config              *cfg.Config
 	kuberlogicInstaller kli.KuberlogicInstaller
+
+	version   string // version of package
+	sha1ver   string // sha1 revision used to build the program
+	buildTime string // when the executable was built
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -44,6 +48,7 @@ func initState() {
 	var err error
 	// initialize logger with debug logs by default
 	log = logger.NewLogger(true)
+	log.Infof("version %s, build time: %s, sha1ver: %s", version, buildTime, sha1ver)
 	log.Infof("Reading config from %s", cfgFile)
 
 	// get config

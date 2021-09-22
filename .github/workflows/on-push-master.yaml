@@ -23,10 +23,9 @@ jobs:
           path: ./modules/installer/kuberlogic-installer
           key: installer-${{ github.sha }}
 
-      - name: Build & Run installer
-        working-directory: ./modules/installer
+      - name: Build installer
         run: |
-          make build
+          make installer-build
 
 #      - name: Restore docker layers
 #        uses: satackey/action-docker-layer-caching@v0.0.11
@@ -210,12 +209,7 @@ jobs:
         uses: docker://antonyurchenko/git-release:v4.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PRE_RELEASE: true
-          ALLOW_EMPTY_CHANGELOG: true
-          DRAFT_RELEASE: true
-          UNRELEASED: delete
-          RELEASE_NAME: master
-          UNRELEASED_TAG: master
+          UNRELEASED: "update"
         with:
           args: |
             ./modules/installer/kuberlogic-installer

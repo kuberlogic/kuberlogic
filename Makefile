@@ -160,6 +160,13 @@ operator-build:
 		--build-arg BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
 		--build-arg REVISION=$(shell git rev-parse HEAD)
 
+installer-build:
+	@cd modules/installer; \
+	VERSION=$(VERSION) \
+	BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
+	REVISION=$(shell git rev-parse HEAD) \
+	$(MAKE) build
+
 updater-build:
 	docker build -f updater.Dockerfile -t $(UPDATER_IMG) -t $(UPDATER_IMG_LATEST) .
 

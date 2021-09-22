@@ -38,7 +38,14 @@ helm-embed: helm-package
 test:
 	go vet
 
-compile:
-	go build -o kuberlogic-installer
+compile: test
+	go build \
+	    -ldflags " \
+        -X github.com/kuberlogic/operator/modules/installer/cmd.sha1ver=$(REVISION) \
+        -X github.com/kuberlogic/operator/modules/installer/cmd.buildTime=$(BUILD_TIME) \
+        -X github.com/kuberlogic/operator/modules/installer/cmd.version=$(VERSION)  \
+        -X github.com/kuberlogic/operator/modules/installer/kli/helm-installer.apiserverTag=$(VERSION)  \
+        -X github.com/kuberlogic/operator/modules/installer/kli/helm-installer.operatorTag=$(VERSION)"  \
+        -o kuberlogic-installer
 
-build: helm-deps helm-lint helm-package helm-embed test compile
+build: helm-embed compile
