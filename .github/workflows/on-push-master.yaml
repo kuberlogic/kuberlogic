@@ -23,22 +23,18 @@ jobs:
           path: ./modules/installer/kuberlogic-installer
           key: installer-${{ github.sha }}
 
-      - name: Build installer
-        run: |
-          make installer-build
+      - name: Restore docker layers
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        # Ignore the failure of a step and avoid terminating the job.
+        continue-on-error: true
+        with:
+          key: docker-cache-${{ github.sha }}
+          restore-keys: |
+            docker-cache-
 
-#      - name: Restore docker layers
-#        uses: satackey/action-docker-layer-caching@v0.0.11
-#        # Ignore the failure of a step and avoid terminating the job.
-#        continue-on-error: true
-#        with:
-#          key: docker-cache-${{ github.sha }}
-#          restore-keys: |
-#            docker-cache-
-#
-#      - name: Build the new images
-#        run: |
-#          make docker-build
+      - name: Build installer & images
+        run: |
+          make docker-build installer-build
 
   setup_and_test:
     name: Setup and test
