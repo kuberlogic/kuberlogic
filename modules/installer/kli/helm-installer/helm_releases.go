@@ -201,7 +201,12 @@ func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
 	return releaseHelmChart(helmOperatorChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
-func deployMonitoring(globals map[string]interface{}, i *HelmInstaller) error {
+func deployMonitoring(globals map[string]interface{}, i *HelmInstaller, release *internal.ReleaseInfo) error {
+	grafanaAuthValues, err := getGrafanaAuthValues(i.ReleaseNamespace, i.ClientSet, i.Log)
+	if err != nil {
+		return errors.Wrap(err, "error computing Grafana Authentication values")
+	}
+
 	values := map[string]interface{}{
 		"victoriametrics": map[string]interface{}{
 			"service": map[string]interface{}{
@@ -219,13 +224,14 @@ func deployMonitoring(globals map[string]interface{}, i *HelmInstaller) error {
 			"secretName": grafanaSecretName,
 			"admin": map[string]interface{}{
 				"user":     grafanaAdminUser,
-				"password": grafanaAdminPassword,
+				"password": release.InternalPassword(),
 			},
 			"mysql": map[string]interface{}{
 				"enabled":      true,
-				"rootPassword": grafanaMysqlRootPassword,
+				"rootPassword": release.InternalPassword(),
 			},
 			"port": grafanaServicePort,
+			"auth": grafanaAuthValues,
 		},
 	}
 
@@ -238,7 +244,7 @@ func deployMonitoring(globals map[string]interface{}, i *HelmInstaller) error {
 	return releaseHelmChart(helmMonitoringChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
-func deployServiceOperators(globals map[string]interface{}, i *HelmInstaller) error {
+func deployServiceOperators(globals map[string]interface{}, i *HelmInstaller, release *internal.ReleaseInfo) error {
 	// postgres first
 	pgValues := map[string]interface{}{
 		"crd": map[string]interface{}{
@@ -275,6 +281,7 @@ func deployServiceOperators(globals map[string]interface{}, i *HelmInstaller) er
 			"ingress": map[string]interface{}{
 				"enabled": false,
 			},
+			"topologyPassword": release.InternalPassword(),
 		},
 
 		"podDisruptionBudget": map[string]interface{}{

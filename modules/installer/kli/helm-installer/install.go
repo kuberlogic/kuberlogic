@@ -48,11 +48,11 @@ func (i *HelmInstaller) Install(args []string) error {
 				return errors.Wrap(err, "error installing keycloak")
 			}
 
-			if err := deployServiceOperators(globalValues, i); err != nil {
+			if err := deployServiceOperators(globalValues, i, release); err != nil {
 				return errors.Wrap(err, "error installing service operators")
 			}
 
-			if err := deployMonitoring(globalValues, i); err != nil {
+			if err := deployMonitoring(globalValues, i, release); err != nil {
 				return errors.Wrap(err, "error installing monitoring component")
 			}
 		}

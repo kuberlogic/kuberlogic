@@ -21,12 +21,6 @@ func (i *HelmInstaller) Uninstall(args []string) error {
 				return errors.Wrap(err, "error uninstalling "+c)
 			}
 		}
-		i.Log.Infof("uninstalling service components")
-		for _, c := range []string{mysqlOperatorChart, postgresOperatorChart} {
-			if err := uninstallHelmChart(c, force, i.HelmActionConfig, i.Log); err != nil {
-				return errors.Wrap(err, "error uninstalling "+c)
-			}
-		}
 
 		i.Log.Infof("uninstalling platform components")
 		if err := uninstallKuberlogicKeycloak(i.ReleaseNamespace, force, i.HelmActionConfig, i.ClientSet, i.Log); err != nil {
@@ -40,6 +34,13 @@ func (i *HelmInstaller) Uninstall(args []string) error {
 		}
 
 		for _, c := range []string{helmKeycloakOperatorChart, helmMonitoringChart} {
+			if err := uninstallHelmChart(c, force, i.HelmActionConfig, i.Log); err != nil {
+				return errors.Wrap(err, "error uninstalling "+c)
+			}
+		}
+
+		i.Log.Infof("uninstalling service components")
+		for _, c := range []string{mysqlOperatorChart, postgresOperatorChart} {
 			if err := uninstallHelmChart(c, force, i.HelmActionConfig, i.Log); err != nil {
 				return errors.Wrap(err, "error uninstalling "+c)
 			}

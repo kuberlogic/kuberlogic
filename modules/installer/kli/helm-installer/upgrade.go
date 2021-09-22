@@ -46,12 +46,12 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 			}
 
 			i.Log.Infof("Upgrading service operators")
-			if err := deployServiceOperators(globalValues, i); err != nil {
+			if err := deployServiceOperators(globalValues, i, release); err != nil {
 				return errors.Wrap(err, "error upgrading service operators")
 			}
 
 			i.Log.Infof("Upgrading monitoring component")
-			if err := deployMonitoring(globalValues, i); err != nil {
+			if err := deployMonitoring(globalValues, i, release); err != nil {
 				return errors.Wrap(err, "error upgrading monitoring component")
 			}
 		}
