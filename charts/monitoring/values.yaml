@@ -79,3 +79,6 @@ grafana:
     rootPassword: ""
 
     enabled: true
+
+  auth:
+    enabled: true
