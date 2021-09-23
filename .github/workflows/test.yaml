@@ -92,7 +92,7 @@ jobs:
 
       - name: Build installer
         run: |
-          make docker-build installer-build
+          make installer-build
 
       - name: Run installer
         working-directory: ./modules/installer
