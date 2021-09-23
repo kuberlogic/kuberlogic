@@ -121,8 +121,8 @@ generate-local-webhook-certs:
 	kubectl get secret kuberlogic-webhook-cert -o=jsonpath="{.data['tls\.crt']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.crt
 
 undeploy-operator:
-	kubectl delete deployment kuberlogic-operator
-	kubectl delete deployment kuberlogic-apiserver
+	kubectl delete deployment -l app.kubernetes.io/instance=kuberlogic-operator
+	kubectl wait pod -l app.kubernetes.io/instance=kuberlogic-operator --for=delete --timeout=5m
 
 configure-logs:
 	envsubst < config/logz.io/logzio-daemonset-rbac.yaml | kubectl apply -f -
