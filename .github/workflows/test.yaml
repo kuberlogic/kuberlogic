@@ -37,8 +37,8 @@ jobs:
 #          - type: postgresql
 #            pg_version: 9.3
 
-          - type: mysql
-            my_version: 5.7.31
+#          - type: mysql
+#            my_version: 5.7.31
 
 #          - type: mysql
 #            my_version: 5.7.29
@@ -60,19 +60,6 @@ jobs:
           go-version: '1.16.0'
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Setup Git credentials
-        run: |
-          git config --global url."https://$PRIVATE_GITHUB_TOKEN:x-oauth-basic@github.com/kuberlogic".insteadOf "https://github.com/kuberlogic"
-        env:
-          PRIVATE_GITHUB_TOKEN: ${{ secrets.PRIVATE_GITHUB_TOKEN }}
-
-      - name: Get dependencies for the installer
-        working-directory: ./modules/installer
-        env:
-          GOPRIVATE: github.com/kuberlogic/*
-        run: |
-          go mod download
 
       - name: Setup Minikube
         uses: manusa/actions-setup-minikube@v2.3.0
@@ -103,44 +90,19 @@ jobs:
         run: |
           kubectl config set-context --current --namespace=kuberlogic
 
-      - name: Build & Run installer
+      - name: Build installer
+        run: |
+          make docker-build installer-build
+
+      - name: Run installer
         working-directory: ./modules/installer
         run: |
-          make build
           ./kuberlogic-installer install all -c t.yaml
 
-#      - name: Create secret of operator
-#        run: |
-#          kubectl create secret docker-registry kuberlogic-registry --docker-server=$REGISTRY_SERVER --docker-username=$REGISTRY_USER --docker-password=$REGISTRY_PASSWORD
-#        env:
-#          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
-#          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
-#          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-
-#      - name: Deploy operator
-#        run: |
-#          make install
-#          make deploy
-
-      - name: Setup minio for backup storage
+      - name: Setup minio & create bucket for backup storage
         working-directory: ./modules/apiserver/tests
         run: |
-          make deploy-minio
-
-#      - name: Waiting ready the pods
-#        run: |
-#          kubectl wait --for=condition=Ready pods --all --timeout=5m
-
-#      - name: Show pod status
-#        run: |
-#          kubectl logs -l app=minio
-#          docker images
-#        if: ${{ failure() }}
-
-      - name: Create test bucket (backup storage)
-        working-directory: ./modules/apiserver/tests
-        run: |
-          make create-bucket
+          make deploy-minio create-bucket
 
       - name: PATCH - Remove operator, creating certs, change endpoint for ability using webhook locally in the tests
         working-directory: ./modules/apiserver/tests
@@ -148,20 +110,12 @@ jobs:
           make undeploy-operator generate-local-webhook-certs patch-endpoint
           kubectl get endpoints
 
-#      - name: Ensure keycloak is ready
-#        working-directory: ./modules/apiserver/tests/config
-#        run: |
-#          ./wait-for-keycloak.sh
-
       - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
         run: |
-          KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443 GODEBUG=x509ignoreCN=0 KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=/$TYPE
+           KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=/$TYPE
         env:
-          KUBERLOGIC_AUTH_PROVIDER: keycloak
-          KUBERLOGIC_AUTH_KEYCLOAK_CLIENTID: apiserver
-          KUBERLOGIC_AUTH_KEYCLOAK_CLIENT_SECRET: apiserver-secret
-          KUBERLOGIC_AUTH_KEYCLOAK_REALM_NAME: kuberlogic_realm
+          GODEBUG: x509ignoreCN=0
           PG_VERSION: ${{ matrix.pg_version }}
           MY_VERSION: ${{ matrix.my_version }}
           TYPE: ${{ matrix.type }}
@@ -182,19 +136,25 @@ jobs:
       - name: Generating logs
         working-directory: ./modules/apiserver/tests
         run: |
-          kubectl logs -l name=postgres-operator --tail=-1 > postgres-operator.log
-          kubectl logs -l app=mysql-operator -c mysql-operator --tail=-1 > mysql-operator.log
-          kubectl describe pod -l name=postgres-operator > postgres-operator.describe.log
+          kubectl logs -l app.kubernetes.io/instance=kuberlogic-operator --tail=-1 -c manager > kuberlogic-operator.log
+          kubectl logs -l app.kubernetes.io/instance=kuberlogic-apiserver --tail=-1 > kuberlogic-apiserver.log
+
+          kubectl get pod --all-namespaces > pods-status.log
+          kubectl get endpoints --all-namespaces > endpoints.log
+          kubectl get services --all-namespaces > services.log
+          kubectl describe kuberlogicservice --all-namespaces > kuberlogic.describe.log
+
+          kubectl logs -l app.kubernetes.io/instance=postgres-operator --tail=-1 > postgres-operator.log
+          kubectl logs -l app=mysql-operator -c operator --tail=-1 > mysql-operator.log
+          kubectl describe pod -l app.kubernetes.io/instance=postgres-operator > postgres-operator.describe.log
           kubectl describe pod -l app=mysql-operator > mysql-operator.describe.log
-          kubectl describe pod -l app=alertmanager > alertmanager.describe.log
-          kubectl get pod > pods-status.log
-          kubectl get endpoints > endpoints.log
-          kubectl get services > services.log
+          kubectl describe pod -l app.kubernetes.io/name=kuberlogic-alertmanager > alertmanager.describe.log
+
           kubectl logs -l app.kubernetes.io/name=kube-state-metrics -c kube-state-metrics > kube-state-metrics.logs
           kubectl logs -l app.kubernetes.io/name=kube-state-metrics -c kube-rbac-proxy > kube-rbac-proxy.kube-state-metrics.logs
-          kubectl get kuberlogicservice,kuberlogicbackupschedules,kuberlogicbackuprestores > kuberlogics-services.log
-          kubectl describe pod -l app.kubernetes.io/name=mysql > mysql-cluster.describe.log
-          kubectl describe pod -l application=spilo > pg-cluster.describe.log
+          kubectl get kuberlogicservice,kuberlogicbackupschedules,kuberlogicbackuprestores --all-namespaces > kuberlogics-services.log
+          kubectl describe pod -l app.kubernetes.io/name=mysql --all-namespaces > mysql-cluster.describe.log
+          kubectl describe pod -l application=spilo --all-namespaces > pg-cluster.describe.log
           kubectl logs -l app.kubernetes.io/name=mysql -c mysql --tail=-1 > mysql-cluster.log
           kubectl logs -l application=spilo -c postgres --tail=-1 > pg-cluster.log
         if: ${{ always() }}
