@@ -123,8 +123,6 @@ generate-local-webhook-certs:
 undeploy-operator:
 	kubectl delete deployment kuberlogic-operator
 	kubectl delete deployment kuberlogic-apiserver
-	kubectl wait pod -l app.kubernetes.io/instance=kuberlogic-operator --for=delete --timeout=2m
-	kubectl wait pod -l app.kubernetes.io/instance=kuberlogic-apiserver --for=delete --timeout=2m
 
 configure-logs:
 	envsubst < config/logz.io/logzio-daemonset-rbac.yaml | kubectl apply -f -

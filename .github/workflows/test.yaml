@@ -104,12 +104,10 @@ jobs:
         run: |
           make deploy-minio create-bucket
 
-      - name: PATCH - Uninstall operator, creating certs, change endpoint for ability using webhook locally in the tests
+      - name: PATCH - Undeploy operator & apiserver, creating certs, change endpoint for ability using webhook locally in the tests
         working-directory: ./modules/apiserver/tests
         run: |
-          helm uninstall kuberlogic-apiserver
-          helm uninstall kuberlogic-operator
-          make generate-local-webhook-certs patch-endpoint
+          make undeploy-operator generate-local-webhook-certs patch-endpoint
           kubectl get endpoints, pods
 
       - name: Run the tests with coverage
