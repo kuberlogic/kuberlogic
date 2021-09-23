@@ -104,6 +104,14 @@ jobs:
         run: |
           make deploy-minio create-bucket
 
+      - name: Create secret for private registry
+        run: |
+          kubectl create secret docker-registry kuberlogic-registry --docker-server=$REGISTRY_SERVER --docker-username=$REGISTRY_USER --docker-password=$REGISTRY_PASSWORD
+        env:
+          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
+          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+
       - name: PATCH - Remove operator, creating certs, change endpoint for ability using webhook locally in the tests
         working-directory: ./modules/apiserver/tests
         run: |
@@ -140,6 +148,7 @@ jobs:
           kubectl logs -l app.kubernetes.io/instance=kuberlogic-apiserver --tail=-1 > kuberlogic-apiserver.log
 
           kubectl get pod --all-namespaces > pods-status.log
+          kubectl get secrets --all-namespaces > secrets.log
           kubectl get endpoints --all-namespaces > endpoints.log
           kubectl get services --all-namespaces > services.log
           kubectl describe kuberlogicservice --all-namespaces > kuberlogic.describe.log
