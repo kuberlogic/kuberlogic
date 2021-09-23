@@ -104,12 +104,16 @@ jobs:
         run: |
           make deploy-minio create-bucket
 
-      - name: PATCH - Undeploy operator & apiserver, creating certs, change endpoint for ability using webhook locally in the tests
+      - name: PATCH - Undeploy operator & apiserver, creating certs
         working-directory: ./modules/apiserver/tests
         run: |
           make undeploy-operator generate-local-webhook-certs
           kubectl get svc, endpoints, pods
-          make patch-endpoint
+
+      - name: PATCH - change endpoint for ability using webhook locally in the tests
+        working-directory: ./modules/apiserver/tests
+        run: |
+          make patch-endpoint | true
 
       - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
