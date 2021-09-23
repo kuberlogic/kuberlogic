@@ -107,8 +107,9 @@ jobs:
       - name: PATCH - Undeploy operator & apiserver, creating certs, change endpoint for ability using webhook locally in the tests
         working-directory: ./modules/apiserver/tests
         run: |
-          make undeploy-operator generate-local-webhook-certs patch-endpoint
-          kubectl get endpoints, pods
+          make undeploy-operator generate-local-webhook-certs
+          kubectl get svc, endpoints, pods
+          make patch-endpoint
 
       - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
