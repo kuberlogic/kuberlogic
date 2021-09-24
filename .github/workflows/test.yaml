@@ -37,8 +37,8 @@ jobs:
 #          - type: postgresql
 #            pg_version: 9.3
 
-#          - type: mysql
-#            my_version: 5.7.31
+          - type: mysql
+            my_version: 5.7.31
 
 #          - type: mysql
 #            my_version: 5.7.29
@@ -104,20 +104,10 @@ jobs:
         run: |
           make deploy-minio create-bucket
 
-      - name: PATCH - Undeploy operator & apiserver, creating certs
+      - name: PATCH - Undeploy operator & apiserver, creating certs, change endpoint for ability using webhook locally in the tests
         working-directory: ./modules/apiserver/tests
         run: |
-          make undeploy-operator
-
-      - name: PATCH - change endpoint for ability using webhook locally in the tests
-        working-directory: ./modules/apiserver/tests
-        run: |
-          make generate-local-webhook-certs
-
-      - name: PATCH - change endpoint for ability using webhook locally in the tests
-        working-directory: ./modules/apiserver/tests
-        run: |
-          make patch-endpoint
+          make undeploy-operator generate-local-webhook-certs patch-endpoint
 
       - name: Run the tests with coverage
         working-directory: ./modules/apiserver/tests
