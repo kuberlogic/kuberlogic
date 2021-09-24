@@ -40,7 +40,7 @@ KUBERLOGIC_GRAFANA_ENDPOINT = http://$(INTERNAL_GRAFANA_IP):3000/
 
 
 test:
-	POD_NAMESPACE=default go test -v \
+	POD_NAMESPACE=kuberlogic go test -v \
 		-coverprofile=coverage.out \
 		-coverpkg="github.com/kuberlogic/..." \
 		-covermode=atomic \
