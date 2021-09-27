@@ -66,6 +66,4 @@ var (
 		},
 		"monitoringPortAnnotation": "core.kuberlogic.com/scrape-port",
 	}
-	apiserverTag = "<MUST BE DEFINED>"
-	operatorTag  = "<MUST BE DEFINED>"
 )
