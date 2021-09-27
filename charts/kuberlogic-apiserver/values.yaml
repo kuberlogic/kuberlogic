@@ -21,8 +21,6 @@ replicaCount: 1
 image:
   repository: quay.io/kuberlogic/apiserver
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: "0.0.24"
 
 nameOverride: ""
 fullnameOverride: ""

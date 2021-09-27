@@ -3,6 +3,10 @@
 # Current Operator version
 VERSION ?= 0.0.29
 
+ifeq ($(USE_BUILD),true)
+	VERSION := $(VERSION)-$(shell git rev-list --count $(shell git rev-parse --abbrev-ref HEAD))
+endif
+
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
 # default secrets with credentials to private repo (using for mysql/redis)
@@ -90,6 +94,9 @@ deploy: kustomize manifests deploy-certmanager
 	$(MAKE) after-deploy
 
 undeploy: kustomize undeploy-certmanager
+	# need to remove several resources before their operators were removed
+	kubectl delete mysqldatabase grafana; \
+	kubectl delete mysql grafana; \
 	kubectl delete keycloakusers --all-namespaces --all; \
 	kubectl delete keycloakclients --all-namespaces --all; \
 	kubectl delete keycloakrealms --all-namespaces --all; \
@@ -152,6 +159,13 @@ operator-build:
 		--build-arg VERSION=$(VERSION) \
 		--build-arg BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
 		--build-arg REVISION=$(shell git rev-parse HEAD)
+
+installer-build:
+	@cd modules/installer; \
+	VERSION=$(VERSION) \
+	BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
+	REVISION=$(shell git rev-parse HEAD) \
+	$(MAKE) build
 
 updater-build:
 	docker build -f updater.Dockerfile -t $(UPDATER_IMG) -t $(UPDATER_IMG_LATEST) .
@@ -234,7 +248,7 @@ docker-push: operator-push apiserver-push updater-push alert-receiver-push backu
 	#
 
 refresh-go-sum:
-	for module in operator updater alert-receiver watcher apiserver; do \
+	for module in operator updater alert-receiver apiserver installer; do \
   		cd ./modules/$${module}; \
   		go clean -modcache; \
   		go mod tidy; \

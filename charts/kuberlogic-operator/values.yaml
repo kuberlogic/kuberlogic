@@ -8,7 +8,6 @@ monitoring:
 image:
   name: operator
   repository: quay.io/kuberlogic
-  tag: 0.0.24
   pullPolicy: IfNotPresent
 
 imagePullSecret: kuberlogic-registry

@@ -143,9 +143,6 @@ func deployUI(globals map[string]interface{}, i *HelmInstaller, release *interna
 
 func deployApiserver(globals map[string]interface{}, i *HelmInstaller, release *internal.ReleaseInfo) error {
 	values := map[string]interface{}{
-		"image": map[string]interface{}{
-			"tag": apiserverTag,
-		},
 		"config": map[string]interface{}{
 			"port":      apiserverPort,
 			"debugLogs": apiserverDebuglLogsEnabled,
@@ -179,7 +176,6 @@ func deployApiserver(globals map[string]interface{}, i *HelmInstaller, release *
 func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
 	values := map[string]interface{}{
 		"image": map[string]interface{}{
-			"tag":        operatorTag,
 			"repository": operatorRepository,
 		},
 		"config": map[string]interface{}{

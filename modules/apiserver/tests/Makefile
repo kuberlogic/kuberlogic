@@ -28,19 +28,19 @@ SENTRY_DSN = https://50ec3b92240a4b4d97dbee02a07fc54f@kl.sentry.cloudlinux.com/5
 POSTHOG_API_KEY =
 
 KUBERLOGIC_AUTH_PROVIDER = keycloak
-KUBERLOGIC_AUTH_KEYCLOAK_CLIENTID = apiserver
-KUBERLOGIC_AUTH_KEYCLOAK_CLIENT_SECRET = apiserver-secret
+KUBERLOGIC_AUTH_KEYCLOAK_CLIENTID = apiserver-client
+KUBERLOGIC_AUTH_KEYCLOAK_CLIENT_SECRET = apiserver-client-secret
 KUBERLOGIC_AUTH_KEYCLOAK_REALM_NAME = kuberlogic_realm
 KUBERLOGIC_AUTH_KEYCLOAK_URL=https://$(shell kubectl get svc keycloak -o jsonpath='{.spec.clusterIP}'):8443
 
-INTERNAL_GRAFANA_IP=$(shell kubectl get pod -l app=grafana -o go-template="{{range .items}}{{.status.podIP}}{{end}}")
+INTERNAL_GRAFANA_IP=$(shell kubectl get pod -l app.kubernetes.io/component=grafana -o go-template="{{range .items}}{{.status.podIP}}{{end}}")
 
 KUBERLOGIC_GRAFANA_ENABLED = true
 KUBERLOGIC_GRAFANA_ENDPOINT = http://$(INTERNAL_GRAFANA_IP):3000/
 
 
 test:
-	POD_NAMESPACE=default go test -v \
+	POD_NAMESPACE=kuberlogic go test -v \
 		-coverprofile=coverage.out \
 		-coverpkg="github.com/kuberlogic/..." \
 		-covermode=atomic \
@@ -50,7 +50,7 @@ test:
 		$(ARGS) ./...
 
 remote-test:
-	REMOTE_HOST=$(shell kubectl get pod -l control-plane=kuberlogic-operator -o jsonpath='{.items[].status.podIP}'):8001 \
+	REMOTE_HOST=$(shell kubectl get pod -l app.kubernetes.io/instance=kuberlogic-apiserver -o jsonpath='{.items[].status.podIP}'):8001 \
 	$(MAKE) test
 
 coverage-report: test
@@ -93,6 +93,7 @@ push-minio:
 
 deploy-minio:
 	kubectl apply -f config/minio/deployment.yaml
+	kubectl wait pods --for=condition=Ready  -l app=minio --timeout=5m
 
 endpoint-minio:
 	@echo $(MINIO_ENDPOINT)
@@ -116,18 +117,18 @@ patch-endpoint:
 
 generate-local-webhook-certs:
 	mkdir -p /tmp/k8s-webhook-server/serving-certs/; \
-	kubectl get secret webhook-server-cert -o=jsonpath="{.data['tls\.key']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.key
-	kubectl get secret webhook-server-cert -o=jsonpath="{.data['tls\.crt']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.crt
+	kubectl get secret kuberlogic-webhook-cert -o=jsonpath="{.data['tls\.key']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.key
+	kubectl get secret kuberlogic-webhook-cert -o=jsonpath="{.data['tls\.crt']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.crt
 
 undeploy-operator:
-	kubectl delete deployment -l control-plane=kuberlogic-operator
-	kubectl wait pod -l control-plane=kuberlogic-operator --for=delete --timeout=2m
+	kubectl delete deployment -l app.kubernetes.io/instance=kuberlogic-operator
+	kubectl wait pod -l app.kubernetes.io/instance=kuberlogic-operator --for=delete --timeout=5m
 
 configure-logs:
 	envsubst < config/logz.io/logzio-daemonset-rbac.yaml | kubectl apply -f -
 
 follow-apiserver-logs:
-	kubectl logs -l control-plane=kuberlogic-operator -c apiserver -f
+	kubectl logs -l app.kubernetes.io/instance=kuberlogic-apiserver -f
 
 follow-operator-logs:
-	kubectl logs -l control-plane=kuberlogic-operator -c manager -f
+	kubectl logs -l app.kubernetes.io/instance=kuberlogic-operator -c manager -f

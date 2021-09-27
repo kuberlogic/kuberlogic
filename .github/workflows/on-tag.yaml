@@ -75,6 +75,7 @@ jobs:
         continue-on-error: true
         with:
           key: docker-cache-${{ github.sha }}
+          skip-save: true
           restore-keys: |
             docker-cache-
 
@@ -174,6 +175,7 @@ jobs:
         continue-on-error: true
         with:
           key: docker-cache-${{ github.sha }}
+          skip-save: true
           restore-keys: |
             docker-cache-
 

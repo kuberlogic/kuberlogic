@@ -22,14 +22,14 @@ helm-package: helm-deps helm-lint
 	helm package crds && \
 	helm package nginx-ingress-controller && \
 	helm package cert-manager && \
-	helm package kuberlogic-ui && \
-	helm package kuberlogic-apiserver && \
 	helm package keycloak-operator && \
 	helm package kuberlogic-keycloak && \
 	helm package monitoring && \
 	helm package mysql-operator && \
 	helm package postgres-operator && \
-	helm package kuberlogic-operator
+	helm package kuberlogic-ui --app-version $(VERSION) && \
+    helm package kuberlogic-apiserver --app-version $(VERSION) && \
+	helm package kuberlogic-operator --app-version $(VERSION)
 
 helm-embed: helm-package
 	rm kli/helm-installer/*tgz ; \
@@ -38,7 +38,12 @@ helm-embed: helm-package
 test:
 	go vet
 
-compile:
-	go build -o kuberlogic-installer
+compile: test
+	go build \
+	    -ldflags " \
+        -X github.com/kuberlogic/operator/modules/installer/cmd.sha1ver=$(REVISION) \
+        -X github.com/kuberlogic/operator/modules/installer/cmd.buildTime=$(BUILD_TIME) \
+        -X github.com/kuberlogic/operator/modules/installer/cmd.version=$(VERSION)"  \
+        -o kuberlogic-installer
 
-build: helm-deps helm-lint helm-package helm-embed test compile
+build: helm-embed compile

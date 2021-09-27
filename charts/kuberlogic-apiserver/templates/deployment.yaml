@@ -58,7 +58,7 @@ spec:
               port: {{ .Values.config.port }}
             initialDelaySeconds: 30
             periodSeconds: 5
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
           imagePullPolicy: "{{ .Values.image.pullPolicy }}"
           name: apiserver
           ports:

@@ -43,11 +43,10 @@ const (
 	victoriaMetricsServiceName = "kuberlogic-victoriametrics"
 
 	// operator
-	operatorTag        = "0.0.29"
 	operatorRepository = registryName + "/" + registryOrg
 
 	// apiserver
-	apiserverTag               = "0.0.29"
+
 	apiserverPort              = 8001
 	apiserverDebuglLogsEnabled = "TRUE"
 	apiserverAuthProvider      = "keycloak"
