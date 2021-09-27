@@ -166,4 +166,5 @@ jobs:
           name: ${{ matrix.type }}-${{ matrix.pg_version }}${{ matrix.my_version }}-logs
           path: |
             ./modules/apiserver/tests/*.log
+            ./modules/installer/kuberlogic-installer
         if: ${{ always() }}

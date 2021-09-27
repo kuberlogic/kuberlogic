@@ -2,7 +2,7 @@ name: On push master
 
 on:
   push:
-    branches: [ master ]
+    branches: [ KL-146-1 ]
 jobs:
   build:
     name: Build images
@@ -12,6 +12,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          # 0 - all history, it uses in generating part of BUILD in version
+          fetch-depth: 0
 
       - uses: actions/setup-go@v2
         with:
@@ -162,6 +165,7 @@ jobs:
           name: ${{ matrix.type }}-${{ matrix.pg_version }}${{ matrix.my_version }}-logs
           path: |
             ./modules/apiserver/tests/*.log
+            ./modules/installer/kuberlogic-installer
         if: ${{ always() }}
 
   release:
@@ -202,11 +206,11 @@ jobs:
           key: installer-${{ github.sha }}
 
       - name: Release installer
-        uses: docker://antonyurchenko/git-release:v4.1.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          UNRELEASED: "update"
-          ALLOW_EMPTY_CHANGELOG: true
+        uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
-          args: |
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
             ./modules/installer/kuberlogic-installer

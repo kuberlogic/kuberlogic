@@ -28,7 +28,7 @@ func deployCertManager(globals map[string]interface{}, i *HelmInstaller) error {
 
 	chart, err := certManagerChartReader()
 	if err != nil {
-		errors.Wrap(err, "error loading cert-manager chart")
+		return errors.Wrap(err, "error loading cert-manager chart")
 	}
 
 	i.Log.Infof("Deploying cert-manager...")
@@ -133,7 +133,7 @@ func deployUI(globals map[string]interface{}, i *HelmInstaller, release *interna
 
 	chart, err := uiChartReader()
 	if err != nil {
-		errors.Wrap(err, "error loading ui chart")
+		return errors.Wrap(err, "error loading ui chart")
 	}
 
 	i.Log.Infof("Deploying Kuberlogic UI...")
