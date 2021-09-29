@@ -1,55 +1,21 @@
 [![integration tests](https://github.com/kuberlogic/operator/actions/workflows/test.yaml/badge.svg?branch=master)](https://github.com/kuberlogic/operator/actions/workflows/test.yaml)
 [![codecov](https://codecov.io/gh/kuberlogic/operator/branch/master/graph/badge.svg?token=VRWDPT0EIC)](https://codecov.io/gh/kuberlogic/operator)
 
-## Kuberlogic operator
+## Kuberlogic
+With KuberLogic you can deploy, manage and scale software using Kubernetes in a frictionless way. Any supported software is turned into managed SaaS - hosted on your Kubernetes cluster. We have API, monitoring, backups, and integration with SSO right out of the box.
 
-### Deploy operators
+### Requirements
+Kuberlogic leverages a lot of top notch open-source projects and it requires a specific environment to run on top of:
+* Kubernetes v1.20.x with:
+   * StorageClass configured as a default
+   * LoadBalancer Services
+   * At least 3 nodes in cluster with 4G of RAM and 2 CPUs each
+* S3 compatible storage for backups (optional)
+* Helm v3.4 CLI tool
 
-This step is responsible for deploy operators:
+### Installation
 
-- kuberlogic
-- postgresql by [Zalando](https://github.com/zalando/postgres-operator)
-- mysql by [Presslabs](https://github.com/presslabs/mysql-operator)
-
-1. Clone the repo
-    ```shell script
-    git clone git@github.com:kuberlogic/operator.git
-    cd operator
-    ```
-2. Create docker registry access token. You can do it here https://docs.quay.io/solution/getting-started.html
-3. Make sure you have the minikube installed and running (https://minikube.sigs.k8s.io/docs/start/)
-    ```shell script
-    minikube status
-    ```
-4. Make sure you have Go installed (https://golang.org/doc/install).
-4. Create a secret in kubernetes to access gitlab registry (learn more
-   here https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#inspecting-the-secret-regcred)
-    ```shell script
-    DOCKER_REGISTRY_SERVER=https://quay.io
-    DOCKER_USER=<username, the one that was given to you during the onboarding>
-    DOCKER_PASSWORD=<access token or password created in step 2>
-    kubectl create secret docker-registry kuberlogic-registry --docker-server=$DOCKER_REGISTRY_SERVER --docker-username=$DOCKER_USER --docker-password=$DOCKER_PASSWORD
-    ```
-4. Install CRDs
-    ```shell script
-   make install
-    ```
-
-4. Deploy operators
-    ```shell script
-   make deploy
-    ```
-5. For the dev usage access to the apiserver is available via http://localhost:30007
-
-### Create PostgreSQL cluster
-
-```
-kubectl create kuberlogic/src/cm-operator/config/samle/cm-postgresql.yaml
-```
-
-### Create MySQL cluster
-
-```
-kubectl apply -f https://raw.githubusercontent.com/presslabs/mysql-operator/master/examples/example-cluster-secret.yaml
-kubectl create kuberlogic/src/cm-operator/config/samle/cm-mysql.yaml
-```
+1. Download `kuberlogic-installer` command-line installation tool
+2. Prepare the configuration file.
+3. Run `kuberlogic-installer install all -c <configFile>`
+4. Access Kuberlogic Web UI via connection endpoint from the previous step.
