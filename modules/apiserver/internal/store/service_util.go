@@ -201,11 +201,12 @@ func getServiceInstanceLogs(c *kubernetes.Clientset, kls *kuberlogicv1.KuberLogi
 	return logs, false, nil
 }
 
-// memoryQuantityAsGi returns a string representation of a resource.Quantity
-// converted to a Gi representation
-// e.g, 512Mi = 0.5Gi, 1Gi = 1Gi
-func memoryQuantityAsGi(m resource.Quantity) string {
-	return strconv.FormatFloat(float64(m.Value())/float64(1024*1024*1024), 'f', 2, 64)
+// memoryQuantityAsG returns a string representation of a resource.Quantity
+// converted to a G representation
+// e.g, 500M = 0.5G, 1000M = 1G
+func memoryQuantityAsG(m resource.Quantity) string {
+	const resModifier = 1000
+	return strconv.FormatFloat(float64(m.Value())/float64(resModifier*resModifier*resModifier), 'f', 2, 64)
 }
 
 // cpuQuantityAsCoreShares returns a string representation of a resource.Quantity
