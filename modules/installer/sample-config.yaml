@@ -10,8 +10,9 @@ registry:
   password: quaypassword
 
 endpoints:
-  api: api.kuberlogic.com
-  ui: ui.kuberlogic.com
+  api: kuberlogic.com
+  ui: kuberlogic.com
+  monitoringConsole: mc.kuberlogic.com
 
 auth:
   testUserPassword: testPassword
