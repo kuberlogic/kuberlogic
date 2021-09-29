@@ -86,44 +86,77 @@ func deployAuth(globals map[string]interface{}, i *HelmInstaller) error {
 	return nil
 }
 
-func deployNginxIC(globals map[string]interface{}, i *HelmInstaller, releaseInfo *internal.ReleaseInfo) error {
+func deployIngressController(globals map[string]interface{}, i *HelmInstaller, releaseInfo *internal.ReleaseInfo) error {
 	values := map[string]interface{}{
-		"defaultBackend": map[string]interface{}{
-			"enabled": false,
+		"ingressController": map[string]interface{}{
+			"installCRDs":  false,
+			"ingressClass": ingressClass,
 		},
-		"ingressClass": ingressClass,
 	}
-	chart, err := nginxIngressControllerChartReader()
+	chart, err := kongIngressControllerChartReader()
 	if err != nil {
-		return errors.Wrap(err, "error loading nginx-ingress-controller chart")
+		return errors.Wrap(err, "error loading kong ingress controller chart")
 	}
-	i.Log.Infof("Deploying Nginx Ingress Controller...")
-	if err := releaseHelmChart(helmNginxIngressChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log); err != nil {
-		return errors.Wrap(err, "error deploying nginx-ingress-controller")
+	i.Log.Infof("Deploying Kong Ingress Controller...")
+	if err := releaseHelmChart(helmKongIngressControllerChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log); err != nil {
+		return errors.Wrap(err, "error deploying kong ingress controller")
 	}
 
-	// verify that Nginx Ingress Controller services is created and received Ingress IP address
-	// service name equals to the chart name
+	// verify that Kong Ingress Controller services is created and received Ingress IP address
+	// service name is expected to be always the same
+	const ingressSvcName = "kong-kong-proxy"
 	const waitTimeoutSec = 30
+	foundIP := false
 	for x := 0; x < waitTimeoutSec; x += 1 {
 		time.Sleep(time.Second)
-		s, err := i.ClientSet.CoreV1().Services(i.ReleaseNamespace).Get(context.TODO(), helmNginxIngressChart, v1.GetOptions{})
+		s, err := i.ClientSet.CoreV1().Services(i.ReleaseNamespace).Get(context.TODO(), ingressSvcName, v1.GetOptions{})
 		if err != nil {
 			continue // hope that the error is transient
 		}
 		if len(s.Status.LoadBalancer.Ingress) != 0 {
 			// success. append to the release banner
 			releaseInfo.AddBannerLines("Connection endpoint address: " + s.Status.LoadBalancer.Ingress[0].IP)
-			return nil
+			foundIP = true
+			break
 		}
 	}
-	return errors.New("failed to obtain an Ingress IP address for nginx-ingress-controller")
+	if !foundIP {
+		return errors.New("failed to obtain an Ingress IP address for Kong ingress controller")
+	}
+
+	// get authentication data for Kong Ingress Controller
+	JWTAuthParams, err := getJWTAuthVals(i.ReleaseNamespace, i.ClientSet, i.Log)
+	if err != nil {
+		return errors.Wrap(err, "error computing Grafana Authentication values")
+	}
+	kuberlogicIngressValues := map[string]interface{}{
+		"kong": map[string]interface{}{
+			"authPlugin":         kongJWTAuthPlugin,
+			"tokenCleanupPlugin": kongJWTCleanupPlugin,
+			"jwt2headerPlugin": map[string]interface{}{
+				"name": kongJWT2HeadersPlugin,
+			},
+		},
+		"jwtAuth":      JWTAuthParams,
+		"ingressClass": ingressClass,
+	}
+
+	chart, err = kuberlogicIngressControllerChartReader()
+	if err != nil {
+		return errors.Wrap(err, "error loading kuberlogic ingress controller chart")
+	}
+	i.Log.Infof("Deploying Kuberlogic Ingress configuration")
+	if err := releaseHelmChart(helmKuberlogicIngressChart, i.ReleaseNamespace, chart, kuberlogicIngressValues, globals, i.HelmActionConfig, i.Log); err != nil {
+		return errors.Wrap(err, "error deploying Kuberlogic Ingress Controller configuration")
+	}
+	return nil
 }
 
 func deployUI(globals map[string]interface{}, i *HelmInstaller, release *internal.ReleaseInfo) error {
 	values := map[string]interface{}{
 		"config": map[string]interface{}{
-			"apiEndpoint": "http://" + i.Endpoints.API,
+			"apiEndpoint":               "http://" + i.Endpoints.API,
+			"monitoringConsoleEndpoint": "http://" + i.Endpoints.MonitoringConsole + "/login",
 		},
 		"image": map[string]interface{}{
 			"tag": uiImageTag,
@@ -156,7 +189,7 @@ func deployApiserver(globals map[string]interface{}, i *HelmInstaller, release *
 					"clientId":     keycloakClientId,
 					"clientSecret": keycloakClientSecret,
 					"realmName":    keycloakRealmName,
-					"URL":          keycloakURL,
+					"URL":          keycloaInternalkURL,
 				},
 			},
 		},
@@ -202,11 +235,6 @@ func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
 }
 
 func deployMonitoring(globals map[string]interface{}, i *HelmInstaller, release *internal.ReleaseInfo) error {
-	grafanaAuthValues, err := getGrafanaAuthValues(i.ReleaseNamespace, i.ClientSet, i.Log)
-	if err != nil {
-		return errors.Wrap(err, "error computing Grafana Authentication values")
-	}
-
 	values := map[string]interface{}{
 		"victoriametrics": map[string]interface{}{
 			"service": map[string]interface{}{
@@ -231,7 +259,19 @@ func deployMonitoring(globals map[string]interface{}, i *HelmInstaller, release 
 				"rootPassword": release.InternalPassword(),
 			},
 			"port": grafanaServicePort,
-			"auth": grafanaAuthValues,
+			"auth": map[string]interface{}{
+				"headerName": grafanaAuthHeaderName,
+			},
+			"ingress": map[string]interface{}{
+				"enabled": true,
+				"host":    i.Endpoints.MonitoringConsole,
+				"class":   ingressClass,
+				"grafanaLogin": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						"konghq.com/plugins": fmt.Sprintf("%s,%s,%s", kongJWT2HeadersPlugin, kongJWTCleanupPlugin, kongJWTAuthPlugin),
+					},
+				},
+			},
 		},
 	}
 

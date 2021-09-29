@@ -32,9 +32,6 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 
 		if upgradePhase == "all" || upgradePhase == "dependencies" {
 			i.Log.Infof("Upgrading dependencies...")
-			if err := deployNginxIC(globalValues, i, release); err != nil {
-				return errors.Wrap(err, "error upgrade nginx-ingress-controller")
-			}
 			i.Log.Infof("Upgrading cert-manager dependency")
 			if err := deployCertManager(globalValues, i); err != nil {
 				return errors.Wrap(err, "error installing cert-manager")
@@ -44,7 +41,9 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 			if err := deployAuth(globalValues, i); err != nil {
 				return errors.Wrap(err, "error upgrading keycloak")
 			}
-
+			if err := deployIngressController(globalValues, i, release); err != nil {
+				return errors.Wrap(err, "error upgrade nginx-ingress-controller")
+			}
 			i.Log.Infof("Upgrading service operators")
 			if err := deployServiceOperators(globalValues, i, release); err != nil {
 				return errors.Wrap(err, "error upgrading service operators")

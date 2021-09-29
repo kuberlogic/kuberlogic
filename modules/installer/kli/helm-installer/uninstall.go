@@ -29,8 +29,11 @@ func (i *HelmInstaller) Uninstall(args []string) error {
 		if err := uninstallHelmChart(helmCertManagerChart, force, i.HelmActionConfig, i.Log); err != nil {
 			return errors.Wrap(err, "error uninstalling cert-manager")
 		}
-		if err := uninstallHelmChart(helmNginxIngressChart, force, i.HelmActionConfig, i.Log); err != nil {
-			return errors.Wrap(err, "error uninstalling nginx-ingress-controller")
+
+		for _, c := range []string{helmKuberlogicIngressChart, helmKongIngressControllerChart} {
+			if err := uninstallHelmChart(c, force, i.HelmActionConfig, i.Log); err != nil {
+				return errors.Wrap(err, "error uninstalling nginx-ingress-controller")
+			}
 		}
 
 		for _, c := range []string{helmKeycloakOperatorChart, helmMonitoringChart} {

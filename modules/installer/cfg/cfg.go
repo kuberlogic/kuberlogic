@@ -24,8 +24,9 @@ type Config struct {
 	Namespace *string `yaml:"namespace"`
 
 	Endpoints struct {
-		API string `yaml:"api""`
-		UI  string `yaml:"ui"`
+		API               string `yaml:"api""`
+		UI                string `yaml:"ui"`
+		MonitoringConsole string `yaml:"monitoringConsole"`
 	} `yaml:"endpoints"`
 
 	Registry struct {
@@ -62,6 +63,11 @@ func (c *Config) setDefaults(log logger.Logger) error {
 	if c.Endpoints.UI == "" || c.Endpoints.API == "" {
 		log.Errorf("`endpoints.api` and `endpoints.ui` must be set and can't be-empty")
 		return errors.New("endpoints configuration is not set")
+	}
+
+	if c.Endpoints.MonitoringConsole == "" {
+		log.Errorf("`endpoints.monitoringConsole` must be set and can't be empty")
+		return errors.New("endpoints.monitoringConsole is not set")
 	}
 
 	if c.Registry.Server == nil {

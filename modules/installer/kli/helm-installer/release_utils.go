@@ -3,6 +3,7 @@ package helm_installer
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	logger "github.com/kuberlogic/operator/modules/installer/log"
 	"github.com/pkg/errors"
@@ -22,7 +23,7 @@ const (
 	realmSecretName  = "credential-kuberlogic-realm-kuberlogic-realm-kuberlogic"
 )
 
-func getGrafanaAuthValues(ns string, clientset *kubernetes.Clientset, log logger.Logger) (map[string]interface{}, error) {
+func getJWTAuthVals(ns string, clientset *kubernetes.Clientset, log logger.Logger) (map[string]interface{}, error) {
 	// get JWKS info from keycloak and save as a secret
 	log.Debugf("getting keycloak nodeport service")
 	svc, err := clientset.CoreV1().Services(ns).Get(context.TODO(), keycloakNodePortServiceName, v1.GetOptions{})
@@ -53,15 +54,15 @@ func getGrafanaAuthValues(ns string, clientset *kubernetes.Clientset, log logger
 
 	// iterate over all node/address combinations in cluster until we reach keycloak via nodePort
 	// usuallu it will succeed on 1st or 2nd address attempt because nodePort is opened on all cluster nodes
-	log.Debugf("getting JWKS data from Keycloak via nodePort service")
-	jwksData := make([]byte, 0)
+	log.Debugf("getting realm public key data from Keycloak via nodePort service")
+	keycloakRealmAuthData := make([]byte, 0)
 found:
 	for _, n := range nodes.Items {
 		for _, addr := range n.Status.Addresses {
 			if addr.Type == v12.NodeHostName {
 				continue // skip hostname
 			}
-			endpoint := fmt.Sprintf("https://%s:%d/auth/realms/%s/protocol/openid-connect/certs",
+			endpoint := fmt.Sprintf("https://%s:%d/auth/realms/%s",
 				addr.Address, nodePort, keycloakRealmName)
 
 			log.Debugf("trying %s endpoint via node %s", endpoint, n.Name)
@@ -69,12 +70,12 @@ found:
 			if err != nil {
 				continue // try next address/node combination
 			}
-			jwksData, err = io.ReadAll(r.Body)
+			keycloakRealmAuthData, err = io.ReadAll(r.Body)
 			if err != nil {
 				continue // try next address/node combination
 			}
 			r.Body.Close()
-			log.Debugf("keycloak JWKS request response is: %s", string(jwksData))
+			log.Debugf("keycloak realm auth data request response is: %s", string(keycloakRealmAuthData))
 			if r.StatusCode != http.StatusOK {
 				return nil, errors.New("keycloak answered with non ok status code")
 			}
@@ -82,48 +83,21 @@ found:
 		}
 	}
 	// no valid response received
-	if len(jwksData) == 0 {
-		return nil, errors.New("failed getting JWKS data from Keycloak")
+	if len(keycloakRealmAuthData) == 0 {
+		return nil, errors.New("failed getting realm auth data from Keycloak")
 	}
-
-	// save JWKS into Kubernetes secret
-	initSecret := &v12.Secret{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      keycloakJWKSDataSecret,
-			Namespace: ns,
-		},
-		StringData: map[string]string{
-			keycloakJWKSFileName: string(jwksData),
-		},
+	var authData struct {
+		PublicKey string `json:"public_key"`
 	}
-
-	// create | update in cluster secret
-	var upsertSecretErr error
-	s, err := clientset.CoreV1().Secrets(ns).Get(context.TODO(), keycloakJWKSDataSecret, v1.GetOptions{})
-	if err != nil && !k8serrors.IsNotFound(err) {
-		return nil, errors.Wrap(err, "error getting keycloak JWKS data secret")
-	}
-	if s.Name == "" {
-		log.Debugf("creating JWKS secret %s/%s", ns, initSecret.Name)
-		s, upsertSecretErr = clientset.CoreV1().Secrets(ns).Create(context.TODO(), initSecret, v1.CreateOptions{})
-	} else {
-		log.Debugf("found JWKS secret %s/%s", ns, s.Name)
-		s.StringData = map[string]string{
-			keycloakJWKSFileName: initSecret.StringData[keycloakJWKSFileName],
-		}
-		s, upsertSecretErr = clientset.CoreV1().Secrets(ns).Update(context.TODO(), s, v1.UpdateOptions{})
-		log.Debugf("JWKS data is updated")
-	}
-	if upsertSecretErr != nil {
-		return nil, errors.Wrap(upsertSecretErr, "error managing cluster JWKS secret")
+	if err := json.Unmarshal(keycloakRealmAuthData, &authData); err != nil {
+		return nil, errors.Wrap(err, "error decoding Keycloak response")
 	}
 
 	return map[string]interface{}{
-		"enabled":        true,
-		"version":        s.ResourceVersion,
-		"headerName":     grafanaAuthHeaderName,
-		"jwksSecretName": keycloakJWKSDataSecret,
-		"jwksJSON":       keycloakJWKSFileName,
+		"name":      ingressAuthName,
+		"param":     jwtTokenQueryParam,
+		"iss":       jwtIssuer,
+		"rsaPubKey": "-----BEGIN PUBLIC KEY-----\n" + authData.PublicKey + "\n-----END PUBLIC KEY-----\n",
 	}, nil
 }
 
