@@ -48,8 +48,6 @@ spec:
         - name: alertmanager-config
           configMap:
             name: alertmanager-config
-      imagePullSecrets:
-      - name: kuberlogic-registry
 ---
 kind: Service
 apiVersion: v1
