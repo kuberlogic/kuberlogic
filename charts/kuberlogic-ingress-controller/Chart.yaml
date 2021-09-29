@@ -1,0 +1,9 @@
+apiVersion: v2
+name: kuberlogic-ingress-controller
+description: A Helm chart for additional configuration of Ingress Controller used by Kuberlogic
+
+type: application
+
+version: 0.1.0
+
+appVersion: "0.0.1"

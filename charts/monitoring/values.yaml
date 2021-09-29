@@ -65,6 +65,12 @@ grafana:
 
   service:
     name: kuberlogic-grafana
+  ingress:
+    grafana:
+      annotations: {}
+    grafanaLogin:
+      annotations: {}
+    enabled: false
 
   secretName: grafana-credentials
   admin:
@@ -82,3 +88,4 @@ grafana:
 
   auth:
     enabled: true
+    headerName: ""
