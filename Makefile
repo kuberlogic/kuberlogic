@@ -11,7 +11,7 @@ endif
 IMG_REPO = quay.io/kuberlogic
 # default secrets with credentials to private repo (using for mysql/redis)
 # for postgresql is using service account
-IMG_PULL_SECRET = kuberlogic-registry
+IMG_PULL_SECRET = ""
 
 # Image URL to use all building/pushing image targets
 OPERATOR_NAME = operator
@@ -79,9 +79,6 @@ show-resources:
 
 after-deploy:
 	kubectl config set-context --current --namespace=$(NAMESPACE)
-	kubectl get secret kuberlogic-registry --namespace=default -o json \
-	| jq 'del(.metadata["namespace","creationTimestamp","resourceVersion","selfLink","uid"])' \
-	| kubectl apply -f -
 
 # Deploy kuberlogic-operator in the configured Kubernetes cluster in ~/.kube/config
 deploy: kustomize manifests deploy-certmanager
