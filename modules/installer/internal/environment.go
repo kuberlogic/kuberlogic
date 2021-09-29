@@ -26,11 +26,12 @@ func PrepareEnvironment(namespace string, regServer, regPassword, regUser string
 		return errors.Wrap(err, "error creating a release namespace")
 	}
 
-	err = createPullSecret(ImagePullSecret, namespace, regServer, regUser, regPassword, clientSet)
-	if err != nil && !k8serrors.IsAlreadyExists(err) {
-		return errors.Wrap(err, "error creating image pull secret")
+	if regServer != "" {
+		err = createPullSecret(ImagePullSecret, namespace, regServer, regUser, regPassword, clientSet)
+		if err != nil && !k8serrors.IsAlreadyExists(err) {
+			return errors.Wrap(err, "error creating image pull secret")
+		}
 	}
-
 	return nil
 }
 
