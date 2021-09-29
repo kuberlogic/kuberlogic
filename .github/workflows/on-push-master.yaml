@@ -106,7 +106,7 @@ jobs:
       - name: Run installer
         working-directory: ./modules/installer
         run: |
-          ./kuberlogic-installer install all -c t.yaml
+          ./kuberlogic-installer install all -c sample-config.yaml
 
       - name: Setup minio & create test backet for backup storage
         working-directory: ./modules/apiserver/tests
