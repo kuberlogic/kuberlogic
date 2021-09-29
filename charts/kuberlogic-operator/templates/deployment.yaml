@@ -35,8 +35,12 @@ spec:
                 fieldPath: metadata.namespace
           - name: IMG_REPO
             value: {{ .Values.image.repository }}
+          {{- with .Values.imagePullSecrets }}
+          {{- with . | first }}
           - name: IMG_PULL_SECRET
-            value: {{ .Values.imagePullSecret }}
+            value: {{ .name }}
+          {{- end }}
+          {{- end }}
           - name: SENTRY_DSN
             value: {{ .Values.sentryDsn }}
           - name: GRAFANA_ENABLED

@@ -37,7 +37,7 @@ func (p *BaseBackup) NewCronJob(name, ns, schedule string) v1beta1.CronJob {
 	}
 	var backOffLimit int32 = 2
 
-	return v1beta1.CronJob{
+	c := v1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: ns,
@@ -62,9 +62,6 @@ func (p *BaseBackup) NewCronJob(name, ns, schedule string) v1beta1.CronJob {
 									Env:             p.EnvVar,
 								},
 							},
-							ImagePullSecrets: []corev1.LocalObjectReference{
-								{Name: util.GetKuberlogicRepoPullSecret()},
-							},
 							RestartPolicy: corev1.RestartPolicyOnFailure,
 						},
 					},
@@ -72,6 +69,13 @@ func (p *BaseBackup) NewCronJob(name, ns, schedule string) v1beta1.CronJob {
 			},
 		},
 	}
+
+	if util.GetKuberlogicRepoPullSecret() != "" {
+		c.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+			{Name: util.GetKuberlogicRepoPullSecret()},
+		}
+	}
+	return c
 }
 
 func (p *BaseBackup) GetCronJob() *v1beta1.CronJob {

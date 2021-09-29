@@ -164,10 +164,12 @@ func (p *Mysql) setVolumeSize(kls *kuberlogicv1.KuberLogicService) {
 func (p *Mysql) setImage(kls *kuberlogicv1.KuberLogicService) {
 	p.Operator.Spec.Image = util.GetKuberlogicImage(image, kls.Spec.Version)
 
-	secrets := []corev1.LocalObjectReference{
-		{Name: util.GetKuberlogicRepoPullSecret()},
+	if util.GetKuberlogicRepoPullSecret() != "" {
+		secrets := []corev1.LocalObjectReference{
+			{Name: util.GetKuberlogicRepoPullSecret()},
+		}
+		p.Operator.Spec.PodSpec.ImagePullSecrets = secrets
 	}
-	p.Operator.Spec.PodSpec.ImagePullSecrets = secrets
 }
 
 func (p *Mysql) setAdvancedConf(kls *kuberlogicv1.KuberLogicService) {
