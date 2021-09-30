@@ -4,7 +4,7 @@ debugLogs: true
 
 namespace: kuberlogic
 
-# registry connection settings. leave blank for public access
+# registry connection settings. omit for public access
 # registry:
 #   server: https://quay.io
 #   username: quayusername
@@ -17,5 +17,5 @@ endpoints:
   monitoringConsole: mc.kuberlogic.com
 
 auth:
-  testUserPassword: testPassword
+  testUserPassword: secret
   adminPassword: adminPassword
