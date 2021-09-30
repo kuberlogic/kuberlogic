@@ -32,7 +32,7 @@ const (
 	helmApiserverChart = "kuberlogic-apiserver"
 	helmUIChart        = "kuberlogic-ui"
 
-	helmActionTimeoutSec = 300
+	helmActionTimeoutSec = 60 * 10 // wait for up to 10 minutes
 )
 
 var (
