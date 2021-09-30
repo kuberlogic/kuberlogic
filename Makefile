@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.29
+VERSION ?= 0.0.30
 
 ifeq ($(USE_BUILD),true)
 	VERSION := $(VERSION)-$(shell git rev-list --count $(shell git rev-parse --abbrev-ref HEAD))
@@ -238,7 +238,6 @@ restore-push:
 	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:$(VERSION)
 	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:latest
 
-docker-build: operator-build apiserver-build updater-build alert-receiver-build backup-build restore-build
 	#
 
 docker-push: operator-push apiserver-push updater-push alert-receiver-push backup-push restore-push
