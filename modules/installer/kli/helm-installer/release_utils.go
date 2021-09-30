@@ -19,8 +19,7 @@ import (
 
 // secrets are created by Keycloak operator during realm/client provisioning
 const (
-	clientSecretName = "keycloak-client-secret-apiserver-client"
-	realmSecretName  = "credential-kuberlogic-realm-kuberlogic-realm-kuberlogic"
+	realmSecretName = "credential-kuberlogic-realm-kuberlogic-realm-kuberlogic"
 )
 
 func getJWTAuthVals(ns string, clientset *kubernetes.Clientset, log logger.Logger) (map[string]interface{}, error) {
@@ -102,10 +101,8 @@ found:
 }
 
 func waitForKeycloakResources(ns string, clientset *kubernetes.Clientset) error {
-	for _, c := range []string{realmSecretName, clientSecretName} {
-		if err := waitForSecretCreation(c, ns, clientset); err != nil {
-			return errors.Wrap(err, "failed to wait for Keycloak resources")
-		}
+	if err := waitForSecretCreation(realmSecretName, ns, clientset); err != nil {
+		return errors.Wrap(err, "failed to wait for Keycloak resources")
 	}
 	return nil
 }
@@ -115,10 +112,8 @@ func uninstallKuberlogicKeycloak(ns string, force bool, act *action.Configuratio
 		return err
 	}
 	log.Debugf("Kuberlogic Keycloak resources are deleted. Waiting for confirmation.")
-	for _, c := range []string{clientSecretName, realmSecretName} {
-		if err := waitForSecretDeletion(c, ns, clientset); err != nil {
-			return errors.Wrap(err, "failed to clean up Keycloak resources")
-		}
+	if err := waitForSecretDeletion(realmSecretName, ns, clientset); err != nil {
+		return errors.Wrap(err, "failed to clean up Keycloak resources")
 	}
 	log.Debugf("Kuberlogic Keycloak resources are deleted")
 

@@ -12,5 +12,5 @@ spec:
       protocol: TCP
       targetPort: {{ .Values.config.port }}
   selector:
-    {{ include "apiserver.labels" . | nindent 4 }}
+    {{ include "apiserver.selectorLabels" . | nindent 4 }}
   type: NodePort

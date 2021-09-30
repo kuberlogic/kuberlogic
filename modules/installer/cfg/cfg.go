@@ -33,7 +33,7 @@ type Config struct {
 		Server   string `yaml:"server,omitempty"`
 		Username string `yaml:"username,omitempty"`
 		Password string `yaml:"password,omitempty"`
-	} `yaml:"registry"`
+	} `yaml:"registry,omitempty"`
 
 	Auth struct {
 		AdminPassword    string  `yaml:"adminPassword"`
