@@ -12,7 +12,7 @@ type Defaults struct {
 	Version    string
 }
 
-const DefaultUser = "kuberlogic"
+const MasterUser = "kuberlogic"
 const DefaultVolumeSize = "1Gi"
 
 var DefaultResources = v1.ResourceRequirements{

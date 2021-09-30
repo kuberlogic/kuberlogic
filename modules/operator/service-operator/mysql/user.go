@@ -3,6 +3,8 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
+	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	"sort"
 )
 
 var protectedUsers = map[string]bool{
@@ -13,7 +15,6 @@ var protectedUsers = map[string]bool{
 	"sys_heartbeat":   true,
 	"mysql.sys":       true,
 	"root":            true,
-	"kuberlogic":      true,
 }
 
 type User struct {
@@ -25,7 +26,26 @@ func (usr *User) IsProtected(name string) bool {
 	return ok
 }
 
+func (usr *User) IsMaster(name string) bool {
+	return name == kuberlogicv1.MasterUser
+}
+
+func (usr *User) Check(name string) error {
+	switch {
+	case usr.IsProtected(name):
+		return fmt.Errorf("user %s is protected", name)
+	case usr.IsMaster(name):
+		return fmt.Errorf("user %s is master", name)
+	default:
+		return nil
+	}
+}
+
 func (usr *User) Create(name, password string) error {
+	if err := usr.Check(name); err != nil {
+		return err
+	}
+
 	conn, err := sql.Open("mysql", usr.session.ConnectionString(usr.session.MasterIP, ""))
 	if err != nil {
 		return err
@@ -38,8 +58,8 @@ func (usr *User) Create(name, password string) error {
 	}
 
 	queries := []string{
-		fmt.Sprintf("CREATE USER '%s'@'localhost' IDENTIFIED BY '%s';", name, password),
-		fmt.Sprintf("GRANT ALL PRIVILEGES ON *.* TO '%s'@'localhost';", name),
+		fmt.Sprintf("CREATE USER '%s'@'%%' IDENTIFIED BY '%s';", name, password),
+		fmt.Sprintf("GRANT ALL PRIVILEGES ON *.* TO '%s'@'%%';", name),
 		"FLUSH PRIVILEGES;",
 	}
 
@@ -53,6 +73,10 @@ func (usr *User) Create(name, password string) error {
 }
 
 func (usr *User) Delete(name string) error {
+	if err := usr.Check(name); err != nil {
+		return err
+	}
+
 	conn, err := sql.Open("mysql", usr.session.ConnectionString(usr.session.MasterIP, ""))
 	if err != nil {
 		return err
@@ -63,11 +87,15 @@ func (usr *User) Delete(name string) error {
 	if err = conn.Ping(); err != nil {
 		return err
 	}
-	_, err = conn.Exec(fmt.Sprintf("DROP USER '%s'@'localhost';", name))
+	_, err = conn.Exec(fmt.Sprintf("DROP USER '%s'@'%%';", name))
 	return err
 }
 
 func (usr *User) Edit(name, password string) error {
+	if usr.IsProtected(name) {
+		return fmt.Errorf("user %s is protected", name)
+	}
+
 	conn, err := sql.Open("mysql", usr.session.ConnectionString(usr.session.MasterIP, ""))
 	if err != nil {
 		return err
@@ -80,13 +108,19 @@ func (usr *User) Edit(name, password string) error {
 	}
 
 	queries := []string{
-		fmt.Sprintf("ALTER USER '%s'@'localhost' IDENTIFIED BY '%s';", name, password),
+		fmt.Sprintf("ALTER USER '%s'@'%%' IDENTIFIED BY '%s';", name, password),
 		"FLUSH PRIVILEGES;",
 	}
 
 	for _, query := range queries {
 		_, err = conn.Exec(query) // multistatement queries do not allowed due to possible sql injections
 		if err != nil {
+			return err
+		}
+	}
+	if usr.IsMaster(name) {
+		// need to edit password in the secret
+		if err := usr.session.SetCredentials(password); err != nil {
 			return err
 		}
 	}
@@ -117,5 +151,6 @@ SELECT user FROM mysql.user;
 		}
 		users = append(users, name)
 	}
+	sort.Strings(users)
 	return users, nil
 }

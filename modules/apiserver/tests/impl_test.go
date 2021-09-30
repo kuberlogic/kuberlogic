@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
+	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
+	"github.com/kuberlogic/operator/modules/operator/service-operator/util/kuberlogic"
 	"github.com/prometheus/common/log"
 	"io/ioutil"
 	"net/http"
@@ -250,6 +252,19 @@ func wait(seconds int) func(t *testing.T) {
 func toJson(v interface{}) string {
 	res, _ := json.Marshal(v)
 	return string(res)
+}
+
+func GetSession(ns, serviceName, db string) (session interfaces.Session, err error) {
+	client, resource, err := Connect(ns, serviceName)
+	if err != nil {
+		return nil, fmt.Errorf("cannot connect to the k8s resource: %s", err)
+	}
+
+	session, err = kuberlogic.GetSession(resource, client, db)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get session:%s", err)
+	}
+	return session, nil
 }
 
 func newApi(t *testing.T) *API {

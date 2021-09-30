@@ -59,7 +59,7 @@ func (d *InternalDetails) GetDefaultConnectionPassword() (secret, passwordField 
 
 func (d *InternalDetails) GetCredentialsSecret() (*corev1.Secret, error) {
 	rootPassword := util2.RandomString(15)
-	userName := kuberlogicv1.DefaultUser
+	userName := kuberlogicv1.MasterUser
 	userPassword := util2.RandomString(15)
 
 	return &corev1.Secret{
