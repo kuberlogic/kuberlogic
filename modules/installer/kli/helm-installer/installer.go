@@ -75,9 +75,9 @@ func New(config *cfg.Config, log logger.Logger) (*HelmInstaller, error) {
 			Username string
 			Password string
 		}{
-			Server:   *config.Registry.Server,
-			Username: *config.Registry.Username,
-			Password: *config.Registry.Password,
+			Server:   config.Registry.Server,
+			Username: config.Registry.Username,
+			Password: config.Registry.Password,
 		},
 		Endpoints: struct {
 			API               string

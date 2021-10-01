@@ -4,15 +4,17 @@ kind: Deployment
 metadata:
   name: {{ include "apiserver.fullname" . }}
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{ include "apiserver.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{ include "apiserver.labels" . | nindent 6 }}
+      {{ include "apiserver.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{ include "apiserver.labels" . | nindent 8 }}
+        {{ include "apiserver.selectorLabels" . | nindent 8 }}
     spec:
       containers:
         - args:

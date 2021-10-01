@@ -18,7 +18,7 @@ type Config struct {
 	EnableLeaderElection bool   `envconfig:"default=false,optional"`
 
 	ImageRepo           string `envconfig:"IMG_REPO"`
-	ImagePullSecretName string `envconfig:"IMG_PULL_SECRET"`
+	ImagePullSecretName string `envconfig:"IMG_PULL_SECRET,optional"`
 	Namespace           string `envconfig:"POD_NAMESPACE"`
 
 	SentryDsn string `envconfig:"optional"`

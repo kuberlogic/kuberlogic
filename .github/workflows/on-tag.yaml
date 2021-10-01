@@ -61,14 +61,6 @@ jobs:
           LOGZ_IO_TOKEN: ${{ secrets.LOGZ_IO_TOKEN }}
           LOGZ_IO_LISTENER: ${{ secrets.LOGZ_IO_LISTENER }}
 
-      - name: Create secret of operator
-        run: |
-          kubectl create secret docker-registry kuberlogic-registry --docker-server=$REGISTRY_SERVER --docker-username=$REGISTRY_USER --docker-password=$REGISTRY_PASSWORD
-        env:
-          REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
-          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
-          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-
       - name: Restore docker layers
         uses: satackey/action-docker-layer-caching@v0.0.11
         # Ignore the failure of a step and avoid terminating the job.
@@ -125,24 +117,16 @@ jobs:
       - name: Generating logs
         working-directory: ./modules/apiserver/tests
         run: |
-          kubectl logs -l control-plane=kuberlogic-operator -c manager --tail=-1 > kuberlogic-operator.log
-          kubectl logs -l control-plane=kuberlogic-operator -c apiserver --tail=-1 > kuberlogic-apiserver.log
+          for p in $(kubectl get pods -o custom-columns=:.metadata.name); do
+            kubectl describe pod $p > kuberlogic-$p-describe.log
+            kubectl logs --tail=-1 --all-containers > kuberlogic-$p-logs.log
+          done
 
-          kubectl logs -l name=postgres-operator --tail=-1 > postgres-operator.log
-          kubectl logs -l app=mysql-operator -c mysql-operator --tail=-1 > mysql-operator.log
-          kubectl describe pod -l name=postgres-operator > postgres-operator.describe.log
-          kubectl describe pod -l app=mysql-operator > mysql-operator.describe.log
-          kubectl describe pod -l app=alertmanager > alertmanager.describe.log
-          kubectl get pod --all-namespaces > pods-status.log
-          kubectl get endpoints --all-namespaces > endpoints.log
-          kubectl get services --all-namespaces > services.log
-          kubectl logs -l app.kubernetes.io/name=kube-state-metrics -c kube-state-metrics > kube-state-metrics.logs
-          kubectl logs -l app.kubernetes.io/name=kube-state-metrics -c kube-rbac-proxy > kube-rbac-proxy.kube-state-metrics.logs
-          kubectl get kuberlogicservice,kuberlogicbackupschedules,kuberlogicbackuprestores --all-namespaces > kuberlogics-services.log
-          kubectl describe pod -l app.kubernetes.io/name=mysql --all-namespaces > mysql-cluster.describe.log
-          kubectl describe pod -l application=spilo --all-namespaces > pg-cluster.describe.log
-          kubectl logs -l app.kubernetes.io/name=mysql -c mysql --tail=-1 > mysql-cluster.log
-          kubectl logs -l application=spilo -c postgres --tail=-1 > pg-cluster.log
+          kubectl get pod -o yaml --all-namespaces > pods-status.log
+          kubectl get secrets -o yaml --all-namespaces > secrets.log
+          kubectl get endpoints -o yaml --all-namespaces > endpoints.log
+          kubectl get services -o yaml --all-namespaces > services.log
+          kubectl get kuberlogic -o yaml --all-namespaces > kuberlogics.log
         if: ${{ always() }}
         continue-on-error: true
 
