@@ -1,7 +1,0 @@
-apiVersion: kuberlogic.com/v1
-kind: KuberLogicTenant
-metadata:
-  name: kuberlogic
-spec:
-  ownerEmail: grafana@kuberlogic.com
-  grafanaDisabled: true

@@ -49,3 +49,14 @@ config:
     endpoint: http://127.0.0.1
 
     secret: secret
+
+updater:
+  image: {}
+  config:
+    registryApi: https://quay.io/v2
+
+  serviceAccount:
+    name: kuberlogic-updater
+  cronjob:
+    name: kuberlogic-updater
+    schedule: "0 2 * * *"
