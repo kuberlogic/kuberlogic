@@ -71,10 +71,13 @@ func setup() {
 		apiPort = p
 	}
 
+	//wait(60 * 60 * 60)(&testing.T{}) // wait the 1 hour
+
 	flag.Parse()
 	if testing.Short() {
 		parallelFunc(createService)
 	}
+	//wait(60 * 60 * 60)(&testing.T{}) // wait the 1 hour
 }
 
 func tearDown() {

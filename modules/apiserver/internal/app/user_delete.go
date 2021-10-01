@@ -7,7 +7,6 @@ import (
 	"github.com/kuberlogic/operator/modules/apiserver/util"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/util/kuberlogic"
-	"github.com/pkg/errors"
 )
 
 func (srv *Service) UserDeleteHandler(params apiService.UserDeleteParams, principal *models.Principal) middleware.Responder {
@@ -16,12 +15,6 @@ func (srv *Service) UserDeleteHandler(params apiService.UserDeleteParams, princi
 	if err != nil {
 		srv.log.Errorw("error generating session", "error", err)
 		return util.BadRequestFromError(err)
-	}
-
-	if protected := session.GetUser().IsProtected(params.Username); protected {
-		e := errors.Errorf("User '%s' is protected", params.Username)
-		srv.log.Errorw("error creating user", "error", e)
-		return util.BadRequestFromError(e)
 	}
 
 	err = session.GetUser().Delete(params.Username)

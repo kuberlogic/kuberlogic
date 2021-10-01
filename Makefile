@@ -126,7 +126,7 @@ undeploy-certmanager:
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
 	cd modules/operator; \
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=../../config/crd/bases output:webhook:artifacts:config=../../config/webhook ;\
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=../../charts/crds/templates ;\
 
 # Run go fmt against code
 fmt:

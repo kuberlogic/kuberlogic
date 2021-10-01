@@ -3,7 +3,6 @@ package tests
 import (
 	"fmt"
 	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
-	"github.com/kuberlogic/operator/modules/operator/service-operator/util/kuberlogic"
 	"net/http"
 	"os"
 	"testing"
@@ -129,13 +128,7 @@ func (tb *tBackupRestore) CheckSuccesfulRestore(t *testing.T) {
 }
 
 func (tb *tBackupRestore) CreateTable(t *testing.T) {
-	client, resource, err := Connect(tb.service.ns, tb.service.name)
-	if err != nil {
-		t.Errorf("cannot connect to the k8s resource: %s", err)
-		return
-	}
-
-	session, err := kuberlogic.GetSession(resource, client, tb.db.name)
+	session, err := GetSession(tb.service.ns, tb.service.name, tb.db.name)
 	if err != nil {
 		t.Errorf("cannot get session:%s", err)
 		return

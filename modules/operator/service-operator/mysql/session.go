@@ -3,43 +3,49 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	base2 "github.com/kuberlogic/operator/modules/operator/service-operator/base"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	client2 "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Session struct {
 	base2.BaseSession
+	client *kubernetes.Clientset
 }
 
 func NewSession(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (*Session, error) {
-	w := &Session{}
-
-	w.ClusterName = op.Name(cm)
-	w.ClusterNamespace = cm.Namespace
-
-	w.Database = db
-	w.Port = 3306
-
-	w.ClusterCredentialsSecret, _ = op.GetInternalDetails().GetDefaultConnectionPassword()
-
-	if err := w.SetMaster(client); err != nil {
-		return nil, err
-	}
-	if err := w.SetReplicas(client); err != nil {
-		return nil, err
-	}
-	if err := w.SetCredentials(client); err != nil {
-		return nil, err
+	session := &Session{
+		client: client,
 	}
 
-	return w, nil
+	session.ClusterName = op.Name(cm)
+	session.ClusterNamespace = cm.Namespace
+
+	session.Database = db
+	session.Port = 3306
+
+	session.ClusterCredentialsSecret, session.PasswordField = op.GetInternalDetails().GetDefaultConnectionPassword()
+
+	if err := session.fillMaster(); err != nil {
+		return nil, err
+	}
+	if err := session.fillReplicas(); err != nil {
+		return nil, err
+	}
+	if err := session.fillCredentials(); err != nil {
+		return nil, err
+	}
+
+	return session, nil
 }
 
 func (session *Session) GetDatabase() interfaces.Database {
@@ -50,8 +56,9 @@ func (session *Session) GetUser() interfaces.User {
 	return &User{session}
 }
 
-func (session *Session) SetCredentials(client *kubernetes.Clientset) error {
-	secret, err := client.CoreV1().Secrets(session.ClusterNamespace).Get(context.TODO(), session.ClusterCredentialsSecret, metav1.GetOptions{})
+func (session *Session) fillCredentials() error {
+	secret, err := session.client.CoreV1().Secrets(session.ClusterNamespace).Get(
+		context.TODO(), session.ClusterCredentialsSecret, metav1.GetOptions{})
 
 	if err != nil {
 		return err
@@ -61,8 +68,34 @@ func (session *Session) SetCredentials(client *kubernetes.Clientset) error {
 	return nil
 }
 
-func (session *Session) SetMaster(client *kubernetes.Clientset) error {
-	pods, err := session.GetPods(client, client2.MatchingLabels{
+func (session *Session) SetCredentials(password string) error {
+	s := v1.Secret{
+		StringData: map[string]string{
+			session.PasswordField: password,
+		},
+	}
+
+	patch, err := json.Marshal(s)
+	if err != nil {
+		return fmt.Errorf("error decode secret: %s", err)
+	}
+
+	_, err = session.client.CoreV1().Secrets(
+		session.ClusterNamespace,
+	).Patch(
+		context.TODO(),
+		session.ClusterCredentialsSecret,
+		types.MergePatchType,
+		patch,
+		metav1.PatchOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (session *Session) fillMaster() error {
+	pods, err := session.GetPods(session.client, client2.MatchingLabels{
 		"mysql.presslabs.org/cluster": session.ClusterName,
 		"role":                        "master",
 		"healthy":                     "yes",
@@ -82,8 +115,8 @@ func (session *Session) SetMaster(client *kubernetes.Clientset) error {
 	return nil
 }
 
-func (session *Session) SetReplicas(client *kubernetes.Clientset) error {
-	pods, err := session.GetPods(client, client2.MatchingLabels{
+func (session *Session) fillReplicas() error {
+	pods, err := session.GetPods(session.client, client2.MatchingLabels{
 		"mysql.presslabs.org/cluster": session.ClusterName,
 		"role":                        "replica",
 		"healthy":                     "yes",
