@@ -24,6 +24,6 @@ var DefaultResources = v1.ResourceRequirements{
 		// CPU 250m required minimum for zalando/posgtresql
 		// Memory 250Mi required minimum for zalando/posgtresql
 		v1.ResourceCPU:    resource.MustParse("250m"),
-		v1.ResourceMemory: resource.MustParse("512M"),
+		v1.ResourceMemory: resource.MustParse("500M"),
 	},
 }
