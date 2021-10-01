@@ -61,7 +61,7 @@ const (
 	apiserverAuthProvider      = "keycloak"
 
 	// kuberlogic UI
-	uiImageTag = "demo-v10"
+	uiImageTag = "demo-v11"
 )
 
 var (

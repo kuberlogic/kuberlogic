@@ -62,7 +62,7 @@ func (r *BaseRestore) New(crb *kuberlogicv1.KuberLogicBackupRestore) batchv1.Job
 func (r *BaseRestore) NewJob(name, ns string) batchv1.Job {
 	var backOffLimit int32 = 2
 
-	return batchv1.Job{
+	j := batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: ns,
@@ -80,12 +80,16 @@ func (r *BaseRestore) NewJob(name, ns string) batchv1.Job {
 							Env:             r.EnvVar,
 						},
 					},
-					ImagePullSecrets: []corev1.LocalObjectReference{
-						{Name: util.GetKuberlogicRepoPullSecret()},
-					},
 					RestartPolicy: corev1.RestartPolicyOnFailure,
 				},
 			},
 		},
 	}
+
+	if util.GetKuberlogicRepoPullSecret() != "" {
+		j.Spec.Template.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
+			{Name: util.GetKuberlogicRepoPullSecret()},
+		}
+	}
+	return j
 }

@@ -29,6 +29,11 @@ func (i *HelmInstaller) Install(args []string) error {
 	}
 
 	err = func() error {
+		// do not pass imagePullSecretReference if it is disabled
+		if i.Registry.Server == "" {
+			delete(globalValues, "imagePullSecrets")
+		}
+
 		// install CRDs into cluster
 		i.Log.Infof("Installing CRDs...")
 		if err := deployCRDs(globalValues, i); err != nil {

@@ -24,6 +24,11 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 	upgradePhase := args[0]
 
 	err = func() error {
+		// do not pass imagePullSecretReference if it is disabled
+		if i.Registry.Server == "" {
+			delete(globalValues, "imagePullSecrets")
+		}
+
 		// upgrade CRDs into cluster
 		i.Log.Infof("Upgrading CRDs")
 		if err := deployCRDs(globalValues, i); err != nil {

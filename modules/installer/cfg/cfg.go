@@ -30,10 +30,10 @@ type Config struct {
 	} `yaml:"endpoints"`
 
 	Registry struct {
-		Server   *string `yaml:"server"`
-		Username *string `yaml:"username"`
-		Password *string `yaml:"password"`
-	} `yaml:"registry"`
+		Server   string `yaml:"server,omitempty"`
+		Username string `yaml:"username,omitempty"`
+		Password string `yaml:"password,omitempty"`
+	} `yaml:"registry,omitempty"`
 
 	Auth struct {
 		AdminPassword    string  `yaml:"adminPassword"`
@@ -70,18 +70,6 @@ func (c *Config) setDefaults(log logger.Logger) error {
 		return errors.New("endpoints.monitoringConsole is not set")
 	}
 
-	if c.Registry.Server == nil {
-		log.Errorf("`regisutr.server` config value can't be empty")
-		configError = requiredParamNotSet
-	}
-	if c.Registry.Username == nil {
-		log.Errorf("`registry.username` config value can't be empty")
-		configError = requiredParamNotSet
-	}
-	if c.Registry.Password == nil {
-		log.Errorf("`registry.password` config value can't be empty")
-		configError = requiredParamNotSet
-	}
 	return configError
 }
 

@@ -38,12 +38,14 @@ const (
 	roleBindingKey
 )
 
-func (s *syncer) Sync(parentName, parentNamespace string) error {
+func (s *syncer) Sync(imagePullSecret, parentNamespace string) error {
 	if err := s.withNamespace(); err != nil {
 		return err
 	}
-	if err := s.withImagePullSecret(parentName, parentNamespace); err != nil {
-		return err
+	if imagePullSecret != "" {
+		if err := s.withImagePullSecret(imagePullSecret, parentNamespace); err != nil {
+			return err
+		}
 	}
 	if err := s.withServiceAccount(); err != nil {
 		return err
@@ -66,16 +68,16 @@ func (s *syncer) withNamespace() error {
 	return s.sync(ns, calcObjectVersion(ns), &corev1.Namespace{}, nsKey)
 }
 
-func (s *syncer) withImagePullSecret(parentName, parentNamespace string) error {
+func (s *syncer) withImagePullSecret(imagePullSecret, parentNamespace string) error {
 	parentSecret := &corev1.Secret{}
-	err := s.client.Get(s.ctx, types.NamespacedName{Name: parentName, Namespace: parentNamespace}, parentSecret)
+	err := s.client.Get(s.ctx, types.NamespacedName{Name: imagePullSecret, Namespace: parentNamespace}, parentSecret)
 	if err != nil {
 		return err
 	}
 
 	clientSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      parentName,
+			Name:      imagePullSecret,
 			Namespace: s.kt.GetTenantName(),
 		},
 		Type: parentSecret.Type,

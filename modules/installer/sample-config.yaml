@@ -1,19 +1,21 @@
 ---
 debugLogs: true
-# kubeconfigPath: ~/.kube/config # must be full path to Kubeconfig
+# kubeconfigPath: /path/to/kubeconfig
 
-# required values
 namespace: kuberlogic
-registry:
-  server: https://quay.io
-  username: quayusername
-  password: quaypassword
 
+# registry connection settings. omit for public access
+# registry:
+#   server: https://quay.io
+#   username: quayusername
+#   password: quaypassword
+
+# connection endpoints configuration
 endpoints:
   api: kuberlogic.com
   ui: kuberlogic.com
   monitoringConsole: mc.kuberlogic.com
 
 auth:
-  testUserPassword: testPassword
-  adminPassword: secret
+  testUserPassword: secret
+  adminPassword: adminPassword

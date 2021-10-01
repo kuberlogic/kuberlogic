@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.29
+VERSION ?= 0.0.30
 
 ifeq ($(USE_BUILD),true)
 	VERSION := $(VERSION)-$(shell git rev-list --count $(shell git rev-parse --abbrev-ref HEAD))
@@ -11,7 +11,7 @@ endif
 IMG_REPO = quay.io/kuberlogic
 # default secrets with credentials to private repo (using for mysql/redis)
 # for postgresql is using service account
-IMG_PULL_SECRET = kuberlogic-registry
+IMG_PULL_SECRET = ""
 
 # Image URL to use all building/pushing image targets
 OPERATOR_NAME = operator
@@ -79,9 +79,6 @@ show-resources:
 
 after-deploy:
 	kubectl config set-context --current --namespace=$(NAMESPACE)
-	kubectl get secret kuberlogic-registry --namespace=default -o json \
-	| jq 'del(.metadata["namespace","creationTimestamp","resourceVersion","selfLink","uid"])' \
-	| kubectl apply -f -
 
 # Deploy kuberlogic-operator in the configured Kubernetes cluster in ~/.kube/config
 deploy: kustomize manifests deploy-certmanager
@@ -241,7 +238,6 @@ restore-push:
 	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:$(VERSION)
 	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:latest
 
-docker-build: operator-build apiserver-build updater-build alert-receiver-build backup-build restore-build
 	#
 
 docker-push: operator-push apiserver-push updater-push alert-receiver-push backup-push restore-push

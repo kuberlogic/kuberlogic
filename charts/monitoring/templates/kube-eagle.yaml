@@ -74,12 +74,12 @@ spec:
   type: ClusterIP
   ports:
     - port: {{ .Values.eagle.service.port }}
-      targetPort: http
+      targetPort: {{ .Values.eagle.service.port }}
       protocol: TCP
       name: http
   selector:
     app.kubernetes.io/component: kube-eagle
-    {{- include "monitoring.labels" . | nindent 4 }}
+    {{- include "monitoring.selectorLabels" . | nindent 4 }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -94,12 +94,12 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/component: kube-eagle
-      {{- include "monitoring.labels" . | nindent 6 }}
+      {{- include "monitoring.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
         app.kubernetes.io/component: kube-eagle
-        {{- include "monitoring.labels" . | nindent 8 }}
+        {{- include "monitoring.selectorLabels" . | nindent 8 }}
     spec:
       securityContext:
         fsGroup: 99
@@ -130,7 +130,7 @@ spec:
               cpu: 10m
               memory: 32Mi
         - args:
-            - --secure-listen-address=0.0.0.0:8443
+            - --secure-listen-address=0.0.0.0:{{ .Values.eagle.service.port }}
             - --upstream=http://127.0.0.1:{{ .Values.eagle.port }}/
             - --logtostderr=true
             - --v=10
@@ -138,7 +138,7 @@ spec:
           imagePullPolicy: IfNotPresent
           name: kube-rbac-proxy
           ports:
-            - containerPort: 8443
+            - containerPort: {{ .Values.eagle.service.port }}
               name: https
               protocol: TCP
           resources:

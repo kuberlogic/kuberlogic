@@ -10,7 +10,7 @@ image:
   repository: quay.io/kuberlogic
   pullPolicy: IfNotPresent
 
-imagePullSecret: kuberlogic-registry
+imagePullSecrets: []
 
 securityContext:
   runAsUser: 1000
