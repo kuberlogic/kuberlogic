@@ -12,7 +12,7 @@ type Defaults struct {
 	Version    string
 }
 
-const DefaultVolumeSize = "1Gi"
+const DefaultVolumeSize = "1G"
 
 var DefaultResources = v1.ResourceRequirements{
 	Requests: v1.ResourceList{
