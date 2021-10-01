@@ -234,11 +234,11 @@ func (s *ServiceStore) kuberLogicToService(kls *kuberlogicv1.KuberLogicService, 
 	if !kls.Spec.Resources.Limits.Memory().IsZero() {
 		v, ok := kls.Spec.Resources.Limits[v12.ResourceMemory]
 		if ok {
-			ret.Limits.Memory = strAsPointer(memoryQuantityAsGi(v))
+			ret.Limits.Memory = strAsPointer(memoryQuantityAsG(v))
 		}
 	}
 
-	ret.Limits.VolumeSize = strAsPointer(memoryQuantityAsGi(resource.MustParse(kls.Spec.VolumeSize)))
+	ret.Limits.VolumeSize = strAsPointer(memoryQuantityAsG(resource.MustParse(kls.Spec.VolumeSize)))
 
 	ret.AdvancedConf = kls.Spec.AdvancedConf
 
@@ -301,11 +301,11 @@ func (s *ServiceStore) serviceToKuberLogic(svc *models.Service) (*kuberlogicv1.K
 		if mem != nil {
 			// amount of resources and limits could be different
 			// for using the same values need to use the same defaults in the operator's scope
-			c.Spec.Resources.Limits[v12.ResourceMemory] = resource.MustParse(fmt.Sprintf("%vGi", *svc.Limits.Memory))
+			c.Spec.Resources.Limits[v12.ResourceMemory] = resource.MustParse(fmt.Sprintf("%vG", *svc.Limits.Memory))
 		}
 
 		if svc.Limits.VolumeSize != nil {
-			c.Spec.VolumeSize = *svc.Limits.VolumeSize + "Gi"
+			c.Spec.VolumeSize = *svc.Limits.VolumeSize + "G"
 		}
 	}
 

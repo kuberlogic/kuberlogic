@@ -13,17 +13,18 @@ type Defaults struct {
 }
 
 const MasterUser = "kuberlogic"
-const DefaultVolumeSize = "1Gi"
+const DefaultVolumeSize = "1G"
+
 
 var DefaultResources = v1.ResourceRequirements{
 	Requests: v1.ResourceList{
 		v1.ResourceCPU:    resource.MustParse("10m"),
-		v1.ResourceMemory: resource.MustParse("50Mi"),
+		v1.ResourceMemory: resource.MustParse("50M"),
 	},
 	Limits: v1.ResourceList{
 		// CPU 250m required minimum for zalando/posgtresql
 		// Memory 250Mi required minimum for zalando/posgtresql
 		v1.ResourceCPU:    resource.MustParse("250m"),
-		v1.ResourceMemory: resource.MustParse("512Mi"),
+		v1.ResourceMemory: resource.MustParse("500M"),
 	},
 }
