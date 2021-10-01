@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMapName }}
+  namespace: {{ .Release.Namespace }}
+data:
+  {{- range tuple "handler.lua" "schema.lua" }}
+    {{ . }}: |-
+    {{ printf "%s/%s" "jwt2header-plugin" . | $.Files.Get | nindent 6 }}
+  {{- end }}

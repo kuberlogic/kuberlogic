@@ -4,6 +4,8 @@ metadata:
   name: {{ include "kuberlogic-ui.fullname" . }}
   labels:
     {{- include "kuberlogic-ui.labels" . | nindent 4 }}
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
 spec:
   selector:
     matchLabels:

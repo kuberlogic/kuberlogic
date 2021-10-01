@@ -60,3 +60,10 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Generate Nginx configuration snippet that would support JWT auth
+*/}}
+{{- define "monitoring.nginxAuthSnippet" -}}
+proxy_set_header X-GRAFANA-AUTH $jwt_claim_email;
+{{- end }}

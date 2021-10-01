@@ -28,8 +28,9 @@ type HelmInstaller struct {
 		Password string
 	}
 	Endpoints struct {
-		API string
-		UI  string
+		API               string
+		UI                string
+		MonitoringConsole string
 	}
 	Auth struct {
 		AdminPassword    string
@@ -79,9 +80,14 @@ func New(config *cfg.Config, log logger.Logger) (*HelmInstaller, error) {
 			Password: *config.Registry.Password,
 		},
 		Endpoints: struct {
-			API string
-			UI  string
-		}{API: config.Endpoints.API, UI: config.Endpoints.UI},
+			API               string
+			UI                string
+			MonitoringConsole string
+		}{
+			API:               config.Endpoints.API,
+			UI:                config.Endpoints.UI,
+			MonitoringConsole: config.Endpoints.MonitoringConsole,
+		},
 		Auth: struct {
 			AdminPassword    string
 			TestUserPassword string

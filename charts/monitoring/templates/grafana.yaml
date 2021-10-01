@@ -113,6 +113,16 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.grafana.mysql.secretName }}
                   key: ROOT_PASSWORD
+            - name: GF_AUTH_PROXY_ENABLED
+              value: "true"
+            - name: GF_AUTH_PROXY_HEADER_NAME
+              value: {{ .Values.grafana.auth.headerName }}
+            - name: GF_AUTH_PROXY_HEADER_PROPERTY
+              value: email
+            - name: GF_AUTH_PROXY_AUTO_SIGN_UP
+              value: "false"
+            - name: GF_AUTH_PROXY_ENABLE_LOGIN_TOKEN
+              value: "true"
             {{ end }}
 ---
 kind: ServiceAccount
@@ -120,4 +130,52 @@ apiVersion: v1
 metadata:
   name: {{ .Values.grafana.serviceAccountName }}
   namespace: {{ .Release.Namespace }}
+{{ if .Values.grafana.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.grafana.service.name }}
+  namespace: {{ .Release.Namespace }}
+  {{ with .Values.grafana.ingress.grafana.annotations }}
+  annotations:
+    {{ . | toYaml | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.grafana.ingress.class }}
+  rules:
+    - host: {{ .Values.grafana.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.grafana.service.name }}
+                port:
+                  number: {{ .Values.grafana.port }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.grafana.service.name }}-login
+  namespace: {{ .Release.Namespace }}
+  {{ with .Values.grafana.ingress.grafanaLogin.annotations }}
+  annotations:
+    {{ . | toYaml | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.grafana.ingress.class }}
+  rules:
+    - host: {{ .Values.grafana.ingress.host }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: {{ .Values.grafana.service.name }}
+                port:
+                  number: {{ .Values.grafana.port }}
+            path: /login
+            pathType: Prefix
+{{ end }}
 {{ end }}

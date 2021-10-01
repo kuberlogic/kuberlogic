@@ -16,8 +16,10 @@ import (
 const (
 	helmCRDsChart = "crds"
 
-	helmCertManagerChart  = "cert-manager"
-	helmNginxIngressChart = "nginx-ingress-controller"
+	helmCertManagerChart = "cert-manager"
+
+	helmKongIngressControllerChart = "kong"
+	helmKuberlogicIngressChart     = "kuberlogic-ingress-controller"
 
 	helmKeycloakOperatorChart   = "keycloak-operator"
 	helmKuberlogicKeycloakCHart = "kuberlogic-keycloak"
@@ -44,12 +46,17 @@ var (
 	//go:embed kuberlogic-apiserver-0.1.0.tgz
 	//go:embed kuberlogic-ui-0.1.0.tgz
 	//go:embed cert-manager-v1.3.1.tgz
-	//go:embed nginx-ingress-controller-7.6.18.tgz
+	//go:embed kong-2.3.0.tgz
+	//go:embed kuberlogic-ingress-controller-0.1.0.tgz
 	helmFs embed.FS
 )
 
-func nginxIngressControllerChartReader() (io.Reader, error) {
-	return helmFs.Open("nginx-ingress-controller-7.6.18.tgz")
+func kuberlogicIngressControllerChartReader() (io.Reader, error) {
+	return helmFs.Open("kuberlogic-ingress-controller-0.1.0.tgz")
+}
+
+func kongIngressControllerChartReader() (io.Reader, error) {
+	return helmFs.Open("kong-2.3.0.tgz")
 }
 
 func certManagerChartReader() (io.Reader, error) {
@@ -120,9 +127,9 @@ func findHelmRelease(name string, c *action.Configuration, log logger.Logger) (*
 
 // releaseHelmChart computes values for Helm Chart and upgrades it if it is already installed
 // otherwise it installs it
-func releaseHelmChart(name, ns string, chartReader io.Reader, locals, globals map[string]interface{}, c *action.Configuration, log logger.Logger) error {
+func releaseHelmChart(name, ns string, chartReader io.Reader, locals, globals map[string]interface{}, conf *action.Configuration, log logger.Logger) error {
 	// load chart
-	chart, err := loader.LoadArchive(chartReader)
+	c, err := loader.LoadArchive(chartReader)
 	if err != nil {
 		return fmt.Errorf("error loading chart archive: %v", err)
 	}
@@ -134,28 +141,31 @@ func releaseHelmChart(name, ns string, chartReader io.Reader, locals, globals ma
 	log.Debugf("Releasing %s with values", name, resultVals)
 
 	// search for already installed release
-	r, err := findHelmRelease(name, c, log)
+	r, err := findHelmRelease(name, conf, log)
 	if err != nil {
 		return errors.Wrap(err, "error releasing chart")
 	}
 
 	// release exists and it is in pending state
 	if r != nil && r.Info.Status.IsPending() {
-		uninstallHelmChart(name, true, c, log)
+		uninstallHelmChart(name, true, conf, log)
 		r = nil
 	}
 
+	// Helm Chart release error
 	var releaseErr error
+	// Signature of the installation func. It is the same for upgrade/install processes
+	var releaseFunc func(string, string, *chart.Chart, map[string]interface{}, *action.Configuration, logger.Logger) error
 	if r == nil {
-		if releaseErr = installHelmChart(name, ns, chart, resultVals, c, log); releaseErr == nil {
-			return nil
-		}
+		releaseFunc = installHelmChart
+	} else {
+		releaseFunc = upgradeHelmChart
 	}
 
 	// retry in case of errors
 	maxRetries := 3
 	for i := 0; i < maxRetries; i += 1 {
-		if releaseErr = upgradeHelmChart(name, ns, chart, resultVals, false, c, log); releaseErr == nil {
+		if releaseErr = releaseFunc(name, ns, c, resultVals, conf, log); releaseErr == nil {
 			return nil
 		}
 		log.Debugf("Error happened: %s. Retries left: %d", releaseErr.Error(), i)
@@ -165,10 +175,9 @@ func releaseHelmChart(name, ns string, chartReader io.Reader, locals, globals ma
 }
 
 // upgradeHelmChart upgrades a Helm chart with given values
-func upgradeHelmChart(name, ns string, chart *chart.Chart, values map[string]interface{}, force bool, c *action.Configuration, log logger.Logger) error {
+func upgradeHelmChart(name, ns string, chart *chart.Chart, values map[string]interface{}, c *action.Configuration, log logger.Logger) error {
 	// create install action
 	action := action.NewUpgrade(c)
-	action.Force = force
 	action.Install = true
 	action.Namespace = ns
 	action.SkipCRDs = false
@@ -189,6 +198,7 @@ func upgradeHelmChart(name, ns string, chart *chart.Chart, values map[string]int
 func installHelmChart(name, ns string, chart *chart.Chart, values map[string]interface{}, c *action.Configuration, log logger.Logger) error {
 	// create install action
 	installAction := action.NewInstall(c)
+	installAction.Atomic = true
 	installAction.Wait = true
 	installAction.Timeout = time.Second * helmActionTimeoutSec
 	installAction.Namespace = ns

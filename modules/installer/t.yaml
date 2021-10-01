@@ -10,8 +10,9 @@ registry:
   password: D1pQ+L889NzoLUVtluN8iQJbm/SPYXfvPXQP47ePULonOw40ifFWcPvZNLHWSUA1
 
 endpoints:
-  api: api.kuberlogic.com
-  ui: ui.kuberlogic.com
+  api: kuberlogic.com
+  ui: kuberlogic.com
+  monitoringConsole: mc.kuberlogic.com
 
 auth:
   testUserPassword: secret
