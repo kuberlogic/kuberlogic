@@ -137,7 +137,7 @@ jobs:
         run: |
           for p in $(kubectl get pods -o custom-columns=:.metadata.name); do
             kubectl describe pod $p > kuberlogic-$p-describe.log
-            kubectl logs --tail=-1 --all-containers > kuberlogic-$p-logs.log
+            kubectl logs --tail=-1 --all-containers $p > kuberlogic-$p-logs.log
           done
 
           kubectl get pod -o yaml --all-namespaces > pods-status.log
