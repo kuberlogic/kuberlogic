@@ -67,7 +67,7 @@ func GetClusterCredentialsInfo(cm *kuberlogicv1.KuberLogicService) (username, pa
 		return
 	}
 	secretName, passwordField = op.GetInternalDetails().GetDefaultConnectionPassword()
-	username = kuberlogicv1.DefaultUser
+	username = kuberlogicv1.MasterUser
 	return
 }
 

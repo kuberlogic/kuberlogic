@@ -19,6 +19,7 @@ type BaseSession struct {
 	Password string
 
 	ClusterCredentialsSecret string
+	PasswordField            string
 
 	MasterIP   string
 	ReplicaIPs []string

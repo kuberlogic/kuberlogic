@@ -2,39 +2,44 @@ package postgresql
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/jackc/pgx/v4"
 	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/base"
 	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
 	"github.com/pkg/errors"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	client2 "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Session struct {
 	base.BaseSession
-	//Cluster *Postgres
+	client *kubernetes.Clientset
 }
 
 func NewSession(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (*Session, error) {
-	session := &Session{}
+	session := &Session{
+		client: client,
+	}
 
 	session.Database = db
 	session.Port = 5432
 	session.ClusterNamespace = cm.Namespace
 	session.ClusterName = op.Name(cm)
 
-	session.ClusterCredentialsSecret, _ = op.GetInternalDetails().GetDefaultConnectionPassword()
+	session.ClusterCredentialsSecret, session.PasswordField = op.GetInternalDetails().GetDefaultConnectionPassword()
 
-	if err := session.SetMaster(client); err != nil {
+	if err := session.fillMaster(); err != nil {
 		return nil, err
 	}
-	if err := session.SetReplicas(client); err != nil {
+	if err := session.fillReplicas(); err != nil {
 		return nil, err
 	}
-	if err := session.SetCredentials(client); err != nil {
+	if err := session.fillCredentials(); err != nil {
 		return nil, err
 	}
 	return session, nil
@@ -48,8 +53,8 @@ func (session *Session) GetUser() interfaces.User {
 	return &User{session}
 }
 
-func (session *Session) SetMaster(client *kubernetes.Clientset) error {
-	pods, err := session.GetPods(client, client2.MatchingLabels{
+func (session *Session) fillMaster() error {
+	pods, err := session.GetPods(session.client, client2.MatchingLabels{
 		"application":  "spilo",
 		"cluster-name": session.ClusterName,
 		"spilo-role":   "master",
@@ -69,8 +74,8 @@ func (session *Session) SetMaster(client *kubernetes.Clientset) error {
 	return nil
 }
 
-func (session *Session) SetReplicas(client *kubernetes.Clientset) error {
-	pods, err := session.GetPods(client, client2.MatchingLabels{
+func (session *Session) fillReplicas() error {
+	pods, err := session.GetPods(session.client, client2.MatchingLabels{
 		"application":  "spilo",
 		"cluster-name": session.ClusterName,
 		"spilo-role":   "replica",
@@ -85,8 +90,38 @@ func (session *Session) SetReplicas(client *kubernetes.Clientset) error {
 	return nil
 }
 
-func (session *Session) SetCredentials(client *kubernetes.Clientset) error {
-	secret, err := client.CoreV1().Secrets(session.ClusterNamespace).Get(context.TODO(), session.ClusterCredentialsSecret, metav1.GetOptions{})
+func (session *Session) fillCredentials() error {
+	secret, err := session.client.CoreV1().Secrets(session.ClusterNamespace).Get(
+		context.TODO(),
+		session.ClusterCredentialsSecret, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	session.Password = string(secret.Data["password"])
+	session.Username = string(secret.Data["username"])
+	return nil
+}
+
+func (session *Session) SetCredentials(password string) error {
+	s := v1.Secret{
+		StringData: map[string]string{
+			session.PasswordField: password,
+		},
+	}
+
+	patch, err := json.Marshal(s)
+	if err != nil {
+		return fmt.Errorf("error decode secret: %s", err)
+	}
+
+	secret, err := session.client.CoreV1().Secrets(
+		session.ClusterNamespace,
+	).Patch(
+		context.TODO(),
+		session.ClusterCredentialsSecret,
+		types.MergePatchType,
+		patch,
+		metav1.PatchOptions{})
 	if err != nil {
 		return err
 	}

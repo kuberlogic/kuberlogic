@@ -1,15 +1,22 @@
 package tests
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
+	"github.com/jackc/pgx/v4"
 	"net/http"
 	"reflect"
 	"testing"
 )
 
 type tUser struct {
-	service tService
-	name    string
+	service     tService
+	name        string
+	password    string
+	newPassword string
+	db          tDb
+	masterUser  string
 }
 
 func TestUsersDoesNotAllowMethodDelete(t *testing.T) {
@@ -35,8 +42,8 @@ func (u *tUser) Create(t *testing.T) {
 	api.setBearerToken()
 	api.setRequestBody(fmt.Sprintf(`     {
         "name": "%s",
-        "password": "secret-password"
-     }`, u.name))
+        "password": "%s"
+     }`, u.name, u.password))
 	api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/users/", u.service.ns, u.service.name))
 	api.responseCodeShouldBe(201)
 }
@@ -46,8 +53,8 @@ func (u *tUser) CreateTheSameName(t *testing.T) {
 	api.setBearerToken()
 	api.setRequestBody(fmt.Sprintf(`     {
         "name": "%s",
-        "password": "secret-password"
-     }`, u.name))
+        "password": "%s"
+     }`, u.name, u.password))
 	api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/users/", u.service.ns, u.service.name))
 	api.responseCodeShouldBe(400)
 	//api.encodeResponseToJson()
@@ -64,7 +71,8 @@ func (u *tUser) List(t *testing.T) {
 	api.responseTypeOf(reflect.Slice)
 	api.responseShouldMatchJson(fmt.Sprintf(`
      [
-		{"name": "%s"}
+		{"name": "%s"},
+		{"name": "kuberlogic"}
      ]`, u.name))
 }
 
@@ -92,25 +100,101 @@ func (u *tUser) ChangePassword(t *testing.T) {
 	api.setBearerToken()
 	api.setRequestBody(fmt.Sprintf(`     {
         "name": "%s",
-		"password": "new-secret-password"
-     }`, u.name))
+		"password": "%s"
+     }`, u.name, u.newPassword))
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/users/%s",
 		u.service.ns, u.service.name, u.name))
 	api.responseCodeShouldBe(200)
 }
 
+func (u *tUser) ChangeMasterPassword(t *testing.T) {
+	api := newApi(t)
+	api.setBearerToken()
+	api.setRequestBody(fmt.Sprintf(`     {
+        "name": "%s",
+		"password": "new-secret-password"
+     }`, u.masterUser))
+	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/users/%s",
+		u.service.ns, u.service.name, u.masterUser))
+	api.responseCodeShouldBe(200)
+}
+
+func (u *tUser) CheckConnection(user, password string) func(t *testing.T) {
+	return func(t *testing.T) {
+		session, err := GetSession(u.service.ns, u.service.name, u.db.name)
+		if err != nil {
+			t.Errorf("cannot get session:%s", err)
+			return
+		}
+
+		connectionString := session.ConnectionString(session.GetMasterIP(), u.db.name)
+		if u.service.type_ == "postgresql" {
+			if user != "" && password != "" {
+				connectionString = fmt.Sprintf("postgresql://%s:%s@%s:%d/%s",
+					user, password, session.GetMasterIP(), 5432, u.db.name)
+			}
+
+			ctx := context.TODO()
+			conn, err := pgx.Connect(ctx, connectionString)
+			if err != nil {
+				t.Errorf("cannot connect to pg: %s", err)
+				return
+			}
+			defer conn.Close(ctx)
+
+			_, err = conn.Exec(ctx, "select 42;")
+			if err != nil {
+				t.Errorf("cannot execute the select: %s", err)
+				return
+			}
+		} else if u.service.type_ == "mysql" {
+			if user != "" && password != "" {
+				//t.Logf("User - password: %s, %s", user, password)
+				connectionString = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
+					user, password, session.GetMasterIP(), 3306, u.db.name)
+			}
+
+			conn, err := sql.Open("mysql", session.ConnectionString(session.GetMasterIP(), u.db.name))
+			if err != nil {
+				t.Errorf("cannot open connection: %s", err)
+				return
+			}
+			defer conn.Close()
+			// Open doesn't open a connection. Validate DSN data:
+			if err = conn.Ping(); err != nil {
+				t.Errorf("cannot ping: %s", err)
+				return
+			}
+
+			_, err = conn.Exec("select 42;")
+			if err != nil {
+				t.Errorf("cannot execute the select: %s", err)
+				return
+			}
+		} else {
+			t.Errorf("unknown service: %s", u.service.type_)
+		}
+
+	}
+}
 func makeTestUser(tu tUser) func(t *testing.T) {
 	return func(t *testing.T) {
 		steps := []func(t *testing.T){
 			tu.service.Create,
 			tu.service.WaitForStatus("Ready", 5, 5*60),
+			tu.db.Create, // create db -> need to testing connection for user
+
+			tu.CheckConnection("", ""),
+			tu.ChangeMasterPassword,
+			tu.CheckConnection("", ""),
+
 			tu.Create,
 			tu.CreateTheSameName,
 			tu.List,
 			tu.UserNotFound,
-			// TODO: make test connection with password
+			tu.CheckConnection(tu.name, tu.password),
 			tu.ChangePassword,
-			// TODO: make test connection with another password
+			tu.CheckConnection(tu.name, tu.newPassword),
 			tu.Delete,
 			tu.service.Delete,
 		}
@@ -123,11 +207,25 @@ func makeTestUser(tu tUser) func(t *testing.T) {
 func TestUser(t *testing.T) {
 	for _, svc := range []tUser{
 		{
-			service: pgTestService,
-			name:    "foo",
+			service:     pgTestService,
+			name:        "foo",
+			password:    "secret-password",
+			newPassword: "new-secret-password",
+			masterUser:  "kuberlogic",
+			db: tDb{
+				service: pgTestService,
+				name:    "foo",
+			},
 		}, {
-			service: mysqlTestService,
-			name:    "foo",
+			service:     mysqlTestService,
+			name:        "foo",
+			password:    "secret-password",
+			newPassword: "new-secret-password",
+			masterUser:  "kuberlogic",
+			db: tDb{
+				service: mysqlTestService,
+				name:    "foo",
+			},
 		}} {
 		t.Run(svc.service.type_, makeTestUser(svc))
 	}
