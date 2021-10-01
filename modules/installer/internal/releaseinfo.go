@@ -2,23 +2,27 @@ package internal
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"github.com/pkg/errors"
 	v12 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"strings"
-
-	"crypto/rand"
 )
 
 const (
-	releaseName          = "kuberlogic"
-	releaseConfigMapName = "kuberlogic-metadata"
-	cmStateKey           = "Status"
-	cmBannerKey          = "Banner"
-	cmSharedSecretKey    = "SharedSecret"
+	releaseName       = "kuberlogic"
+	releaseSecretName = "kuberlogic-metadata"
+	releaseStateKey   = "Status"
+	cmSharedSecretKey = "SharedSecret"
+
+	// connection details
+	apiURLKey          = "api"
+	uiURLKey           = "ui"
+	mcURLKey           = "mc"
+	ingressEndpointKey = "ingressIP"
 
 	releaseStartedPhase    = "started"
 	releaseUpgradePhase    = "upgrading"
@@ -30,27 +34,40 @@ const (
 )
 
 type ReleaseInfo struct {
-	Name        string
-	Namespace   string
-	Status      string
-	bannerLines []string
+	Name      string
+	Namespace string
+	Status    string
+
+	apiURL          string
+	uiURL           string
+	mcURL           string
+	ingressEndpoint string
 
 	secret *v12.Secret
 }
 
-func (r ReleaseInfo) getState() (string, error) {
+func (r *ReleaseInfo) findState() error {
 	if r.secret == nil {
-		return "", errors.New("release Secret is not found")
+		return errors.New("release secret is not found")
 	}
-	s, f := r.secret.Data[cmStateKey]
+	s, f := r.secret.Data[releaseStateKey]
 	if !f || string(s) == "" {
-		return "", errors.New("release state is empty")
+		return errors.New("release state is empty")
 	}
-	return string(s), nil
+	r.Status = string(s)
+	r.apiURL = string(r.secret.Data[apiURLKey])
+	r.uiURL = string(r.secret.Data[uiURLKey])
+	r.mcURL = string(r.secret.Data[uiURLKey])
+	r.ingressEndpoint = string(r.secret.Data[ingressEndpointKey])
+	return nil
 }
 
 func (r *ReleaseInfo) updateState(state string, clientSet *kubernetes.Clientset) error {
-	r.secret.Data[cmStateKey] = []byte(state)
+	r.secret.Data[releaseStateKey] = []byte(state)
+	r.secret.Data[apiURLKey] = []byte(r.apiURL)
+	r.secret.Data[uiURLKey] = []byte(r.uiURL)
+	r.secret.Data[mcURLKey] = []byte(r.mcURL)
+	r.secret.Data[ingressEndpointKey] = []byte(r.ingressEndpoint)
 
 	cm, err := clientSet.CoreV1().Secrets(r.Namespace).Update(context.TODO(), r.secret, v1.UpdateOptions{})
 	if err != nil {
@@ -60,8 +77,8 @@ func (r *ReleaseInfo) updateState(state string, clientSet *kubernetes.Clientset)
 	return nil
 }
 
-func (r *ReleaseInfo) updateBanner(clientSet *kubernetes.Clientset) error {
-	r.secret.Data[cmBannerKey] = []byte(r.Banner())
+func (r *ReleaseInfo) updateInfoKey(key, value string, clientSet *kubernetes.Clientset) error {
+	r.secret.Data[key] = []byte(value)
 
 	secret, err := clientSet.CoreV1().Secrets(r.Namespace).Update(context.TODO(), r.secret, v1.UpdateOptions{})
 	if err != nil {
@@ -75,27 +92,37 @@ func (r ReleaseInfo) InternalPassword() string {
 	return string(r.secret.Data[cmSharedSecretKey])
 }
 
-func (r *ReleaseInfo) AddBannerLines(lines ...string) {
-	r.bannerLines = append(r.bannerLines, lines...)
+func (r *ReleaseInfo) UpdateAPIAddress(addr string) {
+	r.apiURL = addr
 }
 
-func (r ReleaseInfo) Banner() string {
-	return strings.Join(r.bannerLines, "\n")
+func (r *ReleaseInfo) UpdateUIAddress(addr string) {
+	r.uiURL = addr
 }
 
-func (r ReleaseInfo) ShowBanner() bool {
-	return len(r.bannerLines) != 0
+func (r *ReleaseInfo) UpdateMCAddress(addr string) {
+	r.mcURL = addr
+}
+
+func (r *ReleaseInfo) UpdateIngressAddress(addr string) {
+	r.ingressEndpoint = addr
+}
+
+func (r *ReleaseInfo) ShowBanner() string {
+	return fmt.Sprintf(`Kuberlogic API URL: %s
+Kuberlogic UI URL: %s
+Kuberlogic connection Ingress IP: %s
+
+Please make sure that URL domain names are pointing to the Ingress IP!`, r.apiURL, r.uiURL, r.ingressEndpoint)
 }
 
 func (r *ReleaseInfo) UpgradeRelease(clientSet *kubernetes.Clientset) error {
 	err := r.updateState(releaseUpgradePhase, clientSet)
-	r.secret.Data[cmBannerKey] = []byte("")
 	return err
 }
 
 func (r *ReleaseInfo) FinishRelease(clientSet *kubernetes.Clientset) error {
-	err := r.updateBanner(clientSet)
-	err = r.updateState(releaseSuccessfulPhase, clientSet)
+	err := r.updateState(releaseSuccessfulPhase, clientSet)
 	return err
 }
 
@@ -107,11 +134,11 @@ func StartRelease(namespace string, clientSet *kubernetes.Clientset) (*ReleaseIn
 	}
 	secret := &v12.Secret{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      releaseConfigMapName,
+			Name:      releaseSecretName,
 			Namespace: namespace,
 		},
 		Data: map[string][]byte{
-			cmStateKey:        []byte(releaseStartedPhase),
+			releaseStateKey:   []byte(releaseStartedPhase),
 			cmSharedSecretKey: []byte(generateRandomString(internalPasswordLen)),
 		},
 	}
@@ -147,12 +174,11 @@ func FailRelease(namespace string, clientSet *kubernetes.Clientset) (*ReleaseInf
 
 func DiscoverReleaseInfo(namespace string, clientSet *kubernetes.Clientset) (*ReleaseInfo, bool, error) {
 	r := &ReleaseInfo{
-		Name:        releaseName,
-		Namespace:   namespace,
-		bannerLines: make([]string, 0),
+		Name:      releaseName,
+		Namespace: namespace,
 	}
 	var err error
-	r.secret, err = clientSet.CoreV1().Secrets(namespace).Get(context.TODO(), releaseConfigMapName, v1.GetOptions{})
+	r.secret, err = clientSet.CoreV1().Secrets(namespace).Get(context.TODO(), releaseSecretName, v1.GetOptions{})
 	if k8serrors.IsNotFound(err) {
 		return nil, false, nil
 	}
@@ -164,8 +190,7 @@ func DiscoverReleaseInfo(namespace string, clientSet *kubernetes.Clientset) (*Re
 		return nil, false, errors.New("internal password can't be empty")
 	}
 
-	r.Status, err = r.getState()
-	r.bannerLines = strings.Split(string(r.secret.Data[cmBannerKey]), "\n")
+	err = r.findState()
 	return r, true, nil
 }
 
@@ -179,7 +204,7 @@ func CleanupReleaseInfo(namespace string, clientSet *kubernetes.Clientset) error
 		return errors.Wrap(err, "error finding release")
 	}
 
-	err = clientSet.CoreV1().ConfigMaps(namespace).Delete(context.TODO(), rel.secret.Name, v1.DeleteOptions{})
+	err = clientSet.CoreV1().Secrets(namespace).Delete(context.TODO(), rel.secret.Name, v1.DeleteOptions{})
 	return err
 }
 

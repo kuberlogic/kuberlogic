@@ -17,11 +17,7 @@ func (i *HelmInstaller) Status(args []string) error {
 		return nil
 	}
 	i.Log.Infof("Kuberlogic status is: %s", release.Status)
-
-	i.Log.Debugf("release banner: %s", release.Banner())
-	if release.ShowBanner() {
-		i.Log.Infof(release.Banner())
-	}
+	i.Log.Infof(release.ShowBanner())
 
 	return nil
 }

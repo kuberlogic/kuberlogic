@@ -115,7 +115,7 @@ func deployIngressController(globals map[string]interface{}, i *HelmInstaller, r
 		}
 		if len(s.Status.LoadBalancer.Ingress) != 0 {
 			// success. append to the release banner
-			releaseInfo.AddBannerLines("Connection endpoint address: " + s.Status.LoadBalancer.Ingress[0].IP)
+			releaseInfo.UpdateIngressAddress(s.Status.LoadBalancer.Ingress[0].IP)
 			foundIP = true
 			break
 		}
@@ -174,7 +174,7 @@ func deployUI(globals map[string]interface{}, i *HelmInstaller, release *interna
 	}
 
 	i.Log.Infof("Deploying Kuberlogic UI...")
-	release.AddBannerLines("Kuberlogic Web UI endpoint: http://" + i.Endpoints.UI)
+	release.UpdateUIAddress("http://" + i.Endpoints.UI)
 	return releaseHelmChart(helmUIChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
@@ -206,7 +206,7 @@ func deployApiserver(globals map[string]interface{}, i *HelmInstaller, release *
 	}
 
 	i.Log.Infof("Deploying Kuberlogic apiserver...")
-	release.AddBannerLines("Kuberlogic API endpoint: http://" + i.Endpoints.API)
+	release.UpdateAPIAddress("http://" + i.Endpoints.API)
 	return releaseHelmChart(helmApiserverChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
