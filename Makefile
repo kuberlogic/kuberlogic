@@ -238,6 +238,7 @@ restore-push:
 	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:$(VERSION)
 	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:latest
 
+docker-build: operator-build apiserver-build updater-build alert-receiver-build backup-build restore-build
 	#
 
 docker-push: operator-push apiserver-push updater-push alert-receiver-push backup-push restore-push
