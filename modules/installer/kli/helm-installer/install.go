@@ -37,9 +37,6 @@ func (i *HelmInstaller) Install(args []string) error {
 
 		if installPhase == "all" || installPhase == "dependencies" {
 			i.Log.Infof("Installing Kuberlogic dependencies...")
-			if err := deployNginxIC(globalValues, i, release); err != nil {
-				return errors.Wrap(err, "error installing nginx-ingress-controller")
-			}
 			if err := deployCertManager(globalValues, i); err != nil {
 				return errors.Wrap(err, "error installing cert-manager")
 			}
@@ -47,12 +44,14 @@ func (i *HelmInstaller) Install(args []string) error {
 			if err := deployAuth(globalValues, i); err != nil {
 				return errors.Wrap(err, "error installing keycloak")
 			}
-
-			if err := deployServiceOperators(globalValues, i); err != nil {
+			if err := deployIngressController(globalValues, i, release); err != nil {
+				return errors.Wrap(err, "error installing nginx-ingress-controller")
+			}
+			if err := deployServiceOperators(globalValues, i, release); err != nil {
 				return errors.Wrap(err, "error installing service operators")
 			}
 
-			if err := deployMonitoring(globalValues, i); err != nil {
+			if err := deployMonitoring(globalValues, i, release); err != nil {
 				return errors.Wrap(err, "error installing monitoring component")
 			}
 		}

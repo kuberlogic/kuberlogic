@@ -106,7 +106,7 @@ func getServiceCredentials(c *kubernetes.Clientset, log logging.Logger, kls *kub
 		return
 	}
 
-	user = kuberlogicv1.DefaultUser
+	user = kuberlogicv1.MasterUser
 	log.Debugw("trying to get credentials for username",
 		"user", user, "secret", user, "password", passwordField)
 	password, err = k8s.GetSecretFieldDecoded(c, log, secretName, kls.Namespace, passwordField)

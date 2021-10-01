@@ -19,8 +19,6 @@ func (kls *KuberLogicService) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-//+kubebuilder:webhook:path=/mutate-kuberlogic-com-v1-kuberlogicservice,mutating=true,failurePolicy=fail,sideEffects=None,groups=kuberlogic.com,resources=kuberlogicservices,verbs=create;update,versions=v1,name=mkuberlogicservice.kuberlogic.com,admissionReviewVersions={v1,v1beta1}
-
 var _ webhook.Defaulter = &KuberLogicService{}
 
 func (kls *KuberLogicService) Default() {
@@ -38,8 +36,6 @@ func (kls *KuberLogicService) Default() {
 		Version:    version,
 	})
 }
-
-//+kubebuilder:webhook:path=/validate-kuberlogic-com-v1-kuberlogicservice,mutating=false,failurePolicy=fail,sideEffects=None,groups=kuberlogic.com,resources=kuberlogicservices,verbs=create;update,versions=v1,name=vkuberlogicservice.kuberlogic.com,admissionReviewVersions={v1,v1beta1}
 
 var _ webhook.Validator = &KuberLogicService{}
 

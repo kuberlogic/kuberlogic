@@ -1,0 +1,11 @@
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: {{ .Values.kong.tokenCleanupPlugin }}
+  namespace: {{ .Release.Namespace }}
+config:
+  remove:
+    querystring:
+      - {{ .Values.jwtAuth.param }}
+plugin: request-transformer

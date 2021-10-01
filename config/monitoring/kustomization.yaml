@@ -1,8 +1,0 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-- kube-eagle.yaml
-- kube-state-metrics.yaml
-- victoriametrics.yaml
-- alertmanager.yml
-- grafana

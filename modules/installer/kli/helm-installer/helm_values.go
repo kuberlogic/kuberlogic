@@ -6,9 +6,12 @@ import "github.com/kuberlogic/operator/modules/installer/internal"
 const (
 	certManagerNs = "cert-manager"
 
-	// Nginx Ingress Controller
-	ingressClass = "kuberlogic-nginx"
-
+	// Kong Ingress Controller
+	ingressClass          = "kuberlogic-kong"
+	ingressAuthName       = "kuberlogic-auth"
+	kongJWTAuthPlugin     = "kuberlogic-jwt-auth"
+	kongJWTCleanupPlugin  = "kuberlogic-jwt-param-cleanup"
+	kongJWT2HeadersPlugin = "kuberlogic-jwt-headers"
 	// registry information for installation
 	registryName = "quay.io"
 	registryOrg  = "kuberlogic"
@@ -17,9 +20,16 @@ const (
 	keycloakClientId     = "apiserver-client"
 	keycloakClientSecret = "apiserver-client-secret"
 	keycloakRealmName    = "kuberlogic_realm"
-	keycloakURL          = "https://keycloak:8443"
+	keycloaInternalkURL  = "https://keycloak:8443"
+
+	keycloakNodePortServiceName = "keycloak-nodeport"
 
 	oauthApiserverId = "kuberlogic_apiserver"
+
+	// jwt parameters used to configure Ingress Controller
+	// originated from keycloak
+	jwtTokenQueryParam = "token"
+	jwtIssuer          = keycloaInternalkURL + "/auth/realms/" + keycloakRealmName
 
 	// postgres operator values
 	postgresImageRepo      = registryOrg + "/" + "postgres-operator"
@@ -30,14 +40,13 @@ const (
 	mysqlImage = registryName + "/" + registryOrg + "/mysql-operator:v0.5.0-rc.2-3-gac1ec"
 
 	// monitoring grafana values
-	grafanaImageRepo         = registryName + "/" + registryOrg + "/grafana"
-	grafanaImageTag          = "8.1.4"
-	grafanaServiceName       = "kuberlogic-grafana"
-	grafanaServicePort       = 3000
-	grafanaSecretName        = "kuberlogic-grafana-credentials"
-	grafanaAdminUser         = "kuberlogic"
-	grafanaAdminPassword     = "6182ec23cc345656d"
-	grafanaMysqlRootPassword = "84fb81edcc1b35"
+	grafanaImageRepo      = registryName + "/" + registryOrg + "/grafana"
+	grafanaImageTag       = "8.1.4"
+	grafanaServiceName    = "kuberlogic-grafana"
+	grafanaServicePort    = 3000
+	grafanaSecretName     = "kuberlogic-grafana-credentials"
+	grafanaAdminUser      = "kuberlogic"
+	grafanaAuthHeaderName = "X-Kong-JWT-Claim-email" // this value is set dynamically by Kong jwt2headers plugin
 
 	// monitoring victoriametrics values
 	victoriaMetricsServiceName = "kuberlogic-victoriametrics"
@@ -52,7 +61,7 @@ const (
 	apiserverAuthProvider      = "keycloak"
 
 	// kuberlogic UI
-	uiImageTag = "demo-v8"
+	uiImageTag = "demo-v10"
 )
 
 var (

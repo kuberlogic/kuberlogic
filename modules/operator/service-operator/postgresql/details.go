@@ -52,7 +52,7 @@ func (d *InternalDetails) GetMainPodContainer() string {
 }
 
 func (d *InternalDetails) GetDefaultConnectionPassword() (secret, passwordField string) {
-	return genUserCredentialsSecretName(kuberlogicv1.DefaultUser, d.Cluster.Operator.ObjectMeta.Name), "password"
+	return genUserCredentialsSecretName(kuberlogicv1.MasterUser, d.Cluster.Operator.ObjectMeta.Name), "password"
 }
 
 func (d *InternalDetails) GetCredentialsSecret() (*apiv1.Secret, error) {
