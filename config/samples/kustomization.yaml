@@ -1,4 +1,0 @@
-resources:
-  - cm-postgresql.yaml
-  - cm-mysql.yaml
-  - cm-redis.yaml

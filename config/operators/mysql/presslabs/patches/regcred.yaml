@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: mysql-operator
-imagePullSecrets:
-  - name: kuberlogic-registry

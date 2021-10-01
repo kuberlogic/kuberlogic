@@ -1,9 +1,0 @@
-apiVersion: mysql.presslabs.org/v1alpha1
-kind: MysqlDatabase
-metadata:
-  name: grafana
-spec:
-  database: grafana
-  clusterRef:
-    name: grafana
-#    namespace: grafana
