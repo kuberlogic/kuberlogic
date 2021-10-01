@@ -71,13 +71,16 @@ func setup() {
 		apiPort = p
 	}
 
-	//wait(60 * 60 * 60)(&testing.T{}) // wait the 1 hour
-
+	if isWait := os.Getenv("WAIT_BEFORE_CREATE"); isWait == "true" {
+		wait(60 * 60 * 60)(&testing.T{}) // wait the 1 hour
+	}
 	flag.Parse()
 	if testing.Short() {
 		parallelFunc(createService)
 	}
-	//wait(60 * 60 * 60)(&testing.T{}) // wait the 1 hour
+	if isWait := os.Getenv("WAIT_BEFORE_TESTS"); isWait == "true" {
+		wait(60 * 60 * 60)(&testing.T{}) // wait the 1 hour
+	}
 }
 
 func tearDown() {
@@ -154,6 +157,9 @@ func TestMain(m *testing.M) {
 	if code == 0 {
 		// no need destroy if the tests are failed
 		tearDown()
+	} else if isWait := os.Getenv("WAIT_IF_TESTS_FAILS"); isWait == "true" {
+		wait(60 * 60 * 60)(&testing.T{}) // wait the 1 hour
 	}
+
 	os.Exit(code)
 }
