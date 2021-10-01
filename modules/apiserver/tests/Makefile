@@ -4,10 +4,6 @@
 IMG_REPO = quay.io/kuberlogic
 IMG = $(IMG_REPO)/minio:1.0.0
 
-# default secrets with credetials to private repo (using for mysql/redis)
-# for postgresql is using service account
-IMG_PULL_SECRET = ""
-
 KUBERLOGIC_APISERVER_LOG = kuberlogic.apiserver.log
 KUBERLOGIC_OPERATOR_LOG = kuberlogic.operator.log
 
