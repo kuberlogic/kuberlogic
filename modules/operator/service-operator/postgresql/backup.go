@@ -9,11 +9,9 @@ import (
 )
 
 const (
-	backupImage = "backup-postgresql"
-	backupTag   = "latest"
-
-	operatorConfigMap = "postgres-operator"
-	postgreSuperUser  = "postgres" // TODO: Could be grabbed from config map ^
+	backupImage      = "backup-postgresql"
+	backupTag        = "latest"
+	postgreSuperUser = "postgres" // TODO: Could be grabbed from config map "postgres-operator"
 )
 
 type Backup struct {
@@ -70,7 +68,7 @@ func (p *Backup) SetBackupEnv(cm *kuberlogicv1.KuberLogicBackupSchedule) {
 		},
 		{
 			Name:      "PGPASSWORD",
-			ValueFrom: util.FromSecret(pgDataSecret, "password"),
+			ValueFrom: util.FromSecret(pgDataSecret, passwordField),
 		},
 		{
 			Name:  "DATABASE",

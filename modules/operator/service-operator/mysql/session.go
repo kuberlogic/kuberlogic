@@ -63,15 +63,15 @@ func (session *Session) fillCredentials() error {
 	if err != nil {
 		return err
 	}
-	session.Password = string(secret.Data["ROOT_PASSWORD"])
-	session.Username = "root"
+	session.Password = string(secret.Data[passwordField])
+	session.Username = masterUser
 	return nil
 }
 
 func (session *Session) SetCredentials(password string) error {
 	s := v1.Secret{
 		StringData: map[string]string{
-			session.PasswordField: password,
+			passwordField: password,
 		},
 	}
 
@@ -80,7 +80,7 @@ func (session *Session) SetCredentials(password string) error {
 		return fmt.Errorf("error decode secret: %s", err)
 	}
 
-	_, err = session.client.CoreV1().Secrets(
+	secret, err := session.client.CoreV1().Secrets(
 		session.ClusterNamespace,
 	).Patch(
 		context.TODO(),
@@ -91,6 +91,9 @@ func (session *Session) SetCredentials(password string) error {
 	if err != nil {
 		return err
 	}
+	session.Password = string(secret.Data[passwordField])
+	session.Username = masterUser
+
 	return nil
 }
 

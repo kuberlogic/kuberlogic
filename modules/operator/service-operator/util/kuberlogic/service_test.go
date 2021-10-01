@@ -61,7 +61,7 @@ func TestGetClusterCredentialsInfo(t *testing.T) {
 			pgUserE, pgPasswordFieldE, pgSecretE)
 	}
 
-	myUserE, myPasswordFieldE, mySecretE := "kuberlogic", "PASSWORD", "test-mysql-cred"
+	myUserE, myPasswordFieldE, mySecretE := "root", "ROOT_PASSWORD", "test-mysql-cred"
 	myUserA, myPasswordFieldA, mySecretA, _ := GetClusterCredentialsInfo(cmMy)
 
 	if myUserA != myUserE || myPasswordFieldA != myPasswordFieldE || mySecretA != mySecretE {

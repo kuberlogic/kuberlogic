@@ -68,6 +68,7 @@ type InternalDetails interface {
 	GetAccessPort() int
 
 	GetDefaultConnectionPassword() (string, string)
+	GetDefaultConnectionUser() string
 	GetMainPodContainer() string
 }
 

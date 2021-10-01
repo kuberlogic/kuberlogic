@@ -39,7 +39,7 @@ func (p *Restore) SetRestoreEnv(cm *cloudlinuxv1.KuberLogicBackupRestore) {
 		// mysql env vars
 		{
 			Name:      "MYSQL_PASSWORD",
-			ValueFrom: util.FromSecret(p.Cluster.Operator.Spec.SecretName, "ROOT_PASSWORD"),
+			ValueFrom: util.FromSecret(p.Cluster.Operator.Spec.SecretName, passwordField),
 		},
 		{
 			Name:  "PATH_TO_BACKUP",

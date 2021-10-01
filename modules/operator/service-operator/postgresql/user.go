@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v4"
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"sort"
 )
+
+const masterUser = "kuberlogic"
 
 type User struct {
 	session *Session
@@ -22,15 +23,15 @@ func (usr *User) IsProtected(name string) bool {
 	return ok
 }
 
-func (usr *User) IsMaster(name string) bool {
-	return name == kuberlogicv1.MasterUser
+func (usr *User) isMaster(name string) bool {
+	return name == masterUser
 }
 
 func (usr *User) Check(name string) error {
 	switch {
 	case usr.IsProtected(name):
 		return fmt.Errorf("user %s is protected", name)
-	case usr.IsMaster(name):
+	case usr.isMaster(name):
 		return fmt.Errorf("user %s is master", name)
 	default:
 		return nil
@@ -96,7 +97,7 @@ ALTER USER %s WITH PASSWORD '%s';
 		return err
 	}
 
-	if usr.IsMaster(name) {
+	if usr.isMaster(name) {
 		// need to edit password in the secret
 		if err := usr.session.SetCredentials(password); err != nil {
 			return err

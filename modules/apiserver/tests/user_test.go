@@ -72,8 +72,8 @@ func (u *tUser) List(t *testing.T) {
 	api.responseShouldMatchJson(fmt.Sprintf(`
      [
 		{"name": "%s"},
-		{"name": "kuberlogic"}
-     ]`, u.name))
+		{"name": "%s"}
+     ]`, u.name, u.masterUser))
 }
 
 func (u *tUser) UserNotFound(t *testing.T) {
@@ -149,7 +149,6 @@ func (u *tUser) CheckConnection(user, password string) func(t *testing.T) {
 			}
 		} else if u.service.type_ == "mysql" {
 			if user != "" && password != "" {
-				//t.Logf("User - password: %s, %s", user, password)
 				connectionString = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
 					user, password, session.GetMasterIP(), 3306, u.db.name)
 			}
@@ -221,7 +220,7 @@ func TestUser(t *testing.T) {
 			name:        "foo",
 			password:    "secret-password",
 			newPassword: "new-secret-password",
-			masterUser:  "kuberlogic",
+			masterUser:  "root",
 			db: tDb{
 				service: mysqlTestService,
 				name:    "foo",

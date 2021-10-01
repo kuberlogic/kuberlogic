@@ -144,7 +144,7 @@ func (p *Postgres) Init(kls *kuberlogicv1.KuberLogicService) {
 									LocalObjectReference: apiv1.LocalObjectReference{
 										Name: defaultUserCredentialsSecret,
 									},
-									Key: "password",
+									Key: passwordField,
 								},
 							},
 						},

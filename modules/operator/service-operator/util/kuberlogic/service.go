@@ -16,14 +16,6 @@ func GetCluster(cm *kuberlogicv1.KuberLogicService) (op interfaces.OperatorInter
 	return
 }
 
-func GetClusterName(cm *kuberlogicv1.KuberLogicService) (name string, err error) {
-	op, err := GetCluster(cm)
-	if err != nil {
-		return
-	}
-	return op.Name(cm), nil
-}
-
 func GetClusterPodLabels(cm *kuberlogicv1.KuberLogicService) (master map[string]string, replica map[string]string, err error) {
 	op, err := GetCluster(cm)
 	if err != nil {
@@ -66,8 +58,9 @@ func GetClusterCredentialsInfo(cm *kuberlogicv1.KuberLogicService) (username, pa
 	if err != nil {
 		return
 	}
-	secretName, passwordField = op.GetInternalDetails().GetDefaultConnectionPassword()
-	username = kuberlogicv1.MasterUser
+	details := op.GetInternalDetails()
+	secretName, passwordField = details.GetDefaultConnectionPassword()
+	username = details.GetDefaultConnectionUser()
 	return
 }
 

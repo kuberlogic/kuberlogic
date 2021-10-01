@@ -2,7 +2,6 @@ package postgresql
 
 import (
 	"fmt"
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	apiv1 "k8s.io/api/core/v1"
 )
 
@@ -15,6 +14,8 @@ const (
 	postgresPodDefaultVal = "spilo"
 	postgresMainContainer = "postgres"
 	postgresPort          = 5432
+
+	passwordField = "password"
 )
 
 type InternalDetails struct {
@@ -51,8 +52,12 @@ func (d *InternalDetails) GetMainPodContainer() string {
 	return postgresMainContainer
 }
 
-func (d *InternalDetails) GetDefaultConnectionPassword() (secret, passwordField string) {
-	return genUserCredentialsSecretName(kuberlogicv1.MasterUser, d.Cluster.Operator.ObjectMeta.Name), "password"
+func (d *InternalDetails) GetDefaultConnectionPassword() (string, string) {
+	return genUserCredentialsSecretName(masterUser, d.Cluster.Operator.ObjectMeta.Name), passwordField
+}
+
+func (d *InternalDetails) GetDefaultConnectionUser() string {
+	return masterUser
 }
 
 func (d *InternalDetails) GetCredentialsSecret() (*apiv1.Secret, error) {
