@@ -31,10 +31,10 @@ jobs:
         uses: satackey/action-docker-layer-caching@v0.0.11
         # Ignore the failure of a step and avoid terminating the job.
         continue-on-error: true
-        with:
-          key: docker-cache-${{ github.sha }}
-          restore-keys: |
-            docker-cache-
+#        with:
+#          key: docker-cache-${{ github.sha }}
+#          restore-keys: |
+#            docker-cache-
 
       - name: Build installer & images
         run: |
@@ -83,10 +83,10 @@ jobs:
         # Ignore the failure of a step and avoid terminating the job.
         continue-on-error: true
         with:
-          key: docker-cache-${{ github.sha }}
+#          key: docker-cache-${{ github.sha }}
           skip-save: true
-          restore-keys: |
-            docker-cache-
+#          restore-keys: |
+#            docker-cache-
 
       - name: Fake loadbalancer service by installing metallb
         run: |
@@ -177,13 +177,11 @@ jobs:
 
       - name: Restore docker layers
         uses: satackey/action-docker-layer-caching@v0.0.11
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
         with:
-          key: docker-cache-${{ github.sha }}
+#          key: docker-cache-${{ github.sha }}
           skip-save: true
-          restore-keys: |
-            docker-cache-
+#          restore-keys: |
+#            docker-cache-
 
       - name: Push the new images
         run: |
