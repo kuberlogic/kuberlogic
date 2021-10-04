@@ -2,7 +2,7 @@ name: On push master
 
 on:
   push:
-    branches: [ KL-159 ]
+    branches: [ master ]
 
 jobs:
   build:
