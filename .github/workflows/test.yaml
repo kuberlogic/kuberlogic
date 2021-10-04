@@ -88,9 +88,9 @@ jobs:
         run: |
           kubectl config set-context --current --namespace=kuberlogic
 
-      - name: Build installer
+      - name: Build installer & images
         run: |
-          make installer-build
+          make docker-build installer-build
 
       - name: Run installer
         working-directory: ./modules/installer
