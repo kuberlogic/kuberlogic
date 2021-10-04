@@ -84,7 +84,7 @@ spec:
           {{ end }}
         - args:
             - --secure-listen-address=0.0.0.0:{{ .Values.monitoring.externalPort }}
-            - --upstream=http://127.0.0.1:{{ .Values.monitoring.externalPort }}/
+            - --upstream=http://127.0.0.1:{{ .Values.monitoring.internalPort }}/
             - --logtostderr=true
             - --v=10
           image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0

@@ -11,7 +11,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 2Gi
+      storage: {{ .Values.victoriametrics.vmserver.volumeSize }}
 ---
 apiVersion: apps/v1
 kind: Deployment

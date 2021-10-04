@@ -29,6 +29,7 @@ victoriametrics:
       repository: "quay.io/kuberlogic/victoria-metrics"
       tag: "v1.66.2"
     port: 8428
+    volumeSize: 10Gi
   service:
     name: kuberlogic-victoriametrics
     port: 80

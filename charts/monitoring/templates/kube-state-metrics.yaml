@@ -98,6 +98,18 @@ rules:
     resources:
       - volumeattachments
     verbs: ["list", "watch"]
+  - apiGroups:
+      - authentication.k8s.io
+    resources:
+      - tokenreviews
+    verbs:
+      - create
+  - apiGroups:
+      - authorization.k8s.io
+    resources:
+      - subjectaccessreviews
+    verbs:
+      - create
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -180,6 +192,8 @@ spec:
   minReadySeconds: 0
   template:
     metadata:
+      annotations:
+        {{  }}
       labels:
         app.kubernetes.io/component: kube-state-metrics
         {{- include "monitoring.labels" . | nindent 8 }}
