@@ -23,7 +23,7 @@ victoriametrics:
   vmalert:
     image:
       repository: "quay.io/kuberlogic/vmalert"
-      tag: "v1.62.0"
+      tag: "v1.66.2"
   vmserver:
     image:
       repository: "quay.io/kuberlogic/victoria-metrics"
