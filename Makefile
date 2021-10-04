@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.30
+VERSION ?= 0.0.31
 COMMIT_SHA = $(shell git rev-parse HEAD)
 
 ifeq ($(USE_BUILD),true)
@@ -186,7 +186,11 @@ updater-build:
 	-t $(UPDATER_IMG_LATEST)
 
 alert-receiver-build:
-	docker build -f alert-receiver.Dockerfile -t $(ALERT_RECEIVER_IMG) -t $(ALERT_RECEIVER_IMG_LATEST) .
+	docker build . \
+	-f alert-receiver.Dockerfile \
+	-t $(ALERT_RECEIVER_IMG) \
+	-t $(ALERT_RECEIVER_IMG_SHA) \
+	-t $(ALERT_RECEIVER_IMG_LATEST) \
 
 apiserver-build:
 	echo "Building apiserver image"
@@ -268,7 +272,6 @@ restore-push:
 docker-push: operator-push apiserver-push updater-push alert-receiver-push backup-push restore-push
 docker-build: operator-build apiserver-build updater-build alert-receiver-build backup-build restore-build
 
-
 docker-push-cache:
 	for image in \
 		$(OPERATOR_IMG_SHA) \
@@ -280,7 +283,7 @@ docker-push-cache:
 		$(MYSQL_RESTORE_BACKUP_IMG_SHA) \
 		$(PG_RESTORE_BACKUP_IMG_SHA) \
 		; do \
-			docker push $${image};
+			docker push $${image}; \
 	done
 
 docker-pull-cache:
@@ -294,19 +297,26 @@ docker-pull-cache:
 		$(MYSQL_RESTORE_BACKUP_IMG_SHA) \
 		$(PG_RESTORE_BACKUP_IMG_SHA) \
 		; do \
-			docker pull $${image};
+			docker pull $${image}; \
 	done
 
 docker-restore-cache: docker-pull-cache
-	docker tag $(OPERATOR_IMG_SHA) -t $(OPERATOR_IMG) -t $(OPERATOR_IMG_LATEST)
-	docker tag $(APISERVER_IMG_SHA) -t $(APISERVER_IMG) -t $(APISERVER_IMG_LATEST)
-	docker tag $(UPDATER_IMG_SHA) -t $(UPDATER_IMG_IMG) -t $(UPDATER_IMG_LATEST)
-	docker tag $(ALERT_RECEIVER_IMG_SHA) -t $(ALERT_RECEIVER_IMG) -t $(ALERT_RECEIVER_IMG_LATEST)
-	docker tag $(MYSQL_BACKUP_IMG_SHA) -t $(MYSQL_BACKUP_IMG) -t $(MYSQL_BACKUP_IMG_LATEST)
-	docker tag $(PG_BACKUP_IMG_SHA) -t $(PG_BACKUP_IMG) -t $(PG_BACKUP_IMG_LATEST)
-	docker tag $(MYSQL_RESTORE_BACKUP_IMG_SHA) -t $(MYSQL_RESTORE_BACKUP_IMG) -t $(MYSQL_RESTORE_BACKUP_IMG_LATEST)
-	docker tag $(PG_RESTORE_BACKUP_IMG_SHA) -t $(PG_RESTORE_BACKUP_IMG) -t $(PG_RESTORE_BACKUP_IMG_LATEST)
-
+	docker tag $(OPERATOR_IMG_SHA) $(OPERATOR_IMG)
+	docker tag $(OPERATOR_IMG_SHA) $(OPERATOR_IMG_LATEST)
+	docker tag $(APISERVER_IMG_SHA) $(APISERVER_IMG)
+	docker tag $(APISERVER_IMG_SHA) $(APISERVER_IMG_LATEST)
+	docker tag $(UPDATER_IMG_SHA) $(UPDATER_IMG)
+	docker tag $(UPDATER_IMG_SHA) $(UPDATER_IMG_LATEST)
+	docker tag $(ALERT_RECEIVER_IMG_SHA) $(ALERT_RECEIVER_IMG)
+	docker tag $(ALERT_RECEIVER_IMG_SHA) $(ALERT_RECEIVER_IMG_LATEST)
+	docker tag $(MYSQL_BACKUP_IMG_SHA) $(MYSQL_BACKUP_IMG)
+	docker tag $(MYSQL_BACKUP_IMG_SHA) $(MYSQL_BACKUP_IMG_LATEST)
+	docker tag $(PG_BACKUP_IMG_SHA) $(PG_BACKUP_IMG)
+	docker tag $(PG_BACKUP_IMG_SHA) $(PG_BACKUP_IMG_LATEST)
+	docker tag $(MYSQL_RESTORE_BACKUP_IMG_SHA) $(MYSQL_RESTORE_BACKUP_IMG)
+	docker tag $(MYSQL_RESTORE_BACKUP_IMG_SHA) $(MYSQL_RESTORE_BACKUP_IMG_LATEST)
+	docker tag $(PG_RESTORE_BACKUP_IMG_SHA) $(PG_RESTORE_BACKUP_IMG)
+	docker tag $(PG_RESTORE_BACKUP_IMG_SHA) $(PG_RESTORE_BACKUP_IMG_LATEST)
 
 refresh-go-sum:
 	for module in operator updater alert-receiver apiserver installer; do \
