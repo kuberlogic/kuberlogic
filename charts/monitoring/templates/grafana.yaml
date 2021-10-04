@@ -83,14 +83,14 @@ spec:
       {{ end }}
       serviceAccountName: {{ .Values.grafana.serviceAccountName }}
       volumes:
-        - name: grafana-dashboards
+        - name: grafana-default-dashboards
           configMap:
             name: {{ include "monitoring.fullname" . }}-grafana-dash
       containers:
         - name: grafana
           volumeMounts:
             - mountPath: /usr/share/grafana/public/dashboards
-              name: {{ include "monitoring.fullname" . }}-grafana-dash
+              name: grafana-default-dashboards
           image: {{ .Values.grafana.image.repository }}:{{ .Values.grafana.image.tag }}
           ports:
             - name: grafana

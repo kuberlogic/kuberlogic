@@ -27,7 +27,7 @@ victoriametrics:
   vmserver:
     image:
       repository: "quay.io/kuberlogic/victoria-metrics"
-      tag: "v1.62.0"
+      tag: "v1.66.2"
     port: 8428
   service:
     name: kuberlogic-victoriametrics
