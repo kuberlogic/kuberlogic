@@ -39,7 +39,7 @@ func (p *Backup) SetBackupEnv(cm *kuberlogicv1.KuberLogicBackupSchedule) {
 		// mysql env vars
 		{
 			Name:      "MYSQL_PASSWORD",
-			ValueFrom: util.FromSecret(p.Cluster.Operator.Spec.SecretName, "ROOT_PASSWORD"),
+			ValueFrom: util.FromSecret(p.Cluster.Operator.Spec.SecretName, passwordField),
 		},
 		{
 			Name:  "DATABASE",

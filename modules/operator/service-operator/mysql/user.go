@@ -3,9 +3,10 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	"sort"
 )
+
+const masterUser = "root"
 
 var protectedUsers = map[string]bool{
 	"orchestrator":    true,
@@ -14,7 +15,6 @@ var protectedUsers = map[string]bool{
 	"sys_exporter":    true,
 	"sys_heartbeat":   true,
 	"mysql.sys":       true,
-	"root":            true,
 }
 
 type User struct {
@@ -26,15 +26,15 @@ func (usr *User) IsProtected(name string) bool {
 	return ok
 }
 
-func (usr *User) IsMaster(name string) bool {
-	return name == kuberlogicv1.MasterUser
+func (usr *User) isMaster(name string) bool {
+	return name == masterUser
 }
 
 func (usr *User) Check(name string) error {
 	switch {
 	case usr.IsProtected(name):
 		return fmt.Errorf("user %s is protected", name)
-	case usr.IsMaster(name):
+	case usr.isMaster(name):
 		return fmt.Errorf("user %s is master", name)
 	default:
 		return nil
@@ -118,7 +118,7 @@ func (usr *User) Edit(name, password string) error {
 			return err
 		}
 	}
-	if usr.IsMaster(name) {
+	if usr.isMaster(name) {
 		// need to edit password in the secret
 		if err := usr.session.SetCredentials(password); err != nil {
 			return err
@@ -136,7 +136,7 @@ func (usr *User) List() ([]string, error) {
 	defer conn.Close()
 
 	rows, err := conn.Query(`
-SELECT user FROM mysql.user;
+SELECT DISTINCT user FROM mysql.user;
 `)
 	if err != nil {
 		return users, err

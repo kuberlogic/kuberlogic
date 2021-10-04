@@ -31,7 +31,7 @@ func NewSession(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicServ
 	session.ClusterNamespace = cm.Namespace
 	session.ClusterName = op.Name(cm)
 
-	session.ClusterCredentialsSecret, session.PasswordField = op.GetInternalDetails().GetDefaultConnectionPassword()
+	session.ClusterCredentialsSecret, _ = op.GetInternalDetails().GetDefaultConnectionPassword()
 
 	if err := session.fillMaster(); err != nil {
 		return nil, err
@@ -97,7 +97,7 @@ func (session *Session) fillCredentials() error {
 	if err != nil {
 		return err
 	}
-	session.Password = string(secret.Data["password"])
+	session.Password = string(secret.Data[passwordField])
 	session.Username = string(secret.Data["username"])
 	return nil
 }
@@ -105,7 +105,7 @@ func (session *Session) fillCredentials() error {
 func (session *Session) SetCredentials(password string) error {
 	s := v1.Secret{
 		StringData: map[string]string{
-			session.PasswordField: password,
+			passwordField: password,
 		},
 	}
 
@@ -125,7 +125,7 @@ func (session *Session) SetCredentials(password string) error {
 	if err != nil {
 		return err
 	}
-	session.Password = string(secret.Data["password"])
+	session.Password = string(secret.Data[passwordField])
 	session.Username = string(secret.Data["username"])
 	return nil
 }

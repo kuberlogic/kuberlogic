@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"fmt"
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
 	util2 "github.com/presslabs/mysql-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +16,8 @@ const (
 	mysqlMainContainer = "mysql"
 
 	mysqlPort = 3306
+
+	passwordField = "ROOT_PASSWORD"
 )
 
 type InternalDetails struct {
@@ -53,24 +54,22 @@ func (d *InternalDetails) GetMainPodContainer() string {
 	return mysqlMainContainer
 }
 
-func (d *InternalDetails) GetDefaultConnectionPassword() (secret, passwordField string) {
-	return d.Cluster.Operator.Spec.SecretName, "PASSWORD"
+func (d *InternalDetails) GetDefaultConnectionPassword() (string, string) {
+	return d.Cluster.Operator.Spec.SecretName, passwordField
+}
+
+func (d *InternalDetails) GetDefaultConnectionUser() string {
+	return masterUser
 }
 
 func (d *InternalDetails) GetCredentialsSecret() (*corev1.Secret, error) {
-	rootPassword := util2.RandomString(15)
-	userName := kuberlogicv1.MasterUser
-	userPassword := util2.RandomString(15)
-
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      genCredentialsSecretName(d.Cluster.Operator.ObjectMeta.Name),
 			Namespace: d.Cluster.Operator.ObjectMeta.Namespace,
 		},
 		StringData: map[string]string{
-			"ROOT_PASSWORD": rootPassword,
-			"USER":          userName,
-			"PASSWORD":      userPassword,
+			passwordField: util2.RandomString(15),
 		},
 	}, nil
 }

@@ -67,7 +67,7 @@ func (p *Restore) SetRestoreEnv(cm *kuberlogicv1.KuberLogicBackupRestore) {
 		},
 		{
 			Name:      "PGPASSWORD",
-			ValueFrom: util.FromSecret(pgDataSecret, "password"),
+			ValueFrom: util.FromSecret(pgDataSecret, passwordField),
 		},
 		{
 			Name:  "PATH_TO_BACKUP",
