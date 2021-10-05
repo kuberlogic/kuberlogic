@@ -5,6 +5,7 @@ eagle:
   enabled: true
   port: 8080
   service:
+    name: kube-eagle
     port: 8443
 
   serviceAccount:
@@ -18,6 +19,9 @@ kubeStateMetrics:
 
   serviceAccount:
     name: kuberlogic-kube-state-metrics
+  service:
+    name: kube-state-metrics
+    port: 8443
 
 victoriametrics:
   vmalert:

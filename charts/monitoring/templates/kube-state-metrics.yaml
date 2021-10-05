@@ -160,7 +160,7 @@ subjects:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kube-state-metrics
+  name: {{ .Values.kubeStateMetrics.service.name }}
   namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/component: kube-state-metrics
@@ -169,7 +169,7 @@ spec:
   type: ClusterIP
   ports:
     - name: https
-      port: 8443
+      port: {{ .Values.kubeStateMetrics.service.port }}
       targetPort: https
   selector:
     app.kubernetes.io/component: kube-state-metrics
@@ -192,8 +192,6 @@ spec:
   minReadySeconds: 0
   template:
     metadata:
-      annotations:
-        {{  }}
       labels:
         app.kubernetes.io/component: kube-state-metrics
         {{- include "monitoring.labels" . | nindent 8 }}
@@ -222,7 +220,7 @@ spec:
               cpu: 10m
               memory: 32Mi
         - args:
-            - --secure-listen-address=0.0.0.0:8443
+            - --secure-listen-address=0.0.0.0:{{ .Values.kubeStateMetrics.service.port }}
             - --upstream=http://127.0.0.1:8080/
             - --logtostderr=true
             - --v=10
@@ -230,7 +228,7 @@ spec:
           imagePullPolicy: IfNotPresent
           name: kube-rbac-proxy
           ports:
-            - containerPort: 8443
+            - containerPort: {{ .Values.kubeStateMetrics.service.port }}
               name: https
               protocol: TCP
           terminationMessagePath: /dev/termination-log

@@ -12,6 +12,17 @@ data:
       scrape_interval: 10s
 
     scrape_configs:
+    - job_name: kubernetes-stats-services
+      scheme: https
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        insecure_skip_verify: true
+      authorization:
+        credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      static_configs:
+      - targets:
+        - {{ .Values.eagle.service.name }}:{{ .Values.eagle.service.port }}
+        - {{ .Values.kubeStateMetrics.service.name }}:{{ .Values.kubeStateMetrics.service.port }}
     - job_name: kubernetes-nodes
       authorization:
         credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
