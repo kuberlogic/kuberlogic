@@ -27,18 +27,20 @@ jobs:
           path: ./modules/installer/kuberlogic-installer
           key: installer-${{ github.sha }}
 
-      - name: Restore docker layers
-        uses: satackey/action-docker-layer-caching@v0.0.11
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
-        with:
-          key: docker-cache-${{ github.sha }}
-          restore-keys: |
-            docker-cache-
-
       - name: Build installer & images
         run: |
           make docker-build installer-build
+
+      - name: Login to Docker Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ secrets.REGISTRY_SERVER }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Save image's cache
+        run: |
+          make docker-push-cache
 
   setup_and_test:
     name: Setup and test
@@ -61,6 +63,9 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          # 0 - all history, it uses in generating part of BUILD in version
+          fetch-depth: 0
 
       - name: Setup Minikube
         uses: manusa/actions-setup-minikube@v2.3.0
@@ -78,15 +83,9 @@ jobs:
           LOGZ_IO_TOKEN: ${{ secrets.LOGZ_IO_TOKEN }}
           LOGZ_IO_LISTENER: ${{ secrets.LOGZ_IO_LISTENER }}
 
-      - name: Restore docker layers
-        uses: satackey/action-docker-layer-caching@v0.0.11
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
-        with:
-          key: docker-cache-${{ github.sha }}
-          skip-save: true
-          restore-keys: |
-            docker-cache-
+      - name: Restore cached images
+        run: |
+          make docker-restore-cache
 
       - name: Fake loadbalancer service by installing metallb
         run: |
@@ -167,6 +166,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          # 0 - all history, it uses in generating part of BUILD in version
+          fetch-depth: 0
 
       - name: Login to Docker Registry
         uses: docker/login-action@v1
@@ -175,15 +177,9 @@ jobs:
           username: ${{ secrets.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Restore docker layers
-        uses: satackey/action-docker-layer-caching@v0.0.11
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
-        with:
-          key: docker-cache-${{ github.sha }}
-          skip-save: true
-          restore-keys: |
-            docker-cache-
+      - name: Restore cached images
+        run: |
+          make docker-restore-cache
 
       - name: Push the new images
         run: |

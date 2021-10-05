@@ -1,7 +1,8 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.30
+VERSION ?= 0.0.31
+COMMIT_SHA = $(shell git rev-parse HEAD)
 
 ifeq ($(USE_BUILD),true)
 	VERSION := $(VERSION)-$(shell git rev-list --count $(shell git rev-parse --abbrev-ref HEAD))
@@ -16,35 +17,47 @@ IMG_PULL_SECRET = ""
 # Image URL to use all building/pushing image targets
 OPERATOR_NAME = operator
 OPERATOR_IMG ?= $(IMG_REPO)/$(OPERATOR_NAME):$(VERSION)
+OPERATOR_IMG_SHA ?= $(IMG_REPO)/$(OPERATOR_NAME):$(VERSION)-$(COMMIT_SHA)
 OPERATOR_IMG_LATEST ?= $(IMG_REPO)/$(OPERATOR_NAME):latest
 # updater image name
 UPDATER_NAME = updater
 UPDATER_IMG ?= $(IMG_REPO)/$(UPDATER_NAME):$(VERSION)
+UPDATER_IMG_SHA ?= $(IMG_REPO)/$(UPDATER_NAME):$(VERSION)-$(COMMIT_SHA)
 UPDATER_IMG_LATEST ?= $(IMG_REPO)/$(UPDATER_NAME):latest
  # alert receiver image name
 ALERT_RECEIVER_NAME = alert-receiver
 ALERT_RECEIVER_IMG ?= $(IMG_REPO)/$(ALERT_RECEIVER_NAME):$(VERSION)
+ALERT_RECEIVER_IMG_SHA ?= $(IMG_REPO)/$(ALERT_RECEIVER_NAME):$(VERSION)-$(COMMIT_SHA)
 ALERT_RECEIVER_IMG_LATEST ?= $(IMG_REPO)/$(ALERT_RECEIVER_NAME):latest
-# tests
-IMG_TESTS ?= $(IMG_REPO)/integration-tests:$(VERSION)
-IMG_TESTS_LATEST ?= $(IMG_REPO)/integration-tests:latest
+# apiserver image
+APISERVER_NAME = apiserver
+APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME):$(VERSION)
+APISERVER_IMG_SHA = $(IMG_REPO)/$(APISERVER_NAME):$(VERSION)-$(COMMIT_SHA)
+APISERVER_IMG_LATEST = $(IMG_REPO)/$(APISERVER_NAME):latest
 
 # backup image prefix
 BACKUP_PREFIX = backup
+MYSQL_BACKUP_IMG = $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:$(VERSION)
+MYSQL_BACKUP_IMG_SHA = $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:$(VERSION)-$(COMMIT_SHA)
+MYSQL_BACKUP_IMG_LATEST = $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:latest
+PG_BACKUP_IMG = $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:$(VERSION)
+PG_BACKUP_IMG_SHA = $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:$(VERSION)-$(COMMIT_SHA)
+PG_BACKUP_IMG_LATEST = $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:latest
+
 # restore from backup image prefix
-RESTORE_PREFIX = backup-restore
+RESTORE_BACKUP_PREFIX = backup-restore
+MYSQL_RESTORE_BACKUP_IMG = $(IMG_REPO)/$(RESTORE_BACKUP_PREFIX)-mysql:$(VERSION)
+MYSQL_RESTORE_BACKUP_IMG_SHA = $(IMG_REPO)/$(RESTORE_BACKUP_PREFIX)-mysql:$(VERSION)-$(COMMIT_SHA)
+MYSQL_RESTORE_BACKUP_IMG_LATEST = $(IMG_REPO)/$(RESTORE_BACKUP_PREFIX)-mysql:latest
+PG_RESTORE_BACKUP_IMG = $(IMG_REPO)/$(RESTORE_BACKUP_PREFIX)-postgresql:$(VERSION)
+PG_RESTORE_BACKUP_IMG_SHA = $(IMG_REPO)/$(RESTORE_BACKUP_PREFIX)-postgresql:$(VERSION)-$(COMMIT_SHA)
+PG_RESTORE_BACKUP_IMG_LATEST = $(IMG_REPO)/$(RESTORE_BACKUP_PREFIX)-postgresql:latest
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
 # apiserver section
 KUBERLOGIC_AUTH_PROVIDER = none
-
-APISERVER_NAME = apiserver
-APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME):$(VERSION)
-APISERVER_IMG_LATEST = $(IMG_REPO)/$(APISERVER_NAME):latest
-TESTS_IMG ?= $(IMG_REPO)/integration-tests:$(VERSION)
-TESTS_IMG_LATEST ?= $(IMG_REPO)/integration-tests:latest
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -152,32 +165,42 @@ generate: controller-gen
 operator-build:
 	docker build modules/operator \
 		-t $(OPERATOR_IMG) \
+		-t $(OPERATOR_IMG_SHA) \
 		-t $(OPERATOR_IMG_LATEST) \
 		--build-arg VERSION=$(VERSION) \
 		--build-arg BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
-		--build-arg REVISION=$(shell git rev-parse HEAD)
+		--build-arg REVISION=$(COMMIT_SHA)
 
 installer-build:
 	@cd modules/installer; \
 	VERSION=$(VERSION) \
 	BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
-	REVISION=$(shell git rev-parse HEAD) \
+	REVISION=$(COMMIT_SHA) \
 	$(MAKE) build
 
 updater-build:
-	docker build -f updater.Dockerfile -t $(UPDATER_IMG) -t $(UPDATER_IMG_LATEST) .
+	docker build . \
+	-f updater.Dockerfile \
+	-t $(UPDATER_IMG) \
+	-t $(UPDATER_IMG_SHA) \
+	-t $(UPDATER_IMG_LATEST)
 
 alert-receiver-build:
-	docker build -f alert-receiver.Dockerfile -t $(ALERT_RECEIVER_IMG) -t $(ALERT_RECEIVER_IMG_LATEST) .
+	docker build . \
+	-f alert-receiver.Dockerfile \
+	-t $(ALERT_RECEIVER_IMG) \
+	-t $(ALERT_RECEIVER_IMG_SHA) \
+	-t $(ALERT_RECEIVER_IMG_LATEST) \
 
 apiserver-build:
 	echo "Building apiserver image"
 	docker build . -f apiserver.Dockerfile \
 	-t $(APISERVER_IMG) \
+	-t $(APISERVER_IMG_SHA) \
 	-t $(APISERVER_IMG_LATEST) \
 	--build-arg VERSION=$(VERSION) \
 	--build-arg BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
-	--build-arg REVISION=$(shell git rev-parse HEAD)
+	--build-arg REVISION=$(COMMIT_SHA)
 
 build-tests: gen test
 	echo "Building tests image"
@@ -214,35 +237,86 @@ tests-push:
 mark-executable:
 	chmod +x $(shell find backup/ -iname *.sh | xargs)
 
-# Build backup images
 backup-build: mark-executable
-	docker build backup/mysql/ -t $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:$(VERSION) -t $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:latest
-	docker build backup/postgres/ -t $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:$(VERSION) -t $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:latest
+	docker build backup/mysql/ \
+	-t $(MYSQL_BACKUP_IMG) \
+	-t $(MYSQL_BACKUP_IMG_SHA) \
+	-t $(MYSQL_BACKUP_IMG_LATEST)
+	docker build backup/postgres/ \
+	-t $(PG_BACKUP_IMG) \
+	-t $(PG_BACKUP_IMG_SHA) \
+	-t $(PG_BACKUP_IMG_LATEST)
 
-# Push backup images
 backup-push:
-	docker push $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:$(VERSION)
-	docker push $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:latest
-	docker push $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:$(VERSION)
-	docker push $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:latest
+	docker push $(MYSQL_BACKUP_IMG)
+	docker push $(MYSQL_BACKUP_IMG_LATEST)
+	docker push $(PG_BACKUP_IMG)
+	docker push $(PG_BACKUP_IMG_LATEST)
 
-# Build backup restore images
 restore-build: mark-executable
-	docker build backup/restore/mysql/ -t $(IMG_REPO)/$(RESTORE_PREFIX)-mysql:$(VERSION) -t $(IMG_REPO)/$(RESTORE_PREFIX)-mysql:latest
-	docker build backup/restore/postgres/ -t $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:$(VERSION) -t $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:latest
+	docker build backup/restore/mysql/ \
+	-t $(MYSQL_RESTORE_BACKUP_IMG) \
+	-t $(MYSQL_RESTORE_BACKUP_IMG_SHA) \
+	-t $(MYSQL_RESTORE_BACKUP_IMG_LATEST)
+	docker build backup/restore/postgres/ \
+	-t $(PG_RESTORE_BACKUP_IMG) \
+	-t $(PG_RESTORE_BACKUP_IMG_SHA) \
+	-t $(PG_RESTORE_BACKUP_IMG_LATEST)
 
-# Push backup restore images
 restore-push:
-	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-mysql:$(VERSION)
-	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-mysql:latest
-	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:$(VERSION)
-	docker push $(IMG_REPO)/$(RESTORE_PREFIX)-postgresql:latest
-
-docker-build: operator-build apiserver-build updater-build alert-receiver-build backup-build restore-build
-	#
+	docker push $(MYSQL_RESTORE_BACKUP_IMG)
+	docker push $(MYSQL_RESTORE_BACKUP_IMG_LATEST)
+	docker push $(PG_RESTORE_BACKUP_IMG)
+	docker push $(PG_RESTORE_BACKUP_IMG_LATEST)
 
 docker-push: operator-push apiserver-push updater-push alert-receiver-push backup-push restore-push
-	#
+docker-build: operator-build apiserver-build updater-build alert-receiver-build backup-build restore-build
+
+docker-push-cache:
+	for image in \
+		$(OPERATOR_IMG_SHA) \
+		$(APISERVER_IMG_SHA) \
+		$(UPDATER_IMG_SHA) \
+		$(ALERT_RECEIVER_IMG_SHA) \
+		$(MYSQL_BACKUP_IMG_SHA) \
+		$(PG_BACKUP_IMG_SHA) \
+		$(MYSQL_RESTORE_BACKUP_IMG_SHA) \
+		$(PG_RESTORE_BACKUP_IMG_SHA) \
+		; do \
+			docker push $${image}; \
+	done
+
+docker-pull-cache:
+	for image in \
+		$(OPERATOR_IMG_SHA) \
+		$(APISERVER_IMG_SHA) \
+		$(UPDATER_IMG_SHA) \
+		$(ALERT_RECEIVER_IMG_SHA) \
+		$(MYSQL_BACKUP_IMG_SHA) \
+		$(PG_BACKUP_IMG_SHA) \
+		$(MYSQL_RESTORE_BACKUP_IMG_SHA) \
+		$(PG_RESTORE_BACKUP_IMG_SHA) \
+		; do \
+			docker pull $${image}; \
+	done
+
+docker-restore-cache: docker-pull-cache
+	docker tag $(OPERATOR_IMG_SHA) $(OPERATOR_IMG)
+	docker tag $(OPERATOR_IMG_SHA) $(OPERATOR_IMG_LATEST)
+	docker tag $(APISERVER_IMG_SHA) $(APISERVER_IMG)
+	docker tag $(APISERVER_IMG_SHA) $(APISERVER_IMG_LATEST)
+	docker tag $(UPDATER_IMG_SHA) $(UPDATER_IMG)
+	docker tag $(UPDATER_IMG_SHA) $(UPDATER_IMG_LATEST)
+	docker tag $(ALERT_RECEIVER_IMG_SHA) $(ALERT_RECEIVER_IMG)
+	docker tag $(ALERT_RECEIVER_IMG_SHA) $(ALERT_RECEIVER_IMG_LATEST)
+	docker tag $(MYSQL_BACKUP_IMG_SHA) $(MYSQL_BACKUP_IMG)
+	docker tag $(MYSQL_BACKUP_IMG_SHA) $(MYSQL_BACKUP_IMG_LATEST)
+	docker tag $(PG_BACKUP_IMG_SHA) $(PG_BACKUP_IMG)
+	docker tag $(PG_BACKUP_IMG_SHA) $(PG_BACKUP_IMG_LATEST)
+	docker tag $(MYSQL_RESTORE_BACKUP_IMG_SHA) $(MYSQL_RESTORE_BACKUP_IMG)
+	docker tag $(MYSQL_RESTORE_BACKUP_IMG_SHA) $(MYSQL_RESTORE_BACKUP_IMG_LATEST)
+	docker tag $(PG_RESTORE_BACKUP_IMG_SHA) $(PG_RESTORE_BACKUP_IMG)
+	docker tag $(PG_RESTORE_BACKUP_IMG_SHA) $(PG_RESTORE_BACKUP_IMG_LATEST)
 
 refresh-go-sum:
 	for module in operator updater alert-receiver apiserver installer; do \
