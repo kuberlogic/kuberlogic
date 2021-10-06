@@ -173,14 +173,13 @@ jobs:
       - name: Restore installer
         uses: actions/cache@v2
         with:
-          path: ./modules/installer/kuberlogic-installer
+          path: modules/installer/kuberlogic-installer
           key: installer-${{ github.sha }}
 
       - name: Release
-        uses: docker://antonyurchenko/git-release:v4.1.1
+        uses: anton-yurchenko/git-release@v4.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PRE_RELEASE: true
         with:
-          args: |
-            ./modules/installer/kuberlogic-installer
+          args: modules/installer/kuberlogic-installer
