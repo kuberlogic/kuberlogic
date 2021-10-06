@@ -1,0 +1,59 @@
+<div class="backup-storage-dialog">
+    <h2 mat-dialog-title>Backup storage</h2>
+
+    <mat-dialog-content>
+        <form [formGroup]="formGroup">
+
+            <div class="backup-storage-dialog__column">
+                <label class="backup-storage-dialog__label">s3 endpoint</label>
+                <mat-form-field floatLabel="never" appearance="outline">
+                    <input class="form-field__input" type="text"
+                           formControlName="endpoint"
+                           matInput
+                    >
+                    <mat-error>
+                        <span *ngIf="formGroup.controls.endpoint.errors?.required">This field is required</span>
+                    </mat-error>
+                </mat-form-field>
+                <label class="backup-storage-dialog__label">bucket</label>
+                <mat-form-field floatLabel="never" appearance="outline">
+                    <input class="form-field__input" type="text"
+                           formControlName="bucket"
+                           matInput
+                    >
+                    <mat-error>
+                        <span *ngIf="formGroup.controls.bucket.errors?.required">This field is required</span>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <div class="backup-storage-dialog__column">
+                <label class="backup-storage-dialog__label">Secret key</label>
+                <mat-form-field floatLabel="never" appearance="outline">
+                    <input class="form-field__input" type="text"
+                           formControlName="aws_secret_access_key"
+                           matInput
+                    >
+                    <mat-error>
+                        <span *ngIf="formGroup.controls.aws_secret_access_key.errors?.required">This field is required</span>
+                    </mat-error>
+                </mat-form-field>
+                <label class="backup-storage-dialog__label">access</label>
+                <mat-form-field floatLabel="never" appearance="outline">
+                    <input class="form-field__input" type="text"
+                           formControlName="aws_access_key_id"
+                           matInput
+                    >
+                    <mat-error>
+                        <span *ngIf="formGroup.controls.aws_access_key_id.errors?.required">This field is required</span>
+                    </mat-error>
+                </mat-form-field>
+            </div>
+        </form>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="backup-storage-dialog__actions">
+        <button mat-flat-button [mat-dialog-close]="false">Cancel</button>
+        <button mat-flat-button color="primary" (click)="onSave()">Save</button>
+    </mat-dialog-actions>
+</div>

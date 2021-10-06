@@ -1,0 +1,86 @@
+@import "../../../assets/styles/shared";
+
+:host {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: calc(100vh - 50px);
+    min-height: 500px;
+    font-family: "Proxima Nova", serif;
+    font-size: 14px;
+}
+
+form {
+    border-radius: 6px;
+    background-color: $gray10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .login__logo {
+        width: 221px;
+        height: 68px;
+        margin: 80px 80px 60px;
+        background-size: contain;
+        background: url('../../../assets/svg/logo.svg') no-repeat;
+    }
+
+    .login__icon {
+        position: absolute;
+        top: 3px;
+
+        .material-icons {
+            font-size: 26px;
+            color: #c5c7cb;
+        }
+    }
+
+    .login__input {
+        width: calc(100% - 37px);
+        padding-left: 37px;
+    }
+
+    mat-form-field {
+        width: 300px;
+    }
+
+    button {
+        margin-top: 15px;
+        margin-bottom: 38px;
+        width: 300px;
+        height: 48px;
+    }
+    mat-error {
+        color: $red100;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+    }
+}
+::ng-deep {
+    .mat-form-field-wrapper {
+        margin: 0;
+        padding-bottom: 4px;
+
+        .mat-form-field-subscript-wrapper {
+            position: relative;
+
+            mat-error.mat-error {
+                align-items: normal;
+            }
+        }
+    }
+    .mat-form-field-outline {
+        background-color: white;
+        height: 48px;
+    }
+    .mat-form-field-appearance-outline .mat-form-field-infix {
+        padding-top: 9px!important;
+    }
+    .mat-form-field-underline {
+        display: none;
+    }
+}

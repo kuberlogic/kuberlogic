@@ -1,0 +1,11 @@
+@import "../../../../../../../assets/styles/colors";
+
+.services-list-table {
+    &__icon-column {
+        width: 50px;
+    }
+
+    &__link {
+        color: $gray100;
+    }
+}

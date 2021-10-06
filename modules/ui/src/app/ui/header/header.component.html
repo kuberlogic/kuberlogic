@@ -1,0 +1,37 @@
+<header class="header">
+    <div class="header__part">
+        <div class="header__logo"></div>
+        <div class="header__links">
+            <a class="menu-item"
+               mat-ripple
+               [routerLink]="['/services']"
+               [routerLinkActive]="'menu-item--selected'">
+                <span class="menu-item__overlay"></span>
+                <span class="menu-item__title">Services</span>
+            </a>
+            <a class="menu-item"
+               mat-ripple
+               target="_blank"
+               href="{{ getConsoleMonitoringUrl() }}">
+                <span class="menu-item__overlay"></span>
+                <span class="menu-item__title">Monitoring Console</span>
+            </a>
+        </div>
+    </div>
+    <div class="header__part">
+        <a class="menu-item"
+           mat-ripple
+           [routerLink]="['/help']"
+           >
+            <span class="menu-item__overlay"></span>
+            <span class="menu-item__title">Help?</span>
+        </a>
+        <a class="menu-item"
+           mat-ripple
+           (click)="onLogout()"
+        >
+            <span class="menu-item__overlay"></span>
+            <span class="menu-item__title">Sign out</span>
+        </a>
+    </div>
+</header>

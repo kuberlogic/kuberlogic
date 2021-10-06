@@ -1,0 +1,7 @@
+<div class="table-skeleton">
+    <div class="table-skeleton__row" *ngFor="let row of [].constructor(rows)">
+        <div class="table-skeleton__column" *ngFor="let col of [].constructor(columns)">
+            <ngx-skeleton-loader animation="pulse"></ngx-skeleton-loader>
+        </div>
+    </div>
+</div>
