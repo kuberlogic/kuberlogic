@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.34
+VERSION ?= 0.0.35
 COMMIT_SHA = $(shell git rev-parse HEAD)
 
 ifeq ($(USE_BUILD),true)
@@ -283,7 +283,7 @@ ui-build:
 
 ui-push:
 	docker push $(UI_IMG)
-	docker push $(UI_LATEST)
+	docker push $(UI_IMG_LATEST)
 
 docker-push: operator-push apiserver-push updater-push alert-receiver-push backup-push restore-push ui-push
 docker-build: operator-build apiserver-build updater-build alert-receiver-build backup-build restore-build ui-build
