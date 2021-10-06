@@ -1,6 +1,6 @@
 package helm_installer
 
-import "github.com/kuberlogic/operator/modules/installer/internal"
+import "github.com/kuberlogic/kuberlogic/modules/installer/internal"
 
 // helm_values.go contains various installation parameters that are later referenced during installation phase
 const (

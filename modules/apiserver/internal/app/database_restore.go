@@ -2,10 +2,10 @@ package app
 
 import (
 	"github.com/go-openapi/runtime/middleware"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
-	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
-	"github.com/kuberlogic/operator/modules/apiserver/util"
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
+	apiService "github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/restapi/operations/service"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/util"
+	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 )
 
 func (srv *Service) DatabaseRestoreHandler(params apiService.DatabaseRestoreParams, principal *models.Principal) middleware.Responder {

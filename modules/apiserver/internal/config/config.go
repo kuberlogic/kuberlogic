@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/logging"
 	"github.com/pkg/errors"
 	"github.com/vrischmann/envconfig"
 )

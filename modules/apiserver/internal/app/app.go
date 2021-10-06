@@ -2,11 +2,11 @@ package app
 
 import (
 	"context"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/store"
-	"github.com/kuberlogic/operator/modules/apiserver/util/k8s"
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/logging"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/security"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/store"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/util/k8s"
+	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )

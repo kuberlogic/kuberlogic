@@ -10,10 +10,10 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/auth"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/restapi/operations"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/restapi/operations/auth"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/restapi/operations/service"
 )
 
 //go:generate swagger generate server --target ../../generated --name Kuberlogic --spec ../../../openapi.yaml --template-dir swagger-templates/templates --principal models.Principal

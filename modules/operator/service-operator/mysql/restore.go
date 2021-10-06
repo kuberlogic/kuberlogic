@@ -1,9 +1,9 @@
 package mysql
 
 import (
-	cloudlinuxv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	"github.com/kuberlogic/operator/modules/operator/service-operator/base"
-	"github.com/kuberlogic/operator/modules/operator/util"
+	cloudlinuxv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/base"
+	"github.com/kuberlogic/kuberlogic/modules/operator/util"
 	v1 "k8s.io/api/core/v1"
 )
 

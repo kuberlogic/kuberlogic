@@ -2,8 +2,8 @@ package app
 
 import (
 	"github.com/go-openapi/runtime/middleware"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
-	apiService "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
+	apiService "github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/restapi/operations/service"
 )
 
 func (srv *Service) ServiceListHandler(params apiService.ServiceListParams, principal *models.Principal) middleware.Responder {

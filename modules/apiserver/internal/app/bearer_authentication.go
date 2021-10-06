@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"github.com/go-openapi/errors"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
 )
 
 func (srv *Service) BearerAuthentication(token string) (*models.Principal, error) {

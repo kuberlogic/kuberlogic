@@ -1,6 +1,6 @@
 package none
 
-import "github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
+import "github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
 
 const (
 	noneEmail  = "none@example.com"

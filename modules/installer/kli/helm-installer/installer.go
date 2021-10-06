@@ -2,9 +2,9 @@ package helm_installer
 
 import (
 	"fmt"
-	"github.com/kuberlogic/operator/modules/installer/cfg"
-	kubeConfig "github.com/kuberlogic/operator/modules/installer/kubernetes"
-	logger "github.com/kuberlogic/operator/modules/installer/log"
+	"github.com/kuberlogic/kuberlogic/modules/installer/cfg"
+	kubeConfig "github.com/kuberlogic/kuberlogic/modules/installer/kubernetes"
+	logger "github.com/kuberlogic/kuberlogic/modules/installer/log"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
 	"k8s.io/client-go/kubernetes"

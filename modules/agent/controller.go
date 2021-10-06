@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/kuberlogic/operator/modules/agent/command"
-	"github.com/kuberlogic/operator/modules/agent/controller"
+	"github.com/kuberlogic/kuberlogic/modules/agent/command"
+	"github.com/kuberlogic/kuberlogic/modules/agent/controller"
 	"log"
 )
 

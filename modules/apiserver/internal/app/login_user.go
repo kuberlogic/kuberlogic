@@ -2,8 +2,8 @@ package app
 
 import (
 	"github.com/go-openapi/runtime/middleware"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
-	apiAuth "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/auth"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
+	apiAuth "github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/restapi/operations/auth"
 )
 
 func (srv *Service) LoginUserHandler(params apiAuth.LoginUserParams) middleware.Responder {

@@ -12,7 +12,7 @@ Internal communication is done using `grpc` protocol, and it is initiated by an 
 Running agent is this easy:
 ```
 import (
-	"github.com/kuberlogic/operator/modules/agent/client"
+	"github.com/kuberlogic/kuberlogic/modules/agent/client"
 	"os"
 	"log"
 )
@@ -38,7 +38,7 @@ Few more notes:
 `AgentController` is designed to be run as a part of a bigger application:
 ```
 import (
-	"github.com/kuberlogic/operator/modules/agent/controller"
+	"github.com/kuberlogic/kuberlogic/modules/agent/controller"
 )
 
 func main() {
@@ -49,8 +49,8 @@ func main() {
 ## Scheduling commands
 ```
 import (
-	"github.com/kuberlogic/operator/modules/agent/controller"
-	"github.com/kuberlogic/operator/modules/agent/command"
+	"github.com/kuberlogic/kuberlogic/modules/agent/controller"
+	"github.com/kuberlogic/kuberlogic/modules/agent/command"
 )
 
 // some code ommited. we assume controller is already 

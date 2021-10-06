@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/kuberlogic/operator/modules/operator/cmd"
+	"github.com/kuberlogic/kuberlogic/modules/operator/cmd"
 	"os"
 )
 

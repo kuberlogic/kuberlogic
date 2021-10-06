@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"

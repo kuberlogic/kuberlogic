@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	"github.com/kuberlogic/operator/modules/operator/cfg"
-	"github.com/kuberlogic/operator/modules/operator/controllers/kuberlogictenant_controller/grafana"
+	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/operator/cfg"
+	"github.com/kuberlogic/kuberlogic/modules/operator/controllers/kuberlogictenant_controller/grafana"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

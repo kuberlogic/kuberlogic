@@ -1,6 +1,6 @@
 package cache
 
-import "github.com/kuberlogic/operator/modules/apiserver/internal/logging"
+import "github.com/kuberlogic/kuberlogic/modules/apiserver/internal/logging"
 
 type Cache interface {
 	Get(key interface{}) (interface{}, bool)

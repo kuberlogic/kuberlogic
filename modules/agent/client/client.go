@@ -2,8 +2,8 @@ package client
 
 import (
 	"context"
-	agentgrpc "github.com/kuberlogic/operator/modules/agent/agent-grpc"
-	"github.com/kuberlogic/operator/modules/agent/command"
+	agentgrpc "github.com/kuberlogic/kuberlogic/modules/agent/agent-grpc"
+	"github.com/kuberlogic/kuberlogic/modules/agent/command"
 	"google.golang.org/grpc"
 	"log"
 	"time"

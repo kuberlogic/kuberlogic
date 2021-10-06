@@ -53,7 +53,7 @@ coverage-report: test
 	for pkg in apiserver operator; do \
 	  	covfile=coverage-$${pkg}.out; \
 		echo "mode: atomic" > $$covfile; \
-		cat coverage.out | grep "github.com/kuberlogic/operator/modules/$${pkg}" >> $$covfile; \
+		cat coverage.out | grep "github.com/kuberlogic/kuberlogic/modules/$${pkg}" >> $$covfile; \
 	done; \
 
 

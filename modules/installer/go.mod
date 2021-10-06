@@ -1,4 +1,4 @@
-module github.com/kuberlogic/operator/modules/installer
+module github.com/kuberlogic/kuberlogic/modules/installer
 
 go 1.16
 

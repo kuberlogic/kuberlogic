@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/kuberlogic/operator/modules/installer/cmd"
+	"github.com/kuberlogic/kuberlogic/modules/installer/cmd"
 )
 
 func main() {

@@ -2,7 +2,7 @@ package monitoring
 
 import (
 	"fmt"
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"sync"
 )

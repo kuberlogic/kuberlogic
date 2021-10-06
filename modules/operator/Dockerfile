@@ -23,9 +23,9 @@ RUN CGO_ENABLED=0 \
     GO111MODULE=on \
     go build \
     -ldflags " \
-    -X github.com/kuberlogic/operator/modules/operator/cmd.sha1ver=$REVISION \
-    -X github.com/kuberlogic/operator/modules/operator/cmd.buildTime=$BUILD_TIME \
-    -X github.com/kuberlogic/operator/modules/operator/cmd.ver=$VERSION"  \
+    -X github.com/kuberlogic/kuberlogic/modules/operator/cmd.sha1ver=$REVISION \
+    -X github.com/kuberlogic/kuberlogic/modules/operator/cmd.buildTime=$BUILD_TIME \
+    -X github.com/kuberlogic/kuberlogic/modules/operator/cmd.ver=$VERSION"  \
     -a -o operator main.go
 
 # Use distroless as minimal base image to package the manager binary

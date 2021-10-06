@@ -2,8 +2,8 @@ package util
 
 import (
 	"context"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
+	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"

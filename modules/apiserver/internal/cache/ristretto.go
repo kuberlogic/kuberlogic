@@ -2,7 +2,7 @@ package cache
 
 import (
 	rst "github.com/dgraph-io/ristretto"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/logging"
 	"reflect"
 	"time"
 )

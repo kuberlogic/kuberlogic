@@ -1,9 +1,9 @@
 package service_operator
 
 import (
-	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
-	"github.com/kuberlogic/operator/modules/operator/service-operator/mysql"
-	"github.com/kuberlogic/operator/modules/operator/service-operator/postgresql"
+	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/interfaces"
+	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/mysql"
+	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/postgresql"
 	"github.com/pkg/errors"
 )
 

@@ -1,9 +1,9 @@
 package kli
 
 import (
-	"github.com/kuberlogic/operator/modules/installer/cfg"
-	helm_installer "github.com/kuberlogic/operator/modules/installer/kli/helm-installer"
-	logger "github.com/kuberlogic/operator/modules/installer/log"
+	"github.com/kuberlogic/kuberlogic/modules/installer/cfg"
+	helm_installer "github.com/kuberlogic/kuberlogic/modules/installer/kli/helm-installer"
+	logger "github.com/kuberlogic/kuberlogic/modules/installer/log"
 )
 
 type KuberlogicInstaller interface {

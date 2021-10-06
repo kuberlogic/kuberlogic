@@ -2,10 +2,10 @@ package tests
 
 import (
 	"context"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/config"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	"github.com/kuberlogic/operator/modules/operator/util"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/config"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/logging"
+	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/operator/util"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"

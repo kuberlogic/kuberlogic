@@ -13,11 +13,11 @@ import (
     "github.com/go-openapi/loads"
     "github.com/jessevdk/go-flags"
 
-    "github.com/kuberlogic/operator/modules/apiserver/internal/app"
-    "github.com/kuberlogic/operator/modules/apiserver/internal/cache"
-    "github.com/kuberlogic/operator/modules/apiserver/internal/config"
-    "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi"
-    "github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations"
+    "github.com/kuberlogic/kuberlogic/modules/apiserver/internal/app"
+    "github.com/kuberlogic/kuberlogic/modules/apiserver/internal/cache"
+    "github.com/kuberlogic/kuberlogic/modules/apiserver/internal/config"
+    "github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/restapi"
+    "github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/restapi/operations"
 	{{- range $index, $op := .Operations }}
         {{ $found := false }}
         {{- range $i, $sop := $operations }}
@@ -29,13 +29,13 @@ import (
         api{{ pascalize $op.Package }} "{{$op.GenCommon.TargetImportPath}}/{{ $op.RootPackage }}/operations/{{ $op.Package }}"
         {{end -}}
     {{ end -}}
-	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/logging/posthog"
-	apiserverMiddleware "github.com/kuberlogic/operator/modules/apiserver/internal/net/middleware"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
-	"github.com/kuberlogic/operator/modules/apiserver/util/k8s"
-	cloudlinuxv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	"github.com/kuberlogic/operator/modules/operator/util"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/logging"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/logging/posthog"
+	apiserverMiddleware "github.com/kuberlogic/kuberlogic/modules/apiserver/internal/net/middleware"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/security"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/util/k8s"
+	cloudlinuxv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/operator/util"
 	"k8s.io/client-go/kubernetes"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"
 )

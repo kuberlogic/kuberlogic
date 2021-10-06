@@ -1,9 +1,9 @@
 package kuberlogic
 
 import (
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	serviceOperator "github.com/kuberlogic/operator/modules/operator/service-operator"
-	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
+	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	serviceOperator "github.com/kuberlogic/kuberlogic/modules/operator/service-operator"
+	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/interfaces"
 	"k8s.io/client-go/kubernetes"
 )
 

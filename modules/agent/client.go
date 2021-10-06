@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/kuberlogic/operator/modules/agent/client"
+	"github.com/kuberlogic/kuberlogic/modules/agent/client"
 	"log"
 	"os"
 )

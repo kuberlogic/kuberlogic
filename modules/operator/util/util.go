@@ -2,7 +2,7 @@ package util
 
 import (
 	"fmt"
-	"github.com/kuberlogic/operator/modules/operator/cfg"
+	"github.com/kuberlogic/kuberlogic/modules/operator/cfg"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"strings"

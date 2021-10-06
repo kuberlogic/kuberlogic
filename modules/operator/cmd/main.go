@@ -1,14 +1,14 @@
 package cmd
 
 import (
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	operatorConfig "github.com/kuberlogic/operator/modules/operator/cfg"
-	"github.com/kuberlogic/operator/modules/operator/controllers"
-	"github.com/kuberlogic/operator/modules/operator/controllers/kuberlogictenant_controller"
-	"github.com/kuberlogic/operator/modules/operator/logging"
-	"github.com/kuberlogic/operator/modules/operator/monitoring"
-	"github.com/kuberlogic/operator/modules/operator/notifications"
-	"github.com/kuberlogic/operator/modules/operator/util"
+	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	operatorConfig "github.com/kuberlogic/kuberlogic/modules/operator/cfg"
+	"github.com/kuberlogic/kuberlogic/modules/operator/controllers"
+	"github.com/kuberlogic/kuberlogic/modules/operator/controllers/kuberlogictenant_controller"
+	"github.com/kuberlogic/kuberlogic/modules/operator/logging"
+	"github.com/kuberlogic/kuberlogic/modules/operator/monitoring"
+	"github.com/kuberlogic/kuberlogic/modules/operator/notifications"
+	"github.com/kuberlogic/kuberlogic/modules/operator/util"
 	mysql "github.com/presslabs/mysql-operator/pkg/apis"
 	postgres "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	"k8s.io/apimachinery/pkg/runtime"

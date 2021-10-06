@@ -1,7 +1,7 @@
 package interfaces
 
 import (
-	"github.com/kuberlogic/operator/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
