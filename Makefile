@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.31
+VERSION ?= 0.0.34
 COMMIT_SHA = $(shell git rev-parse HEAD)
 
 ifeq ($(USE_BUILD),true)
@@ -294,6 +294,7 @@ docker-push-cache:
 		$(APISERVER_IMG_SHA) \
 		$(UPDATER_IMG_SHA) \
 		$(ALERT_RECEIVER_IMG_SHA) \
+		$(UI_IMG_SHA) \
 		$(MYSQL_BACKUP_IMG_SHA) \
 		$(PG_BACKUP_IMG_SHA) \
 		$(MYSQL_RESTORE_BACKUP_IMG_SHA) \
@@ -308,6 +309,7 @@ docker-pull-cache:
 		$(APISERVER_IMG_SHA) \
 		$(UPDATER_IMG_SHA) \
 		$(ALERT_RECEIVER_IMG_SHA) \
+		$(UI_IMG_SHA) \
 		$(MYSQL_BACKUP_IMG_SHA) \
 		$(PG_BACKUP_IMG_SHA) \
 		$(MYSQL_RESTORE_BACKUP_IMG_SHA) \
@@ -325,6 +327,8 @@ docker-restore-cache: docker-pull-cache
 	docker tag $(UPDATER_IMG_SHA) $(UPDATER_IMG_LATEST)
 	docker tag $(ALERT_RECEIVER_IMG_SHA) $(ALERT_RECEIVER_IMG)
 	docker tag $(ALERT_RECEIVER_IMG_SHA) $(ALERT_RECEIVER_IMG_LATEST)
+	docker tag $(UI_IMG_SHA) $(UI_IMG)
+	docker tag $(UI_IMG_SHA) $(UI_IMG_LATEST)
 	docker tag $(MYSQL_BACKUP_IMG_SHA) $(MYSQL_BACKUP_IMG)
 	docker tag $(MYSQL_BACKUP_IMG_SHA) $(MYSQL_BACKUP_IMG_LATEST)
 	docker tag $(PG_BACKUP_IMG_SHA) $(PG_BACKUP_IMG)
