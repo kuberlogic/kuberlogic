@@ -1,0 +1,39 @@
+@import "../../../../../../../assets/styles/colors";
+
+.create-service-form {
+    display: flex;
+    flex-direction: column;
+    width: 370px;
+
+    &__label {
+        font-size: 13px;
+        margin-bottom: 5px;
+        font-family: "OpenSans", sans-serif;
+    }
+
+    &__field {
+        margin-bottom: 10px;
+    }
+
+    &__first-type {
+        margin-right: 16px;
+    }
+
+    &__limits {
+        border: 1px solid $gray20;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        margin-top: 10px;
+    }
+
+    &__limit-label {
+        font-family: "OpenSans", sans-serif;
+        font-size: 13px;
+    }
+
+    &__radio-error {
+        font-size: 75%;
+        height: 20px;
+    }
+}

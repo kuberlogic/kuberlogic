@@ -1,0 +1,10 @@
+<div class="service-backups">
+    <kl-backup-form></kl-backup-form>
+
+    <div class="service-backups__title">Database backups</div>
+    <kl-service-backups-table [backups]="(serviceBackups$ | async)!"
+                              (restore)="onRestore($event)"></kl-service-backups-table>
+
+    <div class="service-backups__title">Database restores</div>
+    <kl-service-restores-table [restores]="(serviceRestores$ | async)!"></kl-service-restores-table>
+</div>

@@ -1,0 +1,13 @@
+.service-backups-table {
+    margin-bottom: 30px;
+
+    &__first-action {
+        margin-left: -16px;
+    }
+
+    &__action {
+        font-weight: 700 !important;
+        font-family: "Proxima Nova", serif;
+        font-size: 13px;
+    }
+}

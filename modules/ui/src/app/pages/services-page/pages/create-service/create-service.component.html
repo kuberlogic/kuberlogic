@@ -1,0 +1,7 @@
+<div class="create-service">
+    <kl-create-service-header (createPressed)="submitForm()"></kl-create-service-header>
+
+    <div class="create-service__separator"></div>
+
+    <kl-create-service-form #createServiceForm (successfulSubmit)="createService($event)"></kl-create-service-form>
+</div>
