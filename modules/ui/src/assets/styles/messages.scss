@@ -1,0 +1,20 @@
+.mat-snack-bar-container {
+    color: rgba(255, 255, 255, 0.8) !important;
+    border-radius: 0 !important;
+
+    &--success {
+        background: #28a745 !important;
+    }
+
+    &--error {
+        background: #dc3545 !important;
+    }
+
+    &--info {
+        background: #2196f3 !important;
+    }
+}
+
+.mat-simple-snackbar-action {
+    color: rgba(0, 0, 0, 0.7) !important;
+}

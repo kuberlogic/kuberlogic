@@ -1,0 +1,37 @@
+<table class="service-connection-table">
+    <tr class="service-connection-table__header-row">
+        <td></td>
+        <td>Master</td>
+        <td>Read replica</td>
+        <td>Actions</td>
+    </tr>
+    <ng-container *ngIf="serviceModel && !!connection">
+        <tr class="service-connection-table__row">
+            <td>Host</td>
+            <td class="service-connection-table__host">{{connection.master.host}}</td>
+            <td>{{connection.replica.host}}</td>
+        </tr>
+        <tr class="service-connection-table__row">
+            <td>Port</td>
+            <td>{{connection.master.port}}</td>
+            <td>{{connection.replica.port}}</td>
+        </tr>
+        <tr class="service-connection-table__row">
+            <td>User</td>
+            <td>{{connection.master.user}}</td>
+            <td>{{connection.replica.user}}</td>
+        </tr>
+        <tr class="service-connection-table__row">
+            <td>Password</td>
+            <td>*********</td>
+            <td>*********</td>
+            <td>
+                <span class="service-connection-table__action" (click)="changePassword()">
+                    <mat-icon>mode_edit_outline</mat-icon>
+                </span>
+            </td>
+        </tr>
+    </ng-container>
+</table>
+
+<kl-table-skeleton *ngIf="!(serviceModel && !!connection)" [rows]="6" [columns]="3"></kl-table-skeleton>

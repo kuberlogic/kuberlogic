@@ -1,0 +1,15 @@
+.add-advanced-setting-form {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+
+    &__add-button {
+        margin-top: 3px;
+        padding-left: 27px !important;
+        padding-right: 27px !important;
+    }
+
+    &__field {
+        width: 110px;
+    }
+}

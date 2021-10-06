@@ -1,0 +1,101 @@
+@import "colors";
+
+.mat-button-base {
+    border-radius: 0 !important;
+}
+
+button.mat-flat-button {
+    border: 1px solid $gray20 !important;
+    font-size: 13px;
+    font-weight: 600;
+}
+.mat-flat-button:hover {
+    border: 1px solid $black100 !important;
+}
+
+.mat-flat-button.mat-primary {
+    border: 1px solid $primary-color !important;
+}
+.mat-flat-button.mat-accent {
+    border: 1px solid $accent-color !important;
+}
+
+.mat-flat-button.mat-primary:hover {
+    background-color: $orange120;
+}
+
+.mat-button, .mat-icon-button, .mat-stroked-button, .mat-flat-button {
+    padding: 1px 16px !important;
+}
+
+.mat-button-base.mat-button-disabled {
+    border: 1px solid $gray20 !important;
+}
+
+mat-select .mat-select-value {
+    color: black;
+}
+mat-option .mat-option-text {
+    color: black;
+}
+
+// table
+.mat-table {
+    width: 100%;
+}
+
+.mat-header-row {
+    background-color: $gray10 !important;
+    text-transform: uppercase !important;
+
+    .mat-header-cell {
+        font-size: 13px;
+        font-weight: 600;
+    }
+}
+
+// form field
+.mat-form-field-outline-start, .mat-form-field-outline-end {
+    border-radius: 0 !important;
+    border-width: 1px !important;
+}
+.mat-form-field-subscript-wrapper {
+    padding: 0 !important;
+}
+
+// select
+.mat-select-panel {
+    border-radius: 0 !important;
+}
+
+.mat-form-field-appearance-outline .mat-form-field-infix {
+    padding-top: 0.3em !important;
+    padding-bottom: 0.8em !important;
+}
+
+.mat-select-arrow-wrapper {
+    display: block !important;
+}
+
+//tabs
+.mat-tab-link {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    height: 58px !important;
+    opacity: 1!important;
+    color: black!important;
+
+    &.mat-tab-label-active {
+        color: $primary-color !important;
+        opacity: 1 !important;
+    }
+}
+.mat-tab-header, .mat-tab-nav-bar {
+    border-bottom: 1px solid $gray20 !important;
+}
+
+// toggle
+.mat-slide-toggle-content {
+    display: flex;
+    align-items: center;
+}

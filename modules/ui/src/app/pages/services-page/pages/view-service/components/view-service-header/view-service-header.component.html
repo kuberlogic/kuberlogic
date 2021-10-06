@@ -1,0 +1,33 @@
+<div class="view-service-header pb-sm" *ngIf="!!serviceModel">
+    <div class="view-service-header__left-part">
+        <a routerLink="/services">
+            <button mat-flat-button class="view-service-header__back-button mr-md">
+                <mat-icon>keyboard_arrow_left</mat-icon>
+            </button>
+        </a>
+        <mat-icon svgIcon="mysqlIcon" *ngIf="serviceModel.type === ServiceModelType.MYSQL"></mat-icon>
+        <mat-icon svgIcon="postgresqlIcon" *ngIf="serviceModel.type === ServiceModelType.POSTGRES"></mat-icon>
+        <div class="view-service-header__info ml-sm">
+            <div class="view-service-header__title">{{serviceModel.name}}</div>
+            <div class="view-service-header__subtitle">
+                <span>{{ serviceModel | klServiceVersion }}</span>
+                <span class="view-service-header__status"
+                      [class.view-service-header__status--success]="serviceModel.status === ServiceModelStatus.RUNNING || serviceModel.status === ServiceModelStatus.READY"
+                      [class.view-service-header__status--error]="serviceModel.status === ServiceModelStatus.FAILED"
+                >
+                     • {{serviceModel.status | klServiceStatusName}}
+                </span>
+                <span> • Master Node: {{serviceModel.masters}}</span>
+                <span> • Read Replica Nodes: {{serviceModel.replicas}}</span>
+            </div>
+        </div>
+    </div>
+    <div class="view-service-header__actions">
+        <button mat-flat-button (click)="deleteService()">
+            <mat-icon>delete</mat-icon> Delete service
+        </button>
+<!--        <button mat-flat-button color="primary" class="ml-xs">-->
+<!--            <mat-icon>power_settings_new</mat-icon> Power off service-->
+<!--        </button>-->
+    </div>
+</div>

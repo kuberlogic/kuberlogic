@@ -1,0 +1,42 @@
+@import "../../../../../../../../../assets/styles/colors";
+
+.service-connection-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    &__header-row {
+        text-align: left;
+        background-color: $gray10;
+        color: $gray100;
+        height: 50px;
+        font-size: 13px;
+        padding: 0 10px;
+        font-family: "Proxima Nova", serif;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    &__row {
+        border-bottom: 1px solid $gray10;
+        background-color: #FFFFFF;
+        padding: 15px 10px;
+        font-family: "Proxima Nova", serif;
+        font-size: 13px;
+        font-weight: 400;
+
+        td {
+            padding: 15px 0;
+        }
+    }
+
+    &__link {
+        color: $primary-color;
+        text-decoration: none;
+        font-weight: bold;
+    }
+    &__action {
+        cursor: pointer;
+        color: #A4A4A4;
+    }
+
+}

@@ -5,9 +5,7 @@ config:
   grafanaEndpoint: http://127.0.0.1:8080
 
 image:
-  repository: quay.io/kuberlogic/kl-ui
-  tag: latest
-
+  repository: quay.io/kuberlogic/ui
   pullPolicy: IfNotPresent
 
 serviceAccount:

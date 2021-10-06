@@ -55,13 +55,9 @@ const (
 	operatorRepository = registryName + "/" + registryOrg
 
 	// apiserver
-
 	apiserverPort              = 8001
 	apiserverDebuglLogsEnabled = "TRUE"
 	apiserverAuthProvider      = "keycloak"
-
-	// kuberlogic UI
-	uiImageTag = "demo-v11"
 )
 
 var (
