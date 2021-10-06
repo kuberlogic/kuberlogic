@@ -1,9 +1,0 @@
-<div class="app-root">
-    <kl-header class="app-root__header" *ngIf="authService.isLoggedIn"></kl-header>
-
-    <section [ngClass]="{'app-root__logged-in': authService.isLoggedIn}" class="app-root__main">
-        <div class="app-root__content">
-            <router-outlet></router-outlet>
-        </div>
-    </section>
-</div>

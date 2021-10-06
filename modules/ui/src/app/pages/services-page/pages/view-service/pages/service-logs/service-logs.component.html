@@ -1,7 +1,0 @@
-<div class="service-logs">
-    <div class="service-logs__title">{{ renderType((currentService$ | async)?.type) }} logs for</div>
-    <kl-service-logs-form (successfulSubmit)="onFormSubmit($event)"></kl-service-logs-form>
-    <div class="service-logs__box">
-        {{ (serviceLogs$ | async)?.body }}
-    </div>
-</div>
