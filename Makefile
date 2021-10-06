@@ -35,6 +35,12 @@ APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME):$(VERSION)
 APISERVER_IMG_SHA = $(IMG_REPO)/$(APISERVER_NAME):$(VERSION)-$(COMMIT_SHA)
 APISERVER_IMG_LATEST = $(IMG_REPO)/$(APISERVER_NAME):latest
 
+# ui image
+UI_NAME = ui
+UI_IMG = $(IMG_REPO)/$(UI_NAME):$(VERSION)
+UI_IMG_SHA = $(IMG_REPO)/$(UI_NAME):$(VERSION)-$(COMMIT_SHA)
+UI_IMG_LATEST = $(IMG_REPO)/$(UI_NAME):latest
+
 # backup image prefix
 BACKUP_PREFIX = backup
 MYSQL_BACKUP_IMG = $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:$(VERSION)
@@ -269,8 +275,18 @@ restore-push:
 	docker push $(PG_RESTORE_BACKUP_IMG)
 	docker push $(PG_RESTORE_BACKUP_IMG_LATEST)
 
-docker-push: operator-push apiserver-push updater-push alert-receiver-push backup-push restore-push
-docker-build: operator-build apiserver-build updater-build alert-receiver-build backup-build restore-build
+ui-build:
+	docker build modules/ui \
+	-t $(UI_IMG) \
+	-t $(UI_IMG_SHA) \
+	-t $(UI_IMG_LATEST) \
+
+ui-push:
+	docker push $(UI_IMG)
+	docker push $(UI_LATEST)
+
+docker-push: operator-push apiserver-push updater-push alert-receiver-push backup-push restore-push ui-push
+docker-build: operator-build apiserver-build updater-build alert-receiver-build backup-build restore-build ui-build
 
 docker-push-cache:
 	for image in \

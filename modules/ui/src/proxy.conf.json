@@ -1,7 +1,0 @@
-{
-    "/api/*": {
-        "target": "http://kuberlogic-test.com:30007",
-        "secure": false,
-        "logLevel": "debug"
-    }
-}

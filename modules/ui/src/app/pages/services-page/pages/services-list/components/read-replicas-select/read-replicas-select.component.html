@@ -1,9 +1,0 @@
-<mat-form-field floatLabel="never" appearance="outline">
-    <mat-select [(value)]="selected" (valueChange)="onSubmit($event)"
-                [disabled]="service?.status !== serviceStatus.READY
-                && service?.status !== serviceStatus.RUNNING">
-        <mat-option *ngFor="let replica of replicas" [value]="replica">
-            {{ replica }}
-        </mat-option>
-    </mat-select>
-</mat-form-field>
