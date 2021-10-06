@@ -11,15 +11,13 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 2Gi
+      storage: {{ .Values.victoriametrics.vmserver.volumeSize }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kuberlogic-victoriametrics
   namespace: {{ .Release.Namespace }}
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/vm-config.yaml") . | sha256sum }}
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
@@ -32,6 +30,8 @@ spec:
     type: Recreate
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/vm-config.yaml") . | sha256sum }}
       labels:
         app.kubernetes.io/component: kuberlogic-victoriametrics
         {{- include "monitoring.labels" . | nindent 8 }}

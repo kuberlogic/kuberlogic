@@ -5,6 +5,7 @@ eagle:
   enabled: true
   port: 8080
   service:
+    name: kube-eagle
     port: 8443
 
   serviceAccount:
@@ -18,17 +19,21 @@ kubeStateMetrics:
 
   serviceAccount:
     name: kuberlogic-kube-state-metrics
+  service:
+    name: kube-state-metrics
+    port: 8443
 
 victoriametrics:
   vmalert:
     image:
       repository: "quay.io/kuberlogic/vmalert"
-      tag: "v1.62.0"
+      tag: "v1.66.2"
   vmserver:
     image:
       repository: "quay.io/kuberlogic/victoria-metrics"
-      tag: "v1.62.0"
+      tag: "v1.66.2"
     port: 8428
+    volumeSize: 10Gi
   service:
     name: kuberlogic-victoriametrics
     port: 80

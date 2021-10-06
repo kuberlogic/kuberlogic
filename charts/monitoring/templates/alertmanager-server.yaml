@@ -6,8 +6,6 @@ metadata:
     app.kubernetes.io/name: "kuberlogic-alertmanager"
   name: kuberlogic-alertmanager
   namespace: {{ .Release.Namespace }}
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/alertmanager-rules.yaml") . | sha256sum }}
 spec:
   replicas: 1
   selector:
@@ -15,6 +13,8 @@ spec:
       app.kubernetes.io/name: "kuberlogic-alertmanager"
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/alertmanager-rules.yaml") . | sha256sum }}
       labels:
         app.kubernetes.io/name: "kuberlogic-alertmanager"
     spec:
