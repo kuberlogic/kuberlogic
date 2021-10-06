@@ -1,0 +1,14 @@
+.services-list-header {
+    display: flex;
+    justify-content: space-between;
+
+    &__name {
+        font-size: 20px;
+        padding-left: 15px;
+        font-weight: 600;
+    }
+
+    &__table {
+        margin-top: 20px;
+    }
+}

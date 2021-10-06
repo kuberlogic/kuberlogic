@@ -1,0 +1,50 @@
+@import "../../../../../../../assets/styles/colors";
+
+.service-backups {
+    font-family: "Proxima Nova", serif;
+    color: $black100;
+
+    &__title {
+        font-weight: 600;
+        font-size: 13px;
+        line-height: 28px;
+        margin-bottom: 10px;
+    }
+    &__form {
+        display: flex;
+        justify-content: space-between;
+
+        &__left-part {
+            display: flex;
+            align-items: center;
+        }
+
+        &__right-part {
+            display: flex;
+        }
+
+        &__add-button {
+            height: 40px;
+            margin-top: 4px;
+        }
+
+        &__icon {
+            width: 40px;
+            font-size: 30px;
+        }
+    }
+    &__box {
+        font-size: 12px;
+        background: #FFFFFF;
+        height: 380px;
+        padding: 21px 24px;
+        border: 1px solid $gray20;
+        overflow-y: scroll;
+        margin-bottom: 29px;
+        box-sizing: border-box;
+        overflow-x: hidden;
+        scroll-behavior: smooth;
+        white-space: pre-line;
+        word-break: break-word;
+    }
+}

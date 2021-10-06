@@ -1,0 +1,55 @@
+@import "../../../../../../../assets/styles/colors";
+
+.view-service-header {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid $gray20;
+
+    &__left-part {
+        display: flex;
+        flex-flow: wrap;
+
+        & > mat-icon {
+            height: 50px;
+            width: 50px;
+        }
+    }
+
+    &__back-button {
+        min-width: 40px;
+        padding: 0;
+        max-height: 38px;
+    }
+
+    &__title {
+        font-family: "Proxima Nova", sans-serif;
+        font-weight: 600;
+        font-size: 20px;
+        min-width: 100px;
+    }
+
+    &__subtitle {
+        font-family: "Proxima Nova", sans-serif;
+        font-weight: 400;
+        font-size: 13px;
+        min-width: 200px;
+    }
+
+    &__info {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+
+    &__status {
+        color: $black100;
+
+        &--success {
+            color: $green100;
+        }
+
+        &--error {
+            color: $red100;
+        }
+    }
+}

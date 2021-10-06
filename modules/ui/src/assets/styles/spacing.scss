@@ -1,0 +1,68 @@
+@mixin setup-spacing() {
+  body {
+    $spacer: 1.6rem !default;
+    $spacer-xs: $spacer * 0.25;
+    $spacer-sm: $spacer * 0.5;
+    $spacer-md: $spacer;
+    $spacer-lg: $spacer * 1.5;
+    $spacer-xl: $spacer * 2;
+
+    $spacers: () !default;
+
+    $spacers: map-merge(
+      (
+        '': $spacer,
+        auto: auto,
+        none: 0,
+        xs: $spacer-xs,
+        sm: $spacer-sm,
+        md: $spacer-md,
+        lg: $spacer-lg,
+        xl: $spacer-xl,
+        x-small: $spacer-xs,
+        small: $spacer-sm,
+        medium: $spacer-md,
+        large: $spacer-lg,
+        x-large: $spacer-xl,
+        nxs: - $spacer-xs,
+        nsm: - $spacer-sm,
+        nmd: - $spacer,
+        nlg: - $spacer-lg,
+        nxl: - $spacer-xl
+      ),
+      $spacers
+    );
+
+    @each $size, $length in $spacers {
+      $dash: '-';
+      @if $size == '' {
+        $dash: '';
+      }
+
+      $customPropertyName: --spacer#{$dash}#{$size};
+      #{$customPropertyName}: $length;
+
+      @each $prop, $abbrev in (margin: m, padding: p) {
+        .#{$abbrev}#{$dash}#{$size} {
+          #{$prop}: var($customPropertyName) !important;
+        }
+        .#{$abbrev}t#{$dash}#{$size},
+        .#{$abbrev}y#{$dash}#{$size} {
+          #{$prop}-top: var($customPropertyName) !important;
+        }
+        .#{$abbrev}r#{$dash}#{$size},
+        .#{$abbrev}x#{$dash}#{$size} {
+          #{$prop}-right: var($customPropertyName) !important;
+        }
+        .#{$abbrev}b#{$dash}#{$size},
+        .#{$abbrev}y#{$dash}#{$size} {
+          #{$prop}-bottom: var($customPropertyName) !important;
+        }
+        .#{$abbrev}l#{$dash}#{$size},
+        .#{$abbrev}x#{$dash}#{$size} {
+          #{$prop}-left: var($customPropertyName) !important;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+@import "../../../../../assets/styles/colors";
+
+.create-service {
+    &__separator {
+        margin-top: 30px;
+        margin-bottom: 30px;
+        border-bottom: 1px solid $gray20;
+    }
+}
