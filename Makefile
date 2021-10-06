@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 0.0.32
+VERSION ?= 0.0.33
 COMMIT_SHA = $(shell git rev-parse HEAD)
 
 ifeq ($(USE_BUILD),true)
