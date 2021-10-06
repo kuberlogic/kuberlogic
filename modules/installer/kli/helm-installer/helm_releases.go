@@ -158,9 +158,6 @@ func deployUI(globals map[string]interface{}, i *HelmInstaller, release *interna
 			"apiEndpoint":               "http://" + i.Endpoints.API,
 			"monitoringConsoleEndpoint": "http://" + i.Endpoints.MonitoringConsole + "/login",
 		},
-		"image": map[string]interface{}{
-			"tag": uiImageTag,
-		},
 		"ingress": map[string]interface{}{
 			"enabled": true,
 			"host":    i.Endpoints.UI,
