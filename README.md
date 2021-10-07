@@ -1,4 +1,4 @@
-[![integration tests](https://github.com/kuberlogic/kuberlogic/actions/workflows/test.yaml/badge.svg?branch=master)](https://github.com/kuberlogic/kuberlogic/actions/workflows/test.yaml)
+[![Development build](https://github.com/kuberlogic/kuberlogic/actions/workflows/on-push-master.yaml/badge.svg)](https://github.com/kuberlogic/kuberlogic/actions/workflows/on-push-master.yaml)
 [![codecov](https://codecov.io/gh/kuberlogic/operator/branch/master/graph/badge.svg?token=VRWDPT0EIC)](https://codecov.io/gh/kuberlogic/operator)
 
 ## Kuberlogic
