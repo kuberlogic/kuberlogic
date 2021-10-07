@@ -1,5 +1,5 @@
 # Kuberlogic
-[![integration tests](https://github.com/kuberlogic/kuberlogic/actions/workflows/on-push-master.yaml/badge.svg?branch=master)](https://github.com/kuberlogic/kuberlogic/actions/workflows/on-push-master.yaml/badge.svg?branch=master)
+[![Development build](https://github.com/kuberlogic/kuberlogic/actions/workflows/on-push-master.yaml/badge.svg)](https://github.com/kuberlogic/kuberlogic/actions/workflows/on-push-master.yaml)
 [![codecov](https://codecov.io/gh/kuberlogic/operator/branch/master/graph/badge.svg?token=VRWDPT0EIC)](https://codecov.io/gh/kuberlogic/operator)
 
 <img src="https://github.com/kuberlogic/kuberlogic/raw/master/kuberlogic-logo.png" width="100">
