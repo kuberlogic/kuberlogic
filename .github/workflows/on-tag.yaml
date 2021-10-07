@@ -179,7 +179,7 @@ jobs:
 
       - name: Release
         uses: anton-yurchenko/git-release@v4.1.0
-        if: steps.cache-installer.outputs.cache-hit != 'true'
+        if: steps.cache-installer.outputs.cache-hit == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PRE_RELEASE: true
