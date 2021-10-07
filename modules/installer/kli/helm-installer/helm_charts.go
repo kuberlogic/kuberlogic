@@ -3,7 +3,7 @@ package helm_installer
 import (
 	"embed"
 	"fmt"
-	logger "github.com/kuberlogic/operator/modules/installer/log"
+	logger "github.com/kuberlogic/kuberlogic/modules/installer/log"
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"

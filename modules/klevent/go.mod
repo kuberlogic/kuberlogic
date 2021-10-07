@@ -1,4 +1,4 @@
-module github.com/kuberlogic/operator/modules/klevent
+module github.com/kuberlogic/kuberlogic/modules/klevent
 
 go 1.15
 

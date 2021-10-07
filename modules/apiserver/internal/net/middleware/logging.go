@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/go-chi/chi/middleware"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/logging"
 	"net/http"
 	"time"
 )

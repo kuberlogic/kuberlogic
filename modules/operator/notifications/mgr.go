@@ -2,8 +2,8 @@ package notifications
 
 import (
 	"fmt"
-	"github.com/kuberlogic/operator/modules/operator/cfg"
-	"github.com/kuberlogic/operator/modules/operator/notifications/smtp"
+	"github.com/kuberlogic/kuberlogic/modules/operator/cfg"
+	"github.com/kuberlogic/kuberlogic/modules/operator/notifications/smtp"
 )
 
 type NotificationManager struct {

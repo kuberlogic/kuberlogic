@@ -43,9 +43,9 @@ test:
 compile: test
 	go build \
 	    -ldflags " \
-        -X github.com/kuberlogic/operator/modules/installer/cmd.sha1ver=$(REVISION) \
-        -X github.com/kuberlogic/operator/modules/installer/cmd.buildTime=$(BUILD_TIME) \
-        -X github.com/kuberlogic/operator/modules/installer/cmd.version=$(VERSION)"  \
+        -X github.com/kuberlogic/kuberlogic/modules/installer/cmd.sha1ver=$(REVISION) \
+        -X github.com/kuberlogic/kuberlogic/modules/installer/cmd.buildTime=$(BUILD_TIME) \
+        -X github.com/kuberlogic/kuberlogic/modules/installer/cmd.version=$(VERSION)"  \
         -o kuberlogic-installer
 
 build: helm-embed compile

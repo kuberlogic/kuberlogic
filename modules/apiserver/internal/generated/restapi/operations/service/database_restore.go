@@ -14,7 +14,7 @@ import (
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
 
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
 )
 
 // DatabaseRestoreHandlerFunc turns a function with the right signature into a database restore handler

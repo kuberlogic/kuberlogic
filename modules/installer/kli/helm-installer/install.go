@@ -1,8 +1,8 @@
 package helm_installer
 
 import (
-	"github.com/kuberlogic/operator/modules/installer/internal"
-	logger "github.com/kuberlogic/operator/modules/installer/log"
+	"github.com/kuberlogic/kuberlogic/modules/installer/internal"
+	logger "github.com/kuberlogic/kuberlogic/modules/installer/log"
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"
 	"k8s.io/client-go/kubernetes"

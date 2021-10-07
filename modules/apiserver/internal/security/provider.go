@@ -2,13 +2,13 @@ package security
 
 import (
 	"fmt"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/cache"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/config"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/security"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/security/auth/provider/keycloak"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/security/auth/provider/none"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/cache"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/config"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/security"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/logging"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/security/auth/provider/keycloak"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/security/auth/provider/none"
 )
 
 type AuthProvider interface {

@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/go-chi/cors"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/config"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/config"
 	"net/http"
 )
 

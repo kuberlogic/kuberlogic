@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"flag"
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	"github.com/kuberlogic/operator/modules/watcher/api"
-	"github.com/kuberlogic/operator/modules/watcher/api/common"
-	"github.com/kuberlogic/operator/modules/watcher/k8s"
+	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/watcher/api"
+	"github.com/kuberlogic/kuberlogic/modules/watcher/api/common"
+	"github.com/kuberlogic/kuberlogic/modules/watcher/k8s"
 	"log"
 	"time"
 )

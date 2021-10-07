@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/jackc/pgx/v4"
-	"github.com/kuberlogic/operator/modules/operator/service-operator/util/kuberlogic"
+	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/util/kuberlogic"
 	"io/ioutil"
 	"os/exec"
 	"testing"

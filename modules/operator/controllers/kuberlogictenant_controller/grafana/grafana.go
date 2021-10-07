@@ -3,8 +3,8 @@ package grafana
 import (
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
-	"github.com/kuberlogic/operator/modules/operator/api/v1"
-	"github.com/kuberlogic/operator/modules/operator/cfg"
+	"github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/operator/cfg"
 	"github.com/pkg/errors"
 )
 

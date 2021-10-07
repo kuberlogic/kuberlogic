@@ -3,10 +3,10 @@ package service
 
 import (
 	"github.com/go-openapi/runtime/middleware"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/security"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/logging/posthog"
-	"github.com/kuberlogic/operator/modules/apiserver/util"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/security"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/logging/posthog"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/util"
 )
 
 func ServiceAddWrapper(srv Service, next ServiceAddHandlerFunc) (fn ServiceAddHandlerFunc) {

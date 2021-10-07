@@ -2,9 +2,9 @@
 package service
 
 import (
-	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/security"
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/logging"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/security"
+	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 )
 
 type Service interface {

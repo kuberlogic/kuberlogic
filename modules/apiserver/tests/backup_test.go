@@ -2,7 +2,7 @@ package tests
 
 import (
 	"fmt"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
 	"net/http"
 	"os"
 	"testing"

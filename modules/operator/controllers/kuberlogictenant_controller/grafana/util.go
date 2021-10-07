@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-logr/logr"
-	"github.com/kuberlogic/operator/modules/operator/cfg"
+	"github.com/kuberlogic/kuberlogic/modules/operator/cfg"
 	"io"
 	"io/ioutil"
 	"net/http"

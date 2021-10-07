@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
 )
 
 // UserCreateCreatedCode is the HTTP code returned for type UserCreateCreated

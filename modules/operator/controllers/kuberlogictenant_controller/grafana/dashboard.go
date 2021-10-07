@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	dashdata "github.com/kuberlogic/operator/modules/operator/controllers/kuberlogictenant_controller/grafana/templates"
+	dashdata "github.com/kuberlogic/kuberlogic/modules/operator/controllers/kuberlogictenant_controller/grafana/templates"
 	"github.com/pkg/errors"
 	"net/http"
 	"strconv"

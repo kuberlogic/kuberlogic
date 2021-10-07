@@ -5,7 +5,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/go-errors/errors"
 	"github.com/go-logr/logr"
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
+	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"

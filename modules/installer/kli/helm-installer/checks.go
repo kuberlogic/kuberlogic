@@ -3,7 +3,7 @@ package helm_installer
 import (
 	"context"
 	"fmt"
-	logger "github.com/kuberlogic/operator/modules/installer/log"
+	logger "github.com/kuberlogic/kuberlogic/modules/installer/log"
 	"github.com/pkg/errors"
 	v12 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"

@@ -6,8 +6,8 @@ import (
     "github.com/go-openapi/runtime/middleware"
     "{{ .GenCommon.TargetImportPath }}/models"
     "{{ .GenCommon.TargetImportPath }}/security"
-    "github.com/kuberlogic/operator/modules/apiserver/internal/logging/posthog"
-    "github.com/kuberlogic/operator/modules/apiserver/util"
+    "github.com/kuberlogic/kuberlogic/modules/apiserver/internal/logging/posthog"
+    "github.com/kuberlogic/kuberlogic/modules/apiserver/util"
 )
 
 func {{ pascalize .Name }}Wrapper(srv Service, next {{ pascalize .Name }}HandlerFunc) (fn {{ pascalize .Name }}HandlerFunc) {

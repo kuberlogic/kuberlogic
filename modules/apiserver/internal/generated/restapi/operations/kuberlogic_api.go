@@ -19,9 +19,9 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/models"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/auth"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations/service"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/restapi/operations/auth"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/restapi/operations/service"
 )
 
 // NewKuberlogicAPI creates a new Kuberlogic instance

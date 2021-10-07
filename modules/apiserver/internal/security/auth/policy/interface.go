@@ -1,8 +1,8 @@
 package policy
 
 import (
-	"github.com/kuberlogic/operator/modules/apiserver/internal/cache"
-	"github.com/kuberlogic/operator/modules/apiserver/internal/logging"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/cache"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/logging"
 )
 
 type Enforcer interface {

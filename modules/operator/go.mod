@@ -1,4 +1,4 @@
-module github.com/kuberlogic/operator/modules/operator
+module github.com/kuberlogic/kuberlogic/modules/operator
 
 go 1.16
 

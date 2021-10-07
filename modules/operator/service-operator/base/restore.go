@@ -1,8 +1,8 @@
 package base
 
 import (
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	"github.com/kuberlogic/operator/modules/operator/util"
+	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/operator/util"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

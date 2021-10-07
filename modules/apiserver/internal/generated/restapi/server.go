@@ -25,7 +25,7 @@ import (
 	flags "github.com/jessevdk/go-flags"
 	"golang.org/x/net/netutil"
 
-	"github.com/kuberlogic/operator/modules/apiserver/internal/generated/restapi/operations"
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/restapi/operations"
 )
 
 const (

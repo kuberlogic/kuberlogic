@@ -32,9 +32,9 @@ RUN CGO_ENABLED=0 \
     GO111MODULE=on \
     go build \
     -ldflags " \
-    -X github.com/kuberlogic/operator/modules/apiserver/cmd.sha1ver=$REVISION \
-    -X github.com/kuberlogic/operator/modules/apiserver/cmd.buildTime=$BUILD_TIME \
-    -X github.com/kuberlogic/operator/modules/apiserver/cmd.ver=$VERSION"  \
+    -X github.com/kuberlogic/kuberlogic/modules/apiserver/cmd.sha1ver=$REVISION \
+    -X github.com/kuberlogic/kuberlogic/modules/apiserver/cmd.buildTime=$BUILD_TIME \
+    -X github.com/kuberlogic/kuberlogic/modules/apiserver/cmd.ver=$VERSION"  \
     -a -o apiserver main.go
 
 # Use distroless as minimal base image to package the manager binary

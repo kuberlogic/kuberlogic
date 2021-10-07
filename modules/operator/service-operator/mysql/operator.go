@@ -1,9 +1,9 @@
 package mysql
 
 import (
-	kuberlogicv1 "github.com/kuberlogic/operator/modules/operator/api/v1"
-	"github.com/kuberlogic/operator/modules/operator/service-operator/interfaces"
-	"github.com/kuberlogic/operator/modules/operator/util"
+	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/interfaces"
+	"github.com/kuberlogic/kuberlogic/modules/operator/util"
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"

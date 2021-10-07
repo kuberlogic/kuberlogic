@@ -1,7 +1,7 @@
 package helm_installer
 
 import (
-	"github.com/kuberlogic/operator/modules/installer/internal"
+	"github.com/kuberlogic/kuberlogic/modules/installer/internal"
 )
 
 func (i *HelmInstaller) Status(args []string) error {

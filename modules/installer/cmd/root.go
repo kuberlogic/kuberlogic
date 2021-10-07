@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/kuberlogic/operator/modules/installer/cfg"
-	"github.com/kuberlogic/operator/modules/installer/kli"
-	logger "github.com/kuberlogic/operator/modules/installer/log"
+	"github.com/kuberlogic/kuberlogic/modules/installer/cfg"
+	"github.com/kuberlogic/kuberlogic/modules/installer/kli"
+	logger "github.com/kuberlogic/kuberlogic/modules/installer/log"
 	"github.com/spf13/cobra"
 	"os"
 )
