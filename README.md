@@ -72,6 +72,7 @@ kuberlogic-installer install all
 cd modules/apiserver
 make deploy-minio create-bucket
 ```
+For more information see [docs](modules/apiserver/tests/README.md).
 
 #### Local mode
 ```shell
