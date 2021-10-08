@@ -53,7 +53,7 @@ type Config struct {
 
 	Auth struct {
 		AdminPassword    string  `yaml:"adminPassword"`
-		TestUserPassword *string `yaml:"testUserPassword,omitempty"`
+		DemoUserPassword *string `yaml:"demoUserPassword,omitempty"`
 	} `yaml:"auth"`
 }
 

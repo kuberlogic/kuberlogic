@@ -39,6 +39,7 @@ const (
 	uiURLKey           = "ui"
 	mcURLKey           = "mc"
 	ingressEndpointKey = "ingressIP"
+	demoUserKey        = "demoUser"
 
 	releaseStartedPhase    = "started"
 	releaseUpgradePhase    = "upgrading"
@@ -58,6 +59,7 @@ type ReleaseInfo struct {
 	uiURL           string
 	mcURL           string
 	ingressEndpoint string
+	demoUser        string
 
 	secret *v12.Secret
 }
@@ -75,6 +77,7 @@ func (r *ReleaseInfo) findState() error {
 	r.uiURL = string(r.secret.Data[uiURLKey])
 	r.mcURL = string(r.secret.Data[uiURLKey])
 	r.ingressEndpoint = string(r.secret.Data[ingressEndpointKey])
+	r.demoUser = string(r.secret.Data[demoUserKey])
 	return nil
 }
 
@@ -84,6 +87,7 @@ func (r *ReleaseInfo) updateState(state string, clientSet *kubernetes.Clientset)
 	r.secret.Data[uiURLKey] = []byte(r.uiURL)
 	r.secret.Data[mcURLKey] = []byte(r.mcURL)
 	r.secret.Data[ingressEndpointKey] = []byte(r.ingressEndpoint)
+	r.secret.Data[demoUserKey] = []byte(r.demoUser)
 
 	cm, err := clientSet.CoreV1().Secrets(r.Namespace).Update(context.TODO(), r.secret, v1.UpdateOptions{})
 	if err != nil {
@@ -124,12 +128,19 @@ func (r *ReleaseInfo) UpdateIngressAddress(addr string) {
 	r.ingressEndpoint = addr
 }
 
+func (r *ReleaseInfo) UpdateDemoUser(user string) {
+	r.demoUser = user
+}
+
 func (r *ReleaseInfo) ShowBanner() string {
 	return fmt.Sprintf(`Kuberlogic API URL: %s
 Kuberlogic UI URL: %s
 Kuberlogic connection Ingress IP: %s
 
-Please make sure that URL domain names are pointing to the Ingress IP!`, r.apiURL, r.uiURL, r.ingressEndpoint)
+Please make sure that URL domain names are pointing to the Ingress IP!
+
+Demo user login: %s
+Demo user password can be found in the configuration file.`, r.apiURL, r.uiURL, r.ingressEndpoint, r.demoUser)
 }
 
 func (r *ReleaseInfo) UpgradeRelease(clientSet *kubernetes.Clientset) error {

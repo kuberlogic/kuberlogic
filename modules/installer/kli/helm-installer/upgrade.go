@@ -59,7 +59,7 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 			}
 
 			i.Log.Infof("Upgrading authentication component")
-			if err := deployAuth(globalValues, i); err != nil {
+			if err := deployAuth(globalValues, i, release); err != nil {
 				return errors.Wrap(err, "error upgrading keycloak")
 			}
 			if err := deployIngressController(globalValues, i, release); err != nil {

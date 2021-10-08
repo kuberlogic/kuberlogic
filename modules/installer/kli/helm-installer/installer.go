@@ -50,7 +50,7 @@ type HelmInstaller struct {
 	}
 	Auth struct {
 		AdminPassword    string
-		TestUserPassword string
+		DemoUserPassword string
 	}
 }
 
@@ -106,13 +106,13 @@ func New(config *cfg.Config, log logger.Logger) (*HelmInstaller, error) {
 		},
 		Auth: struct {
 			AdminPassword    string
-			TestUserPassword string
+			DemoUserPassword string
 		}{
 			AdminPassword: config.Auth.AdminPassword,
 		},
 	}
-	if config.Auth.TestUserPassword != nil {
-		i.Auth.TestUserPassword = *config.Auth.TestUserPassword
+	if config.Auth.DemoUserPassword != nil {
+		i.Auth.DemoUserPassword = *config.Auth.DemoUserPassword
 	}
 
 	return i, nil

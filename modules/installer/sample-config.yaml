@@ -23,7 +23,7 @@ endpoints:
 
 # `auth` section contains settings for Keycloak-based authentication
 auth:
-  # testUserPassword configures a password for Kuberlogic test user: user@kuberlogic.com
-  testUserPassword: secret
+  # demoUserPassword configures a password for Kuberlogic test user: user@kuberlogic.com
+  demoUserPassword: secret
   # adminPassword is password for Keycloak realm administrator: `kuberlogic`
   adminPassword: adminPassword
