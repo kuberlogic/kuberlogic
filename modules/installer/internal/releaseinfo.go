@@ -77,6 +77,7 @@ func (r *ReleaseInfo) findState() error {
 	r.uiURL = string(r.secret.Data[uiURLKey])
 	r.mcURL = string(r.secret.Data[uiURLKey])
 	r.ingressEndpoint = string(r.secret.Data[ingressEndpointKey])
+	r.demoUser = string(r.secret.Data[demoUserKey])
 	return nil
 }
 
@@ -86,6 +87,7 @@ func (r *ReleaseInfo) updateState(state string, clientSet *kubernetes.Clientset)
 	r.secret.Data[uiURLKey] = []byte(r.uiURL)
 	r.secret.Data[mcURLKey] = []byte(r.mcURL)
 	r.secret.Data[ingressEndpointKey] = []byte(r.ingressEndpoint)
+	r.secret.Data[demoUserKey] = []byte(r.demoUser)
 
 	cm, err := clientSet.CoreV1().Secrets(r.Namespace).Update(context.TODO(), r.secret, v1.UpdateOptions{})
 	if err != nil {
