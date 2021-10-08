@@ -62,7 +62,7 @@ func (i *HelmInstaller) Install(args []string) error {
 				return errors.Wrap(err, "error installing cert-manager")
 			}
 
-			if err := deployAuth(globalValues, i); err != nil {
+			if err := deployAuth(globalValues, i, release); err != nil {
 				return errors.Wrap(err, "error installing keycloak")
 			}
 			if err := deployIngressController(globalValues, i, release); err != nil {
