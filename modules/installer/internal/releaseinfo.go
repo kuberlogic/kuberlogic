@@ -135,12 +135,13 @@ func (r *ReleaseInfo) UpdateDemoUser(user string) {
 func (r *ReleaseInfo) ShowBanner() string {
 	return fmt.Sprintf(`Kuberlogic API URL: %s
 Kuberlogic UI URL: %s
+Kuberlogic Monitoring Console URL: %s
 Kuberlogic connection Ingress IP: %s
 
 Please make sure that URL domain names are pointing to the Ingress IP!
 
 Demo user login: %s
-Demo user password can be found in the configuration file.`, r.apiURL, r.uiURL, r.ingressEndpoint, r.demoUser)
+Demo user password can be found in the configuration file.`, r.apiURL, r.uiURL, r.mcURL, r.ingressEndpoint, r.demoUser)
 }
 
 func (r *ReleaseInfo) UpgradeRelease(clientSet *kubernetes.Clientset) error {
