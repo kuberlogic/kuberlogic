@@ -1,29 +1,15 @@
-## [0.0.39] - 2021-10-07
+## [1.0.0] - 2021-10-08
 ### Added
-- ui
+* Web UI
+* Automatic provisioning
+* Automatic minor updates
+* Automatic failover
+* Scheduled backups
+* Resource usage monitoring
+* Ability to scale up and down as needed
+* REST API for service management
+* Supported databases: postgresql (9.3 - 13) and mysql (5.7.24 - 5.7.31)
 
-## [0.0.24] - 2021-09-10
-### Added
-- apiserver
-
-### Fixes
-- some tests
-
-### Changed
-- some files
-
-## [0.0.22] - 2021-09-10
-### Added
-- Mysql and Postgresql are supported
-- Monitoring and grafana integrations
-- Backups and restores
-- UI
-- automatically minor upgrades
-
-## [0.0.20] - 2021-09-09
-### Added
-- second
-
-## [0.0.19] - 2021-09-08
+## [0.0.1] - 2021-09-08
 ### Added
 - initial
