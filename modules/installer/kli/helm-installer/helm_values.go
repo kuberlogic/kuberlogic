@@ -33,6 +33,7 @@ const (
 	registryOrg  = "kuberlogic"
 
 	// keycloak_ values are passed to both keycloak for configuration and apiserver for consumption
+	keycloakDemoUser     = "user@kuberlogic.com"
 	keycloakClientId     = "apiserver-client"
 	keycloakClientSecret = "apiserver-client-secret"
 	keycloakRealmName    = "kuberlogic_realm"

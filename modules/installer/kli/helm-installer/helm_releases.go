@@ -51,7 +51,7 @@ func deployCertManager(globals map[string]interface{}, i *HelmInstaller) error {
 	return releaseHelmChart(helmCertManagerChart, certManagerNs, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
-func deployAuth(globals map[string]interface{}, i *HelmInstaller) error {
+func deployAuth(globals map[string]interface{}, i *HelmInstaller, releaseInfo *internal.ReleaseInfo) error {
 	keycloakLocalValues := map[string]interface{}{
 		"installCRDs": false,
 	}
@@ -81,11 +81,13 @@ func deployAuth(globals map[string]interface{}, i *HelmInstaller) error {
 			"name": keycloakNodePortServiceName,
 		},
 	}
-	if i.Auth.TestUserPassword != "" {
+	if i.Auth.DemoUserPassword != "" {
 		kuberlogicKeycloakValues["testUser"] = map[string]interface{}{
 			"create":   true,
-			"password": i.Auth.TestUserPassword,
+			"password": i.Auth.DemoUserPassword,
+			"email":    keycloakDemoUser,
 		}
+		releaseInfo.UpdateDemoUser(keycloakDemoUser)
 	}
 
 	kuberlogicKeycloakChart, err := kuberlogicKeycloakChartReader()
