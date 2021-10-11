@@ -182,7 +182,7 @@ installer-build:
 	VERSION=$(VERSION) \
 	BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
 	REVISION=$(COMMIT_SHA) \
-	$(MAKE) build
+	$(MAKE) release
 
 updater-build:
 	docker build . \
