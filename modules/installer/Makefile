@@ -39,10 +39,10 @@ helm-embed: helm-package
 	rm kli/helm-installer/*tgz ; \
 	mv $(CHARTS_DIR)/*.tgz kli/helm-installer
 
-test:
+test: helm-embed
 	go vet
 
-compile: test helm-embed
+compile: test
 	mkdir -p bin && \
 	go build \
 	    -ldflags " \
