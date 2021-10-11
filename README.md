@@ -89,7 +89,7 @@ MY_VERSION=5.7.31 GODEBUG: x509ignoreCN=0 KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kub
 ```
 
 ## Support
-Feel free to open an [issue](https://github.com/kuberlogic/kuberlogic/issues) if you need any help. You can also reach us at help@kuberlogic.com with any questions. 
+Feel free to open an [issue](https://github.com/kuberlogic/kuberlogic/issues) if you need any help. You can also reach us at info@kuberlogic.com with any questions. 
 
 ## License
 ```text
