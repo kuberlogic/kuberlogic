@@ -1,3 +1,10 @@
+## [1.0.1] - 2021-10-11
+### Added
+* `kuberlogic-installer` is now built for darwin / linux: [#90](https://github.com/kuberlogic/kuberlogic/pull/90)
+
+### Fixed
+* `kuberlogic-installer` now shows monitoring console endpoint: [#91](https://github.com/kuberlogic/kuberlogic/pull/91)
+
 ## [1.0.0] - 2021-10-08
 ### Added
 * Web UI
