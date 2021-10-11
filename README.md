@@ -30,7 +30,7 @@ KuberLogic leverages a lot of top notch open-source projects and it requires a s
 
 ## Installation
 
-1. Download `kuberlogic-installer` command-line installation tool from the [Releases page](https://github.com/kuberlogic/kuberlogic/releases).
+1. Download `kuberlogic-installer` command-line installation tool for your platform from the [Releases page](https://github.com/kuberlogic/kuberlogic/releases) and add it to PATH.
 2. Prepare the KuberLogic [configuration file](modules/installer/README.md#Configuration).
 3. Run `kuberlogic-installer install all -c <configFile>`
 4. Run `kuberlogic-installer status -c <configFile>`

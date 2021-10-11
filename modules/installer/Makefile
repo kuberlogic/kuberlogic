@@ -1,4 +1,6 @@
 CHARTS_DIR="../../charts"
+GOARCH=amd64
+GOOS=linux
 
 helm-deps:
 	cd $(CHARTS_DIR) && \
@@ -40,12 +42,15 @@ helm-embed: helm-package
 test:
 	go vet
 
-compile: test
+compile: test helm-embed
+	mkdir -p bin && \
 	go build \
 	    -ldflags " \
         -X github.com/kuberlogic/kuberlogic/modules/installer/cmd.sha1ver=$(REVISION) \
         -X github.com/kuberlogic/kuberlogic/modules/installer/cmd.buildTime=$(BUILD_TIME) \
         -X github.com/kuberlogic/kuberlogic/modules/installer/cmd.version=$(VERSION)"  \
-        -o kuberlogic-installer
+        -o bin/kuberlogic-installer-$(GOOS)-$(GOARCH)
 
-build: helm-embed compile
+release:
+	$(MAKE) compile GOOS=darwin
+	$(MAKE) compile GOOS=linux

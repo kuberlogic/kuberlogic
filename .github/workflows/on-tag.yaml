@@ -16,10 +16,10 @@ jobs:
         with:
           go-version: '1.16.0'
 
-      - name: Cache installer
+      - name: Cache installers
         uses: actions/cache@v2
         with:
-          path: ./modules/installer/kuberlogic-installer
+          path: ./modules/installer/bin
           key: installer-${{ github.sha }}
 
       - name: Build installer & images
@@ -89,13 +89,13 @@ jobs:
       - name: Restore installer
         uses: actions/cache@v2
         with:
-          path: ./modules/installer/kuberlogic-installer
+          path: ./modules/installer/bin
           key: installer-${{ github.sha }}
 
       - name: Run installer
         working-directory: ./modules/installer
         run: |
-          ./kuberlogic-installer install all -c sample-config.yaml
+          ./bin/kuberlogic-installer-linux-amd64 install all -c sample-config.yaml
 
       - name: Setup minio & create test backet for backup storage
         working-directory: ./modules/apiserver/tests
@@ -174,7 +174,7 @@ jobs:
         id: cache-installer
         uses: actions/cache@v2
         with:
-          path: ./modules/installer/kuberlogic-installer
+          path: ./modules/installer/bin
           key: installer-${{ github.sha }}
 
       - name: Release
@@ -185,4 +185,4 @@ jobs:
           PRE_RELEASE: true
         with:
           args: |
-            ./modules/installer/kuberlogic-installer
+            ./modules/installer/bin/*
