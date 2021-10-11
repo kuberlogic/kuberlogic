@@ -24,7 +24,7 @@ jobs:
       - name: Cache installer
         uses: actions/cache@v2
         with:
-          path: ./modules/installer/kuberlogic-installer
+          path: ./modules/installer/bin
           key: installer-${{ github.sha }}
 
       - name: Build installer & images
@@ -99,13 +99,13 @@ jobs:
       - name: Restore installer
         uses: actions/cache@v2
         with:
-          path: ./modules/installer/kuberlogic-installer
+          path: ./modules/installer/bin
           key: installer-${{ github.sha }}
 
       - name: Run installer
         working-directory: ./modules/installer
         run: |
-          ./kuberlogic-installer install all -c sample-config.yaml
+          ./bin/kuberlogic-installer-linux-amd64 install all -c sample-config.yaml
 
       - name: Setup minio & create test backet for backup storage
         working-directory: ./modules/apiserver/tests
@@ -154,7 +154,7 @@ jobs:
           name: ${{ matrix.type }}-${{ matrix.pg_version }}${{ matrix.my_version }}
           path: |
             ./modules/apiserver/tests/*.log
-            ./modules/installer/kuberlogic-installer
+            ./modules/installer/bin/*
         if: ${{ always() }}
 
   release:
@@ -188,7 +188,7 @@ jobs:
       - name: Restore installer
         uses: actions/cache@v2
         with:
-          path: ./modules/installer/kuberlogic-installer
+          path: ./modules/installer/bin
           key: installer-${{ github.sha }}
 
       - name: Release installer
@@ -199,4 +199,4 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            ./modules/installer/kuberlogic-installer
+            ./modules/installer/bin/*

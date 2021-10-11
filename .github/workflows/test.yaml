@@ -95,7 +95,7 @@ jobs:
       - name: Run installer
         working-directory: ./modules/installer
         run: |
-          ./kuberlogic-installer install all -c sample-config.yaml
+          ./bin/kuberlogic-installer-linux-amd64 install all -c sample-config.yaml
 
       - name: Setup minio & create bucket for backup storage
         working-directory: ./modules/apiserver/tests
@@ -152,5 +152,5 @@ jobs:
           name: ${{ matrix.type }}-${{ matrix.pg_version }}${{ matrix.my_version }}
           path: |
             ./modules/apiserver/tests/*.log
-            ./modules/installer/kuberlogic-installer
+            ./modules/installer/bin/*
         if: ${{ always() }}
