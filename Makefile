@@ -128,8 +128,8 @@ generate: controller-gen
 operator-build:
 	docker build modules/operator \
 		-t $(OPERATOR_IMG):$(VERSION) \
-		-t $(OPERATOR):$(IMG_SHA_TAG):$(VERSION) \
-		-t $(OPERATOR_IMG):$(IMG_LATEST_TAG):$(VERSION) \
+		-t $(OPERATOR_IMG):$(IMG_SHA_TAG) \
+		-t $(OPERATOR_IMG):$(IMG_LATEST_TAG) \
 		--build-arg VERSION=$(VERSION) \
 		--build-arg BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
 		--build-arg REVISION=$(COMMIT_SHA) \
