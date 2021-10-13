@@ -16,8 +16,8 @@ IMG_REPO = quay.io/kuberlogic
 # for postgresql is using service account
 IMG_PULL_SECRET = ""
 
-# build phae tag
-IMG_SHA_TAG=$(VERSION_COMMIT_SHA)
+# build phase tag
+IMG_SHA_TAG=$(COMMIT_SHA)
 # always points to the latest development release
 IMG_LATEST_TAG=latest
 # always points to the latest successful build
