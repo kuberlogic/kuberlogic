@@ -1,9 +1,5 @@
 FROM golang:1.16 as builder
 
-ARG VERSION
-ARG REVISION
-ARG BUILD_TIME
-
 # Copy the operator sources
 WORKDIR /workspace/operator/
 COPY modules/operator ./
@@ -24,6 +20,10 @@ COPY modules/apiserver/cmd cmd/
 COPY modules/apiserver/internal internal/
 COPY modules/apiserver/util util/
 COPY modules/apiserver/main.go main.go
+
+ARG VERSION
+ARG REVISION
+ARG BUILD_TIME
 
 # Build
 RUN CGO_ENABLED=0 \
