@@ -8,56 +8,47 @@ ifeq ($(USE_BUILD),true)
 	VERSION := $(VERSION)-$(shell git rev-list --count $(shell git rev-parse --abbrev-ref HEAD))
 endif
 
+# docker build args
+DOCKER_BUILDKIT = 1
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
 # default secrets with credentials to private repo (using for mysql/redis)
 # for postgresql is using service account
 IMG_PULL_SECRET = ""
 
+# build phae tag
+IMG_SHA_TAG=$(VERSION_COMMIT_SHA)
+# always points to the latest development release
+IMG_LATEST_TAG=latest
+# always points to the latest successful build
+IMG_LATEST_BUILD_CACHED_TAG=latest-cached
+
 # Image URL to use all building/pushing image targets
 OPERATOR_NAME = operator
-OPERATOR_IMG ?= $(IMG_REPO)/$(OPERATOR_NAME):$(VERSION)
-OPERATOR_IMG_SHA ?= $(IMG_REPO)/$(OPERATOR_NAME):$(VERSION)-$(COMMIT_SHA)
-OPERATOR_IMG_LATEST ?= $(IMG_REPO)/$(OPERATOR_NAME):latest
+OPERATOR_IMG ?= $(IMG_REPO)/$(OPERATOR_NAME)
 # updater image name
 UPDATER_NAME = updater
-UPDATER_IMG ?= $(IMG_REPO)/$(UPDATER_NAME):$(VERSION)
-UPDATER_IMG_SHA ?= $(IMG_REPO)/$(UPDATER_NAME):$(VERSION)-$(COMMIT_SHA)
-UPDATER_IMG_LATEST ?= $(IMG_REPO)/$(UPDATER_NAME):latest
+UPDATER_IMG ?= $(IMG_REPO)/$(UPDATER_NAME)
  # alert receiver image name
 ALERT_RECEIVER_NAME = alert-receiver
-ALERT_RECEIVER_IMG ?= $(IMG_REPO)/$(ALERT_RECEIVER_NAME):$(VERSION)
-ALERT_RECEIVER_IMG_SHA ?= $(IMG_REPO)/$(ALERT_RECEIVER_NAME):$(VERSION)-$(COMMIT_SHA)
-ALERT_RECEIVER_IMG_LATEST ?= $(IMG_REPO)/$(ALERT_RECEIVER_NAME):latest
+ALERT_RECEIVER_IMG ?= $(IMG_REPO)/$(ALERT_RECEIVER_NAME)
 # apiserver image
 APISERVER_NAME = apiserver
-APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME):$(VERSION)
-APISERVER_IMG_SHA = $(IMG_REPO)/$(APISERVER_NAME):$(VERSION)-$(COMMIT_SHA)
-APISERVER_IMG_LATEST = $(IMG_REPO)/$(APISERVER_NAME):latest
+APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME)
 
 # ui image
 UI_NAME = ui
-UI_IMG = $(IMG_REPO)/$(UI_NAME):$(VERSION)
-UI_IMG_SHA = $(IMG_REPO)/$(UI_NAME):$(VERSION)-$(COMMIT_SHA)
-UI_IMG_LATEST = $(IMG_REPO)/$(UI_NAME):latest
+UI_IMG = $(IMG_REPO)/$(UI_NAME)
 
 # backup image prefix
 BACKUP_PREFIX = backup
-MYSQL_BACKUP_IMG = $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:$(VERSION)
-MYSQL_BACKUP_IMG_SHA = $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:$(VERSION)-$(COMMIT_SHA)
-MYSQL_BACKUP_IMG_LATEST = $(IMG_REPO)/$(BACKUP_PREFIX)-mysql:latest
-PG_BACKUP_IMG = $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:$(VERSION)
-PG_BACKUP_IMG_SHA = $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:$(VERSION)-$(COMMIT_SHA)
-PG_BACKUP_IMG_LATEST = $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql:latest
+MYSQL_BACKUP_IMG = $(IMG_REPO)/$(BACKUP_PREFIX)-mysql
+PG_BACKUP_IMG = $(IMG_REPO)/$(BACKUP_PREFIX)-postgresql
 
 # restore from backup image prefix
 RESTORE_BACKUP_PREFIX = backup-restore
-MYSQL_RESTORE_BACKUP_IMG = $(IMG_REPO)/$(RESTORE_BACKUP_PREFIX)-mysql:$(VERSION)
-MYSQL_RESTORE_BACKUP_IMG_SHA = $(IMG_REPO)/$(RESTORE_BACKUP_PREFIX)-mysql:$(VERSION)-$(COMMIT_SHA)
-MYSQL_RESTORE_BACKUP_IMG_LATEST = $(IMG_REPO)/$(RESTORE_BACKUP_PREFIX)-mysql:latest
-PG_RESTORE_BACKUP_IMG = $(IMG_REPO)/$(RESTORE_BACKUP_PREFIX)-postgresql:$(VERSION)
-PG_RESTORE_BACKUP_IMG_SHA = $(IMG_REPO)/$(RESTORE_BACKUP_PREFIX)-postgresql:$(VERSION)-$(COMMIT_SHA)
-PG_RESTORE_BACKUP_IMG_LATEST = $(IMG_REPO)/$(RESTORE_BACKUP_PREFIX)-postgresql:latest
+MYSQL_RESTORE_BACKUP_IMG = $(IMG_REPO)/$(RESTORE_BACKUP_PREFIX)-mysql
+PG_RESTORE_BACKUP_IMG = $(IMG_REPO)/$(RESTORE_BACKUP_PREFIX)-postgresql
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
@@ -99,16 +90,6 @@ show-resources:
 after-deploy:
 	kubectl config set-context --current --namespace=$(NAMESPACE)
 
-# Deploy kuberlogic-operator in the configured Kubernetes cluster in ~/.kube/config
-deploy: kustomize manifests deploy-certmanager
-	cd config/manager && \
-	$(KUSTOMIZE) edit set image operator=$(OPERATOR_IMG) && \
-	$(KUSTOMIZE) edit set image controller=$(OPERATOR_IMG) && \
-	$(KUSTOMIZE) edit set image apiserver=$(APISERVER_IMG)
-	cd config/updater && $(KUSTOMIZE) edit set image updater=$(UPDATER_IMG)
-	$(KUSTOMIZE) build config/default | envsubst | kubectl apply -f -
-	$(MAKE) after-deploy
-
 undeploy: kustomize undeploy-certmanager
 	# need to remove several resources before their operators were removed
 	kubectl delete mysqldatabase grafana; \
@@ -117,30 +98,6 @@ undeploy: kustomize undeploy-certmanager
 	kubectl delete keycloakclients --all-namespaces --all; \
 	kubectl delete keycloakrealms --all-namespaces --all; \
 	$(KUSTOMIZE) build config/default | envsubst | kubectl delete -f -
-
-# Install CRDs into a cluster
-install: kustomize
-	kubectl apply -f config/certmanager/cert-manager-crd.yaml \
-	 -f config/keycloak/crd/ \
-	 -f config/crd/bases/mysql/presslabs/ \
-	 -f config/crd/bases/postgresql/zalando/
-	 $(KUSTOMIZE) build config/crd | kubectl apply -f -
-
-# Uninstall CRDs into a cluster
-uninstall: kustomize
-	kubectl delete -f config/certmanager/cert-manager-crd.yaml \
-	 -f config/keycloak/crd/ \
-	 -f config/crd/bases/mysql/presslabs/ \
-	 -f config/crd/bases/postgresql/zalando/
-	 $(KUSTOMIZE) build config/crd | kubectl delete -f -
-
-deploy-certmanager:
-	kubectl apply -f config/certmanager/cert-manager.yaml
-	kubectl wait -n cert-manager --for=condition=Ready pods --all --timeout=5m
-	sleep 10 # need to wait cert-manager deployments
-
-undeploy-certmanager:
-	kubectl delete -f config/certmanager/cert-manager.yaml
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
@@ -167,15 +124,17 @@ generate: controller-gen
 	cd modules/operator ;\
 	$(CONTROLLER_GEN) object paths="./..." output:dir="./api/v1"
 
-# Build the  images
+# Build images
 operator-build:
 	docker build modules/operator \
-		-t $(OPERATOR_IMG) \
-		-t $(OPERATOR_IMG_SHA) \
-		-t $(OPERATOR_IMG_LATEST) \
+		-t $(OPERATOR_IMG):$(VERSION) \
+		-t $(OPERATOR):$(IMG_SHA_TAG):$(VERSION) \
+		-t $(OPERATOR_IMG):$(IMG_LATEST_TAG):$(VERSION) \
 		--build-arg VERSION=$(VERSION) \
 		--build-arg BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
-		--build-arg REVISION=$(COMMIT_SHA)
+		--build-arg REVISION=$(COMMIT_SHA) \
+		--build-arg BUILDKIT_INLINE_CACHE=1 \
+		--cache-from $(OPERATOR_IMG):$(IMG_LATEST_TAG)
 
 installer-build:
 	@cd modules/installer; \
@@ -187,58 +146,64 @@ installer-build:
 updater-build:
 	docker build . \
 	-f updater.Dockerfile \
-	-t $(UPDATER_IMG) \
-	-t $(UPDATER_IMG_SHA) \
-	-t $(UPDATER_IMG_LATEST)
+	-t $(UPDATER_IMG):$(VERSION) \
+	-t $(UPDATER_IMG):$(IMG_SHA_TAG) \
+	-t $(UPDATER_IMG):$(IMG_LATEST_TAG) \
+	--build-arg BUILDKIT_INLINE_CACHE=1 \
+	--cache-from $(UPDATER_IMG):$(IMG_LATEST_TAG)
 
 alert-receiver-build:
 	docker build . \
 	-f alert-receiver.Dockerfile \
 	-t $(ALERT_RECEIVER_IMG) \
-	-t $(ALERT_RECEIVER_IMG_SHA) \
-	-t $(ALERT_RECEIVER_IMG_LATEST) \
+	-t $(ALERT_RECEIVER_IMG):$(IMG_SHA_TAG) \
+	-t $(ALERT_RECEIVER_IMG):$(IMG_LATEST_TAG) \
+	--build-arg BUILDKIT_INLINE_CACHE=1 \
+	--cache-from $(ALERT_RECEIVER_IMG):$(IMG_LATEST_TAG)
 
 apiserver-build:
 	echo "Building apiserver image"
 	docker build . -f apiserver.Dockerfile \
 	-t $(APISERVER_IMG) \
-	-t $(APISERVER_IMG_SHA) \
-	-t $(APISERVER_IMG_LATEST) \
+	-t $(APISERVER_IMG):$(IMG_SHA_TAG) \
+	-t $(APISERVER_IMG):$(IMG_LATEST_TAG) \
 	--build-arg VERSION=$(VERSION) \
 	--build-arg BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
-	--build-arg REVISION=$(COMMIT_SHA)
+	--build-arg REVISION=$(COMMIT_SHA) \
+	--build-arg BUILDKIT_INLINE_CACHE=1 \
+	--cache-from $(APISERVER_IMG):$(IMG_LATEST_TAG)
 
 build-tests: gen test
 	echo "Building tests image"
-	docker build . -f Dockerfile.tests -t $(TESTS_IMG) -t $(TESTS_IMG_LATEST) .
+	docker build . -f Dockerfile.tests -t $(TESTS_IMG) -t $(TESTS_IMG):$(IMG_LATEST_TAG) .
 
 push-tests:
 	docker push $(TESTS_IMG)
-	docker push $(TESTS_IMG_LATEST)
+	docker push $(TESTS_IMG):$(IMG_LATEST_TAG)
 
 operator-push:
 	docker push $(OPERATOR_IMG)
-	docker push $(OPERATOR_IMG_LATEST)
+	docker push $(OPERATOR_IMG):$(IMG_LATEST_TAG)
 
 updater-push:
 	docker push $(UPDATER_IMG)
-	docker push $(UPDATER_IMG_LATEST)
+	docker push $(UPDATER_IMG):$(IMG_LATEST_TAG)
 
 alert-receiver-push:
 	docker push $(ALERT_RECEIVER_IMG)
-	docker push $(ALERT_RECEIVER_IMG_LATEST)
+	docker push $(ALERT_RECEIVER_IMG):$(IMG_LATEST_TAG)
 
 apiserver-push:
 	docker push $(APISERVER_IMG)
-	docker push $(APISERVER_IMG_LATEST)
+	docker push $(APISERVER_IMG):$(IMG_LATEST_TAG)
 
 tests-build: apiserver-gen
 	echo "Building tests image"
-	docker build . -f tests.Dockerfile -t $(TESTS_IMG) -t $(TESTS_IMG_LATEST)
+	docker build . -f tests.Dockerfile -t $(TESTS_IMG) -t $(TESTS_IMG):$(IMG_LATEST_TAG)
 
 tests-push:
 	docker push $(TESTS_IMG)
-	docker push $(TESTS_IMG_LATEST)
+	docker push $(TESTS_IMG):$(IMG_LATEST_TAG)
 
 mark-executable:
 	chmod +x $(shell find backup/ -iname *.sh | xargs)
@@ -246,97 +211,105 @@ mark-executable:
 backup-build: mark-executable
 	docker build backup/mysql/ \
 	-t $(MYSQL_BACKUP_IMG) \
-	-t $(MYSQL_BACKUP_IMG_SHA) \
-	-t $(MYSQL_BACKUP_IMG_LATEST)
+	-t $(MYSQL_BACKUP_IMG):$(IMG_SHA_TAG) \
+	-t $(MYSQL_BACKUP_IMG):$(IMG_LATEST_TAG) \
+	--build-arg BUILDKIT_INLINE_CACHE=1 \
+	--cache-from $(MYSQL_BACKUP_IMG):$(IMG_LATEST_TAG)
 	docker build backup/postgres/ \
 	-t $(PG_BACKUP_IMG) \
-	-t $(PG_BACKUP_IMG_SHA) \
-	-t $(PG_BACKUP_IMG_LATEST)
+	-t $(PG_BACKUP_IMG):$(IMG_SHA_TAG) \
+	-t $(PG_BACKUP_IMG):$(IMG_LATEST_TAG) \
+	--build-arg BUILDKIT_INLINE_CACHE=1 \
+	--cache-from $(PG_BACKUP_IMG):$(IMG_LATEST_TAG)
 
 backup-push:
 	docker push $(MYSQL_BACKUP_IMG)
-	docker push $(MYSQL_BACKUP_IMG_LATEST)
+	docker push $(MYSQL_BACKUP_IMG):$(IMG_LATEST_TAG)
 	docker push $(PG_BACKUP_IMG)
-	docker push $(PG_BACKUP_IMG_LATEST)
+	docker push $(PG_BACKUP_IMG):$(IMG_LATEST_TAG)
 
 restore-build: mark-executable
 	docker build backup/restore/mysql/ \
 	-t $(MYSQL_RESTORE_BACKUP_IMG) \
-	-t $(MYSQL_RESTORE_BACKUP_IMG_SHA) \
-	-t $(MYSQL_RESTORE_BACKUP_IMG_LATEST)
+	-t $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) \
+	-t $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG) \
+	--build-arg BUILDKIT_INLINE_CACHE=1 \
+	--cache-from $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
 	docker build backup/restore/postgres/ \
 	-t $(PG_RESTORE_BACKUP_IMG) \
-	-t $(PG_RESTORE_BACKUP_IMG_SHA) \
-	-t $(PG_RESTORE_BACKUP_IMG_LATEST)
+	-t $(PG_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) \
+	-t $(PG_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG) \
+	--build-arg BUILDKIT_INLINE_CACHE=1 \
+	--cache-from $(PG_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
 
 restore-push:
 	docker push $(MYSQL_RESTORE_BACKUP_IMG)
-	docker push $(MYSQL_RESTORE_BACKUP_IMG_LATEST)
+	docker push $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
 	docker push $(PG_RESTORE_BACKUP_IMG)
-	docker push $(PG_RESTORE_BACKUP_IMG_LATEST)
+	docker push $(PG_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
 
 ui-build:
 	docker build modules/ui \
 	-t $(UI_IMG) \
-	-t $(UI_IMG_SHA) \
-	-t $(UI_IMG_LATEST) \
+	-t $(UI_IMG):$(IMG_SHA_TAG) \
+	-t $(UI_IMG):$(IMG_LATEST_TAG) \
+	--build-arg BUILDKIT_INLINE_CACHE=1 \
+	--cache-from $(UI_IMG):$(IMG_LATEST_TAG)
 
 ui-push:
 	docker push $(UI_IMG)
-	docker push $(UI_IMG_LATEST)
-
-docker-push: operator-push apiserver-push updater-push alert-receiver-push backup-push restore-push ui-push
-docker-build: operator-build apiserver-build updater-build alert-receiver-build backup-build restore-build ui-build
+	docker push $(UI_IMG):$(IMG_LATEST_TAG)
 
 docker-push-cache:
 	for image in \
-		$(OPERATOR_IMG_SHA) \
-		$(APISERVER_IMG_SHA) \
-		$(UPDATER_IMG_SHA) \
-		$(ALERT_RECEIVER_IMG_SHA) \
-		$(UI_IMG_SHA) \
-		$(MYSQL_BACKUP_IMG_SHA) \
-		$(PG_BACKUP_IMG_SHA) \
-		$(MYSQL_RESTORE_BACKUP_IMG_SHA) \
-		$(PG_RESTORE_BACKUP_IMG_SHA) \
-		; do \
-			docker push $${image}; \
-	done
+		$(OPERATOR_IMG):$(IMG_SHA_TAG) \
+        $(APISERVER_IMG):$(IMG_SHA_TAG) \
+        $(UPDATER_IMG):$(IMG_SHA_TAG) \
+        $(ALERT_RECEIVER_IMG):$(IMG_SHA_TAG) \
+        $(UI_IMG):$(IMG_SHA_TAG) \
+        $(MYSQL_BACKUP_IMG):$(IMG_SHA_TAG) \
+        $(PG_BACKUP_IMG):$(IMG_SHA_TAG) \
+        $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) \
+        $(PG_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) \
+        ; do \
+        	docker push $${image}; \
+    done
 
 docker-pull-cache:
 	for image in \
-		$(OPERATOR_IMG_SHA) \
-		$(APISERVER_IMG_SHA) \
-		$(UPDATER_IMG_SHA) \
-		$(ALERT_RECEIVER_IMG_SHA) \
-		$(UI_IMG_SHA) \
-		$(MYSQL_BACKUP_IMG_SHA) \
-		$(PG_BACKUP_IMG_SHA) \
-		$(MYSQL_RESTORE_BACKUP_IMG_SHA) \
-		$(PG_RESTORE_BACKUP_IMG_SHA) \
+		$(OPERATOR_IMG):$(IMG_SHA_TAG) \
+		$(APISERVER_IMG):$(IMG_SHA_TAG) \
+		$(UPDATER_IMG):$(IMG_SHA_TAG) \
+		$(ALERT_RECEIVER_IMG):$(IMG_SHA_TAG) \
+		$(UI_IMG):$(IMG_SHA_TAG) \
+		$(MYSQL_BACKUP_IMG):$(IMG_SHA_TAG) \
+		$(PG_BACKUP_IMG):$(IMG_SHA_TAG) \
+		$(MYSQL_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) \
+		$(PG_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) \
 		; do \
 			docker pull $${image}; \
 	done
 
+
 docker-restore-cache: docker-pull-cache
-	docker tag $(OPERATOR_IMG_SHA) $(OPERATOR_IMG)
-	docker tag $(OPERATOR_IMG_SHA) $(OPERATOR_IMG_LATEST)
-	docker tag $(APISERVER_IMG_SHA) $(APISERVER_IMG)
-	docker tag $(APISERVER_IMG_SHA) $(APISERVER_IMG_LATEST)
-	docker tag $(UPDATER_IMG_SHA) $(UPDATER_IMG)
-	docker tag $(UPDATER_IMG_SHA) $(UPDATER_IMG_LATEST)
-	docker tag $(ALERT_RECEIVER_IMG_SHA) $(ALERT_RECEIVER_IMG)
-	docker tag $(ALERT_RECEIVER_IMG_SHA) $(ALERT_RECEIVER_IMG_LATEST)
-	docker tag $(UI_IMG_SHA) $(UI_IMG)
-	docker tag $(UI_IMG_SHA) $(UI_IMG_LATEST)
-	docker tag $(MYSQL_BACKUP_IMG_SHA) $(MYSQL_BACKUP_IMG)
-	docker tag $(MYSQL_BACKUP_IMG_SHA) $(MYSQL_BACKUP_IMG_LATEST)
-	docker tag $(PG_BACKUP_IMG_SHA) $(PG_BACKUP_IMG)
-	docker tag $(PG_BACKUP_IMG_SHA) $(PG_BACKUP_IMG_LATEST)
-	docker tag $(MYSQL_RESTORE_BACKUP_IMG_SHA) $(MYSQL_RESTORE_BACKUP_IMG)
-	docker tag $(MYSQL_RESTORE_BACKUP_IMG_SHA) $(MYSQL_RESTORE_BACKUP_IMG_LATEST)
-	docker tag $(PG_RESTORE_BACKUP_IMG_SHA) $(PG_RESTORE_BACKUP_IMG)
-	docker tag $(PG_RESTORE_BACKUP_IMG_SHA) $(PG_RESTORE_BACKUP_IMG_LATEST)
+	docker tag $(OPERATOR_IMG):$(IMG_SHA_TAG) $(OPERATOR_IMG)
+	docker tag $(OPERATOR_IMG):$(IMG_SHA_TAG) $(OPERATOR_IMG):$(IMG_LATEST_TAG)
+	docker tag $(APISERVER_IMG):$(IMG_SHA_TAG) $(APISERVER_IMG)
+	docker tag $(APISERVER_IMG):$(IMG_SHA_TAG) $(APISERVER_IMG):$(IMG_LATEST_TAG)
+	docker tag $(UPDATER_IMG):$(IMG_SHA_TAG) $(UPDATER_IMG)
+	docker tag $(UPDATER_IMG):$(IMG_SHA_TAG) $(UPDATER_IMG):$(IMG_LATEST_TAG)
+	docker tag $(ALERT_RECEIVER_IMG):$(IMG_SHA_TAG) $(ALERT_RECEIVER_IMG)
+	docker tag $(ALERT_RECEIVER_IMG):$(IMG_SHA_TAG) $(ALERT_RECEIVER_IMG):$(IMG_LATEST_TAG)
+	docker tag $(UI):$(IMG_SHA_TAG_IMG) $(UI_IMG)
+	docker tag $(UI):$(IMG_SHA_TAG_IMG) $(UI_IMG):$(IMG_LATEST_TAG)
+	docker tag $(MYSQL_BACKUP_IMG):$(IMG_SHA_TAG) $(MYSQL_BACKUP_IMG)
+	docker tag $(MYSQL_BACKUP_IMG):$(IMG_SHA_TAG) $(MYSQL_BACKUP_IMG):$(IMG_LATEST_TAG)
+	docker tag $(PG_BACKUP_IMG):$(IMG_SHA_TAG) $(PG_BACKUP_IMG)
+	docker tag $(PG_BACKUP_IMG):$(IMG_SHA_TAG) $(PG_BACKUP_IMG):$(IMG_LATEST_TAG)
+	docker tag $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) $(MYSQL_RESTORE_BACKUP_IMG)
+	docker tag $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
+	docker tag $(PG_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) $(PG_RESTORE_BACKUP_IMG)
+	docker tag $(PG_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) $(PG_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
 
 refresh-go-sum:
 	for module in operator updater alert-receiver apiserver installer; do \
