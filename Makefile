@@ -260,6 +260,10 @@ ui-push:
 	docker push $(UI_IMG)
 	docker push $(UI_IMG):$(IMG_LATEST_TAG)
 
+docker-push: operator-push apiserver-push updater-push alert-receiver-push backup-push restore-push ui-push
+docker-build: operator-build apiserver-build updater-build alert-receiver-build backup-build restore-build ui-build
+
+
 docker-push-cache:
 	for image in \
 		$(OPERATOR_IMG):$(IMG_SHA_TAG) \
