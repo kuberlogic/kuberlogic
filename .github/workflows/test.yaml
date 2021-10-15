@@ -102,7 +102,7 @@ jobs:
         run: |
           make docker-build installer-build
         env:
-          USE_BUILDX=true
+          USE_BUILDX: true
 
       - name: Move cache
         run: |
