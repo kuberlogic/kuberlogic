@@ -1,6 +1,10 @@
 # Build the manager binary
 FROM golang:1.16 as builder
 
+ARG VERSION
+ARG REVISION
+ARG BUILD_TIME
+
 WORKDIR /workspace
 # Copy the Go Modules manifests
 COPY go.mod go.mod
@@ -11,10 +15,6 @@ RUN go mod download
 
 # Copy the go source
 COPY . ./
-
-ARG VERSION
-ARG REVISION
-ARG BUILD_TIME
 
 # Build
 RUN CGO_ENABLED=0 \
