@@ -169,8 +169,7 @@ apiserver-build:
 		--build-arg VERSION=$(VERSION) \
 		--build-arg BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
 		--build-arg REVISION=$(COMMIT_SHA) \
-		--build-arg BUILDKIT_INLINE_CACHE=1 \
-		--cache-from $(APISERVER_IMG):$(IMG_LATEST_TAG)
+		--build-arg BUILDKIT_INLINE_CACHE=1
 
 build-tests: gen test
 	echo "Building tests image"
@@ -212,14 +211,12 @@ backup-build: mark-executable
 		-t $(MYSQL_BACKUP_IMG) \
 		-t $(MYSQL_BACKUP_IMG):$(IMG_SHA_TAG) \
 		-t $(MYSQL_BACKUP_IMG):$(IMG_LATEST_TAG) \
-		--build-arg BUILDKIT_INLINE_CACHE=1 \
-		--cache-from $(MYSQL_BACKUP_IMG):$(IMG_LATEST_TAG)
+		--build-arg BUILDKIT_INLINE_CACHE=1 ; \
 	docker $(DOCKER_BUILD_CMD) backup/postgres/ \
 		-t $(PG_BACKUP_IMG) \
 		-t $(PG_BACKUP_IMG):$(IMG_SHA_TAG) \
 		-t $(PG_BACKUP_IMG):$(IMG_LATEST_TAG) \
-		--build-arg BUILDKIT_INLINE_CACHE=1 \
-		--cache-from $(PG_BACKUP_IMG):$(IMG_LATEST_TAG)
+		--build-arg BUILDKIT_INLINE_CACHE=1
 
 backup-push:
 	docker push $(MYSQL_BACKUP_IMG)
@@ -232,14 +229,12 @@ restore-build: mark-executable
 	-t $(MYSQL_RESTORE_BACKUP_IMG) \
 	-t $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) \
 	-t $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG) \
-	--build-arg BUILDKIT_INLINE_CACHE=1 \
-	--cache-from $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
+	--build-arg BUILDKIT_INLINE_CACHE=1 ; \
 	docker $(DOCKER_BUILD_CMD) backup/restore/postgres/ \
 	-t $(PG_RESTORE_BACKUP_IMG) \
 	-t $(PG_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) \
 	-t $(PG_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG) \
-	--build-arg BUILDKIT_INLINE_CACHE=1 \
-	--cache-from $(PG_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
+	--build-arg BUILDKIT_INLINE_CACHE=1
 
 restore-push:
 	docker push $(MYSQL_RESTORE_BACKUP_IMG)
@@ -252,8 +247,7 @@ ui-build:
 	-t $(UI_IMG) \
 	-t $(UI_IMG):$(IMG_SHA_TAG) \
 	-t $(UI_IMG):$(IMG_LATEST_TAG) \
-	--build-arg BUILDKIT_INLINE_CACHE=1 \
-	--cache-from $(UI_IMG):$(IMG_LATEST_TAG)
+	--build-arg BUILDKIT_INLINE_CACHE=1
 
 ui-push:
 	docker push $(UI_IMG)
