@@ -151,7 +151,7 @@ installer-build:
 
 updater-build:
 	cd modules/updater && \
-	go mod -vendor && \
+	go mod vendor && \
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o bin/updater main.go
 	docker $(DOCKER_BUILD_CMD) . \
 		--build-arg BIN=modules/updater/bin/updater \
