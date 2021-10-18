@@ -258,6 +258,8 @@ restore-push:
 
 ui-build:
 	docker $(DOCKER_BUILD_CMD) modules/ui \
+	--target build && \
+	docker $(DOCKER_BUILD_CMD) modules/ui \
 	-t $(UI_IMG) \
 	-t $(UI_IMG):$(IMG_SHA_TAG) \
 	-t $(UI_IMG):$(IMG_LATEST_TAG)
