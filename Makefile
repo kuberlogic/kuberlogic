@@ -10,7 +10,7 @@ endif
 
 DOCKER_BUILD_CMD = build
 ifeq ($(USE_BUILDX),true)
-	DOCKER_BUILD_CMD = buildx build --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new
+	DOCKER_BUILD_CMD = buildx build --load --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new
 endif
 # docker $(DOCKER_BUILD_CMD) args
 DOCKER_BUILDKIT = 1
@@ -122,7 +122,6 @@ vet:
 		go vet ./... ; \
 	done
 
-
 # Generate code
 generate: controller-gen
 	cd modules/operator ;\
@@ -130,13 +129,17 @@ generate: controller-gen
 
 # Build images
 operator-build:
-	docker $(DOCKER_BUILD_CMD) modules/operator \
+	cd modules/operator && \
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -ldflags " \
+        -X github.com/kuberlogic/kuberlogic/modules/operator/cmd.sha1ver=$(REVISION) \
+        -X github.com/kuberlogic/kuberlogic/modules/operator/cmd.buildTime=$(BUILD_TIME) \
+        -X github.com/kuberlogic/kuberlogic/modules/operator/cmd.ver=$(VERSION)"  \
+    -a -o bin/operator main.go
+	docker $(DOCKER_BUILD_CMD) . \
+		--build-arg BIN=modules/operator/bin/operator \
 		-t $(OPERATOR_IMG):$(VERSION) \
 		-t $(OPERATOR_IMG):$(IMG_SHA_TAG) \
 		-t $(OPERATOR_IMG):$(IMG_LATEST_TAG) \
-		--build-arg VERSION=$(VERSION) \
-		--build-arg BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
-		--build-arg REVISION=$(COMMIT_SHA)
 
 installer-build:
 	@cd modules/installer; \
@@ -146,30 +149,40 @@ installer-build:
 	$(MAKE) release
 
 updater-build:
+	cd modules/updater && \
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o bin/updater main.go
 	docker $(DOCKER_BUILD_CMD) . \
-		-f updater.Dockerfile \
+		--build-arg BIN=modules/updater/bin/updater \
 		-t $(UPDATER_IMG):$(VERSION) \
 		-t $(UPDATER_IMG):$(IMG_SHA_TAG) \
-		-t $(UPDATER_IMG):$(IMG_LATEST_TAG) \
-		--build-arg BUILDKIT_INLINE_CACHE=1
+		-t $(UPDATER_IMG):$(IMG_LATEST_TAG)
 
 alert-receiver-build:
+	cd modules/alert-receiver && \
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o bin/alert-receiver
 	docker $(DOCKER_BUILD_CMD) . \
-		-f alert-receiver.Dockerfile \
+		--build-arg BIN=modules/alert-receiver/bin/alert-receiver \
 		-t $(ALERT_RECEIVER_IMG) \
 		-t $(ALERT_RECEIVER_IMG):$(IMG_SHA_TAG) \
-		-t $(ALERT_RECEIVER_IMG):$(IMG_LATEST_TAG) \
-		--build-arg BUILDKIT_INLINE_CACHE=1
+		-t $(ALERT_RECEIVER_IMG):$(IMG_LATEST_TAG)
 
 apiserver-build:
-	docker $(DOCKER_BUILD_CMD) . -f apiserver.Dockerfile \
+	cd modules/apiserver && \
+	CGO_ENABLED=0 \
+        GOOS=linux \
+        GOARCH=amd64 \
+        GO111MODULE=on \
+        go build \
+        -ldflags " \
+        -X github.com/kuberlogic/kuberlogic/modules/apiserver/cmd.sha1ver=$(REVISION) \
+        -X github.com/kuberlogic/kuberlogic/modules/apiserver/cmd.buildTime=$(BUILD_TIME) \
+        -X github.com/kuberlogic/kuberlogic/modules/apiserver/cmd.ver=$(VERSION)"  \
+        -a -o bin/apiserver main.go
+	docker $(DOCKER_BUILD_CMD) . \
+		--build-arg BIN=modules/apiserver/bin/apiserver \
 		-t $(APISERVER_IMG) \
 		-t $(APISERVER_IMG):$(IMG_SHA_TAG) \
-		-t $(APISERVER_IMG):$(IMG_LATEST_TAG) \
-		--build-arg VERSION=$(VERSION) \
-		--build-arg BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
-		--build-arg REVISION=$(COMMIT_SHA) \
-		--build-arg BUILDKIT_INLINE_CACHE=1
+		-t $(APISERVER_IMG):$(IMG_LATEST_TAG)
 
 build-tests: gen test
 	echo "Building tests image"
@@ -210,13 +223,11 @@ backup-build: mark-executable
 	docker $(DOCKER_BUILD_CMD) backup/mysql/ \
 		-t $(MYSQL_BACKUP_IMG) \
 		-t $(MYSQL_BACKUP_IMG):$(IMG_SHA_TAG) \
-		-t $(MYSQL_BACKUP_IMG):$(IMG_LATEST_TAG) \
-		--build-arg BUILDKIT_INLINE_CACHE=1 ; \
+		-t $(MYSQL_BACKUP_IMG):$(IMG_LATEST_TAG)
 	docker $(DOCKER_BUILD_CMD) backup/postgres/ \
 		-t $(PG_BACKUP_IMG) \
 		-t $(PG_BACKUP_IMG):$(IMG_SHA_TAG) \
-		-t $(PG_BACKUP_IMG):$(IMG_LATEST_TAG) \
-		--build-arg BUILDKIT_INLINE_CACHE=1
+		-t $(PG_BACKUP_IMG):$(IMG_LATEST_TAG)
 
 backup-push:
 	docker push $(MYSQL_BACKUP_IMG)
@@ -228,13 +239,11 @@ restore-build: mark-executable
 	docker $(DOCKER_BUILD_CMD) backup/restore/mysql/ \
 	-t $(MYSQL_RESTORE_BACKUP_IMG) \
 	-t $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) \
-	-t $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG) \
-	--build-arg BUILDKIT_INLINE_CACHE=1 ; \
+	-t $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
 	docker $(DOCKER_BUILD_CMD) backup/restore/postgres/ \
 	-t $(PG_RESTORE_BACKUP_IMG) \
 	-t $(PG_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) \
-	-t $(PG_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG) \
-	--build-arg BUILDKIT_INLINE_CACHE=1
+	-t $(PG_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
 
 restore-push:
 	docker push $(MYSQL_RESTORE_BACKUP_IMG)
@@ -246,8 +255,7 @@ ui-build:
 	docker $(DOCKER_BUILD_CMD) modules/ui \
 	-t $(UI_IMG) \
 	-t $(UI_IMG):$(IMG_SHA_TAG) \
-	-t $(UI_IMG):$(IMG_LATEST_TAG) \
-	--build-arg BUILDKIT_INLINE_CACHE=1
+	-t $(UI_IMG):$(IMG_LATEST_TAG)
 
 ui-push:
 	docker push $(UI_IMG)

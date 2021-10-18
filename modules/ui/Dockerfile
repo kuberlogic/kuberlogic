@@ -7,8 +7,7 @@ FROM node:16.3.0 as build
 WORKDIR /usr/local/app
 
 # Copy dependency information
-COPY ./package.json ./
-COPY ./package-lock.json ./
+COPY ./package.json ./package-lock.json ./
 
 # Install all the dependencies
 RUN npm install --loglevel verbose
