@@ -177,7 +177,7 @@ apiserver-build:
         GOARCH=amd64 \
         GO111MODULE=on \
         go build \
-        -mod=vendor && \
+        -mod=vendor \
         -ldflags " \
         -X github.com/kuberlogic/kuberlogic/modules/apiserver/cmd.sha1ver=$(REVISION) \
         -X github.com/kuberlogic/kuberlogic/modules/apiserver/cmd.buildTime=$(BUILD_TIME) \
