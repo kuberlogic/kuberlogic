@@ -8,6 +8,9 @@ jobs:
   build:
     name: Build images
     runs-on: ubuntu-latest
+    env:
+      USE_BUILDX: true
+      GOPATH: /tmp/go
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -18,7 +21,7 @@ jobs:
       - name: Cache go modules
         uses: actions/cache@v2
         with:
-          path: ./pkg
+          path: $GOPATH/pkg
           key: go-cache
 
       - name: Set up Docker Buildx
@@ -39,8 +42,6 @@ jobs:
       - name: Build installer & images
         run: |
           make docker-build installer-build
-        env:
-          USE_BUILDX: "true"
 
       - name: Login to Docker Registry
         uses: docker/login-action@v1
