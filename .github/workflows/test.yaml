@@ -60,11 +60,6 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '1.16.0'
-      - name: Cache go modules
-        uses: actions/cache@v2
-        with:
-          path: $GOPATH/pkg
-          key: go-cache
 
       - name: Checkout
         uses: actions/checkout@v2
