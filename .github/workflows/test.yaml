@@ -7,6 +7,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      USE_BUILDX: true
+      GOPATH: /tmp/go
     strategy:
       fail-fast: true
       matrix:
@@ -60,7 +63,7 @@ jobs:
       - name: Cache go modules
         uses: actions/cache@v2
         with:
-          path: ./pkg
+          path: $GOPATH/pkg
           key: go-cache
 
       - name: Checkout
@@ -107,8 +110,6 @@ jobs:
       - name: Build installer & images
         run: |
           make docker-build installer-build
-        env:
-          USE_BUILDX: "true"
 
       - name: Move cache
         run: |
