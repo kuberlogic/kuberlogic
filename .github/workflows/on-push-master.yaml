@@ -29,7 +29,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: /tmp/.buildx-cache
-          key: buildx-cache-${{ github.run.id }}
+          key: buildx-cache-${{ github.run_id }}
           restore-keys: |
             buildx-cache-
 
