@@ -5,7 +5,7 @@ metadata:
   name: {{ .Values.configMapName }}
   namespace: {{ .Release.Namespace }}
 data:
-  {{- range tuple "handler.lua" "schema.lua" }}
+  {{- range tuple "handler.lua" "schema.lua" "JSON.lua" }}
     {{ . }}: |-
-    {{ printf "%s/%s" "jwt2header-plugin" . | $.Files.Get | nindent 6 }}
+    {{ printf "%s/%s" "keycloak-token-introspect" . | $.Files.Get | nindent 6 }}
   {{- end }}
