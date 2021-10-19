@@ -320,7 +320,7 @@ func deployMonitoring(globals map[string]interface{}, i *HelmInstaller, release 
 	}
 
 	i.Log.Infof("Deploying Kuberlogic monitoring...")
-	release.UpdateMCAddress("http://" + i.Endpoints.MonitoringConsole)
+	release.UpdateMCAddress("http://" + i.Config.Endpoints.MonitoringConsole)
 	return releaseHelmChart(helmMonitoringChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
