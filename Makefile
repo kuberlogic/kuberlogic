@@ -224,7 +224,7 @@ tests-push:
 mark-executable:
 	chmod +x $(shell find backup/ -iname *.sh | xargs)
 
-backup-build: mark-executable
+backup-build:
 	docker $(DOCKER_BUILD_CMD) backup/mysql/ \
 		-t $(MYSQL_BACKUP_IMG) \
 		-t $(MYSQL_BACKUP_IMG):$(IMG_SHA_TAG) \
@@ -240,7 +240,7 @@ backup-push:
 	docker push $(PG_BACKUP_IMG)
 	docker push $(PG_BACKUP_IMG):$(IMG_LATEST_TAG)
 
-restore-build: mark-executable
+restore-build:
 	docker $(DOCKER_BUILD_CMD) backup/restore/mysql/ \
 	-t $(MYSQL_RESTORE_BACKUP_IMG) \
 	-t $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) \
