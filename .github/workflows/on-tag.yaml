@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       USE_BUILDX: true
+      GOPATH: /tmp/go
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -17,6 +18,13 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '1.16.0'
+      - name: Cache Go modules
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.GOPATH }}
+          key: go-cache-${{ github.run_id }}
+          restore-keys: |
+            go-cache-
 
       - name: Set up Docker Buildx
         id: buildx
