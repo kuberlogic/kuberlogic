@@ -30,8 +30,8 @@ jobs:
         with:
           path: /tmp/.buildx-cache
           key: buildx-cache-{{ github.run.id }}
-          restore-keys:
-            - buildx-cache-
+          restore-keys: |
+            buildx-cache-
 
       - name: Cache installer
         uses: actions/cache@v2
