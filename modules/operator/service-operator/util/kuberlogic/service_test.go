@@ -66,28 +66,6 @@ var cmMy = &kuberlogicv1.KuberLogicService{
 	Status: kuberlogicv1.KuberLogicServiceStatus{},
 }
 
-func TestGetClusterCredentialsInfo(t *testing.T) {
-	pgUserE, pgPasswordFieldE, pgSecretE := "kuberlogic", "password", "kuberlogic.kuberlogic-test-pg.credentials"
-	pgUserA, pgPasswordFieldA, pgSecretA, _ := GetClusterCredentialsInfo(cmPg)
-
-	if pgUserE != pgUserA || pgPasswordFieldE != pgPasswordFieldA || pgSecretE != pgSecretA {
-		t.Errorf("user or passwordfield or secret is not correct for %s of type %s.\nActual: %s, %s, %s\nExpected: %s, %s, %s",
-			cmPg.Name, cmPg.Spec.Type,
-			pgUserA, pgPasswordFieldA, pgSecretA,
-			pgUserE, pgPasswordFieldE, pgSecretE)
-	}
-
-	myUserE, myPasswordFieldE, mySecretE := "root", "ROOT_PASSWORD", "test-mysql-cred"
-	myUserA, myPasswordFieldA, mySecretA, _ := GetClusterCredentialsInfo(cmMy)
-
-	if myUserA != myUserE || myPasswordFieldA != myPasswordFieldE || mySecretA != mySecretE {
-		t.Errorf("user or passwordfield or secret is not correct for %s of type %s.\nActual: %s, %s, %s\nExpected: %s, %s, %s",
-			cmMy.Name, cmMy.Spec.Type,
-			myUserA, myPasswordFieldA, mySecretA,
-			myUserE, myPasswordFieldE, mySecretE)
-	}
-}
-
 func TestGetClusterPodLabels(t *testing.T) {
 	masterPgE, replicaPgE :=
 		map[string]string{"spilo-role": "master", "application": "spilo", "cluster-name": "kuberlogic-test-pg"},
@@ -111,5 +89,49 @@ func TestGetClusterPodLabels(t *testing.T) {
 			cmMy.Name, cmMy.Spec.Type,
 			masterMyA, replicaMyA,
 			masterMyE, replicaMyE)
+	}
+}
+
+func TestGetClusterServices(t *testing.T) {
+	pgMasterSvcE, pgReplicaSvcE := "kuberlogic-test-pg.default", "kuberlogic-test-pg-repl.default"
+	pgMasterSvcA, pgReplicaSvcA, _ := GetClusterServices(cmPg)
+
+	if pgMasterSvcE != pgMasterSvcA || pgReplicaSvcE != pgReplicaSvcA {
+		t.Errorf("master and/or replica service are not correct for %s of type %s.\nActual: %s, %s\nExpected: %s, %s",
+			cmPg.Name, cmPg.Spec.Type,
+			pgMasterSvcA, pgReplicaSvcA,
+			pgReplicaSvcE, pgReplicaSvcE)
+	}
+
+	mysqlMasterSvcE, mysqlReplicaSvcE := "test-mysql-mysql-master.default", "test-mysql-mysql-replicas.default"
+	mysqlMasterSvcA, mysqlReplicaSvcA, _ := GetClusterServices(cmMy)
+
+	if mysqlMasterSvcE != mysqlMasterSvcA || mysqlReplicaSvcE != mysqlReplicaSvcA {
+		t.Errorf("master and/or replica service are not correct for %s of type %s.\nActual: %s, %s\nExpected: %s, %s",
+			cmMy.Name, cmMy.Spec.Type,
+			mysqlMasterSvcA, mysqlReplicaSvcA,
+			mysqlReplicaSvcE, mysqlReplicaSvcE)
+	}
+}
+
+func TestGetClusterCredentialsInfo(t *testing.T) {
+	pgUserE, pgPasswordFieldE, pgSecretE := "kuberlogic", "password", "kuberlogic.kuberlogic-test-pg.credentials"
+	pgUserA, pgPasswordFieldA, pgSecretA, _ := GetClusterCredentialsInfo(cmPg)
+
+	if pgUserE != pgUserA || pgPasswordFieldE != pgPasswordFieldA || pgSecretE != pgSecretA {
+		t.Errorf("user or passwordfield or secret is not correct for %s of type %s.\nActual: %s, %s, %s\nExpected: %s, %s, %s",
+			cmPg.Name, cmPg.Spec.Type,
+			pgUserA, pgPasswordFieldA, pgSecretA,
+			pgUserE, pgPasswordFieldE, pgSecretE)
+	}
+
+	myUserE, myPasswordFieldE, mySecretE := "root", "ROOT_PASSWORD", "test-mysql-cred"
+	myUserA, myPasswordFieldA, mySecretA, _ := GetClusterCredentialsInfo(cmMy)
+
+	if myUserA != myUserE || myPasswordFieldA != myPasswordFieldE || mySecretA != mySecretE {
+		t.Errorf("user or passwordfield or secret is not correct for %s of type %s.\nActual: %s, %s, %s\nExpected: %s, %s, %s",
+			cmMy.Name, cmMy.Spec.Type,
+			myUserA, myPasswordFieldA, mySecretA,
+			myUserE, myPasswordFieldE, mySecretE)
 	}
 }

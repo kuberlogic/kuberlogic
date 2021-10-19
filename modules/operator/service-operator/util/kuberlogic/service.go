@@ -23,6 +23,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// GetCluster returns a service operator based on cm.Spec.Type field
 func GetCluster(cm *kuberlogicv1.KuberLogicService) (op interfaces.OperatorInterface, err error) {
 	op, err = serviceOperator.GetOperator(cm.Spec.Type)
 	if err != nil {
@@ -32,6 +33,8 @@ func GetCluster(cm *kuberlogicv1.KuberLogicService) (op interfaces.OperatorInter
 	return
 }
 
+// GetClusterPodLabels returns maps of labels for master and replica service pods
+// it returns an error if a cluster Operator is not found
 func GetClusterPodLabels(cm *kuberlogicv1.KuberLogicService) (master map[string]string, replica map[string]string, err error) {
 	op, err := GetCluster(cm)
 	if err != nil {
@@ -42,15 +45,21 @@ func GetClusterPodLabels(cm *kuberlogicv1.KuberLogicService) (master map[string]
 	return
 }
 
+// GetClusterServices returns master and replica service names.
+// A service form is "<svc>.<namespace>".
+// An error is returned if a cluster Operator is not found
 func GetClusterServices(cm *kuberlogicv1.KuberLogicService) (master string, replica string, err error) {
 	op, err := GetCluster(cm)
 	if err != nil {
 		return
 	}
-	master, replica = op.GetInternalDetails().GetMasterService(), op.GetInternalDetails().GetReplicaService()
+	master = op.GetInternalDetails().GetMasterService() + "." + cm.Namespace
+	replica = op.GetInternalDetails().GetReplicaService() + "." + cm.Namespace
 	return
 }
 
+// GetClusterServicePort returns a service port for a service.
+// An error is returned if a cluster Operator is not found
 func GetClusterServicePort(cm *kuberlogicv1.KuberLogicService) (p int, err error) {
 	op, err := GetCluster(cm)
 	if err != nil {
@@ -60,6 +69,8 @@ func GetClusterServicePort(cm *kuberlogicv1.KuberLogicService) (p int, err error
 	return
 }
 
+// GetClusterMainContainer returns a name of a main container for a serivce (mysql for Mysql, etc)
+// An error is returned if a cluster Operator is not found
 func GetClusterMainContainer(cm *kuberlogicv1.KuberLogicService) (c string, err error) {
 	op, err := GetCluster(cm)
 	if err != nil {
@@ -69,6 +80,11 @@ func GetClusterMainContainer(cm *kuberlogicv1.KuberLogicService) (c string, err 
 	return
 }
 
+// GetClusterCredentialsInfo returns:
+// * username
+// * secret field that contains a password for this username
+// * secret name that contains a password
+// * error if a service operator is not found
 func GetClusterCredentialsInfo(cm *kuberlogicv1.KuberLogicService) (username, passwordField, secretName string, err error) {
 	op, err := GetCluster(cm)
 	if err != nil {
@@ -80,6 +96,8 @@ func GetClusterCredentialsInfo(cm *kuberlogicv1.KuberLogicService) (username, pa
 	return
 }
 
+// GetSession returns a session struct for a service
+// An error is returned if a cluster Operator is not found
 func GetSession(cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (session interfaces.Session, err error) {
 	op, err := GetCluster(cm)
 	if err != nil {

@@ -74,7 +74,7 @@ NAMESPACE ?= kuberlogic
 all: manager
 
 # Run tests
-test: generate fmt vet manifests
+operator-test: generate fmt vet manifests
 	cd modules/operator; \
 	go test ./... -coverprofile cover.out ;\
 

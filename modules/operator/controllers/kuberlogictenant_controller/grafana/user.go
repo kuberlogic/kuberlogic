@@ -90,7 +90,7 @@ func (gr *grafana) ensureUser(email, username, password, orgRole string, orgId i
 		// something was wrong
 		var result interface{}
 		err = gr.api.encodeResponseTo(resp.Body, &result)
-		return fmt.Errorf("grafana: something was wrong with request %gr, status: %d, result: %v, err: %v",
+		return fmt.Errorf("grafana: something was wrong with request %s, status: %d, result: %v, err: %v",
 			endpoint, resp.StatusCode, result, err)
 	}
 }
@@ -125,7 +125,7 @@ func (gr *grafana) ensureUserInOrganization(user user, orgRole string, orgId int
 		// something was wrong
 		var result interface{}
 		err = gr.api.encodeResponseTo(resp.Body, &result)
-		return fmt.Errorf("grafana: something was wrong with request %gr, status: %d, result: %v, err: %v",
+		return fmt.Errorf("grafana: something was wrong with request %s, status: %d, result: %v, err: %v",
 			endpoint, resp.StatusCode, result, err)
 	}
 }
@@ -158,7 +158,7 @@ func (gr *grafana) createUser(email, username, password string, orgId int) error
 	default:
 		var result interface{}
 		err = gr.api.encodeResponseTo(resp.Body, &result)
-		return fmt.Errorf("grafana: something was wrong with request %gr, status: %d, result: %v, err: %v",
+		return fmt.Errorf("grafana: something was wrong with request %s, status: %d, result: %v, err: %v",
 			endpoint, resp.StatusCode, result, err)
 	}
 }
@@ -177,7 +177,7 @@ func (gr *grafana) deleteUser(userId int) error {
 	default:
 		var result interface{}
 		err = gr.api.encodeResponseTo(resp.Body, &result)
-		return fmt.Errorf("grafana: something was wrong with request %gr, status: %d, result: %v, err: %v",
+		return fmt.Errorf("grafana: something was wrong with request %s, status: %d, result: %v, err: %v",
 			endpoint, resp.StatusCode, result, err)
 	}
 }
