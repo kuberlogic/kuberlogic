@@ -2,17 +2,12 @@
 authType: jwt
 
 kong:
-  authPlugin: kuberlogic-auth
-
   tokenCleanupPlugin: kuberlogic-auth-token-cleanup
+  tokenIntrospectPlugin:
+    name: kuberlogic-token-introspect
 
-  jwt2headerPlugin:
-    name: kuberlogic-jwt2headers
+    config:
+      idClaim: email
 
-jwtAuth:
-  param: token
-  algorithm: RS256
-  iss: https://keycloak:8443/auth/realms/kuberlogic_realm
-  rsaPubKey: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFoY3hNOFFxYVFXRTlkYUthL0I3NmN0UVY3OERXTENPWVhUUVZPdVJhUWpCbXY4elV0clp3ZmJUci96VUNneW9WeTZ4U3JETFRDcDZTMzczUUtzSkVIWG1TUTlucjBtSlR3TXhDK1UxRnV2RnFPdmFCMjRzVTV3RzRMY3ZnemF1ODd6elNIa3IxTzZLRnV6NXVLTUNkMmJaaWlmTmI1M1VhOUpBOHVFT1VncDhCZUxueEUzTGxwQmRYWHB6SXQ5QmE5SHZlaTBSOXhPclJHd0JHMG5IdEI1Y0hQWmJsTDFLSGF0ZWN0Q2s3QWtXajZYMjBqUEZJMkxPdW5YcWsvRTVQR0YrVk1QV0w1QTRkcDZ0V1VqS2VMZ1ROSSsybS82ZFhFa2NwSjZ5dDZ0WTVtTHErYVNtWEpqZzBvQUVYQWFCWCsxTkhpZ0dmdTVFSURrVjRiS29LaVFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tICAK
 
 ingressClass: kong

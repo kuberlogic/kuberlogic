@@ -7,5 +7,5 @@ metadata:
 config:
   remove:
     querystring:
-      - {{ .Values.jwtAuth.param }}
+      - {{ .Values.kong.tokenIntrospectPlugin.config.tokenArg }}
 plugin: request-transformer

@@ -142,20 +142,20 @@ func deployIngressController(globals map[string]interface{}, i *HelmInstaller, r
 		return errors.New("failed to obtain an Ingress IP address for Kong ingress controller")
 	}
 
-	// get authentication data for Kong Ingress Controller
-	JWTAuthParams, err := getJWTAuthVals(i.ReleaseNamespace, i.ClientSet, i.Log)
-	if err != nil {
-		return errors.Wrap(err, "error computing Grafana Authentication values")
-	}
 	kuberlogicIngressValues := map[string]interface{}{
 		"kong": map[string]interface{}{
-			"authPlugin":         kongJWTAuthPlugin,
 			"tokenCleanupPlugin": kongJWTCleanupPlugin,
-			"jwt2headerPlugin": map[string]interface{}{
-				"name": kongJWT2HeadersPlugin,
+
+			"tokenIntrospectPlugin": map[string]interface{}{
+				"name": kongKeycloakIntrospectPlugin,
+				"config": map[string]interface{}{
+					"tokenArg":         jwtTokenQueryParam,
+					"introspectionUrl": jwtIssuer + "/" + "protocol/openid-connect/token/introspect",
+					"basicUsername":    keycloakClientId,
+					"basicPassword":    keycloakClientSecret,
+				},
 			},
 		},
-		"jwtAuth":      JWTAuthParams,
 		"ingressClass": ingressClass,
 	}
 
@@ -283,7 +283,7 @@ func deployMonitoring(globals map[string]interface{}, i *HelmInstaller, release 
 				"class":   ingressClass,
 				"grafanaLogin": map[string]interface{}{
 					"annotations": map[string]interface{}{
-						"konghq.com/plugins": fmt.Sprintf("%s,%s,%s", kongJWT2HeadersPlugin, kongJWTCleanupPlugin, kongJWTAuthPlugin),
+						"konghq.com/plugins": fmt.Sprintf("%s,%s", kongKeycloakIntrospectPlugin, kongJWTCleanupPlugin),
 					},
 				},
 			},

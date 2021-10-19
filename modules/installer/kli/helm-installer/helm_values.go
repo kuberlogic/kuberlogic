@@ -23,11 +23,9 @@ const (
 	certManagerNs = "cert-manager"
 
 	// Kong Ingress Controller
-	ingressClass          = "kuberlogic-kong"
-	ingressAuthName       = "kuberlogic-auth"
-	kongJWTAuthPlugin     = "kuberlogic-jwt-auth"
-	kongJWTCleanupPlugin  = "kuberlogic-jwt-param-cleanup"
-	kongJWT2HeadersPlugin = "kuberlogic-jwt-headers"
+	ingressClass                 = "kuberlogic-kong"
+	kongJWTCleanupPlugin         = "kuberlogic-jwt-param-cleanup"
+	kongKeycloakIntrospectPlugin = "keycloak-introspect-plugin"
 	// registry information for installation
 	registryName = "quay.io"
 	registryOrg  = "kuberlogic"
@@ -63,7 +61,7 @@ const (
 	grafanaServicePort    = 3000
 	grafanaSecretName     = "kuberlogic-grafana-credentials"
 	grafanaAdminUser      = "kuberlogic"
-	grafanaAuthHeaderName = "X-Kong-JWT-Claim-email" // this value is set dynamically by Kong jwt2headers plugin
+	grafanaAuthHeaderName = "X-INTROSPECTION-ID"
 
 	// monitoring victoriametrics values
 	victoriaMetricsServiceName = "kuberlogic-victoriametrics"
