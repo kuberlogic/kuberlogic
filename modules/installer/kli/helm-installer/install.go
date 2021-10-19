@@ -17,6 +17,7 @@
 package helm_installer
 
 import (
+	"github.com/kuberlogic/kuberlogic/modules/installer/cfg"
 	"github.com/kuberlogic/kuberlogic/modules/installer/internal"
 	logger "github.com/kuberlogic/kuberlogic/modules/installer/log"
 	"github.com/pkg/errors"
@@ -31,12 +32,16 @@ func (i *HelmInstaller) Install(args []string) error {
 	installPhase := args[0]
 
 	// run pre install checks
-	if err := runInstallChecks(i.ClientSet, i.HelmActionConfig, i.Log); err != nil {
+	if err := runInstallChecks(i.ClientSet, i.HelmActionConfig, i.Log, i.Config); err != nil {
 		return errors.Wrap(err, "pre-install checks are failed")
 	}
 
 	// prepare environment for release and start release process
-	if err := internal.PrepareEnvironment(i.ReleaseNamespace, i.Registry.Server, i.Registry.Password, i.Registry.Username, i.ClientSet); err != nil {
+	if err := internal.PrepareEnvironment(i.ReleaseNamespace,
+		i.Config.Registry.Server,
+		i.Config.Registry.Password,
+		i.Config.Registry.Username,
+		i.ClientSet); err != nil {
 		return errors.Wrap(err, "error preparing environment")
 	}
 	release, err := internal.StartRelease(i.ReleaseNamespace, i.ClientSet)
@@ -46,7 +51,7 @@ func (i *HelmInstaller) Install(args []string) error {
 
 	err = func() error {
 		// do not pass imagePullSecretReference if it is disabled
-		if i.Registry.Server == "" {
+		if i.Config.Registry.Server == "" {
 			delete(globalValues, "imagePullSecrets")
 		}
 
@@ -105,7 +110,7 @@ func (i *HelmInstaller) Install(args []string) error {
 	return err
 }
 
-func runInstallChecks(clientSet *kubernetes.Clientset, actionConfig *action.Configuration, log logger.Logger) error {
+func runInstallChecks(clientSet *kubernetes.Clientset, actionConfig *action.Configuration, log logger.Logger, config cfg.Config) error {
 	if err := checkKubernetesVersion(clientSet, log); err != nil {
 		return errors.Wrap(err, "error checking Kubernetes version")
 	}
@@ -114,6 +119,9 @@ func runInstallChecks(clientSet *kubernetes.Clientset, actionConfig *action.Conf
 	}
 	if err := checkLoadBalancerServiceType(clientSet, log); err != nil {
 		return errors.Wrap(err, "error checking Kubernetes LoadBalancer service")
+	}
+	if err := checkCustomCertificates(config, log); err != nil {
+		return errors.Wrap(err, "error checking certificates")
 	}
 	return nil
 }

@@ -1,7 +1,6 @@
 replicas: 1
 
 config:
-  apiEndpoint: http://127.0.0.1:8080
   grafanaEndpoint: http://127.0.0.1:8080
 
 image:
@@ -19,10 +18,18 @@ resources:
     cpu: 100m
     memory: 128Mi
 
-service:
+uiService:
   type: ClusterIP
   port: 80
 
+apiService:
+  port: 80
+  fullName: kuberlogic-apiserver
+
 ingress:
   host: kuberlogic.com
-  enabled: false
+  enabled: true
+  tls:
+    ca:
+    crt:
+    key:

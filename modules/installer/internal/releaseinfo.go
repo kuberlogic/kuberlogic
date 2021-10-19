@@ -35,7 +35,6 @@ const (
 	cmSharedSecretKey = "SharedSecret"
 
 	// connection details
-	apiURLKey          = "api"
 	uiURLKey           = "ui"
 	mcURLKey           = "mc"
 	ingressEndpointKey = "ingressIP"
@@ -55,7 +54,6 @@ type ReleaseInfo struct {
 	Namespace string
 	Status    string
 
-	apiURL          string
 	uiURL           string
 	mcURL           string
 	ingressEndpoint string
@@ -73,7 +71,6 @@ func (r *ReleaseInfo) findState() error {
 		return errors.New("release state is empty")
 	}
 	r.Status = string(s)
-	r.apiURL = string(r.secret.Data[apiURLKey])
 	r.uiURL = string(r.secret.Data[uiURLKey])
 	r.mcURL = string(r.secret.Data[uiURLKey])
 	r.ingressEndpoint = string(r.secret.Data[ingressEndpointKey])
@@ -83,7 +80,6 @@ func (r *ReleaseInfo) findState() error {
 
 func (r *ReleaseInfo) updateState(state string, clientSet *kubernetes.Clientset) error {
 	r.secret.Data[releaseStateKey] = []byte(state)
-	r.secret.Data[apiURLKey] = []byte(r.apiURL)
 	r.secret.Data[uiURLKey] = []byte(r.uiURL)
 	r.secret.Data[mcURLKey] = []byte(r.mcURL)
 	r.secret.Data[ingressEndpointKey] = []byte(r.ingressEndpoint)
@@ -112,10 +108,6 @@ func (r ReleaseInfo) InternalPassword() string {
 	return string(r.secret.Data[cmSharedSecretKey])
 }
 
-func (r *ReleaseInfo) UpdateAPIAddress(addr string) {
-	r.apiURL = addr
-}
-
 func (r *ReleaseInfo) UpdateUIAddress(addr string) {
 	r.uiURL = addr
 }
@@ -133,15 +125,14 @@ func (r *ReleaseInfo) UpdateDemoUser(user string) {
 }
 
 func (r *ReleaseInfo) ShowBanner() string {
-	return fmt.Sprintf(`Kuberlogic API URL: %s
-Kuberlogic UI URL: %s
+	return fmt.Sprintf(`Kuberlogic UI URL: %s
 Kuberlogic Monitoring Console URL: %s
 Kuberlogic connection Ingress address: %s
 
 Please make sure that URL domain names are pointing to the Ingress IP!
 
 Demo user login: %s
-Demo user password can be found in the configuration file.`, r.apiURL, r.uiURL, r.mcURL, r.ingressEndpoint, r.demoUser)
+Demo user password can be found in the configuration file.`, r.uiURL, r.mcURL, r.ingressEndpoint, r.demoUser)
 }
 
 func (r *ReleaseInfo) UpgradeRelease(clientSet *kubernetes.Clientset) error {

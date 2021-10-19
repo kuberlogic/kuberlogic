@@ -22,6 +22,7 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/installer/internal"
 	"github.com/pkg/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"os"
 	"time"
 )
 
@@ -70,7 +71,7 @@ func deployAuth(globals map[string]interface{}, i *HelmInstaller, releaseInfo *i
 		"realm": map[string]interface{}{
 			"id":            keycloakRealmName,
 			"name":          keycloakRealmName,
-			"adminPassword": i.Auth.AdminPassword,
+			"adminPassword": i.Config.Auth.AdminPassword,
 		},
 		"clientId":     keycloakClientId,
 		"clientSecret": keycloakClientSecret,
@@ -81,10 +82,10 @@ func deployAuth(globals map[string]interface{}, i *HelmInstaller, releaseInfo *i
 			"name": keycloakNodePortServiceName,
 		},
 	}
-	if i.Auth.DemoUserPassword != "" {
+	if i.Config.Auth.DemoUserPassword != "" {
 		kuberlogicKeycloakValues["testUser"] = map[string]interface{}{
 			"create":   true,
-			"password": i.Auth.DemoUserPassword,
+			"password": i.Config.Auth.DemoUserPassword,
 			"email":    keycloakDemoUser,
 		}
 		releaseInfo.UpdateDemoUser(keycloakDemoUser)
@@ -175,15 +176,38 @@ func deployIngressController(globals map[string]interface{}, i *HelmInstaller, r
 }
 
 func deployUI(globals map[string]interface{}, i *HelmInstaller, release *internal.ReleaseInfo) error {
+	tls := make(map[string]interface{})
+	if i.Config.TLS.CaFile != "" {
+		data, err := os.ReadFile(i.Config.TLS.CaFile)
+		if err != nil {
+			return errors.Wrap(err, "cannot read the ca file")
+		}
+		tls["ca"] = string(data)
+	}
+	if i.Config.TLS.CrtFile != "" {
+		data, err := os.ReadFile(i.Config.TLS.CrtFile)
+		if err != nil {
+			return errors.Wrap(err, "cannot read the certificate file")
+		}
+		tls["crt"] = string(data)
+	}
+	if i.Config.TLS.KeyFile != "" {
+		data, err := os.ReadFile(i.Config.TLS.KeyFile)
+		if err != nil {
+			return errors.Wrap(err, "cannot read the certificate key file")
+		}
+		tls["key"] = string(data)
+	}
+
 	values := map[string]interface{}{
 		"config": map[string]interface{}{
-			"apiEndpoint":               "http://" + i.Endpoints.API,
-			"monitoringConsoleEndpoint": "http://" + i.Endpoints.MonitoringConsole + "/login",
+			"monitoringConsoleEndpoint": "http://" + i.Config.Endpoints.MonitoringConsole + "/login",
 		},
 		"ingress": map[string]interface{}{
 			"enabled": true,
-			"host":    i.Endpoints.UI,
+			"host":    i.Config.Endpoints.UI,
 			"class":   ingressClass,
+			"tls":     tls,
 		},
 	}
 
@@ -193,7 +217,8 @@ func deployUI(globals map[string]interface{}, i *HelmInstaller, release *interna
 	}
 
 	i.Log.Infof("Deploying Kuberlogic UI...")
-	release.UpdateUIAddress("http://" + i.Endpoints.UI)
+	// TODO: could be https
+	release.UpdateUIAddress("http://" + i.Config.Endpoints.UI)
 	return releaseHelmChart(helmUIChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
@@ -212,11 +237,6 @@ func deployApiserver(globals map[string]interface{}, i *HelmInstaller, release *
 				},
 			},
 		},
-		"ingress": map[string]interface{}{
-			"enabled": true,
-			"host":    i.Endpoints.API,
-			"class":   ingressClass,
-		},
 	}
 
 	chart, err := apiserverChartReader()
@@ -225,7 +245,6 @@ func deployApiserver(globals map[string]interface{}, i *HelmInstaller, release *
 	}
 
 	i.Log.Infof("Deploying Kuberlogic apiserver...")
-	release.UpdateAPIAddress("http://" + i.Endpoints.API)
 	return releaseHelmChart(helmApiserverChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
@@ -284,7 +303,7 @@ func deployMonitoring(globals map[string]interface{}, i *HelmInstaller, release 
 			},
 			"ingress": map[string]interface{}{
 				"enabled": true,
-				"host":    i.Endpoints.MonitoringConsole,
+				"host":    i.Config.Endpoints.MonitoringConsole,
 				"class":   ingressClass,
 				"grafanaLogin": map[string]interface{}{
 					"annotations": map[string]interface{}{
