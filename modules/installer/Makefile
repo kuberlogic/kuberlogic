@@ -44,7 +44,9 @@ test: helm-embed
 
 compile: test
 	mkdir -p bin && \
+	go mod vendor && \
 	go build \
+		-mod=vendor \
 	    -ldflags " \
         -X github.com/kuberlogic/kuberlogic/modules/installer/cmd.sha1ver=$(REVISION) \
         -X github.com/kuberlogic/kuberlogic/modules/installer/cmd.buildTime=$(BUILD_TIME) \
