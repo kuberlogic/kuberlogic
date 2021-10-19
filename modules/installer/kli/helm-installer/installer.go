@@ -65,14 +65,11 @@ func New(config *cfg.Config, log logger.Logger) (*HelmInstaller, error) {
 		return nil, fmt.Errorf("error building Helm cli: %v", err)
 	}
 
-	i := &HelmInstaller{
+	return &HelmInstaller{
 		Log:              log,
 		ClientSet:        k8sclientset,
 		HelmActionConfig: helmActionConfig,
 		Config:           *config,
 		ReleaseNamespace: *config.Namespace,
-
-	}
-
-	return i, nil
+	}, nil
 }
