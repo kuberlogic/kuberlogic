@@ -1,7 +1,6 @@
 # jwt2header plugin that is managed as a subchart
-jwt2headers-plugin:
-  configMapName: &jwt2headerPlugin jwt2header-plugin
-
+keycloak-token-introspect:
+  configMapName: &keycloakTokenIntrospectPlugin keycloak-token-introspect-plugin
 
 # Default values for Kong's Helm Chart.
 # Declare variables to be passed into your templates.
@@ -319,8 +318,8 @@ udpProxy:
 # below will mount the contents of kong-plugin-rewriter-migrations at "/opt/kong/rewriter/migrations".
 plugins:
   configMaps:
-    - pluginName: *jwt2headerPlugin
-      name: *jwt2headerPlugin
+    - pluginName: keycloak-token-introspect
+      name: *keycloakTokenIntrospectPlugin
   # configMaps:
   # - pluginName: rewriter
   #   name: kong-plugin-rewriter
