@@ -19,36 +19,43 @@ package helm_installer
 import (
 	"context"
 	"fmt"
+	"github.com/Masterminds/semver/v3"
 	logger "github.com/kuberlogic/kuberlogic/modules/installer/log"
 	"github.com/pkg/errors"
 	v12 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"strings"
 	"time"
 )
 
 var (
 	// compatible kubernetes version in major.minor form
-	kubeCompatVersions = []string{"1.20"}
+	kubeCompatVersions = []string{"1.20", "1.21"}
 )
 
-// checkKubernetesVersion checks if Kubernetes cluster is ex
+// checkKubernetesVersion checks if Kubernetes cluster is compatible with what is found
 func checkKubernetesVersion(clientset *kubernetes.Clientset, log logger.Logger) error {
 	log.Infof("Checking Kubernetes cluster version")
 	info, err := clientset.Discovery().ServerVersion()
 	if err != nil {
-		return fmt.Errorf("error checking Kubernetes version: %s", err)
+		return errors.Wrap(err, "error checking Kubernetes version")
+	}
+	log.Infof("Kubernetes version %s is found", info.String())
+	clusterVersion, err := semver.NewVersion(info.String())
+	if err != nil {
+		return errors.Wrap(err, "error marshaling Kubernetes version")
 	}
 	for _, v := range kubeCompatVersions {
-		ver := strings.Split(v, ".")
-		if info.Major == ver[0] && info.Minor == ver[1] {
-			log.Infof("Kubernetes version %s is found", info.String())
+		c, err := semver.NewConstraint(v)
+		if err != nil {
+			return errors.Wrap(err, "error creating version constraint")
+		}
+		if c.Check(clusterVersion) {
 			return nil
 		}
 	}
-	log.Errorf("Kubernetes version %s found", info.String())
-	return fmt.Errorf("cluster version incompatible")
+	log.Infof("Compatible Kubernetes versions: %v", kubeCompatVersions)
+	return errors.New("cluster version incompatible")
 }
 
 // checkDefaultStorageClass checks if a Kubernetes cluster has a default StorageClass
@@ -72,6 +79,7 @@ func checkDefaultStorageClass(clientset *kubernetes.Clientset, log logger.Logger
 	return nil
 }
 
+// checkLoadBalancerServiceType checks if a cluster provisions IngressIP for test LoadBalancer service
 func checkLoadBalancerServiceType(clientset *kubernetes.Clientset, log logger.Logger) error {
 	const (
 		testServiceName = "kubernetes-test-service"

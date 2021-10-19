@@ -3,6 +3,7 @@ module github.com/kuberlogic/kuberlogic/modules/installer
 go 1.16
 
 require (
+	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
