@@ -93,7 +93,7 @@ func TestGetClusterPodLabels(t *testing.T) {
 }
 
 func TestGetClusterServices(t *testing.T) {
-	pgMasterSvcE, pgReplicaSvcE := "kuberlogic-test-pg.default", "kuberlogic-test-pg-repl.default"
+	pgMasterSvcE, pgReplicaSvcE := "kuberlogic-test-pg", "kuberlogic-test-pg-repl"
 	pgMasterSvcA, pgReplicaSvcA, _ := GetClusterServices(cmPg)
 
 	if pgMasterSvcE != pgMasterSvcA || pgReplicaSvcE != pgReplicaSvcA {
@@ -103,7 +103,7 @@ func TestGetClusterServices(t *testing.T) {
 			pgReplicaSvcE, pgReplicaSvcE)
 	}
 
-	mysqlMasterSvcE, mysqlReplicaSvcE := "test-mysql-mysql-master.default", "test-mysql-mysql-replicas.default"
+	mysqlMasterSvcE, mysqlReplicaSvcE := "test-mysql-mysql-master", "test-mysql-mysql-replicas"
 	mysqlMasterSvcA, mysqlReplicaSvcA, _ := GetClusterServices(cmMy)
 
 	if mysqlMasterSvcE != mysqlMasterSvcA || mysqlReplicaSvcE != mysqlReplicaSvcA {

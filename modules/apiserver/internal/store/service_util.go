@@ -98,7 +98,7 @@ func getServiceInternalConnection(c *kubernetes.Clientset, log logging.Logger, k
 
 	svc.Master = &models.Connection{
 		Cert:     "",
-		Host:     masterSvc,
+		Host:     masterSvc + "." + kls.Namespace,
 		Password: password,
 		Port:     int64(port),
 		SslMode:  "",
@@ -106,7 +106,7 @@ func getServiceInternalConnection(c *kubernetes.Clientset, log logging.Logger, k
 	}
 	svc.Replica = &models.Connection{
 		Cert:     "",
-		Host:     replicaSvc,
+		Host:     replicaSvc + kls.Namespace,
 		Password: password,
 		Port:     int64(port),
 		SslMode:  "",

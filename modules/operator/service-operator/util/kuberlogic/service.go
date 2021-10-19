@@ -46,15 +46,14 @@ func GetClusterPodLabels(cm *kuberlogicv1.KuberLogicService) (master map[string]
 }
 
 // GetClusterServices returns master and replica service names.
-// A service form is "<svc>.<namespace>".
 // An error is returned if a cluster Operator is not found
 func GetClusterServices(cm *kuberlogicv1.KuberLogicService) (master string, replica string, err error) {
 	op, err := GetCluster(cm)
 	if err != nil {
 		return
 	}
-	master = op.GetInternalDetails().GetMasterService() + "." + cm.Namespace
-	replica = op.GetInternalDetails().GetReplicaService() + "." + cm.Namespace
+	master = op.GetInternalDetails().GetMasterService()
+	replica = op.GetInternalDetails().GetReplicaService()
 	return
 }
 
