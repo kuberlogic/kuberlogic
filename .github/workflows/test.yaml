@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       USE_BUILDX: true
-      GOPATH: /tmp/go
     strategy:
       fail-fast: true
       matrix:
@@ -71,7 +70,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: /tmp/.buildx-cache
-          key: buildx-cache
+          key: buildx-cache-{{ github.run.id }}
+          restore-keys:
+            - buildx-cache-
 
       - name: Setup Minikube
         uses: manusa/actions-setup-minikube@v2.3.0

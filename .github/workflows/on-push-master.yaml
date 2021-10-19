@@ -11,7 +11,6 @@ jobs:
     env:
       USE_BUILD: true
       USE_BUILDX: true
-      GOPATH: /tmp/go
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -22,11 +21,6 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '1.16.0'
-      - name: Cache go modules
-        uses: actions/cache@v2
-        with:
-          path: $GOPATH/pkg
-          key: go-cache
 
       - name: Set up Docker Buildx
         id: buildx
@@ -35,7 +29,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: /tmp/.buildx-cache
-          key: buildx-cache
+          key: buildx-cache-{{ github.run.id }}
+          restore-keys:
+            - buildx-cache-
 
       - name: Cache installer
         uses: actions/cache@v2
