@@ -28,9 +28,9 @@ RUN apt-get update     \
     && rm -rf /var/lib/apt/lists/* \
     && curl -sL https://sentry.io/get-cli/ | bash
 
-COPY restore.sh /app/
-COPY pg_extract.sh /app/
-COPY recreatedb.sql /app/
+
+COPY restore.sh pg_extract.sh recreatedb.sql /app/
+RUN chmod +x /app/*.sh
 
 WORKDIR /app/
 

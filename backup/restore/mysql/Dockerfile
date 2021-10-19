@@ -25,5 +25,6 @@ RUN apt-get update     \
     && curl -sL https://sentry.io/get-cli/ | bash
 
 COPY restore.sh ./
+RUN chmod +x ./*.sh
 
 ENTRYPOINT ["/restore.sh"]
