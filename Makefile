@@ -10,7 +10,7 @@ endif
 
 DOCKER_BUILD_CMD = build
 ifeq ($(USE_BUILDX),true)
-	DOCKER_BUILD_CMD = buildx build --load --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new
+	DOCKER_BUILD_CMD = buildx build -o type=image --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new
 endif
 # docker $(DOCKER_BUILD_CMD) args
 DOCKER_BUILDKIT = 1
@@ -82,7 +82,7 @@ operator-test: generate fmt vet manifests
 manager: generate fmt vet
 	go build -o bin/manager main.go
 
-# Run against the configured Kubernetes cluster in ~/.kube/config
+# Run again/st the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet manifests
 	cd modules/operator ;\
 	go run main.go
@@ -110,6 +110,7 @@ manifests: controller-gen
 
 # Run go fmt against code
 fmt:
+	set -e ; \
 	for module in operator apiserver; do \
 		cd ./modules/$${module}; \
 		go fmt ./... ;\
@@ -117,6 +118,7 @@ fmt:
 
 # Run go vet against code
 vet:
+	set -e ; \
 	for module in operator apiserver; do \
 		cd ./modules/$${module}; \
 		go vet ./... ; \
@@ -273,6 +275,7 @@ docker-build: operator-build apiserver-build updater-build alert-receiver-build 
 
 
 docker-push-cache:
+	set -e ; \
 	for image in \
 		$(OPERATOR_IMG) \
         $(APISERVER_IMG) \
@@ -288,6 +291,7 @@ docker-push-cache:
     done
 
 docker-pull-cache:
+	set -e ; \
 	for image in \
 		$(OPERATOR_IMG):$(IMG_SHA_TAG) \
 		$(APISERVER_IMG):$(IMG_SHA_TAG) \
@@ -324,6 +328,7 @@ docker-restore-cache: docker-pull-cache
 	docker tag $(PG_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) $(PG_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
 
 refresh-go-sum:
+	set -e ; \
 	for module in operator updater alert-receiver apiserver installer; do \
   		cd ./modules/$${module}; \
   		go clean -modcache; \
