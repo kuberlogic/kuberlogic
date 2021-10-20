@@ -114,6 +114,7 @@ fmt:
 	for module in operator apiserver; do \
 		cd ./modules/$${module}; \
 		go fmt ./... ;\
+		cd - ;\
 	done
 
 # Run go vet against code
@@ -122,6 +123,7 @@ vet:
 	for module in operator apiserver; do \
 		cd ./modules/$${module}; \
 		go vet ./... ; \
+		cd - ; \
 	done
 
 # Generate code
