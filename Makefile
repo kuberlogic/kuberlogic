@@ -79,9 +79,8 @@ operator-test: generate fmt vet manifests
 	go test ./... -coverprofile cover.out
 
 installer-test:
-	cd modules/installer ;\
-	go vet && \
-	go test ./... -coverprofile cover.out
+	@cd modules/installer; \
+	$(MAKE) test
 
 # Build manager binary
 manager: generate fmt vet
