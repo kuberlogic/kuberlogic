@@ -1060,6 +1060,8 @@ definitions:
         type: string
       schedule:
         type: string
+      region:
+        type: string
 
   UserCredentials:
     required:

@@ -1401,6 +1401,9 @@ func init() {
         "endpoint": {
           "type": "string"
         },
+        "region": {
+          "type": "string"
+        },
         "schedule": {
           "type": "string"
         }
@@ -3253,6 +3256,9 @@ func init() {
           "type": "boolean"
         },
         "endpoint": {
+          "type": "string"
+        },
+        "region": {
           "type": "string"
         },
         "schedule": {

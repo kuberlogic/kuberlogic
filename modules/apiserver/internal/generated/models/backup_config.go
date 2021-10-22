@@ -37,6 +37,9 @@ type BackupConfig struct {
 	// Required: true
 	Endpoint *string `json:"endpoint"`
 
+	// region
+	Region string `json:"region,omitempty"`
+
 	// schedule
 	// Required: true
 	Schedule *string `json:"schedule"`

@@ -25,6 +25,7 @@ import (
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"strconv"
+	"strings"
 )
 
 func BackupConfigResourceToModel(resource *v1.Secret) *models.BackupConfig {
@@ -43,6 +44,7 @@ func BackupConfigResourceToModel(resource *v1.Secret) *models.BackupConfig {
 		Endpoint:           &endpoint,
 		Enabled:            &enabled,
 		Schedule:           &schedule,
+		Region:             string(resource.Data["region"]),
 	}
 }
 
@@ -53,6 +55,10 @@ func BackupConfigModelToResource(model *models.BackupConfig) *v1.Secret {
 	endpoint := *model.Endpoint
 	enabled := *model.Enabled
 	schedule := *model.Schedule
+	region := model.Region
+	if region == "" {
+		region = RegionByEndpoint(endpoint)
+	}
 
 	return &v1.Secret{
 		StringData: map[string]string{
@@ -61,12 +67,26 @@ func BackupConfigModelToResource(model *models.BackupConfig) *v1.Secret {
 			"bucket":                bucket,
 			"bucket-scope-suffix":   "",
 			"endpoint":              endpoint,
-			"region":                "",
+			"region":                region,
 			"sse":                   "AES256",
 			"enabled":               strconv.FormatBool(enabled),
 			"schedule":              schedule,
 		},
 	}
+}
+
+func RegionByEndpoint(endpoint string) string {
+	// https://docs.aws.amazon.com/general/latest/gr/s3.html
+	region := ""
+	if strings.HasSuffix(endpoint, "amazonaws.com") {
+		// example endpoint of s3-fips.us-east-2.amazonaws.com
+		s := strings.Split(endpoint, ".")
+		third := 3 // third part after amazonaws com
+		if len(s)-third > 0 {
+			region = s[len(s)-third]
+		}
+	}
+	return region
 }
 
 // TODO: Should be moved into operator's package/repo
