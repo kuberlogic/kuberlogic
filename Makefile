@@ -72,7 +72,12 @@ all: manager
 # Run tests
 operator-test: generate fmt vet manifests
 	cd modules/operator; \
-	go test ./... -coverprofile cover.out ;\
+	go test ./... -coverprofile cover.out
+
+installer-test:
+	cd modules/installer ;\
+	go vet && \
+	go test ./... -coverprofile cover.out
 
 # Build manager binary
 manager: generate fmt vet
