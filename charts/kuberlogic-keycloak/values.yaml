@@ -6,6 +6,8 @@ realm:
   name: "keycloak"
   id: "keycloak"
 
+sessionExpiration: 3600
+
 authorization:
   enabled: true
 
