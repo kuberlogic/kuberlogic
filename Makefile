@@ -20,12 +20,8 @@ IMG_REPO = quay.io/kuberlogic
 # for postgresql is using service account
 IMG_PULL_SECRET = ""
 
-# build phase tag
-IMG_SHA_TAG=$(COMMIT_SHA)
-# always points to the latest development release
+IMG_SHA_TAG ?= $(VERSION)-$(COMMIT_SHA)
 IMG_LATEST_TAG=latest
-# always points to the latest successful build
-IMG_LATEST_BUILD_CACHED_TAG=latest-build-cached
 
 # Image URL to use all building/pushing image targets
 OPERATOR_NAME = operator
@@ -169,7 +165,7 @@ alert-receiver-build:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o bin/alert-receiver
 	docker $(DOCKER_BUILD_CMD) . \
 		--build-arg BIN=modules/alert-receiver/bin/alert-receiver \
-		-t $(ALERT_RECEIVER_IMG) \
+		-t $(ALERT_RECEIVER_IMG):$(VERSION) \
 		-t $(ALERT_RECEIVER_IMG):$(IMG_SHA_TAG) \
 		-t $(ALERT_RECEIVER_IMG):$(IMG_LATEST_TAG)
 
@@ -189,7 +185,7 @@ apiserver-build:
         -a -o bin/apiserver main.go
 	docker $(DOCKER_BUILD_CMD) . \
 		--build-arg BIN=modules/apiserver/bin/apiserver \
-		-t $(APISERVER_IMG) \
+		-t $(APISERVER_IMG):$(VERSION) \
 		-t $(APISERVER_IMG):$(IMG_SHA_TAG) \
 		-t $(APISERVER_IMG):$(IMG_LATEST_TAG)
 
@@ -198,31 +194,31 @@ build-tests: gen test
 	docker $(DOCKER_BUILD_CMD) . -f Dockerfile.tests -t $(TESTS_IMG) -t $(TESTS_IMG):$(IMG_LATEST_TAG) .
 
 push-tests:
-	docker push $(TESTS_IMG)
+	docker push $(TESTS_IMG):$(VERSION)
 	docker push $(TESTS_IMG):$(IMG_LATEST_TAG)
 
 operator-push:
-	docker push $(OPERATOR_IMG)
+	docker push $(OPERATOR_IMG):$(VERSION)
 	docker push $(OPERATOR_IMG):$(IMG_LATEST_TAG)
 
 updater-push:
-	docker push $(UPDATER_IMG)
+	docker push $(UPDATER_IMG):$(VERSION)
 	docker push $(UPDATER_IMG):$(IMG_LATEST_TAG)
 
 alert-receiver-push:
-	docker push $(ALERT_RECEIVER_IMG)
+	docker push $(ALERT_RECEIVER_IMG):$(VERSION)
 	docker push $(ALERT_RECEIVER_IMG):$(IMG_LATEST_TAG)
 
 apiserver-push:
-	docker push $(APISERVER_IMG)
+	docker push $(APISERVER_IMG):$(VERSION)
 	docker push $(APISERVER_IMG):$(IMG_LATEST_TAG)
 
 tests-build: apiserver-gen
 	echo "Building tests image"
-	docker $(DOCKER_BUILD_CMD) . -f tests.Dockerfile -t $(TESTS_IMG) -t $(TESTS_IMG):$(IMG_LATEST_TAG)
+	docker $(DOCKER_BUILD_CMD) . -f tests.Dockerfile -t $(TESTS_IMG):$(VERSION) -t $(TESTS_IMG):$(IMG_LATEST_TAG)
 
 tests-push:
-	docker push $(TESTS_IMG)
+	docker push $(TESTS_IMG):$(VERSION)
 	docker push $(TESTS_IMG):$(IMG_LATEST_TAG)
 
 mark-executable:
@@ -230,46 +226,46 @@ mark-executable:
 
 backup-build:
 	docker $(DOCKER_BUILD_CMD) backup/mysql/ \
-		-t $(MYSQL_BACKUP_IMG) \
+		-t $(MYSQL_BACKUP_IMG):$(VERSION) \
 		-t $(MYSQL_BACKUP_IMG):$(IMG_SHA_TAG) \
 		-t $(MYSQL_BACKUP_IMG):$(IMG_LATEST_TAG)
 	docker $(DOCKER_BUILD_CMD) backup/postgres/ \
-		-t $(PG_BACKUP_IMG) \
+		-t $(PG_BACKUP_IMG):$(VERSION) \
 		-t $(PG_BACKUP_IMG):$(IMG_SHA_TAG) \
 		-t $(PG_BACKUP_IMG):$(IMG_LATEST_TAG)
 
 backup-push:
-	docker push $(MYSQL_BACKUP_IMG)
+	docker push $(MYSQL_BACKUP_IMG):$(VERSION)
 	docker push $(MYSQL_BACKUP_IMG):$(IMG_LATEST_TAG)
-	docker push $(PG_BACKUP_IMG)
+	docker push $(PG_BACKUP_IMG):$(VERSION)
 	docker push $(PG_BACKUP_IMG):$(IMG_LATEST_TAG)
 
 restore-build:
 	docker $(DOCKER_BUILD_CMD) backup/restore/mysql/ \
-	-t $(MYSQL_RESTORE_BACKUP_IMG) \
+	-t $(MYSQL_RESTORE_BACKUP_IMG):$(VERSION) \
 	-t $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) \
 	-t $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
 	docker $(DOCKER_BUILD_CMD) backup/restore/postgres/ \
-	-t $(PG_RESTORE_BACKUP_IMG) \
+	-t $(PG_RESTORE_BACKUP_IMG):$(VERSION) \
 	-t $(PG_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) \
 	-t $(PG_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
 
 restore-push:
-	docker push $(MYSQL_RESTORE_BACKUP_IMG)
+	docker push $(MYSQL_RESTORE_BACKUP_IMG):$(VERSION)
 	docker push $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
-	docker push $(PG_RESTORE_BACKUP_IMG)
+	docker push $(PG_RESTORE_BACKUP_IMG):$(VERSION)
 	docker push $(PG_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
 
 ui-build:
 	docker $(DOCKER_BUILD_CMD) modules/ui \
 	--target build && \
 	docker $(DOCKER_BUILD_CMD) modules/ui \
-	-t $(UI_IMG) \
+	-t $(UI_IMG):$(VERSION) \
 	-t $(UI_IMG):$(IMG_SHA_TAG) \
 	-t $(UI_IMG):$(IMG_LATEST_TAG)
 
 ui-push:
-	docker push $(UI_IMG)
+	docker push $(UI_IMG):$(VERSION)
 	docker push $(UI_IMG):$(IMG_LATEST_TAG)
 
 docker-push: operator-push apiserver-push updater-push alert-receiver-push backup-push restore-push ui-push
@@ -279,9 +275,9 @@ docker-build: operator-build apiserver-build updater-build alert-receiver-build 
 docker-push-cache:
 	set -e ; \
 	for image in \
-		$(OPERATOR_IMG) \
-        $(APISERVER_IMG) \
-        $(UPDATER_IMG) \
+		$(OPERATOR_IMG):$(IMG_SHA_TAG) \
+        $(APISERVER_IMG):$(IMG_SHA_TAG) \
+        $(UPDATER_IMG):$(IMG_SHA_TAG) \
         $(ALERT_RECEIVER_IMG)$(IMG_SHA_TAG) \
         $(UI_IMG):$(IMG_SHA_TAG) \
         $(MYSQL_BACKUP_IMG):$(IMG_SHA_TAG) \
@@ -310,23 +306,23 @@ docker-pull-cache:
 
 
 docker-restore-cache: docker-pull-cache
-	docker tag $(OPERATOR_IMG):$(IMG_SHA_TAG) $(OPERATOR_IMG)
+	docker tag $(OPERATOR_IMG):$(IMG_SHA_TAG) $(OPERATOR_IMG):$(VERSION)
 	docker tag $(OPERATOR_IMG):$(IMG_SHA_TAG) $(OPERATOR_IMG):$(IMG_LATEST_TAG)
-	docker tag $(APISERVER_IMG):$(IMG_SHA_TAG) $(APISERVER_IMG)
+	docker tag $(APISERVER_IMG):$(IMG_SHA_TAG) $(APISERVER_IMG):$(VERSION)
 	docker tag $(APISERVER_IMG):$(IMG_SHA_TAG) $(APISERVER_IMG):$(IMG_LATEST_TAG)
-	docker tag $(UPDATER_IMG):$(IMG_SHA_TAG) $(UPDATER_IMG)
+	docker tag $(UPDATER_IMG):$(IMG_SHA_TAG) $(UPDATER_IMG):$(VERSION)
 	docker tag $(UPDATER_IMG):$(IMG_SHA_TAG) $(UPDATER_IMG):$(IMG_LATEST_TAG)
-	docker tag $(ALERT_RECEIVER_IMG):$(IMG_SHA_TAG) $(ALERT_RECEIVER_IMG)
+	docker tag $(ALERT_RECEIVER_IMG):$(IMG_SHA_TAG) $(ALERT_RECEIVER_IMG):$(VERSION)
 	docker tag $(ALERT_RECEIVER_IMG):$(IMG_SHA_TAG) $(ALERT_RECEIVER_IMG):$(IMG_LATEST_TAG)
-	docker tag $(UI):$(IMG_SHA_TAG_IMG) $(UI_IMG)
+	docker tag $(UI):$(IMG_SHA_TAG_IMG) $(UI_IMG):$(VERSION)
 	docker tag $(UI):$(IMG_SHA_TAG_IMG) $(UI_IMG):$(IMG_LATEST_TAG)
-	docker tag $(MYSQL_BACKUP_IMG):$(IMG_SHA_TAG) $(MYSQL_BACKUP_IMG)
+	docker tag $(MYSQL_BACKUP_IMG):$(IMG_SHA_TAG) $(MYSQL_BACKUP_IMG):$(VERSION)
 	docker tag $(MYSQL_BACKUP_IMG):$(IMG_SHA_TAG) $(MYSQL_BACKUP_IMG):$(IMG_LATEST_TAG)
-	docker tag $(PG_BACKUP_IMG):$(IMG_SHA_TAG) $(PG_BACKUP_IMG)
+	docker tag $(PG_BACKUP_IMG):$(IMG_SHA_TAG) $(PG_BACKUP_IMG):$(VERSION)
 	docker tag $(PG_BACKUP_IMG):$(IMG_SHA_TAG) $(PG_BACKUP_IMG):$(IMG_LATEST_TAG)
-	docker tag $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) $(MYSQL_RESTORE_BACKUP_IMG)
+	docker tag $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) $(MYSQL_RESTORE_BACKUP_IMG):$(VERSION)
 	docker tag $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) $(MYSQL_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
-	docker tag $(PG_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) $(PG_RESTORE_BACKUP_IMG)
+	docker tag $(PG_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) $(PG_RESTORE_BACKUP_IMG):$(VERSION)
 	docker tag $(PG_RESTORE_BACKUP_IMG):$(IMG_SHA_TAG) $(PG_RESTORE_BACKUP_IMG):$(IMG_LATEST_TAG)
 
 refresh-go-sum:
