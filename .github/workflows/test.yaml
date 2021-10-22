@@ -114,6 +114,7 @@ jobs:
       - name: Run unit tests
         run: |
           make operator-test
+          make installer-test
 
       - name: Build installer & images
         run: |
