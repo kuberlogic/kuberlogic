@@ -10,7 +10,7 @@ endif
 
 DOCKER_BUILD_CMD = build
 ifeq ($(USE_BUILDX),true)
-	DOCKER_BUILD_CMD = buildx build -o type=image --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new
+	DOCKER_BUILD_CMD = buildx build --output=type=docker --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache-new
 endif
 # docker $(DOCKER_BUILD_CMD) args
 DOCKER_BUILDKIT = 1
