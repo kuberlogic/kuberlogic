@@ -19,8 +19,6 @@ spec:
       containers:
         - args:
             - --scheme=http
-          command:
-            - /apiserver
           env:
             - name: KUBERLOGIC_BIND_HOST
               value: "0.0.0.0"
