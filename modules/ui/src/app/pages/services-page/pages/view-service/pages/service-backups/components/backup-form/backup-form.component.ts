@@ -63,6 +63,7 @@ export class BackupFormComponent extends FormContainerMixin(BaseObject) implemen
             enabled: [false],
             aws_access_key_id: ['', []],
             aws_secret_access_key: ['', []],
+            region: ['', []],
             bucket: ['', []],
             endpoint: ['', []],
             schedule: ['0 3 * * 4', []],
