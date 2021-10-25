@@ -26,7 +26,8 @@ RUN apt-get update     \
         postgresql-client-9.5 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && curl -sL https://sentry.io/get-cli/ | bash
+    && curl -SL --progress-bar https://github.com/getsentry/sentry-cli/releases/download/1.70.1/sentry-cli-Linux-x86_64 > /usr/local/bin/sentry-cli \
+    && chmod +x /usr/local/bin/sentry-cli
 
 COPY dump.sh ./
 RUN chmod +x ./*.sh

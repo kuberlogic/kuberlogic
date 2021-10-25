@@ -7,7 +7,8 @@ set -o pipefail
 IFS=$'\n\t'
 
 # integrate sentry
-[[ -v SENTRY_DSN ]] && eval "$(sentry-cli bash-hook)"
+SENTRY_CLI_NO_EXIT_TRAP=1
+if [[ -v SENTRY_DSN ]] && eval "$(sentry-cli bash-hook)"
 
 BACKUP_NAME=$(date '+%s')
 [[ ! -z "$DATABASE" ]] && BACKUP_NAME=$DATABASE-$BACKUP_NAME

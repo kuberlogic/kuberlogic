@@ -7,6 +7,7 @@ set -o pipefail
 IFS=$'\n\t'
 
 # integrate sentry
+SENTRY_CLI_NO_EXIT_TRAP=1
 [[ -v SENTRY_DSN ]] && eval "$(sentry-cli bash-hook)"
 
 TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
