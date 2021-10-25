@@ -7,7 +7,7 @@ set -o pipefail
 IFS=$'\n\t'
 
 # integrate sentry
-SENTRY_CLI_NO_EXIT_TRAP=1
+export SENTRY_CLI_NO_EXIT_TRAP=1
 [[ -v SENTRY_DSN ]] && eval "$(sentry-cli bash-hook)"
 
 PG_BIN=$PG_DIR/$PG_VERSION/bin

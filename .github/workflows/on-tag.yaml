@@ -140,7 +140,7 @@ jobs:
 
       - name: Show status
         run: |
-          kubectl get pod,sts,deploy,svc,cj,job -o yaml
+          kubectl get pod,sts,deploy,svc,cj,job -o yaml --all-namespaces
         if: ${{ failure() }}
 
       - name: Generating logs

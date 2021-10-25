@@ -7,7 +7,7 @@ set -o pipefail
 IFS=$'\n\t'
 
 # integrate sentry
-SENTRY_CLI_NO_EXIT_TRAP=1
+export SENTRY_CLI_NO_EXIT_TRAP=1
 [[ -v SENTRY_DSN ]] && eval "$(sentry-cli bash-hook)"
 
 ALL_DB_SIZE_QUERY="select sum(pg_database_size(datname)::numeric) from pg_database;"
