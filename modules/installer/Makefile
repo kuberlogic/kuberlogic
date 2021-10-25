@@ -40,9 +40,10 @@ helm-embed: helm-package
 	mv $(CHARTS_DIR)/*.tgz kli/helm-installer
 
 test: helm-embed
-	go vet
+	go vet && \
+	go test ./...
 
-compile: test
+compile:
 	mkdir -p bin && \
 	go mod vendor && \
 	go build \

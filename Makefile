@@ -72,7 +72,11 @@ all: manager
 # Run tests
 operator-test: generate fmt vet manifests
 	cd modules/operator; \
-	go test ./... -coverprofile cover.out ;\
+	go test ./... -coverprofile cover.out
+
+installer-test:
+	@cd modules/installer; \
+	$(MAKE) test
 
 # Build manager binary
 manager: generate fmt vet
@@ -278,7 +282,7 @@ docker-push-cache:
 		$(OPERATOR_IMG):$(IMG_SHA_TAG) \
         $(APISERVER_IMG):$(IMG_SHA_TAG) \
         $(UPDATER_IMG):$(IMG_SHA_TAG) \
-        $(ALERT_RECEIVER_IMG)$(IMG_SHA_TAG) \
+        $(ALERT_RECEIVER_IMG):$(IMG_SHA_TAG) \
         $(UI_IMG):$(IMG_SHA_TAG) \
         $(MYSQL_BACKUP_IMG):$(IMG_SHA_TAG) \
         $(PG_BACKUP_IMG):$(IMG_SHA_TAG) \

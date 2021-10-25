@@ -93,6 +93,12 @@ func GetServiceExternalIP(c *kubernetes.Clientset, log logging.Logger, name, ns 
 		return
 	}
 
+	if extName := s.Spec.ExternalName; extName != "" {
+		found = true
+		ip = extName
+		return
+	}
+
 	if extIPs := s.Spec.ExternalIPs; len(extIPs) != 0 {
 		found = true
 		ip = extIPs[0]
