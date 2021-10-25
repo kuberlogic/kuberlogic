@@ -282,7 +282,7 @@ docker-push-cache:
 		$(OPERATOR_IMG):$(IMG_SHA_TAG) \
         $(APISERVER_IMG):$(IMG_SHA_TAG) \
         $(UPDATER_IMG):$(IMG_SHA_TAG) \
-        $(ALERT_RECEIVER_IMG)$(IMG_SHA_TAG) \
+        $(ALERT_RECEIVER_IMG):$(IMG_SHA_TAG) \
         $(UI_IMG):$(IMG_SHA_TAG) \
         $(MYSQL_BACKUP_IMG):$(IMG_SHA_TAG) \
         $(PG_BACKUP_IMG):$(IMG_SHA_TAG) \
