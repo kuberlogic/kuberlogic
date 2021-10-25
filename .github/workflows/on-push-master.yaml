@@ -51,6 +51,11 @@ jobs:
         run: |
           make docker-build installer-build
 
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
       - name: Login to Docker Registry
         uses: docker/login-action@v1
         with:
