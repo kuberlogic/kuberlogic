@@ -43,7 +43,7 @@ test: helm-embed
 	go vet && \
 	go test ./...
 
-compile:
+compile: helm-embed
 	mkdir -p bin && \
 	go mod vendor && \
 	go build \
