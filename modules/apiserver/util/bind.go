@@ -91,6 +91,7 @@ func CreateBackupResource(client *rest.RESTClient, ns, name, schedule string) er
 	result := kuberlogicv1.KuberLogicBackupSchedule{}
 	err := client.Post().
 		Namespace(ns).
+		Name(name).
 		Resource("kuberlogicbackupschedules").
 		Body(&resource).
 		Do(context.TODO()).
@@ -113,8 +114,9 @@ func UpdateBackupResource(client *rest.RESTClient, ns, name, schedule string) er
 		result := kuberlogicv1.KuberLogicBackupSchedule{}
 		err := client.Put().
 			Namespace(ns).
+			Name(name).
 			Resource("kuberlogicbackupschedules").
-			Body(&resource).
+			Body(resource).
 			Do(context.TODO()).
 			Into(&result)
 		if err != nil {

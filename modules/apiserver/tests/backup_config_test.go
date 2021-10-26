@@ -95,7 +95,7 @@ func (u *tBackupConfig) ChangeConfig(t *testing.T) {
 	api := newApi(t)
 	api.setBearerToken()
 	api.setRequestBody(`     {
-        "enabled": false,
+        "enabled": true,
         "aws_access_key_id": "key-secret",
 		"aws_secret_access_key": "access-secret",
 		"bucket": "changed-backup",
@@ -116,6 +116,19 @@ func (u *tBackupConfig) GetChanged(t *testing.T) {
 	api.encodeResponseToJson()
 	api.responseTypeOf(reflect.Map)
 	api.responseShouldMatchJson(`{
+        "enabled": true,
+        "aws_access_key_id": "key-secret",
+		"aws_secret_access_key": "access-secret",
+		"bucket": "changed-backup",
+		"endpoint": "new-endpoint",
+		"schedule": "* 2 * * *"
+     }`)
+}
+
+func (u *tBackupConfig) DisableBackup(t *testing.T) {
+	api := newApi(t)
+	api.setBearerToken()
+	api.setRequestBody(`     {
         "enabled": false,
         "aws_access_key_id": "key-secret",
 		"aws_secret_access_key": "access-secret",
@@ -123,6 +136,9 @@ func (u *tBackupConfig) GetChanged(t *testing.T) {
 		"endpoint": "new-endpoint",
 		"schedule": "* 2 * * *"
      }`)
+	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/backup-config",
+		u.service.ns, u.service.name))
+	api.responseCodeShouldBe(200)
 }
 
 func makeTestBackupConfig(tbc tBackupConfig) func(t *testing.T) {
