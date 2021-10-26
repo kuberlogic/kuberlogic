@@ -62,3 +62,30 @@ func (gr *grafana) Sync() error {
 	}
 	return nil
 }
+
+func (gr *grafana) CleanupOrg(orgName string) error {
+	org, err := gr.getOrganization(orgName)
+	if err != nil {
+		return err
+	}
+	// org does not exist. exit
+	if org == nil {
+		return nil
+	}
+
+	users, err := gr.usersInOrg(org.Id)
+	if err != nil {
+		return err
+	}
+	for _, usr := range users {
+		if usr.Role == VIEWER_ROLE || usr.Role == EDITOR_ROLE {
+			if err := gr.deleteUser(usr.UserId); err != nil {
+				return err
+			}
+		}
+	}
+	if err = gr.deleteOrganization(org.Id); err != nil {
+		return err
+	}
+	return nil
+}
