@@ -1383,7 +1383,8 @@ func init() {
         "aws_secret_access_key",
         "bucket",
         "endpoint",
-        "schedule"
+        "schedule",
+        "region"
       ],
       "properties": {
         "aws_access_key_id": {
@@ -1399,7 +1400,8 @@ func init() {
           "type": "boolean"
         },
         "endpoint": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^http[s]*://.*"
         },
         "region": {
           "type": "string"
@@ -3240,7 +3242,8 @@ func init() {
         "aws_secret_access_key",
         "bucket",
         "endpoint",
-        "schedule"
+        "schedule",
+        "region"
       ],
       "properties": {
         "aws_access_key_id": {
@@ -3256,7 +3259,8 @@ func init() {
           "type": "boolean"
         },
         "endpoint": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^http[s]*://.*"
         },
         "region": {
           "type": "string"

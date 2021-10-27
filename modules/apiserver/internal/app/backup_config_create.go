@@ -21,7 +21,6 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
 	apiService "github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/restapi/operations/service"
-	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/validation"
 	"github.com/kuberlogic/kuberlogic/modules/apiserver/util"
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,12 +30,6 @@ import (
 func (srv *Service) BackupConfigCreateHandler(params apiService.BackupConfigCreateParams, principal *models.Principal) middleware.Responder {
 	service := params.HTTPRequest.Context().Value("service").(*kuberlogicv1.KuberLogicService)
 	ns, name := principal.Namespace, service.Name
-
-	if err := validation.ValidateEndpoint(*params.BackupConfig.Endpoint); err != nil {
-		srv.log.Errorw("failed to create a backup config",
-			"namespace", ns, "name", name, "error", err)
-		return util.BadRequestFromError(err)
-	}
 
 	// Create secret
 	secretResource := util.BackupConfigModelToResource(params.BackupConfig)

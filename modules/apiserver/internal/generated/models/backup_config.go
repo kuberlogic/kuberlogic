@@ -35,10 +35,12 @@ type BackupConfig struct {
 
 	// endpoint
 	// Required: true
+	// Pattern: ^http[s]*://.*
 	Endpoint *string `json:"endpoint"`
 
 	// region
-	Region string `json:"region,omitempty"`
+	// Required: true
+	Region *string `json:"region"`
 
 	// schedule
 	// Required: true
@@ -66,6 +68,10 @@ func (m *BackupConfig) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateEndpoint(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateRegion(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -118,6 +124,19 @@ func (m *BackupConfig) validateEnabled(formats strfmt.Registry) error {
 func (m *BackupConfig) validateEndpoint(formats strfmt.Registry) error {
 
 	if err := validate.Required("endpoint", "body", m.Endpoint); err != nil {
+		return err
+	}
+
+	if err := validate.Pattern("endpoint", "body", string(*m.Endpoint), `^http[s]*://.*`); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *BackupConfig) validateRegion(formats strfmt.Registry) error {
+
+	if err := validate.Required("region", "body", m.Region); err != nil {
 		return err
 	}
 

@@ -62,9 +62,9 @@ func (u *tBackupConfig) CreateIncorrectEndpoint(t *testing.T) {
      }`)
 	api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/backup-config",
 		u.service.ns, u.service.name))
-	api.responseCodeShouldBe(400)
+	api.responseCodeShouldBe(422)
 	api.encodeResponseToJson()
-	api.responseShouldMatchJson(`{"message":"endpoint s3.us-east-2.amazonaws.com is not contain http/https scheme"}`)
+	api.responseShouldMatchJson(`{"code":605, "message":"endpoint in body should match '^http[s]*://.*'"}`)
 }
 
 func (u *tBackupConfig) Create(t *testing.T) {
@@ -76,7 +76,8 @@ func (u *tBackupConfig) Create(t *testing.T) {
 		"aws_secret_access_key": "aws_secret_access_key",
 		"bucket": "bucket",
 		"endpoint": "https://s3.us-east-2.amazonaws.com",
-		"schedule": "* 1 * * *"
+		"schedule": "* 1 * * *",
+		"region": "us-east-2"
      }`)
 	api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/backup-config",
 		u.service.ns, u.service.name))
@@ -120,7 +121,7 @@ func (u *tBackupConfig) ChangeConfig(t *testing.T) {
 		"bucket": "changed-backup",
 		"endpoint": "https://another-endpoint.com",
 		"schedule": "* 2 * * *",
-		"region": ""
+		"region": "us-west-2"
      }`)
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/backup-config",
 		u.service.ns, u.service.name))
@@ -136,13 +137,14 @@ func (u *tBackupConfig) ChangeConfigIncorrectEndpoint(t *testing.T) {
 		"aws_secret_access_key": "access-secret",
 		"bucket": "changed-backup",
 		"endpoint": "s3.us-west-1.amazonaws.com",
-		"schedule": "* 2 * * *"
+		"schedule": "* 2 * * *",
+		"region": "us-west-1"
      }`)
 	api.sendRequestTo(http.MethodPut, fmt.Sprintf("/services/%s:%s/backup-config",
 		u.service.ns, u.service.name))
-	api.responseCodeShouldBe(400)
+	api.responseCodeShouldBe(422)
 	api.encodeResponseToJson()
-	api.responseShouldMatchJson(`{"message":"endpoint s3.us-west-1.amazonaws.com is not contain http/https scheme"}`)
+	api.responseShouldMatchJson(`{"code":605,"message":"endpoint in body should match '^http[s]*://.*'"}`)
 }
 
 func (u *tBackupConfig) GetChanged(t *testing.T) {
@@ -158,8 +160,9 @@ func (u *tBackupConfig) GetChanged(t *testing.T) {
         "aws_access_key_id": "key-secret",
 		"aws_secret_access_key": "access-secret",
 		"bucket": "changed-backup",
-		"endpoint": "new-endpoint",
-		"schedule": "* 2 * * *"
+		"endpoint": "https://another-endpoint.com",
+		"schedule": "* 2 * * *",
+		"region": "us-west-2"
      }`)
 }
 

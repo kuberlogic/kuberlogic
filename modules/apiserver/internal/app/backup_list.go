@@ -34,10 +34,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// DEFAULT_REGION just a stub ->  s3 region is not required for DO, minio, but required for sdk list method
-// due to error "MissingRegion: could not find region configuration"
-const defaultRegion = "us-west-2"
-
 func (srv *Service) BackupListHandler(params apiService.BackupListParams, principal *models.Principal) middleware.Responder {
 	service := params.HTTPRequest.Context().Value("service").(*kuberlogicv1.KuberLogicService)
 	ns, name := principal.Namespace, service.Name
@@ -64,14 +60,10 @@ func (srv *Service) BackupListHandler(params apiService.BackupListParams, princi
 	}
 
 	model := util.BackupConfigResourceToModel(secret)
-	region := model.Region
-	if region == "" {
-		region = defaultRegion
-	}
 	mySession := session.Must(session.NewSession(
 		&aws.Config{
 			Endpoint: model.Endpoint,
-			Region:   aws.String(region),
+			Region:   aws.String(*model.Region),
 			Credentials: credentials.NewStaticCredentials(
 				*model.AwsAccessKeyID,
 				*model.AwsSecretAccessKey,
