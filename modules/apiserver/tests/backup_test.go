@@ -53,7 +53,8 @@ func (tb *tBackupRestore) CreateSchedule(t *testing.T) {
 		"aws_secret_access_key": "%s",
 		"bucket": "%s",
 		"endpoint": "%s",
-		"schedule": "%02d %02d * * *"
+		"schedule": "%02d %02d * * *",
+		"region": "us-east-2"
      }`, tb.accessKey, tb.secretKey, tb.bucket, tb.endpoint, tb.backupTime.Minute(), tb.backupTime.Hour()))
 	api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/backup-config", tb.service.ns, tb.service.name))
 	api.responseCodeShouldBe(201)
