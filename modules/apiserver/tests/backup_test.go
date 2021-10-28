@@ -53,7 +53,8 @@ func (tb *tBackupRestore) CreateSchedule(t *testing.T) {
 		"aws_secret_access_key": "%s",
 		"bucket": "%s",
 		"endpoint": "%s",
-		"schedule": "%02d %02d * * *"
+		"schedule": "%02d %02d * * *",
+		"region": "us-east-2"
      }`, tb.accessKey, tb.secretKey, tb.bucket, tb.endpoint, tb.backupTime.Minute(), tb.backupTime.Hour()))
 	api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/backup-config", tb.service.ns, tb.service.name))
 	api.responseCodeShouldBe(201)
@@ -205,8 +206,6 @@ func makeTestBackupRestore(tb tBackupRestore) func(t *testing.T) {
 }
 
 func TestBackupRestore(t *testing.T) {
-	//t.FailNow()
-
 	endpoint, exists := os.LookupEnv("MINIO_ENDPOINT")
 	if !exists {
 		t.Errorf("endpoint must be defined")
@@ -261,9 +260,6 @@ func TestBackupRestore(t *testing.T) {
 			},
 			table: "foo",
 		}} {
-		//if svc.service.type_ == "mysql"{
-		//	t.Skip("Temporary skipping. Fails with unknown reason on the github actions")
-		//}
 		t.Run(svc.service.type_, makeTestBackupRestore(svc))
 	}
 }

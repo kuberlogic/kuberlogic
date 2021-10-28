@@ -1047,6 +1047,7 @@ definitions:
       - bucket
       - endpoint
       - schedule
+      - region
     properties:
       enabled:
         type: boolean
@@ -1058,7 +1059,10 @@ definitions:
         type: string
       endpoint:
         type: string
+        pattern: ^http[s]*://.*
       schedule:
+        type: string
+      region:
         type: string
 
   UserCredentials:
