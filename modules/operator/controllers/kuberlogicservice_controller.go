@@ -24,6 +24,7 @@ import (
 	serviceOperator "github.com/kuberlogic/kuberlogic/modules/operator/service-operator"
 	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/interfaces"
 	"github.com/kuberlogic/kuberlogic/modules/operator/util"
+	"github.com/pkg/errors"
 	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -44,6 +45,10 @@ const (
 	klsFinalizer = kuberlogicv1.Group + "/service-finalizer"
 )
 
+var (
+	errKlsNotReady = errors.New("kuberlogicservice is not ready")
+)
+
 // KuberLogicServiceReconciler reconciles a KuberLogicServices object
 type KuberLogicServiceReconciler struct {
 	client.Client
@@ -57,7 +62,7 @@ type KuberLogicServiceReconciler struct {
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicservices/status,verbs=get;update;patch
 func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("kuberlogicservices", req.NamespacedName)
-
+	log.Info("reconciliation started")
 	defer util.HandlePanic(log)
 
 	mu := getMutex(req.NamespacedName)
@@ -100,7 +105,6 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			if err := r.Update(ctx, kls); err != nil {
 				return ctrl.Result{}, err
 			}
-			return ctrl.Result{}, nil
 		}
 	}
 
@@ -110,8 +114,8 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		err := r.Update(ctx, kls)
 		if err != nil {
 			log.Error(err, "error adding finalizer")
+			return ctrl.Result{}, err
 		}
-		return ctrl.Result{}, err
 	}
 
 	op, err := serviceOperator.GetOperator(kls.Spec.Type)
@@ -215,7 +219,7 @@ func (r *KuberLogicServiceReconciler) update(ctx context.Context, kt *kuberlogic
 		log.Info("updates are not allowed in current service state")
 		return ctrl.Result{
 			RequeueAfter: time.Second * klsServiceNotReadyDelaySec,
-		}, nil
+		}, errKlsNotReady
 	}
 
 	op.Update(kls)

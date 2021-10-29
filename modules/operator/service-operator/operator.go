@@ -23,6 +23,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	ErrOperatorTypeUnknown = errors.New("operator type unknown")
+)
+
 func GetOperator(t string) (interfaces.OperatorInterface, error) {
 	var operators = map[string]interfaces.OperatorInterface{
 		"postgresql": &postgresql.Postgres{},
@@ -31,7 +35,7 @@ func GetOperator(t string) (interfaces.OperatorInterface, error) {
 
 	value, ok := operators[t]
 	if !ok {
-		return nil, errors.Errorf("Service Operator %s is not supported", t)
+		return nil, ErrOperatorTypeUnknown
 	}
 	return value, nil
 }
