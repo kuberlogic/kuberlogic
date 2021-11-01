@@ -1,6 +1,6 @@
 # KuberLogic
 [![Development build](https://github.com/kuberlogic/kuberlogic/actions/workflows/on-push-master.yaml/badge.svg)](https://github.com/kuberlogic/kuberlogic/actions/workflows/on-push-master.yaml)
-[![codecov](https://codecov.io/gh/kuberlogic/operator/branch/master/graph/badge.svg?token=VRWDPT0EIC)](https://codecov.io/gh/kuberlogic/operator)
+[![codecov](https://codecov.io/gh/kuberlogic/kuberlogic/master/graph/badge.svg?token=VRWDPT0EIC)](https://codecov.io/gh/kuberlogic/kuberlogic)
 ---
 ![logo](img/kuberlogic-logo.png)
 
