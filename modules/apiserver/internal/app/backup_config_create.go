@@ -23,6 +23,7 @@ import (
 	apiService "github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/restapi/operations/service"
 	"github.com/kuberlogic/kuberlogic/modules/apiserver/util"
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	"github.com/pkg/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -43,9 +44,10 @@ func (srv *Service) BackupConfigCreateHandler(params apiService.BackupConfigCrea
 		Secrets(ns).
 		Create(context.TODO(), secretResource, v1.CreateOptions{})
 	if err != nil {
-		srv.log.Errorw("failed to create a backup config",
-			"namespace", ns, "name", name, "error", err)
-		return util.BadRequestFromError(err)
+		newErr := errors.Wrap(err, "failed to create a backup config")
+		srv.log.Errorw(newErr.Error(),
+			"namespace", ns, "name", name)
+		return util.BadRequestFromError(newErr)
 	}
 
 	if *params.BackupConfig.Enabled {
@@ -53,9 +55,9 @@ func (srv *Service) BackupConfigCreateHandler(params apiService.BackupConfigCrea
 			"namespace", ns, "name", name)
 		err = util.CreateBackupResource(srv.kuberlogicClient, ns, name, *params.BackupConfig.Schedule)
 		if err != nil {
-			srv.log.Errorw("error creating a backup resource",
-				"namespace", ns, "name", name, "error", err)
-			return util.BadRequestFromError(err)
+			newErr := errors.Wrap(err, "error creating a backup resource")
+			srv.log.Errorw(newErr.Error(), "namespace", ns, "name", name)
+			return util.BadRequestFromError(newErr)
 		}
 	}
 

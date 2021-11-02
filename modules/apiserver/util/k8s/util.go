@@ -64,7 +64,7 @@ func MapToStrSelector(labels map[string]string) string {
 	return strings.TrimSuffix(b.String(), ",")
 }
 
-func GetPodLogs(c *kubernetes.Clientset, log logging.Logger, name, container, ns string, lines int64) (logs string, err error) {
+func GetPodLogs(c kubernetes.Interface, log logging.Logger, name, container, ns string, lines int64) (logs string, err error) {
 	podLogOptions := v1.PodLogOptions{
 		Follow:    false,
 		TailLines: &lines,
@@ -86,7 +86,7 @@ func GetPodLogs(c *kubernetes.Clientset, log logging.Logger, name, container, ns
 	return buf.String(), nil
 }
 
-func GetServiceExternalIP(c *kubernetes.Clientset, log logging.Logger, name, ns string) (ip string, found bool, err error) {
+func GetServiceExternalIP(c kubernetes.Interface, log logging.Logger, name, ns string) (ip string, found bool, err error) {
 	s, err := c.CoreV1().Services(ns).Get(context.TODO(), name, metav1.GetOptions{})
 	log.Debugw("response for get service", "namespace", ns, "name", name, "response", s)
 	if err != nil {
@@ -114,7 +114,7 @@ func GetServiceExternalIP(c *kubernetes.Clientset, log logging.Logger, name, ns 
 	return
 }
 
-func GetSecretFieldDecoded(c *kubernetes.Clientset, log logging.Logger, secret, ns, field string) (string, error) {
+func GetSecretFieldDecoded(c kubernetes.Interface, log logging.Logger, secret, ns, field string) (string, error) {
 	log.Debugw("getting secret", "namespace", ns, "secret", secret)
 	s, err := c.CoreV1().Secrets(ns).Get(context.TODO(), secret, metav1.GetOptions{})
 	if err != nil {
