@@ -29,7 +29,7 @@ func GetCluster(cm *kuberlogicv1.KuberLogicService) (op interfaces.OperatorInter
 	if err != nil {
 		return
 	}
-	op.Init(cm)
+	op.Init(cm, "")
 	return
 }
 

@@ -42,3 +42,5 @@ var DefaultResources = v1.ResourceRequirements{
 		v1.ResourceMemory: resource.MustParse("500M"),
 	},
 }
+
+var DefaultAllowedIPs = []string{"0.0.0.0/0"}

@@ -16,7 +16,37 @@
 
 package k8s
 
-import "testing"
+import (
+	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/logging"
+	v1 "k8s.io/api/core/v1"
+	"testing"
+)
+
+func TestGetServiceExternalAddr(t *testing.T) {
+	l := logging.WithComponentLogger("tests")
+	for expectedHost, input := range map[string]*v1.Service{
+		"":          {},
+		"127.0.0.1": {Spec: v1.ServiceSpec{ExternalIPs: []string{"127.0.0.1"}}},
+		"localhost": {Spec: v1.ServiceSpec{ExternalName: "localhost"}},
+		"1.1.1.1": {
+			Spec: v1.ServiceSpec{},
+			Status: v1.ServiceStatus{
+				LoadBalancer: v1.LoadBalancerStatus{
+					Ingress: []v1.LoadBalancerIngress{
+						{IP: "1.1.1.1", Hostname: "test"},
+					}}}},
+		"externalhost": {
+			Spec: v1.ServiceSpec{},
+			Status: v1.ServiceStatus{
+				LoadBalancer: v1.LoadBalancerStatus{
+					Ingress: []v1.LoadBalancerIngress{
+						{Hostname: "externalhost"},
+					}}}}} {
+		if actual := GetServiceExternalAddr(input, l); actual != expectedHost {
+			t.Errorf("actual external host (%s) does not match expected (%s)", actual, expectedHost)
+		}
+	}
+}
 
 func TestMapToStrSelector(t *testing.T) {
 	k8sSelector := map[string]string{"app": "test", "env": "testing"}

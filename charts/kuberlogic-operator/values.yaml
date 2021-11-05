@@ -44,6 +44,8 @@ webhook:
 
 
 config:
+  platform: generic
+
   grafana:
     enabled: false
     endpoint: http://127.0.0.1

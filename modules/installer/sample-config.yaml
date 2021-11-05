@@ -1,4 +1,9 @@
 ---
+# Target deployment platform for Kuberlogic
+# Currently supported:
+#   * `eks` (Amazon EKS)
+#   * `generic` (Any other Kubernetes installation. Default.)
+platform: generic
 # Whether to enable debug logs or not
 debugLogs: true
 # Provides an absolute path to a kubeconfig file

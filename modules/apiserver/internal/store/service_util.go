@@ -24,6 +24,7 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/apiserver/util/k8s"
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	util "github.com/kuberlogic/kuberlogic/modules/operator/service-operator/util/kuberlogic"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,27 +32,28 @@ import (
 	"strconv"
 )
 
+// getServiceExternalConnection discovers master/replica services and returns external connection info: host, port, user, etc
 func getServiceExternalConnection(c *kubernetes.Clientset, log logging.Logger, kls *kuberlogicv1.KuberLogicService) (*models.ServiceExternalConnection, error) {
 	svc := new(models.ServiceExternalConnection)
 
-	masterSvc, replicaSvc, err := util.GetClusterServices(kls)
+	masterSvcName, replicaSvcName, err := util.GetClusterServices(kls)
 	if err != nil {
 		return svc, err
 	}
-	log.Debugw("services", "master", masterSvc, "replica", replicaSvc)
+	log.Debugw("services", "master", masterSvcName, "replica", replicaSvcName)
 
 	port, err := util.GetClusterServicePort(kls)
 	if err != nil {
 		return svc, err
 	}
 
-	masterExt, _, err := k8s.GetServiceExternalIP(c, log, masterSvc, kls.Namespace)
+	masterSvc, err := c.CoreV1().Services(kls.Namespace).Get(context.TODO(), masterSvcName, metav1.GetOptions{})
 	if err != nil {
-		return svc, err
+		return nil, errors.Wrap(err, "error getting master service")
 	}
-	replicaExt, _, err := k8s.GetServiceExternalIP(c, log, replicaSvc, kls.Namespace)
+	replicaSvc, err := c.CoreV1().Services(kls.Namespace).Get(context.TODO(), replicaSvcName, metav1.GetOptions{})
 	if err != nil {
-		return svc, err
+		return nil, errors.Wrap(err, "error getting replica service")
 	}
 
 	user, password, err := getServiceCredentials(c, log, kls)
@@ -61,7 +63,7 @@ func getServiceExternalConnection(c *kubernetes.Clientset, log logging.Logger, k
 
 	svc.Master = &models.Connection{
 		Cert:     "",
-		Host:     masterExt,
+		Host:     k8s.GetServiceExternalAddr(masterSvc, log),
 		Password: password,
 		Port:     int64(port),
 		SslMode:  "",
@@ -69,7 +71,7 @@ func getServiceExternalConnection(c *kubernetes.Clientset, log logging.Logger, k
 	}
 	svc.Replica = &models.Connection{
 		Cert:     "",
-		Host:     replicaExt,
+		Host:     k8s.GetServiceExternalAddr(replicaSvc, log),
 		Password: password,
 		Port:     int64(port),
 		SslMode:  "",
@@ -106,7 +108,7 @@ func getServiceInternalConnection(c *kubernetes.Clientset, log logging.Logger, k
 	}
 	svc.Replica = &models.Connection{
 		Cert:     "",
-		Host:     replicaSvc + kls.Namespace,
+		Host:     replicaSvc + "." + kls.Namespace,
 		Password: password,
 		Port:     int64(port),
 		SslMode:  "",

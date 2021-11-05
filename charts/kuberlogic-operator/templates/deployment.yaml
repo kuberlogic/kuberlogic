@@ -29,6 +29,8 @@ spec:
             - --metrics-addr=127.0.0.1:{{ .Values.monitoring.internalPort }}
             - --enable-leader-election
           env:
+          - name: PLATFORM
+            value: "{{ .Values.config.platform | upper }}"
           - name: POD_NAMESPACE
             valueFrom:
               fieldRef:

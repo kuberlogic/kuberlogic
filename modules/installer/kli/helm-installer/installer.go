@@ -52,6 +52,7 @@ type HelmInstaller struct {
 		AdminPassword    string
 		DemoUserPassword string
 	}
+	Platform string
 }
 
 func New(config *cfg.Config, log logger.Logger) (*HelmInstaller, error) {
@@ -110,6 +111,7 @@ func New(config *cfg.Config, log logger.Logger) (*HelmInstaller, error) {
 		}{
 			AdminPassword: config.Auth.AdminPassword,
 		},
+		Platform: config.Platform,
 	}
 	if config.Auth.DemoUserPassword != nil {
 		i.Auth.DemoUserPassword = *config.Auth.DemoUserPassword

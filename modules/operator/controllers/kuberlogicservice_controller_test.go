@@ -18,12 +18,13 @@ package controllers
 
 import (
 	"context"
+	mysql "github.com/bitpoke/mysql-operator/pkg/apis"
+	"github.com/bitpoke/mysql-operator/pkg/apis/mysql/v1alpha1"
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/operator/cfg"
 	"github.com/kuberlogic/kuberlogic/modules/operator/monitoring"
 	serviceoperator "github.com/kuberlogic/kuberlogic/modules/operator/service-operator"
 	"github.com/pkg/errors"
-	mysql "github.com/presslabs/mysql-operator/pkg/apis"
-	"github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	postgres "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -36,25 +37,22 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"sync"
 	"testing"
 )
 
 var (
-	testKlsSkeleton = &kuberlogicv1.KuberLogicService{
-		Spec: kuberlogicv1.KuberLogicServiceSpec{
-			Type:       "postgresql",
-			Replicas:   3,
-			VolumeSize: "1G",
-			Resources: corev1.ResourceRequirements{
-				Limits: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("0.1"),
-					corev1.ResourceMemory: resource.MustParse("1G"),
-				},
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("0.5"),
-					corev1.ResourceMemory: resource.MustParse("2G"),
-				},
+	testKlsSpec = kuberlogicv1.KuberLogicServiceSpec{
+		Type:       "postgresql",
+		Replicas:   3,
+		VolumeSize: "1G",
+		Resources: corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse("0.1"),
+				corev1.ResourceMemory: resource.MustParse("1G"),
+			},
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse("0.5"),
+				corev1.ResourceMemory: resource.MustParse("2G"),
 			},
 		},
 	}
@@ -74,13 +72,15 @@ func initTestReconciler() *KuberLogicServiceReconciler {
 	logger := zap.New()
 	controllerruntime.SetLogger(logger)
 
-	return &KuberLogicServiceReconciler{
-		Client:              c,
-		Log:                 logger.WithName("kuberlogicservice"),
-		Scheme:              scheme,
-		mu:                  sync.Mutex{},
-		MonitoringCollector: monitoring.NewCollector(),
-	}
+	return NewKuberlogicServiceReconciler(
+		c,
+		logger.WithName("kuberlogicservice"),
+		scheme,
+		&cfg.Config{
+			Platform: "testing",
+		},
+		monitoring.NewCollector(),
+	)
 }
 
 func TestKlsReconcileAbsent(t *testing.T) {
@@ -138,10 +138,12 @@ func TestKlsReconcileMysql(t *testing.T) {
 		Namespace: "valid-mysql",
 	}
 
-	kls := testKlsSkeleton
-	kls.ObjectMeta = v1.ObjectMeta{
-		Name:      klsId.Name,
-		Namespace: klsId.Namespace,
+	kls := &kuberlogicv1.KuberLogicService{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      klsId.Name,
+			Namespace: klsId.Namespace,
+		},
+		Spec: testKlsSpec,
 	}
 	kls.Spec.Type = "mysql"
 
@@ -174,10 +176,12 @@ func TestKlsReconcilePsql(t *testing.T) {
 		Name:      "valid-psql",
 		Namespace: "valid-psql",
 	}
-	kls := testKlsSkeleton
-	kls.ObjectMeta = v1.ObjectMeta{
-		Name:      klsId.Name,
-		Namespace: klsId.Namespace,
+	kls := &kuberlogicv1.KuberLogicService{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      klsId.Name,
+			Namespace: klsId.Namespace,
+		},
+		Spec: testKlsSpec,
 	}
 	kls.Spec.Type = "postgresql"
 
@@ -215,10 +219,12 @@ func TestKlsReconcileNotReady(t *testing.T) {
 		Name:      "valid-postgres",
 		Namespace: "valid-postgres",
 	}
-	kls := testKlsSkeleton
-	kls.ObjectMeta = v1.ObjectMeta{
-		Name:      klsId.Name,
-		Namespace: klsId.Namespace,
+	kls := &kuberlogicv1.KuberLogicService{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      klsId.Name,
+			Namespace: klsId.Namespace,
+		},
+		Spec: testKlsSpec,
 	}
 
 	if err := createKuberlogicserviceWithEnv(r.Client, kls); err != nil {
@@ -237,8 +243,8 @@ func TestKlsReconcileNotReady(t *testing.T) {
 		t.Fatalf("did not expect an error during the first run: %v", err)
 	}
 
-	if _, err := r.Reconcile(ctx, req); err != errKlsNotReady {
-		t.Fatalf("error \"%v\" does not match expected \"%v\"", err, errKlsNotReady)
+	if res, err := r.Reconcile(ctx, req); err != nil || res.RequeueAfter == 0 {
+		t.Fatalf("error (actual: %v)  must be nil and requeueAfter must not be zero", err)
 	}
 }
 
@@ -251,10 +257,12 @@ func TestKlsReconcileUpdate(t *testing.T) {
 		Name:      "valid-mysql",
 		Namespace: "valid-mysql",
 	}
-	kls := testKlsSkeleton
-	kls.ObjectMeta = v1.ObjectMeta{
-		Name:      klsId.Name,
-		Namespace: klsId.Namespace,
+	kls := &kuberlogicv1.KuberLogicService{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      klsId.Name,
+			Namespace: klsId.Namespace,
+		},
+		Spec: testKlsSpec,
 	}
 	kls.Spec.Type = "mysql"
 

@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	"os"
+	"strings"
 )
 
 // default configuration variables
@@ -31,6 +32,9 @@ var (
 	defaultKubeconfigPath   = fmt.Sprintf("%s/%s", os.Getenv("HOME"), ".kube/config")
 	defaultDebugLogsEnabled = false
 	defaultHelmReleaseName  = "kuberlogic"
+
+	defaultPlatform    = "generic"
+	supportedPlatforms = []string{defaultPlatform, "eks"}
 )
 
 type Config struct {
@@ -55,6 +59,8 @@ type Config struct {
 		AdminPassword    string  `yaml:"adminPassword"`
 		DemoUserPassword *string `yaml:"demoUserPassword,omitempty"`
 	} `yaml:"auth"`
+
+	Platform string `yaml:"platform,omitempty"`
 }
 
 func (c *Config) setDefaults(log logger.Logger) error {
@@ -84,6 +90,22 @@ func (c *Config) setDefaults(log logger.Logger) error {
 	if c.Endpoints.MonitoringConsole == "" {
 		log.Errorf("`endpoints.monitoringConsole` must be set and can't be empty")
 		return errors.New("endpoints.monitoringConsole is not set")
+	}
+
+	if c.Platform == "" {
+		log.Debugf("Using default value for platform: %s", defaultPlatform)
+		c.Platform = defaultPlatform
+	} else {
+		matched := false
+		for _, p := range supportedPlatforms {
+			if strings.ToUpper(p) == strings.ToUpper(c.Platform) {
+				matched = true
+			}
+		}
+		if !matched {
+			log.Errorf("Unsupported platform. List of supported platforms: %v", supportedPlatforms)
+			return errors.New("unsupported platform")
+		}
 	}
 
 	return configError
