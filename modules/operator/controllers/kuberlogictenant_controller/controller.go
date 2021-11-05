@@ -18,10 +18,11 @@ package kuberlogictenant_controller
 
 import (
 	"context"
+	"errors"
 	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	"github.com/kuberlogic/kuberlogic/modules/operator/cfg"
-	grafana "github.com/kuberlogic/kuberlogic/modules/operator/controllers/kuberlogictenant_controller/grafana"
+	"github.com/kuberlogic/kuberlogic/modules/operator/controllers/kuberlogictenant_controller/grafana"
 	"github.com/kuberlogic/kuberlogic/modules/operator/util"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -47,11 +48,12 @@ const (
 	ktFinalizer = kuberlogicv1.Group + "/tenant-finalizer"
 )
 
+var (
+	errFinalizingTenant = errors.New("error finalizing tenant")
+)
+
 func (r *KuberlogicTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithValues("kuberlogictenant", req.NamespacedName) //"enabled", r.Config.Grafana.Enabled,
-	//"login", r.Config.Grafana.Login,
-	//"password", r.Config.Grafana.Password,
-	//"endpoint", r.Config.Grafana.Endpoint,
+	log := r.Log.WithValues("kuberlogictenant", req.NamespacedName)
 
 	defer util.HandlePanic(log)
 
@@ -74,13 +76,14 @@ func (r *KuberlogicTenantReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, err
 	}
 	if kt.DeletionTimestamp != nil {
-		log.Info("kuberlogicalert is pending for deletion")
+		log.Info("kuberlogictenant is pending for deletion")
 		if controllerutil.ContainsFinalizer(kt, ktFinalizer) {
-			if err := finalize(ctx, r.Config, r.Client, kt, log); err != nil {
-				log.Error(err, "error finalizing kuberlogicalert")
+			if err := finalize(r.Config, kt, log); err != nil {
+				log.Error(err, "error finalizing kuberlogictenant")
 				return ctrl.Result{}, err
 			}
 			controllerutil.RemoveFinalizer(kt, ktFinalizer)
+			log.Info("object", "klt", kt)
 			if err := r.Client.Update(ctx, kt); err != nil {
 				return ctrl.Result{}, err
 			}
@@ -94,14 +97,14 @@ func (r *KuberlogicTenantReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		err := r.Client.Update(ctx, kt)
 		if err != nil {
 			log.Error(err, "error adding finalizer")
+			return ctrl.Result{}, err
 		}
-		return ctrl.Result{}, err
 	}
 
 	if r.Config.Grafana.Enabled {
 		if err := grafana.NewGrafanaSyncer(kt, log, r.Config.Grafana).Sync(); err != nil {
-			kt.SyncFailed(err.Error())
 			log.Info("grafana sync failed", "error", err)
+			_ = r.syncFailed(kt, err, ctx)
 			return ctrl.Result{}, err
 		}
 	}
@@ -109,17 +112,23 @@ func (r *KuberlogicTenantReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	err := newSyncer(ctx, log, r.Client, r.Scheme, kt).Sync(
 		r.Config.ImagePullSecretName, r.Config.Namespace)
 	log.Info("reconciliation finished", "error", err)
-
-	if err == nil {
-		kt.SetSynced()
-		log.Info("setting object status to synced")
-		return ctrl.Result{}, r.Client.Status().Update(ctx, kt)
+	if err != nil {
+		_ = r.syncFailed(kt, err, ctx)
 	} else {
-		kt.SyncFailed(err.Error())
-		log.Info("object sync failed", "error", err)
+		_ = r.syncSuccessful(kt, ctx)
 	}
 
 	return ctrl.Result{}, err
+}
+
+func (r *KuberlogicTenantReconciler) syncFailed(kt *kuberlogicv1.KuberLogicTenant, err error, ctx context.Context) error {
+	kt.SyncFailed(err.Error())
+	return r.Client.Status().Update(ctx, kt)
+}
+
+func (r *KuberlogicTenantReconciler) syncSuccessful(kt *kuberlogicv1.KuberLogicTenant, ctx context.Context) error {
+	kt.SetSynced()
+	return r.Client.Status().Update(ctx, kt)
 }
 
 func (r *KuberlogicTenantReconciler) SetupWithManager(mgr ctrl.Manager) error {

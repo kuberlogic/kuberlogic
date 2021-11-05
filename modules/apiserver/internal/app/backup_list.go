@@ -63,8 +63,7 @@ func (srv *Service) BackupListHandler(params apiService.BackupListParams, princi
 	mySession := session.Must(session.NewSession(
 		&aws.Config{
 			Endpoint: model.Endpoint,
-			// region just a stub -> for s3 region is no needed, but required for sdk
-			Region: aws.String("us-west-2"),
+			Region:   aws.String(*model.Region),
 			Credentials: credentials.NewStaticCredentials(
 				*model.AwsAccessKeyID,
 				*model.AwsSecretAccessKey,

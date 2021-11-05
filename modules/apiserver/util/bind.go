@@ -35,6 +35,7 @@ func BackupConfigResourceToModel(resource *v1.Secret) *models.BackupConfig {
 
 	enabled, _ := strconv.ParseBool(string(resource.Data["enabled"]))
 	schedule := string(resource.Data["schedule"])
+	region := string(resource.Data["region"])
 
 	return &models.BackupConfig{
 		AwsAccessKeyID:     &awsAccessKeyID,
@@ -43,6 +44,7 @@ func BackupConfigResourceToModel(resource *v1.Secret) *models.BackupConfig {
 		Endpoint:           &endpoint,
 		Enabled:            &enabled,
 		Schedule:           &schedule,
+		Region:             &region,
 	}
 }
 
@@ -53,6 +55,7 @@ func BackupConfigModelToResource(model *models.BackupConfig) *v1.Secret {
 	endpoint := *model.Endpoint
 	enabled := *model.Enabled
 	schedule := *model.Schedule
+	region := *model.Region
 
 	return &v1.Secret{
 		StringData: map[string]string{
@@ -61,7 +64,7 @@ func BackupConfigModelToResource(model *models.BackupConfig) *v1.Secret {
 			"bucket":                bucket,
 			"bucket-scope-suffix":   "",
 			"endpoint":              endpoint,
-			"region":                "",
+			"region":                region,
 			"sse":                   "AES256",
 			"enabled":               strconv.FormatBool(enabled),
 			"schedule":              schedule,
