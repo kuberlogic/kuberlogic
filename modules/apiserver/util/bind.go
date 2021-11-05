@@ -29,31 +29,39 @@ import (
 	"strconv"
 )
 
+func convertBytesToStringPtr(src []byte) *string {
+	return aws.String(string(src))
+}
+
+func convertStringPtrToBytes(src *string) []byte {
+	return []byte(aws.StringValue(src))
+}
+
 func BackupConfigResourceToModel(resource *v1.Secret) *models.BackupConfig {
-	enabled, _ := strconv.ParseBool(resource.StringData["enabled"])
+	enabled, _ := strconv.ParseBool(string(resource.Data["enabled"]))
 	return &models.BackupConfig{
-		AwsAccessKeyID:     aws.String(resource.StringData["aws-access-key-id"]),
-		AwsSecretAccessKey: aws.String(resource.StringData["aws-secret-access-key"]),
-		Bucket:             aws.String(resource.StringData["bucket"]),
-		Endpoint:           aws.String(resource.StringData["endpoint"]),
+		AwsAccessKeyID:     convertBytesToStringPtr(resource.Data["aws-access-key-id"]),
+		AwsSecretAccessKey: convertBytesToStringPtr(resource.Data["aws-secret-access-key"]),
+		Bucket:             convertBytesToStringPtr(resource.Data["bucket"]),
+		Endpoint:           convertBytesToStringPtr(resource.Data["endpoint"]),
 		Enabled:            aws.Bool(enabled),
-		Schedule:           aws.String(resource.StringData["schedule"]),
-		Region:             aws.String(resource.StringData["region"]),
+		Schedule:           convertBytesToStringPtr(resource.Data["schedule"]),
+		Region:             convertBytesToStringPtr(resource.Data["region"]),
 	}
 }
 
 func BackupConfigModelToResource(model *models.BackupConfig) *v1.Secret {
 	return &v1.Secret{
-		StringData: map[string]string{
-			"aws-access-key-id":     aws.StringValue(model.AwsAccessKeyID),
-			"aws-secret-access-key": aws.StringValue(model.AwsSecretAccessKey),
-			"bucket":                aws.StringValue(model.Bucket),
-			"bucket-scope-suffix":   "",
-			"endpoint":              aws.StringValue(model.Endpoint),
-			"region":                aws.StringValue(model.Region),
-			"sse":                   "AES256",
-			"enabled":               strconv.FormatBool(aws.BoolValue(model.Enabled)),
-			"schedule":              aws.StringValue(model.Schedule),
+		Data: map[string][]byte{
+			"aws-access-key-id":     convertStringPtrToBytes(model.AwsAccessKeyID),
+			"aws-secret-access-key": convertStringPtrToBytes(model.AwsSecretAccessKey),
+			"bucket":                convertStringPtrToBytes(model.Bucket),
+			"bucket-scope-suffix":   []byte(""),
+			"endpoint":              convertStringPtrToBytes(model.Endpoint),
+			"region":                convertStringPtrToBytes(model.Region),
+			"sse":                   []byte("AES256"),
+			"enabled":               []byte(strconv.FormatBool(aws.BoolValue(model.Enabled))),
+			"schedule":              convertStringPtrToBytes(model.Schedule),
 		},
 	}
 }

@@ -40,7 +40,7 @@ func (srv *Service) BackupConfigCreateHandler(params apiService.BackupConfigCrea
 	}
 
 	srv.log.Debugw("attempting to create a backup config", "namespace", ns, "name", name)
-	_, err := srv.clientset.CoreV1().
+	secretResourceResult, err := srv.clientset.CoreV1().
 		Secrets(ns).
 		Create(context.TODO(), secretResource, v1.CreateOptions{})
 	if err != nil {
@@ -60,8 +60,7 @@ func (srv *Service) BackupConfigCreateHandler(params apiService.BackupConfigCrea
 			return util.BadRequestFromError(newErr)
 		}
 	}
-
 	return &apiService.BackupConfigCreateCreated{
-		Payload: util.BackupConfigResourceToModel(secretResource),
+		Payload: util.BackupConfigResourceToModel(secretResourceResult),
 	}
 }
