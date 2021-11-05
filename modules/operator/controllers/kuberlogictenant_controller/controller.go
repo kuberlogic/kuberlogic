@@ -53,7 +53,7 @@ var (
 )
 
 func (r *KuberlogicTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithValues("kuberlogictenant", req.NamespacedName) //"enabled", r.Config.Grafana.Enabled,
+	log := r.Log.WithValues("kuberlogictenant", req.NamespacedName)
 
 	defer util.HandlePanic(log)
 
