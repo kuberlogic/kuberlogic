@@ -23,7 +23,7 @@ import (
 )
 
 type ServiceStore struct {
-	restClient *rest.RESTClient
-	clientset  *kubernetes.Clientset
+	restClient rest.Interface
+	clientset  kubernetes.Interface
 	log        logging.Logger
 }

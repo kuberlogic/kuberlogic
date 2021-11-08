@@ -46,7 +46,7 @@ func getConfig() (*rest.Config, error) {
 	return conf, nil
 }
 
-func Connect(ns, name string) (*kubernetes.Clientset, *kuberlogicv1.KuberLogicService, error) {
+func Connect(ns, name string) (kubernetes.Interface, *kuberlogicv1.KuberLogicService, error) {
 	cfg, err := getConfig()
 	if err != nil {
 		return nil, nil, err
