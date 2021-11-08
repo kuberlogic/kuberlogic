@@ -41,7 +41,7 @@ helm-embed: helm-package
 
 test: helm-embed
 	go vet && \
-	go test ./...
+	go test ./... -race -covermode=atomic -coverprofile=unit-coverage.out
 
 compile: helm-embed
 	mkdir -p bin && \
