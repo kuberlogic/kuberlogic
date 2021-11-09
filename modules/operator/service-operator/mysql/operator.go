@@ -59,7 +59,7 @@ func (p *Mysql) GetInternalDetails() interfaces.InternalDetails {
 	}
 }
 
-func (p *Mysql) GetSession(kls *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (interfaces.Session, error) {
+func (p *Mysql) GetSession(kls *kuberlogicv1.KuberLogicService, client kubernetes.Interface, db string) (interfaces.Session, error) {
 	return NewSession(p, kls, client, db)
 }
 

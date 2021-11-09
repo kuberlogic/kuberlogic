@@ -97,7 +97,7 @@ func GetClusterCredentialsInfo(cm *kuberlogicv1.KuberLogicService) (username, pa
 
 // GetSession returns a session struct for a service
 // An error is returned if a cluster Operator is not found
-func GetSession(cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (session interfaces.Session, err error) {
+func GetSession(cm *kuberlogicv1.KuberLogicService, client kubernetes.Interface, db string) (session interfaces.Session, err error) {
 	op, err := GetCluster(cm)
 	if err != nil {
 		return

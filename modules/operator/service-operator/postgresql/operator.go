@@ -60,7 +60,7 @@ func (p *Postgres) GetInternalDetails() interfaces.InternalDetails {
 	}
 }
 
-func (p *Postgres) GetSession(kls *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (interfaces.Session, error) {
+func (p *Postgres) GetSession(kls *kuberlogicv1.KuberLogicService, client kubernetes.Interface, db string) (interfaces.Session, error) {
 	return NewSession(p, kls, client, db)
 }
 

@@ -18,8 +18,10 @@ package util
 
 import (
 	"context"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	errors2 "github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,53 +29,45 @@ import (
 	"strconv"
 )
 
+func convertBytesToStringPtr(src []byte) *string {
+	return aws.String(string(src))
+}
+
+func convertStringPtrToBytes(src *string) []byte {
+	return []byte(aws.StringValue(src))
+}
+
 func BackupConfigResourceToModel(resource *v1.Secret) *models.BackupConfig {
-	awsAccessKeyID := string(resource.Data["aws-access-key-id"])
-	awsSecretAccessKey := string(resource.Data["aws-secret-access-key"])
-	bucket := string(resource.Data["bucket"])
-	endpoint := string(resource.Data["endpoint"])
-
 	enabled, _ := strconv.ParseBool(string(resource.Data["enabled"]))
-	schedule := string(resource.Data["schedule"])
-	region := string(resource.Data["region"])
-
 	return &models.BackupConfig{
-		AwsAccessKeyID:     &awsAccessKeyID,
-		AwsSecretAccessKey: &awsSecretAccessKey,
-		Bucket:             &bucket,
-		Endpoint:           &endpoint,
-		Enabled:            &enabled,
-		Schedule:           &schedule,
-		Region:             &region,
+		AwsAccessKeyID:     convertBytesToStringPtr(resource.Data["aws-access-key-id"]),
+		AwsSecretAccessKey: convertBytesToStringPtr(resource.Data["aws-secret-access-key"]),
+		Bucket:             convertBytesToStringPtr(resource.Data["bucket"]),
+		Endpoint:           convertBytesToStringPtr(resource.Data["endpoint"]),
+		Enabled:            aws.Bool(enabled),
+		Schedule:           convertBytesToStringPtr(resource.Data["schedule"]),
+		Region:             convertBytesToStringPtr(resource.Data["region"]),
 	}
 }
 
 func BackupConfigModelToResource(model *models.BackupConfig) *v1.Secret {
-	accessKey := *model.AwsAccessKeyID
-	secretKey := *model.AwsSecretAccessKey
-	bucket := *model.Bucket
-	endpoint := *model.Endpoint
-	enabled := *model.Enabled
-	schedule := *model.Schedule
-	region := *model.Region
-
 	return &v1.Secret{
-		StringData: map[string]string{
-			"aws-access-key-id":     accessKey,
-			"aws-secret-access-key": secretKey,
-			"bucket":                bucket,
-			"bucket-scope-suffix":   "",
-			"endpoint":              endpoint,
-			"region":                region,
-			"sse":                   "AES256",
-			"enabled":               strconv.FormatBool(enabled),
-			"schedule":              schedule,
+		Data: map[string][]byte{
+			"aws-access-key-id":     convertStringPtrToBytes(model.AwsAccessKeyID),
+			"aws-secret-access-key": convertStringPtrToBytes(model.AwsSecretAccessKey),
+			"bucket":                convertStringPtrToBytes(model.Bucket),
+			"bucket-scope-suffix":   []byte(""),
+			"endpoint":              convertStringPtrToBytes(model.Endpoint),
+			"region":                convertStringPtrToBytes(model.Region),
+			"sse":                   []byte("AES256"),
+			"enabled":               []byte(strconv.FormatBool(aws.BoolValue(model.Enabled))),
+			"schedule":              convertStringPtrToBytes(model.Schedule),
 		},
 	}
 }
 
 // TODO: Should be moved into operator's package/repo
-func CreateBackupResource(client *rest.RESTClient, ns, name, schedule string) error {
+func CreateBackupResource(client rest.Interface, ns, name, schedule string) error {
 	if _, err := GetBackupResource(client, ns, name); !errors.IsNotFound(err) {
 		return err // backup already exists
 	}
@@ -100,12 +94,12 @@ func CreateBackupResource(client *rest.RESTClient, ns, name, schedule string) er
 		Do(context.TODO()).
 		Into(&result)
 	if err != nil {
-		return err
+		return errors2.Wrap(err, "cannot create kuberlogicbackupschedule resource")
 	}
 	return nil
 }
 
-func UpdateBackupResource(client *rest.RESTClient, ns, name, schedule string) error {
+func UpdateBackupResource(client rest.Interface, ns, name, schedule string) error {
 	resource, err := GetBackupResource(client, ns, name)
 	if err != nil {
 		return err
@@ -123,7 +117,7 @@ func UpdateBackupResource(client *rest.RESTClient, ns, name, schedule string) er
 			Do(context.TODO()).
 			Into(&result)
 		if err != nil {
-			return err
+			return errors2.Wrap(err, "cannot update kuberlogicbackupschedule resource")
 		}
 		return nil
 	}
@@ -131,7 +125,7 @@ func UpdateBackupResource(client *rest.RESTClient, ns, name, schedule string) er
 	return nil
 }
 
-func DeleteBackupResource(client *rest.RESTClient, ns, name string) error {
+func DeleteBackupResource(client rest.Interface, ns, name string) error {
 	_, err := GetBackupResource(client, ns, name)
 	if errors.IsNotFound(err) {
 		return nil // cluster does not exist
@@ -147,12 +141,12 @@ func DeleteBackupResource(client *rest.RESTClient, ns, name string) error {
 		Do(context.TODO()).
 		Error()
 	if err != nil {
-		return err
+		return errors2.Wrap(err, "cannot delete kuberlogicbackupschedule resource")
 	}
 	return nil
 }
 
-func GetBackupResource(client *rest.RESTClient, ns, name string) (*kuberlogicv1.KuberLogicBackupSchedule, error) {
+func GetBackupResource(client rest.Interface, ns, name string) (*kuberlogicv1.KuberLogicBackupSchedule, error) {
 	item := kuberlogicv1.KuberLogicBackupSchedule{}
 	err := client.Get().
 		Namespace(ns).
@@ -162,12 +156,12 @@ func GetBackupResource(client *rest.RESTClient, ns, name string) (*kuberlogicv1.
 		Into(&item)
 
 	if err != nil {
-		return nil, err
+		return nil, errors2.Wrap(err, "cannot receive kuberlogicbackupschedule resource")
 	}
 	return &item, nil
 }
 
-func CreateBackupRestoreResource(client *rest.RESTClient, ns, name, backup, database string) error {
+func CreateBackupRestoreResource(client rest.Interface, ns, name, backup, database string) error {
 	resource := kuberlogicv1.KuberLogicBackupRestore{
 		ObjectMeta: v12.ObjectMeta{
 			GenerateName: name,
@@ -190,7 +184,7 @@ func CreateBackupRestoreResource(client *rest.RESTClient, ns, name, backup, data
 		Do(context.TODO()).
 		Into(&result)
 	if err != nil {
-		return err
+		return errors2.Wrap(err, "cannot create kuberlogicbackuprestore resource")
 	}
 	return nil
 }

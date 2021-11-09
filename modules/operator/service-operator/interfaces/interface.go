@@ -40,7 +40,7 @@ type OperatorInterface interface {
 	GetBackupSchedule() BackupSchedule
 	GetBackupRestore() BackupRestore
 	GetInternalDetails() InternalDetails
-	GetSession(cm *v1.KuberLogicService, client *kubernetes.Clientset, db string) (Session, error)
+	GetSession(cm *v1.KuberLogicService, client kubernetes.Interface, db string) (Session, error)
 }
 
 // PlatformOperator interface holds methods for platform specific actions

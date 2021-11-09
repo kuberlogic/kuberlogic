@@ -28,7 +28,7 @@ import (
 	"time"
 )
 
-func GetKuberLogicClient(config *rest.Config) (*rest.RESTClient, error) {
+func GetKuberLogicClient(config *rest.Config) (rest.Interface, error) {
 	crdConfig := *config
 	crdConfig.ContentConfig.GroupVersion = &kuberlogicv1.GroupVersion
 	crdConfig.APIPath = "/apis"
