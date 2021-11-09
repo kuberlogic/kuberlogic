@@ -17,7 +17,6 @@
 package helm_installer
 
 import (
-	"github.com/kuberlogic/kuberlogic/modules/installer/cfg"
 	"github.com/kuberlogic/kuberlogic/modules/installer/internal"
 	logger "github.com/kuberlogic/kuberlogic/modules/installer/log"
 	"github.com/pkg/errors"
@@ -32,7 +31,7 @@ func (i *HelmInstaller) Install(args []string) error {
 	installPhase := args[0]
 
 	// run pre install checks
-	if err := runInstallChecks(i.ClientSet, i.HelmActionConfig, i.Log, i.Config); err != nil {
+	if err := runInstallChecks(i.ClientSet, i.HelmActionConfig, i.Log); err != nil {
 		return errors.Wrap(err, "pre-install checks are failed")
 	}
 
@@ -93,7 +92,7 @@ func (i *HelmInstaller) Install(args []string) error {
 			}
 
 			if err := deployUI(globalValues, i, release); err != nil {
-				return errors.Wrap(err, "error installing UI")
+				return errors.Wrap(err, "error installing Kuberlogic")
 			}
 		}
 		return nil
@@ -110,7 +109,7 @@ func (i *HelmInstaller) Install(args []string) error {
 	return err
 }
 
-func runInstallChecks(clientSet *kubernetes.Clientset, actionConfig *action.Configuration, log logger.Logger, config cfg.Config) error {
+func runInstallChecks(clientSet *kubernetes.Clientset, actionConfig *action.Configuration, log logger.Logger) error {
 	if err := checkKubernetesVersion(clientSet, log); err != nil {
 		return errors.Wrap(err, "error checking Kubernetes version")
 	}
@@ -119,9 +118,6 @@ func runInstallChecks(clientSet *kubernetes.Clientset, actionConfig *action.Conf
 	}
 	if err := checkLoadBalancerServiceType(clientSet, log); err != nil {
 		return errors.Wrap(err, "error checking Kubernetes LoadBalancer service")
-	}
-	if err := checkCustomCertificates(config, log); err != nil {
-		return errors.Wrap(err, "error checking certificates")
 	}
 	return nil
 }

@@ -33,7 +33,7 @@ func configureAPI(api *operations.KuberlogicAPI) http.Handler {
 	// api.Logger = log.Printf
 
 	api.UseSwaggerUI()
-	// To continue using redoc as your UI, uncomment the following line
+	// To continue using redoc as your Kuberlogic, uncomment the following line
 	// api.UseRedoc()
 
 	api.JSONConsumer = runtime.JSONConsumer()
@@ -165,9 +165,9 @@ func configureAPI(api *operations.KuberlogicAPI) http.Handler {
 	return setupGlobalMiddleware(api.Serve(setupMiddlewares))
 }
 
-// The TLS configuration before HTTPS server starts.
+// The KuberlogicTLS configuration before HTTPS server starts.
 func configureTLS(tlsConfig *tls.Config) {
-	// Make all necessary changes to the TLS configuration here.
+	// Make all necessary changes to the KuberlogicTLS configuration here.
 }
 
 // As soon as server is initialized but not run yet, this function will be called.

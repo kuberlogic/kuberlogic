@@ -125,7 +125,7 @@ func (r *ReleaseInfo) UpdateDemoUser(user string) {
 }
 
 func (r *ReleaseInfo) ShowBanner() string {
-	return fmt.Sprintf(`Kuberlogic UI URL: %s
+	return fmt.Sprintf(`Kuberlogic URL: %s
 Kuberlogic Monitoring Console URL: %s
 Kuberlogic connection Ingress address: %s
 

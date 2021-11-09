@@ -162,6 +162,8 @@ spec:
                 port:
                   number: {{ .Values.grafana.port }}
 ---
+# the main different between this ingress resource and resource above --
+# this resource (with -login suffix) using konghq plugin for autentication JWT token in Keycloak
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
