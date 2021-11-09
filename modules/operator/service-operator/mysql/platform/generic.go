@@ -16,8 +16,14 @@
 
 package platform
 
-type MysqlGeneric struct{}
+import "github.com/bitpoke/mysql-operator/pkg/apis/mysql/v1alpha1"
+
+type MysqlGeneric struct {
+	Spec *v1alpha1.MysqlCluster
+}
 
 func (m *MysqlGeneric) SetAllowedIPs(ips []string) error {
+	m.Spec.Spec.MasterServiceSpec.AllowedSourceRanges = ips
+	m.Spec.Spec.ReplicaServiceSpec.AllowedSourceRanges = ips
 	return nil
 }

@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	testMysql = &MysqlEKS{
+	testMysql = &MysqlGeneric{
 		Spec: &v1alpha1.MysqlCluster{
 			ObjectMeta: v1.ObjectMeta{
 				Name:      "test",
@@ -33,7 +33,7 @@ var (
 	}
 )
 
-func TestMysqlEKS_AllowIPs(t *testing.T) {
+func TestMysqlGeneric_AllowIPs(t *testing.T) {
 	for _, inputList := range [][]string{
 		{"1.1.1.1/32"},
 		{"2.2.2.2/32", "8.8.8.8/24"},

@@ -24,4 +24,4 @@ require (
 	sigs.k8s.io/controller-runtime v0.9.2
 )
 
-replace github.com/bitpoke/mysql-operator v0.5.1 => github.com/ynnt/mysql-operator v0.4.1-0.20211104191942-46957122d7a4
+replace github.com/bitpoke/mysql-operator v0.5.1 => github.com/ynnt/mysql-operator v0.4.1-0.20211105080955-6cd163c75b57

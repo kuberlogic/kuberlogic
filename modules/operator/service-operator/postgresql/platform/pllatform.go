@@ -23,11 +23,9 @@ import (
 
 func NewPlatformOperator(p *v1.Postgresql, platform string) interfaces.PlatformOperator {
 	switch platform {
-	case "EKS":
-		return &PostgresEKS{
+	default:
+		return &PostgresGeneric{
 			Spec: p,
 		}
-	default:
-		return &PostgresGeneric{}
 	}
 }

@@ -23,11 +23,9 @@ import (
 
 func NewPlatformOperator(m *v1alpha1.MysqlCluster, platform string) interfaces.PlatformOperator {
 	switch platform {
-	case "EKS":
-		return &MysqlEKS{
+	default:
+		return &MysqlGeneric{
 			Spec: m,
 		}
-	default:
-		return &MysqlGeneric{}
 	}
 }

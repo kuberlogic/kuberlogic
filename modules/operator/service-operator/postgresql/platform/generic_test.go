@@ -17,14 +17,30 @@
 package platform
 
 import (
-	postgres "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
+	v1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"testing"
 )
 
-type PostgresEKS struct {
-	Spec *postgres.Postgresql
-}
+var (
+	testPostgres = &PostgresGeneric{
+		Spec: &v1.Postgresql{
+			ObjectMeta: v12.ObjectMeta{
+				Name:      "test",
+				Namespace: "test",
+			},
+		},
+	}
+)
 
-func (c *PostgresEKS) SetAllowedIPs(ips []string) error {
-	c.Spec.Spec.AllowedSourceRanges = ips
-	return nil
+func TestPostgresGeneric_SetAllowedIPs(t *testing.T) {
+
+	for _, inputList := range [][]string{
+		{"1.1.1.1/32"},
+		{"2.2.2.2/32", "8.8.8.8/24"},
+	} {
+		if err := testPostgres.SetAllowedIPs(inputList); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	}
 }
