@@ -76,6 +76,12 @@ grafana:
     grafanaLogin:
       annotations: {}
     enabled: false
+    class:
+    host:
+    tls:
+      ca:
+      crt:
+      key:
 
   secretName: grafana-credentials
   admin:

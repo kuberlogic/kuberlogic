@@ -38,14 +38,25 @@ var (
 )
 
 type Config struct {
-	DebugLogs      *bool   `yaml:"debugLogs,omitempty"`
-	KubeconfigPath *string `yaml:"kubeconfigPath,omitempty"`
+	DebugLogs      *bool   `yaml:"debug-logs,omitempty"`
+	KubeconfigPath *string `yaml:"kubeconfig-path,omitempty"`
 
 	Namespace *string `yaml:"namespace"`
 
 	Endpoints struct {
-		Kuberlogic        string `yaml:"kuberlogic"`
-		MonitoringConsole string `yaml:"monitoringConsole"`
+		Kuberlogic    string `yaml:"kuberlogic"`
+		KuberlogicTLS struct {
+			CaFile  string `yaml:"ca.crt"`
+			CrtFile string `yaml:"tls.crt"`
+			KeyFile string `yaml:"tls.key"`
+		} `yaml:"kuberlogic-tls"`
+
+		MonitoringConsole    string `yaml:"monitoring-console"`
+		MonitoringConsoleTLS struct {
+			CaFile  string `yaml:"ca.crt"`
+			CrtFile string `yaml:"tls.crt"`
+			KeyFile string `yaml:"tls.key"`
+		} `yaml:"monitoring-console-tls"`
 	} `yaml:"endpoints"`
 
 	Registry struct {
@@ -55,15 +66,9 @@ type Config struct {
 	} `yaml:"registry,omitempty"`
 
 	Auth struct {
-		AdminPassword    string  `yaml:"adminPassword"`
-		DemoUserPassword *string `yaml:"demoUserPassword,omitempty"`
+		AdminPassword    string  `yaml:"admin-password"`
+		DemoUserPassword *string `yaml:"demo-user-password,omitempty"`
 	} `yaml:"auth"`
-
-	KuberlogicTLS struct {
-		CaFile  string `yaml:"ca.crt"`
-		CrtFile string `yaml:"tls.crt"`
-		KeyFile string `yaml:"tls.key"`
-	} `yaml:"kuberlogic-tls"`
 
 	Platform string `yaml:"platform,omitempty"`
 }
@@ -77,7 +82,7 @@ func (c *Config) setDefaults(log logger.Logger) error {
 	}
 
 	if c.KubeconfigPath == nil {
-		log.Debugf("Using default value for kubeconfigPath: %s", defaultKubeconfigPath)
+		log.Debugf("Using default value for kubeconfig-path: %s", defaultKubeconfigPath)
 		v := &defaultKubeconfigPath
 		c.KubeconfigPath = v
 	}
@@ -117,6 +122,17 @@ func (c *Config) setDefaults(log logger.Logger) error {
 }
 
 func (c *Config) CheckKuberlogicTLS() error {
+	if err := checkCertificates(c.Endpoints.KuberlogicTLS.CaFile,
+		c.Endpoints.KuberlogicTLS.CrtFile,
+		c.Endpoints.KuberlogicTLS.KeyFile); err != nil {
+		return err
+	}
+
+	if err := checkCertificates(c.Endpoints.MonitoringConsoleTLS.CaFile,
+		c.Endpoints.MonitoringConsoleTLS.CrtFile,
+		c.Endpoints.MonitoringConsoleTLS.KeyFile); err != nil {
+		return err
+	}
 	return nil
 }
 

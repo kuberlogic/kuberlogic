@@ -177,22 +177,22 @@ func deployIngressController(globals map[string]interface{}, i *HelmInstaller, r
 
 func deployUI(globals map[string]interface{}, i *HelmInstaller, release *internal.ReleaseInfo) error {
 	tls := make(map[string]interface{})
-	if i.Config.KuberlogicTLS.CaFile != "" {
-		data, err := os.ReadFile(i.Config.KuberlogicTLS.CaFile)
+	if i.Config.Endpoints.KuberlogicTLS.CaFile != "" {
+		data, err := os.ReadFile(i.Config.Endpoints.KuberlogicTLS.CaFile)
 		if err != nil {
 			return errors.Wrap(err, "cannot read the ca file")
 		}
 		tls["ca"] = string(data)
 	}
-	if i.Config.KuberlogicTLS.CrtFile != "" {
-		data, err := os.ReadFile(i.Config.KuberlogicTLS.CrtFile)
+	if i.Config.Endpoints.KuberlogicTLS.CrtFile != "" {
+		data, err := os.ReadFile(i.Config.Endpoints.KuberlogicTLS.CrtFile)
 		if err != nil {
 			return errors.Wrap(err, "cannot read the certificate file")
 		}
 		tls["crt"] = string(data)
 	}
-	if i.Config.KuberlogicTLS.KeyFile != "" {
-		data, err := os.ReadFile(i.Config.KuberlogicTLS.KeyFile)
+	if i.Config.Endpoints.KuberlogicTLS.KeyFile != "" {
+		data, err := os.ReadFile(i.Config.Endpoints.KuberlogicTLS.KeyFile)
 		if err != nil {
 			return errors.Wrap(err, "cannot read the certificate key file")
 		}
@@ -256,7 +256,7 @@ func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
 		"config": map[string]interface{}{
 			"grafana": map[string]interface{}{
 				"enabled":                   true,
-				"endpoint":                  fmt.Sprintf("http://%s:%d/", grafanaServiceName, grafanaServicePort),
+				"endpoint":                  fmt.Sprintf("https://%s:%d/", grafanaServiceName, grafanaServicePort),
 				"secret":                    grafanaSecretName,
 				"defaultDatasourceEndpoint": "http://" + victoriaMetricsServiceName,
 			},
@@ -274,6 +274,29 @@ func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
 }
 
 func deployMonitoring(globals map[string]interface{}, i *HelmInstaller, release *internal.ReleaseInfo) error {
+	tls := make(map[string]interface{})
+	if i.Config.Endpoints.MonitoringConsoleTLS.CaFile != "" {
+		data, err := os.ReadFile(i.Config.Endpoints.MonitoringConsoleTLS.CaFile)
+		if err != nil {
+			return errors.Wrap(err, "cannot read the ca file")
+		}
+		tls["ca"] = string(data)
+	}
+	if i.Config.Endpoints.MonitoringConsoleTLS.CrtFile != "" {
+		data, err := os.ReadFile(i.Config.Endpoints.MonitoringConsoleTLS.CrtFile)
+		if err != nil {
+			return errors.Wrap(err, "cannot read the certificate file")
+		}
+		tls["crt"] = string(data)
+	}
+	if i.Config.Endpoints.MonitoringConsoleTLS.KeyFile != "" {
+		data, err := os.ReadFile(i.Config.Endpoints.MonitoringConsoleTLS.KeyFile)
+		if err != nil {
+			return errors.Wrap(err, "cannot read the certificate key file")
+		}
+		tls["key"] = string(data)
+	}
+
 	values := map[string]interface{}{
 		"victoriametrics": map[string]interface{}{
 			"service": map[string]interface{}{
@@ -305,6 +328,7 @@ func deployMonitoring(globals map[string]interface{}, i *HelmInstaller, release 
 				"enabled": true,
 				"host":    i.Config.Endpoints.MonitoringConsole,
 				"class":   ingressClass,
+				"tls":     tls,
 				"grafanaLogin": map[string]interface{}{
 					"annotations": map[string]interface{}{
 						"konghq.com/plugins": fmt.Sprintf("%s,%s", kongKeycloakIntrospectPlugin, kongJWTCleanupPlugin),
@@ -320,7 +344,7 @@ func deployMonitoring(globals map[string]interface{}, i *HelmInstaller, release 
 	}
 
 	i.Log.Infof("Deploying Kuberlogic monitoring...")
-	release.UpdateMCAddress("http://" + i.Config.Endpoints.MonitoringConsole)
+	release.UpdateMCAddress("https://" + i.Config.Endpoints.MonitoringConsole)
 	return releaseHelmChart(helmMonitoringChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 

@@ -1,7 +1,8 @@
 replicas: 1
 
 config:
-  grafanaEndpoint: http://127.0.0.1:8080
+  grafanaEndpoint: https://127.0.0.1:8080
+  monitoringConsoleEndpoint:
 
 image:
   repository: quay.io/kuberlogic/ui

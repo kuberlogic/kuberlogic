@@ -138,18 +138,42 @@ metadata:
   name: {{ .Values.grafana.serviceAccountName }}
   namespace: {{ .Release.Namespace }}
 {{ if .Values.grafana.ingress.enabled }}
+  {{ if and .Values.grafana.ingress.tls.ca .Values.grafana.ingress.tls.crt .Values.grafana.ingress.tls.key }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kuberlogic-grafana-cert
+  namespace: {{ .Release.Namespace }}
+data:
+  ca.crt: |-
+  {{ b64enc .Values.grafana.ingress.tls.ca | indent 2 }}
+  tls.crt: |-
+  {{ b64enc .Values.grafana.ingress.tls.crt | indent 2 }}
+  tls.key: |-
+    {{ b64enc .Values.grafana.ingress.tls.key | indent 2 }}
+
+  {{ end }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Values.grafana.service.name }}
   namespace: {{ .Release.Namespace }}
-  {{ with .Values.grafana.ingress.grafana.annotations }}
   annotations:
-    {{ . | toYaml | nindent 4 }}
-  {{- end }}
+    konghq.com/https-redirect-status-code: "301"
+    konghq.com/protocols: https
+    {{ if not (and .Values.grafana.ingress.tls.ca .Values.grafana.ingress.tls.crt .Values.grafana.ingress.tls.key) }}
+    # kuberlogic-selfsigned issuer also is used for sign kuberlogic webhook
+    cert-manager.io/issuer: kuberlogic-selfsigned
+    {{ end }}
+    {{ .Values.grafana.ingress.grafana.annotations | toYaml | nindent 4 }}
 spec:
   ingressClassName: {{ .Values.grafana.ingress.class }}
+  tls:
+    - hosts:
+        - {{ .Values.grafana.ingress.host }}
+      secretName: kuberlogic-grafana-cert
   rules:
     - host: {{ .Values.grafana.ingress.host }}
       http:
@@ -169,12 +193,20 @@ kind: Ingress
 metadata:
   name: {{ .Values.grafana.service.name }}-login
   namespace: {{ .Release.Namespace }}
-  {{ with .Values.grafana.ingress.grafanaLogin.annotations }}
   annotations:
-    {{ . | toYaml | nindent 4 }}
-  {{- end }}
+    konghq.com/https-redirect-status-code: "301"
+    konghq.com/protocols: https
+    {{ if not (and .Values.grafana.ingress.tls.ca .Values.grafana.ingress.tls.crt .Values.grafana.ingress.tls.key) }}
+    # kuberlogic-selfsigned issuer also is used for sign kuberlogic webhook
+    cert-manager.io/issuer: kuberlogic-selfsigned
+    {{ end }}
+    {{ .Values.grafana.ingress.grafanaLogin.annotations | toYaml | nindent 4 }}
 spec:
   ingressClassName: {{ .Values.grafana.ingress.class }}
+  tls:
+    - hosts:
+        - {{ .Values.grafana.ingress.host }}
+      secretName: kuberlogic-grafana-cert
   rules:
     - host: {{ .Values.grafana.ingress.host }}
       http:

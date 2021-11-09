@@ -2,42 +2,58 @@ package cfg
 
 import (
 	"crypto/x509"
+	"encoding/pem"
 	"github.com/pkg/errors"
 	"os"
 )
 
-func open(caFile, crtFile, keyFile string) error{
-	if caFile != "" && crtFile != "" &&  keyFile != "" {
-		ca, err := os.ReadFile(caFile)
+func openCertificate(file string) (*x509.Certificate, error) {
+	content, err := os.ReadFile(file)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot read the file")
+	}
+
+	block, _ := pem.Decode(content)
+	if block == nil {
+		return nil, errors.New("certitifate is not found in file")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot parse certificate")
+	}
+	return cert, nil
+}
+
+func checkCertificates(caFile, crtFile, keyFile string) error {
+	if caFile != "" && crtFile != "" && keyFile != "" {
+		contentCa, err := os.ReadFile(caFile)
 		if err != nil {
-			return errors.Wrap(err, "cannot read the ca file")
+			return errors.Wrap(err, "cannot read the CA file")
+		}
+		_, err = os.ReadFile(keyFile)
+		if err != nil {
+			return errors.Wrap(err, "cannot read the secret file")
 		}
 
-		leafCrt, err := os.ReadFile(crtFile)
+		leaf, err := openCertificate(crtFile)
 		if err != nil {
-			return errors.Wrap(err, "cannot read the certificate file")
+			return errors.Wrap(err, "incorrect certificate")
 		}
 
-		caCert, err := x509.ParseCertificate(ca)
-		leaf, err := x509.ParseCertificate(leafCrt)
+		roots := x509.NewCertPool()
+		ok := roots.AppendCertsFromPEM(contentCa)
+		if !ok {
+			return errors.New("failed to parse root certificate")
+		}
 
-		intCerts := []*x509.Certificate{caCert}
-		caCheck(leaf, intCerts)
+		if _, err := leaf.Verify(x509.VerifyOptions{
+			Roots: roots,
+		}); err == nil {
+			return err
+		}
+		return nil
 
 	}
 	return nil
-}
-
-func caCheck(leafCert *x509.Certificate, intCerts []*x509.Certificate) bool {
-	caPool := x509.NewCertPool()
-	for _, intCert := range intCerts {
-		caPool.AddCert(intCert)
-	}
-
-	if _, err := leafCert.Verify(x509.VerifyOptions{
-		Roots: caPool,
-	}); err == nil {
-		return true
-	}
-	return false
 }

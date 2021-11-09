@@ -5,10 +5,10 @@
 #   * `generic` (Any other Kubernetes installation. Default.)
 platform: generic
 # Whether to enable debug logs or not
-debugLogs: true
+debug-logs: true
 # Provides an absolute path to a kubeconfig file
 # default is $HOME/.kube/config
-# kubeconfigPath: /path/to/kubeconfig
+# kubeconfig-path: /path/to/kubeconfig
 
 # namespace where Kuberlogic components will be installed
 namespace: kuberlogic
@@ -23,16 +23,21 @@ namespace: kuberlogic
 # and it is expected that Kuberlogic ingress traffic will be received via these endpoints
 endpoints:
   kuberlogic: kuberlogic.com
-  monitoringConsole: mc.kuberlogic.com
+  #kuberlogic-tls:
+  #  ca.crt: /root/certs/rootCA.crt
+  #  tls.crt: /root/certs/kuberlogic.crt
+  #  tls.key: /root/certs/kuberlogic.key
 
-#kuberlogic-tls:
-#  ca.crt: /root/certs/rootCA.crt
-#  tls.crt: /root/certs/kuberlogic.crt
-#  tls.key: /root/certs/kuberlogic.key
+  monitoring-console: mc.kuberlogic.com
+  #monitoring-console-tls:
+  #  ca.crt: /root/certs/rootCA.crt
+  #  tls.crt: /root/certs/kuberlogic.crt
+  #  tls.key: /root/certs/kuberlogic.key
+
 
 # `auth` section contains settings for Keycloak-based authentication
 auth:
-  # demoUserPassword configures a password for Kuberlogic test user: user@kuberlogic.com
-  demoUserPassword: secret
-  # adminPassword is password for Keycloak realm administrator: `kuberlogic`
-  adminPassword: adminPassword
+  # demo-usep-password configures a password for Kuberlogic test user: user@kuberlogic.com
+  demo-usep-password: secret
+  # admin-password is password for Keycloak realm administrator: `kuberlogic`
+  admin-password: adminPassword

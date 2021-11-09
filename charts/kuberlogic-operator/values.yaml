@@ -48,7 +48,7 @@ config:
 
   grafana:
     enabled: false
-    endpoint: http://127.0.0.1
+    endpoint: https://127.0.0.1
 
     secret: secret
 
