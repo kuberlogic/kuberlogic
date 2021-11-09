@@ -47,6 +47,10 @@ jobs:
           path: ./modules/installer/bin
           key: installer-${{ github.sha }}
 
+      - name: Run unit tests
+        run: |
+          make unit-tests
+
       - name: Build installer & images
         run: |
           make docker-build installer-build
@@ -66,6 +70,14 @@ jobs:
       - name: Save image's cache
         run: |
           make docker-push-cache
+
+      - name: Upload coverage
+        run: |
+          bash <(curl -s https://codecov.io/bash) -f modules/operator/unit-coverage.out -F unit-operator
+          bash <(curl -s https://codecov.io/bash) -f modules/installer/unit-coverage.out -F unit-installer
+          bash <(curl -s https://codecov.io/bash) -f modules/apiserver/unit-coverage.out -F unit-apiserver
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   setup_and_test:
     name: Setup and test
@@ -151,6 +163,13 @@ jobs:
           PG_VERSION: ${{ matrix.pg_version }}
           MY_VERSION: ${{ matrix.my_version }}
           TYPE: ${{ matrix.type }}
+
+      - name: Upload coverage
+        run: |
+          bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-operator.out -F operator
+          bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-apiserver.out -F apiserver
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Show status
         run: |

@@ -5,7 +5,42 @@ on:
     branches: [ master ]
 
 jobs:
-  test:
+  unit-test:
+    runs-on: ubuntu-latest
+    env:
+      GOPATH: /tmp/go
+    steps:
+      - uses: azure/setup-helm@v1
+        with:
+          version: v3.4.2
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.16.0'
+
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Cache Go modules
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.GOPATH }}
+          key: go-cache-${{ github.run_id }}
+          restore-keys: |
+            go-cache-
+
+      - name: Run unit tests
+        run: |
+          make unit-tests
+
+      - name: Upload coverage
+        run: |
+          bash <(curl -s https://codecov.io/bash) -f modules/operator/unit-coverage.out -F unit-operator
+          bash <(curl -s https://codecov.io/bash) -f modules/installer/unit-coverage.out -F unit-installer
+          bash <(curl -s https://codecov.io/bash) -f modules/apiserver/unit-coverage.out -F unit-apiserver
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  e2e-test:
     runs-on: ubuntu-latest
     env:
       USE_BUILDX: true
@@ -16,42 +51,8 @@ jobs:
         include:
           - type: postgresql
             pg_version: 13
-
-#          - type: postgresql
-#            pg_version: 12
-
-#          - type: postgresql
-#            pg_version: 11
-
-#          - type: postgresql
-#            pg_version: 10
-
-#          - type: postgresql
-#            pg_version: 9.6
-
-#          - type: postgresql
-#            pg_version: 9.5
-
-#          - type: postgresql
-#            pg_version: 9.4
-#
-#          - type: postgresql
-#            pg_version: 9.3
-
           - type: mysql
             my_version: 5.7.31
-
-#          - type: mysql
-#            my_version: 5.7.29
-
-#          - type: mysql
-#            my_version: 5.7.26
-
-#          - type: mysql
-#            my_version: 5.7.24
-
-#         - type: mysql
-#            version: 8.0.20
     steps:
       - uses: azure/setup-helm@v1
         with:
@@ -112,10 +113,6 @@ jobs:
         run: |
           kubectl config set-context --current --namespace=kuberlogic
 
-      - name: Run unit tests
-        run: |
-          make operator-test installer-test
-
       - name: Build installer & images
         run: |
           make docker-build installer-build
@@ -155,8 +152,6 @@ jobs:
 
           bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-operator.out -F operator
           bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-apiserver.out -F apiserver
-          bash <(curl -s https://codecov.io/bash) -f modules/operator/unit-coverage.out -F unit-operator
-          bash <(curl -s https://codecov.io/bash) -f modules/installer/unit-coverage.out -F unit-installer
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 

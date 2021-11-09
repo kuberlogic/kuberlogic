@@ -70,7 +70,7 @@ NAMESPACE ?= kuberlogic
 all: manager
 
 # Run tests
-unit-tests: operator-test installer-test
+unit-tests: operator-test installer-test apiserver-test
 operator-test: generate fmt vet manifests
 	cd modules/operator; \
 	go test ./... -race -covermode=atomic -coverprofile=unit-coverage.out
@@ -78,6 +78,10 @@ operator-test: generate fmt vet manifests
 installer-test:
 	@cd modules/installer; \
 	$(MAKE) test
+
+apiserver-test:
+	cd modiles/apiserver; \
+	go test $(go list ./... | grep -v tests) -coverprofile=unit-coverage.out
 
 # Build manager binary
 manager: generate fmt vet
