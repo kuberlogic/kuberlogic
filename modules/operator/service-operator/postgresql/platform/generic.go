@@ -16,7 +16,11 @@
 
 package platform
 
-type PostgresGeneric struct{}
+import v1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
+
+type PostgresGeneric struct {
+	Spec *v1.Postgresql
+}
 
 func (p *PostgresGeneric) SetAllowedIPs(ips []string) error {
 	return nil

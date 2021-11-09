@@ -34,7 +34,7 @@ var (
 	defaultHelmReleaseName  = "kuberlogic"
 
 	defaultPlatform    = "generic"
-	supportedPlatforms = []string{defaultPlatform, "eks"}
+	supportedPlatforms = []string{defaultPlatform, "aws"}
 )
 
 type Config struct {
