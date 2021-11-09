@@ -87,8 +87,8 @@ jobs:
       - name: Setup Minikube
         uses: manusa/actions-setup-minikube@v2.3.0
         with:
-          minikube version: 'v1.19.0'
-          kubernetes version: 'v1.20.5'
+          minikube version: 'v1.23.2'
+          kubernetes version: 'v1.21.1'
           github token: ${{ secrets.GITHUB_TOKEN }}
 
           # It's need for the local usage for the webhook:
