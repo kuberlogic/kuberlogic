@@ -20,7 +20,9 @@ import (
 	"fmt"
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/interfaces"
+	platformOp "github.com/kuberlogic/kuberlogic/modules/operator/service-operator/postgresql/platform"
 	"github.com/kuberlogic/kuberlogic/modules/operator/util"
+	"github.com/pkg/errors"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,7 +38,8 @@ const (
 )
 
 type Postgres struct {
-	Operator postgresv1.Postgresql
+	Operator         postgresv1.Postgresql
+	platformOperator interfaces.PlatformOperator
 }
 
 func (p *Postgres) GetBackupSchedule() interfaces.BackupSchedule {
@@ -81,7 +84,7 @@ func (p *Postgres) InitFrom(o runtime.Object) {
 	p.Operator = *o.(*postgresv1.Postgresql)
 }
 
-func (p *Postgres) Init(kls *kuberlogicv1.KuberLogicService) {
+func (p *Postgres) Init(kls *kuberlogicv1.KuberLogicService, platform string) {
 	loadBalancersEnabled := true
 
 	name := p.Name(kls)
@@ -169,14 +172,20 @@ func (p *Postgres) Init(kls *kuberlogicv1.KuberLogicService) {
 			},
 		},
 	}
+	p.platformOperator = platformOp.NewPlatformOperator(&p.Operator, platform)
 }
 
-func (p *Postgres) Update(kls *kuberlogicv1.KuberLogicService) {
+func (p *Postgres) Update(kls *kuberlogicv1.KuberLogicService) error {
 	p.setReplica(kls)
 	p.setResources(kls)
 	p.setVolumeSize(kls)
 	p.setVersion(kls)
 	p.setAdvancedConf(kls)
+
+	if err := p.platformOperator.SetAllowedIPs(kuberlogicv1.DefaultAllowedIPs); err != nil {
+		return errors.Wrap(err, "error applying platforms changes")
+	}
+	return nil
 }
 
 func (p *Postgres) setReplica(kls *kuberlogicv1.KuberLogicService) {
@@ -207,46 +216,6 @@ func (p *Postgres) setAdvancedConf(kls *kuberlogicv1.KuberLogicService) {
 	for k, v := range kls.Spec.AdvancedConf {
 		p.Operator.Spec.PostgresqlParam.Parameters[k] = v
 	}
-}
-
-func (p *Postgres) IsEqual(kls *kuberlogicv1.KuberLogicService) bool {
-	return p.isEqualReplica(kls) &&
-		p.isEqualResources(kls) &&
-		p.isEqualVolumeSize(kls) &&
-		p.isEqualVersion(kls) &&
-		p.isEqualAdvancedConf(kls)
-}
-
-func (p *Postgres) isEqualReplica(kls *kuberlogicv1.KuberLogicService) bool {
-	return p.Operator.Spec.NumberOfInstances == kls.Spec.Replicas
-}
-
-func (p *Postgres) isEqualResources(kls *kuberlogicv1.KuberLogicService) bool {
-	op := p.Operator.Spec.Resources
-	klsr := kls.Spec.Resources
-	return op.ResourceLimits.CPU == klsr.Limits.Cpu().String() &&
-		op.ResourceLimits.Memory == klsr.Limits.Memory().String() &&
-		op.ResourceRequests.CPU == klsr.Requests.Cpu().String() &&
-		op.ResourceRequests.Memory == klsr.Requests.Memory().String()
-}
-
-func (p *Postgres) isEqualVolumeSize(kls *kuberlogicv1.KuberLogicService) bool {
-	return p.Operator.Spec.Volume.Size == kls.Spec.VolumeSize
-}
-
-func (p *Postgres) isEqualVersion(kls *kuberlogicv1.KuberLogicService) bool {
-	return p.Operator.Spec.PostgresqlParam.PgVersion == kls.Spec.Version
-}
-
-func (p *Postgres) isEqualAdvancedConf(kls *kuberlogicv1.KuberLogicService) bool {
-	for k, v := range kls.Spec.AdvancedConf {
-		if val, ok := p.Operator.Spec.PostgresqlParam.Parameters[k]; !ok {
-			return false
-		} else if val != v {
-			return false
-		}
-	}
-	return true
 }
 
 func (p *Postgres) IsReady() (bool, string) {

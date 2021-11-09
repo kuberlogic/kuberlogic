@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-export interface ServiceBackupConfigModel {
-    enabled: boolean;
-    aws_access_key_id: string;
-    aws_secret_access_key: string;
-    bucket: string;
-    endpoint: string;
-    region: string;
-    schedule: string;
+package platform
+
+import (
+	"github.com/bitpoke/mysql-operator/pkg/apis/mysql/v1alpha1"
+)
+
+type MysqlEKS struct {
+	Spec *v1alpha1.MysqlCluster
+}
+
+func (m *MysqlEKS) SetAllowedIPs(ips []string) error {
+	m.Spec.Spec.MasterServiceSpec.AllowedSourceRanges = ips
+	m.Spec.Spec.ReplicaServiceSpec.AllowedSourceRanges = ips
+	return nil
 }

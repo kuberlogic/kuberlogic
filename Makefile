@@ -70,9 +70,10 @@ NAMESPACE ?= kuberlogic
 all: manager
 
 # Run tests
+unit-tests: operator-test installer-test
 operator-test: generate fmt vet manifests
 	cd modules/operator; \
-	go test ./... -coverprofile cover.out
+	go test ./... -race -covermode=atomic -coverprofile=unit-coverage.out
 
 installer-test:
 	@cd modules/installer; \
@@ -134,8 +135,7 @@ generate: controller-gen
 # Build images
 operator-build:
 	cd modules/operator && \
-	go mod vendor && \
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -ldflags " \
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -ldflags " \
         -X github.com/kuberlogic/kuberlogic/modules/operator/cmd.sha1ver=$(REVISION) \
         -X github.com/kuberlogic/kuberlogic/modules/operator/cmd.buildTime=$(BUILD_TIME) \
         -X github.com/kuberlogic/kuberlogic/modules/operator/cmd.ver=$(VERSION)"  \
@@ -155,8 +155,7 @@ installer-build:
 
 updater-build:
 	cd modules/updater && \
-	go mod vendor && \
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o bin/updater main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o bin/updater main.go
 	docker $(DOCKER_BUILD_CMD) . \
 		--build-arg BIN=modules/updater/bin/updater \
 		-t $(UPDATER_IMG):$(VERSION) \
@@ -165,8 +164,7 @@ updater-build:
 
 alert-receiver-build:
 	cd modules/alert-receiver && \
-	go mod vendor && \
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o bin/alert-receiver
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o bin/alert-receiver
 	docker $(DOCKER_BUILD_CMD) . \
 		--build-arg BIN=modules/alert-receiver/bin/alert-receiver \
 		-t $(ALERT_RECEIVER_IMG):$(VERSION) \
@@ -175,13 +173,11 @@ alert-receiver-build:
 
 apiserver-build:
 	cd modules/apiserver && \
-	go mod vendor && \
 	CGO_ENABLED=0 \
         GOOS=linux \
         GOARCH=amd64 \
         GO111MODULE=on \
         go build \
-        -mod=vendor \
         -ldflags " \
         -X github.com/kuberlogic/kuberlogic/modules/apiserver/cmd.sha1ver=$(REVISION) \
         -X github.com/kuberlogic/kuberlogic/modules/apiserver/cmd.buildTime=$(BUILD_TIME) \

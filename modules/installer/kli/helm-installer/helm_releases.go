@@ -110,6 +110,9 @@ func deployIngressController(globals map[string]interface{}, i *HelmInstaller, r
 			"installCRDs":  false,
 			"ingressClass": ingressClass,
 		},
+		"proxy": map[string]interface{}{
+			"loadBalancerSourceRanges": []string{"0.0.0.0/0"},
+		},
 	}
 	chart, err := kongIngressControllerChartReader()
 	if err != nil {
@@ -133,7 +136,11 @@ func deployIngressController(globals map[string]interface{}, i *HelmInstaller, r
 		}
 		if len(s.Status.LoadBalancer.Ingress) != 0 {
 			// success. append to the release banner
-			releaseInfo.UpdateIngressAddress(s.Status.LoadBalancer.Ingress[0].IP)
+			if host := s.Status.LoadBalancer.Ingress[0].Hostname; host != "" {
+				releaseInfo.UpdateIngressAddress(host)
+			} else if ip := s.Status.LoadBalancer.Ingress[0].IP; ip != "" {
+				releaseInfo.UpdateIngressAddress(ip)
+			}
 			foundIP = true
 			break
 		}
@@ -237,6 +244,7 @@ func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
 				"secret":                    grafanaSecretName,
 				"defaultDatasourceEndpoint": "http://" + victoriaMetricsServiceName,
 			},
+			"platform": i.Platform,
 		},
 	}
 
@@ -330,8 +338,6 @@ func deployServiceOperators(globals map[string]interface{}, i *HelmInstaller, re
 
 	mysqlValues := map[string]interface{}{
 		"installCRDs": false,
-
-		"image": mysqlImage,
 
 		"orchestrator": map[string]interface{}{
 			"ingress": map[string]interface{}{

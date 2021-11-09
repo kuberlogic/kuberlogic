@@ -14,28 +14,37 @@
  * limitations under the License.
  */
 
-package service_operator
+package platform
 
 import (
-	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/interfaces"
-	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/mysql"
-	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/postgresql"
-	"github.com/pkg/errors"
+	v1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"testing"
+)
+
+const (
+	eksAllowedCIDRannotation = "service.beta.kubernetes.io/load-balancer-source-ranges"
 )
 
 var (
-	ErrOperatorTypeUnknown = errors.New("operator type unknown")
+	testPostgres = &PostgresEKS{
+		Spec: &v1.Postgresql{
+			ObjectMeta: v12.ObjectMeta{
+				Name:      "test",
+				Namespace: "test",
+			},
+		},
+	}
 )
 
-func GetOperator(t string) (interfaces.OperatorInterface, error) {
-	var operators = map[string]interfaces.OperatorInterface{
-		"postgresql": &postgresql.Postgres{},
-		"mysql":      &mysql.Mysql{},
-	}
+func TestPostgresEKS_SetAllowedIPs(t *testing.T) {
 
-	value, ok := operators[t]
-	if !ok {
-		return nil, ErrOperatorTypeUnknown
+	for _, inputList := range [][]string{
+		{"1.1.1.1/32"},
+		{"2.2.2.2/32", "8.8.8.8/24"},
+	} {
+		if err := testPostgres.SetAllowedIPs(inputList); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 	}
-	return value, nil
 }

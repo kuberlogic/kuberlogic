@@ -136,7 +136,7 @@ func (r *ReleaseInfo) ShowBanner() string {
 	return fmt.Sprintf(`Kuberlogic API URL: %s
 Kuberlogic UI URL: %s
 Kuberlogic Monitoring Console URL: %s
-Kuberlogic connection Ingress IP: %s
+Kuberlogic connection Ingress address: %s
 
 Please make sure that URL domain names are pointing to the Ingress IP!
 

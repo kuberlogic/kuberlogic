@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-export interface ServiceBackupConfigModel {
-    enabled: boolean;
-    aws_access_key_id: string;
-    aws_secret_access_key: string;
-    bucket: string;
-    endpoint: string;
-    region: string;
-    schedule: string;
+package platform
+
+import (
+	postgres "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
+)
+
+type PostgresEKS struct {
+	Spec *postgres.Postgresql
+}
+
+func (c *PostgresEKS) SetAllowedIPs(ips []string) error {
+	c.Spec.Spec.AllowedSourceRanges = ips
+	return nil
 }

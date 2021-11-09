@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-export interface ServiceBackupConfigModel {
-    enabled: boolean;
-    aws_access_key_id: string;
-    aws_secret_access_key: string;
-    bucket: string;
-    endpoint: string;
-    region: string;
-    schedule: string;
+package platform
+
+import (
+	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/interfaces"
+	v1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
+)
+
+func NewPlatformOperator(p *v1.Postgresql, platform string) interfaces.PlatformOperator {
+	switch platform {
+	case "EKS":
+		return &PostgresEKS{
+			Spec: p,
+		}
+	default:
+		return &PostgresGeneric{}
+	}
 }

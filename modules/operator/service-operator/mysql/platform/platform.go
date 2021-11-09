@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-export interface ServiceBackupConfigModel {
-    enabled: boolean;
-    aws_access_key_id: string;
-    aws_secret_access_key: string;
-    bucket: string;
-    endpoint: string;
-    region: string;
-    schedule: string;
+package platform
+
+import (
+	"github.com/bitpoke/mysql-operator/pkg/apis/mysql/v1alpha1"
+	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/interfaces"
+)
+
+func NewPlatformOperator(m *v1alpha1.MysqlCluster, platform string) interfaces.PlatformOperator {
+	switch platform {
+	case "EKS":
+		return &MysqlEKS{
+			Spec: m,
+		}
+	default:
+		return &MysqlGeneric{}
+	}
 }

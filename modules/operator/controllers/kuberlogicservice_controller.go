@@ -18,13 +18,14 @@ package controllers
 
 import (
 	"context"
+	mysqlv1 "github.com/bitpoke/mysql-operator/pkg/apis/mysql/v1alpha1"
 	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/operator/cfg"
 	"github.com/kuberlogic/kuberlogic/modules/operator/monitoring"
 	serviceOperator "github.com/kuberlogic/kuberlogic/modules/operator/service-operator"
 	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/interfaces"
 	"github.com/kuberlogic/kuberlogic/modules/operator/util"
-	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -50,14 +51,17 @@ type KuberLogicServiceReconciler struct {
 	Log                 logr.Logger
 	Scheme              *runtime.Scheme
 	mu                  sync.Mutex
+	cfg                 *cfg.Config
 	MonitoringCollector *monitoring.KuberLogicCollector
 }
 
+// Reconcile function is being triggered when a manager receives an update from Kube apiserver about the object
+// identified by Request,NamespacedName
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicservices,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicservices/status,verbs=get;update;patch
 func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("kuberlogicservices", req.NamespacedName)
-
+	log.Info("reconciliation started")
 	defer util.HandlePanic(log)
 
 	mu := getMutex(req.NamespacedName)
@@ -80,7 +84,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		log.Error(err, "Failed to get KuberLogicService")
 		return ctrl.Result{}, err
 	}
-	defer r.MonitoringCollector.MonitorKuberlogicService(kls)
+	_ = r.MonitoringCollector.MonitorKuberlogicService(kls)
 
 	// fetch tenant information
 	kt := new(kuberlogicv1.KuberLogicTenant)
@@ -100,7 +104,6 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			if err := r.Update(ctx, kls); err != nil {
 				return ctrl.Result{}, err
 			}
-			return ctrl.Result{}, nil
 		}
 	}
 
@@ -110,8 +113,8 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		err := r.Update(ctx, kls)
 		if err != nil {
 			log.Error(err, "error adding finalizer")
+			return ctrl.Result{}, err
 		}
-		return ctrl.Result{}, err
 	}
 
 	op, err := serviceOperator.GetOperator(kls.Spec.Type)
@@ -119,6 +122,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		log.Error(err, "Could not define the base operator")
 		return ctrl.Result{}, err
 	}
+	op.Init(kls, r.cfg.Platform)
 
 	serviceObj := op.AsClientObject()
 	err = r.Get(
@@ -159,8 +163,9 @@ func (r *KuberLogicServiceReconciler) ensureClusterDependencies(op interfaces.Op
 }
 
 func (r *KuberLogicServiceReconciler) defineCluster(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService) (client.Object, error) {
-	op.Init(cm)
-	op.Update(cm)
+	if err := op.Update(cm); err != nil {
+		return nil, err
+	}
 
 	// Set KuberLogicService instance as the owner and controller
 	// if KuberLogicService will remove -> dep also should be removed automatically
@@ -218,7 +223,9 @@ func (r *KuberLogicServiceReconciler) update(ctx context.Context, kt *kuberlogic
 		}, nil
 	}
 
-	op.Update(kls)
+	if err := op.Update(kls); err != nil {
+		return ctrl.Result{}, err
+	}
 	if err := r.Update(ctx, op.AsClientObject()); err != nil {
 		log.Error(err, "Failed to update object", "BaseOperator", kls.Spec.Type)
 		return ctrl.Result{}, err
@@ -244,6 +251,17 @@ func (r *KuberLogicServiceReconciler) finalize(ctx context.Context, kt *kuberlog
 	}
 	r.MonitoringCollector.ForgetKuberlogicService(kls)
 	return nil
+}
+
+func NewKuberlogicServiceReconciler(c client.Client, l logr.Logger, s *runtime.Scheme, cfg *cfg.Config, m *monitoring.KuberLogicCollector) *KuberLogicServiceReconciler {
+	return &KuberLogicServiceReconciler{
+		Client:              c,
+		Log:                 l,
+		Scheme:              s,
+		mu:                  sync.Mutex{},
+		cfg:                 cfg,
+		MonitoringCollector: m,
+	}
 }
 
 func syncStatus(kls *kuberlogicv1.KuberLogicService, op interfaces.OperatorInterface) {

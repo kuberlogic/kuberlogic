@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-export interface ServiceBackupConfigModel {
-    enabled: boolean;
-    aws_access_key_id: string;
-    aws_secret_access_key: string;
-    bucket: string;
-    endpoint: string;
-    region: string;
-    schedule: string;
+package platform
+
+type PostgresGeneric struct{}
+
+func (p *PostgresGeneric) SetAllowedIPs(ips []string) error {
+	return nil
 }

@@ -39,7 +39,8 @@ export class BackupStorageDialogComponent extends FormContainerMixin(BaseObject)
             aws_access_key_id: [data.aws_access_key_id, [Validators.required]],
             aws_secret_access_key: [data.aws_secret_access_key, [Validators.required]],
             bucket: [data.bucket, [Validators.required]],
-            endpoint: [data.endpoint, [Validators.required]],
+            region: [data.region, [Validators.required]],
+            endpoint: [data.endpoint, [Validators.pattern("^(http|https)://.*$")]],
         });
     }
 

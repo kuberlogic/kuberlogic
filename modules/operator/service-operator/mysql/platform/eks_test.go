@@ -14,12 +14,32 @@
  * limitations under the License.
  */
 
-export interface ServiceBackupConfigModel {
-    enabled: boolean;
-    aws_access_key_id: string;
-    aws_secret_access_key: string;
-    bucket: string;
-    endpoint: string;
-    region: string;
-    schedule: string;
+package platform
+
+import (
+	"github.com/bitpoke/mysql-operator/pkg/apis/mysql/v1alpha1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"testing"
+)
+
+var (
+	testMysql = &MysqlEKS{
+		Spec: &v1alpha1.MysqlCluster{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "test",
+				Namespace: "test",
+			},
+		},
+	}
+)
+
+func TestMysqlEKS_AllowIPs(t *testing.T) {
+	for _, inputList := range [][]string{
+		{"1.1.1.1/32"},
+		{"2.2.2.2/32", "8.8.8.8/24"},
+	} {
+		if err := testMysql.SetAllowedIPs(inputList); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	}
 }

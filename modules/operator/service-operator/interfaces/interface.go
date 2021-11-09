@@ -29,19 +29,25 @@ import (
 
 type OperatorInterface interface {
 	Name(cm *v1.KuberLogicService) string
-	Init(cm *v1.KuberLogicService)
+	Init(cm *v1.KuberLogicService, platform string)
 	InitFrom(o runtime.Object)
-	Update(cm *v1.KuberLogicService)
+	Update(cm *v1.KuberLogicService) error
 	AsRuntimeObject() runtime.Object
 	AsMetaObject() metav1.Object
 	AsClientObject() client.Object
-	IsEqual(cm *v1.KuberLogicService) bool
 	IsReady() (bool, string)
 
 	GetBackupSchedule() BackupSchedule
 	GetBackupRestore() BackupRestore
 	GetInternalDetails() InternalDetails
 	GetSession(cm *v1.KuberLogicService, client kubernetes.Interface, db string) (Session, error)
+}
+
+// PlatformOperator interface holds methods for platform specific actions
+// For example: managing a firewall, interacting with load balancers, etc
+// SetAllowedIPs method configures a service to accepts traffic from a list of CIDR ranges passed as []string
+type PlatformOperator interface {
+	SetAllowedIPs([]string) error
 }
 
 type BackupSchedule interface {

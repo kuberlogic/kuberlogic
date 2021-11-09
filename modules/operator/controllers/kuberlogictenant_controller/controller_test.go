@@ -63,28 +63,9 @@ func setupTestReconciler() *KuberlogicTenantReconciler {
 	}
 }
 
-func TestKuberlogicTenantReconciler_Reconcile(t *testing.T) {
-	r := setupTestReconciler()
-
-	if err := testAbsentKlt(r); err != nil {
-		t.Errorf("testAbsentKlt failed with error: %v", err)
-	}
-
-	if err := testCreatedKlt(r); err != nil {
-		t.Errorf("testCreatedKlt failed with error: %v", err)
-	}
-
-	if err := testKltWithGrafana(r); err != nil {
-		t.Errorf("testKltWithGrafana failed with error: %v", err)
-	}
-
-	if err := testDeletionWithServices(r); err != nil {
-		t.Errorf("testDeletionWithServices failed with error: %v", err)
-	}
-}
-
 // testAbsentKlt tests Reconcile function when klt does not exist in cluster
-func testAbsentKlt(r *KuberlogicTenantReconciler) error {
+func TestKuberlogicTenantReconciler_ReconcileAbsent(t *testing.T) {
+	r := setupTestReconciler()
 	ctx := context.TODO()
 	kltId := types.NamespacedName{
 		Name: "absent",
@@ -94,17 +75,17 @@ func testAbsentKlt(r *KuberlogicTenantReconciler) error {
 	}
 	_, err := r.Reconcile(ctx, req)
 	if err != nil {
-		return errors.Wrap(err, "error reconciling object")
+		t.Errorf("error reconciling kuberlogictenant: %v", err)
 	}
 	klt := new(kuberlogicv1.KuberLogicTenant)
 	if err := r.Client.Get(ctx, kltId, klt); err != nil && !k8serrors.IsNotFound(err) {
-		return errors.Wrap(err, "error checking object after reconciliation")
+		t.Errorf("error getting kuberlogictenant: %v", err)
 	}
-	return nil
 }
 
 // testCreatedKlt tests a newly created kuberlogictenant
-func testCreatedKlt(r *KuberlogicTenantReconciler) error {
+func TestKuberlogicTenantReconciler_ReconcileCreated(t *testing.T) {
+	r := setupTestReconciler()
 	ctx := context.TODO()
 	kltId := types.NamespacedName{
 		Name: "created",
@@ -116,7 +97,7 @@ func testCreatedKlt(r *KuberlogicTenantReconciler) error {
 			Namespace: kltId.Namespace,
 		},
 	}); err != nil {
-		return errors.Wrap(err, "error creating test klt")
+		t.Errorf("error creating kuberlogictenant: %v", err)
 	}
 
 	req := controllerruntime.Request{
@@ -124,22 +105,21 @@ func testCreatedKlt(r *KuberlogicTenantReconciler) error {
 	}
 	_, err := r.Reconcile(ctx, req)
 	if err != nil {
-		return errors.Wrap(err, "reconciliation failed")
+		t.Errorf("error reconciling kuberlogictenant: %v", err)
 	}
 
 	klt := new(kuberlogicv1.KuberLogicTenant)
 	if err := r.Client.Get(ctx, kltId, klt); err != nil {
-		return errors.Wrap(err, "error checking object after reconciliation")
+		t.Errorf("error getting kuberlogictenant: %v", err)
 	}
 	if !klt.IsSynced() {
-		return errors.New("klt must be synced")
+		t.Errorf("klt must be synced")
 	}
-
-	return nil
 }
 
 // testKltWithGrafana tests
-func testKltWithGrafana(r *KuberlogicTenantReconciler) error {
+func TestKuberlogicTenantReconciler_ReconcileGrafana(t *testing.T) {
+	r := setupTestReconciler()
 	grafanaServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		e := r.URL.Path
 		// mock org create
@@ -183,7 +163,7 @@ func testKltWithGrafana(r *KuberlogicTenantReconciler) error {
 			OwnerEmail: "test@example.com",
 		},
 	}); err != nil {
-		return errors.Wrap(err, "error creating test klt")
+		t.Errorf("error creating kuberlogictenant: %v", err)
 	}
 
 	req := controllerruntime.Request{
@@ -191,22 +171,21 @@ func testKltWithGrafana(r *KuberlogicTenantReconciler) error {
 	}
 	_, err := r.Reconcile(ctx, req)
 	if err != nil {
-		return errors.Wrap(err, "reconciliation failed")
+		t.Errorf("error reconciling kuberlogictenant: %v", err)
 	}
 
 	klt := new(kuberlogicv1.KuberLogicTenant)
 	if err := r.Client.Get(ctx, kltId, klt); err != nil {
-		return errors.Wrap(err, "error checking object after reconciliation")
+		t.Errorf("error getting kuberlogictenant: %v", err)
 	}
 	if !klt.IsSynced() {
-		return errors.New("klt must be synced")
+		t.Errorf("klt must be synced")
 	}
-	r.Config.Grafana.Enabled = false
-	return nil
 }
 
 // testDeletionWithServices tests klt deletion when service exist
-func testDeletionWithServices(r *KuberlogicTenantReconciler) error {
+func TestKuberlogicTenantReconciler_ReconcileDeletionWithServices(t *testing.T) {
+	r := setupTestReconciler()
 	ctx := context.TODO()
 	kltId := types.NamespacedName{
 		Name: "klt-service-exists",
@@ -221,7 +200,7 @@ func testDeletionWithServices(r *KuberlogicTenantReconciler) error {
 			Services: map[string]string{"my": "mysql"},
 		},
 	}); err != nil {
-		return errors.Wrap(err, "error creating test klt")
+		t.Errorf("error creating kuberlogictenant: %v", err)
 	}
 
 	req := controllerruntime.Request{
@@ -229,15 +208,15 @@ func testDeletionWithServices(r *KuberlogicTenantReconciler) error {
 	}
 	_, err := r.Reconcile(ctx, req)
 	if err != nil {
-		return errors.Wrap(err, "reconciliation failed")
+		t.Errorf("error reconciling kuberlogictenant: %v", err)
 	}
 
 	klt := new(kuberlogicv1.KuberLogicTenant)
 	if err := r.Client.Get(ctx, kltId, klt); err != nil {
-		return errors.Wrap(err, "error checking object after reconciliation")
+		t.Errorf("error getting kuberlogictenant: %v", err)
 	}
 	if len(klt.Finalizers) == 0 {
-		return errors.New("finalizers not found")
+		t.Errorf("finalizers not found")
 	}
 
 	// now simulate deletion
@@ -248,25 +227,23 @@ func testDeletionWithServices(r *KuberlogicTenantReconciler) error {
 	// and reconcile again hoping for an error
 	_, err = r.Reconcile(ctx, req)
 	if !errors.Is(err, errFinalizingTenant) {
-		return errors.Wrap(err, "did not find expected error")
+		t.Errorf("error reconciling kuberlogictenant: %v", err)
 	}
 
 	// now delete services and try again
 	klt.Status.Services = make(map[string]string, 0)
-	_ = r.Client.Update(ctx, klt)
+	if err = r.Client.Status().Update(ctx, klt); err != nil {
+		t.Errorf("unexpected error while updating status: %v", err)
+	}
 
-	// and reconcile again hoping for an error
+	// and reconcile again, no error expected
 	_, err = r.Reconcile(ctx, req)
 	if err != nil {
-		return errors.Wrap(err, "object must have been deleted with errors")
+		t.Errorf("error reconciling kuberlogictenant: %v", err)
 	}
 
 	klt = new(kuberlogicv1.KuberLogicTenant)
-	if err := r.Client.Get(ctx, kltId, klt); err != nil {
-		return errors.Wrap(err, "error checking object after reconciliation")
+	if err := r.Client.Get(ctx, kltId, klt); ! k8serrors.IsNotFound(err) {
+		t.Errorf("object should have been deleted. Instead error: %v", err)
 	}
-	if len(klt.Finalizers) != 0 {
-		return errors.New("object should not have any finalizers")
-	}
-	return nil
 }

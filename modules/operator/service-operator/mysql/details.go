@@ -18,7 +18,7 @@ package mysql
 
 import (
 	"fmt"
-	util2 "github.com/presslabs/mysql-operator/pkg/util"
+	util2 "github.com/bitpoke/mysql-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

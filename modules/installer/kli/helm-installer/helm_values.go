@@ -51,9 +51,6 @@ const (
 	postgresImageTag       = "v1.6.2"
 	postgresSecretTemplate = "{username}.{cluster}.credentials"
 
-	// mysql operator values
-	mysqlImage = registryName + "/" + registryOrg + "/mysql-operator:v0.5.0-rc.2-3-gac1ec"
-
 	// monitoring grafana values
 	grafanaImageRepo      = registryName + "/" + registryOrg + "/grafana"
 	grafanaImageTag       = "8.1.4"

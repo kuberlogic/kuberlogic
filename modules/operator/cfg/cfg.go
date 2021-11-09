@@ -37,6 +37,7 @@ type Config struct {
 	ImagePullSecretName string `envconfig:"IMG_PULL_SECRET,optional"`
 	Namespace           string `envconfig:"POD_NAMESPACE"`
 
+	Platform  string `envconfig:"default=GENERIC,optional"`
 	SentryDsn string `envconfig:"optional"`
 
 	NotificationChannels struct {
