@@ -31,10 +31,8 @@ var (
 
 	defaultKubeconfigPath   = fmt.Sprintf("%s/%s", os.Getenv("HOME"), ".kube/config")
 	defaultDebugLogsEnabled = false
-	defaultHelmReleaseName  = "kuberlogic"
-
-	defaultPlatform    = "generic"
-	supportedPlatforms = []string{defaultPlatform, "aws"}
+	defaultPlatform         = "generic"
+	supportedPlatforms      = []string{defaultPlatform, "aws"}
 )
 
 type Config struct {
