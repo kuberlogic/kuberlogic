@@ -80,7 +80,7 @@ installer-test:
 	$(MAKE) test
 
 apiserver-test:
-	cd modiles/apiserver; \
+	cd modules/apiserver; \
 	go test $(go list ./... | grep -v tests) -coverprofile=unit-coverage.out
 
 # Build manager binary
