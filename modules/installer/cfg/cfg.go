@@ -35,6 +35,12 @@ var (
 	supportedPlatforms      = []string{defaultPlatform, "aws"}
 )
 
+type TLS struct {
+	CaFile  string `yaml:"ca.crt"`
+	CrtFile string `yaml:"tls.crt"`
+	KeyFile string `yaml:"tls.key"`
+}
+
 type Config struct {
 	DebugLogs      *bool   `yaml:"debug-logs,omitempty"`
 	KubeconfigPath *string `yaml:"kubeconfig-path,omitempty"`
@@ -43,18 +49,10 @@ type Config struct {
 
 	Endpoints struct {
 		Kuberlogic    string `yaml:"kuberlogic"`
-		KuberlogicTLS struct {
-			CaFile  string `yaml:"ca.crt"`
-			CrtFile string `yaml:"tls.crt"`
-			KeyFile string `yaml:"tls.key"`
-		} `yaml:"kuberlogic-tls"`
+		KuberlogicTLS *TLS   `yaml:"kuberlogic-tls,omitempty"`
 
 		MonitoringConsole    string `yaml:"monitoring-console"`
-		MonitoringConsoleTLS struct {
-			CaFile  string `yaml:"ca.crt"`
-			CrtFile string `yaml:"tls.crt"`
-			KeyFile string `yaml:"tls.key"`
-		} `yaml:"monitoring-console-tls"`
+		MonitoringConsoleTLS *TLS   `yaml:"monitoring-console-tls,omitempty"`
 	} `yaml:"endpoints"`
 
 	Registry struct {
@@ -119,7 +117,7 @@ func (c *Config) setDefaults(log logger.Logger) error {
 	return configError
 }
 
-func (c *Config) CheckKuberlogicTLS() error {
+func (c *Config) checkKuberlogicTLS() error {
 	if err := checkCertificates(c.Endpoints.KuberlogicTLS.CaFile,
 		c.Endpoints.KuberlogicTLS.CrtFile,
 		c.Endpoints.KuberlogicTLS.KeyFile); err != nil {
@@ -134,8 +132,8 @@ func (c *Config) CheckKuberlogicTLS() error {
 	return nil
 }
 
-func (c *Config) Check() error {
-	return c.CheckKuberlogicTLS()
+func (c *Config) check() error {
+	return c.checkKuberlogicTLS()
 }
 
 func NewConfigFromFile(file string, log logger.Logger) (*Config, error) {
@@ -154,7 +152,7 @@ func NewConfigFromFile(file string, log logger.Logger) (*Config, error) {
 	if err := cfg.setDefaults(log); err != nil {
 		return nil, err
 	}
-	if err := cfg.Check(); err != nil {
+	if err := cfg.check(); err != nil {
 		return nil, err
 	}
 	return cfg, nil

@@ -22,7 +22,6 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/installer/internal"
 	"github.com/pkg/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
 	"time"
 )
 
@@ -176,29 +175,10 @@ func deployIngressController(globals map[string]interface{}, i *HelmInstaller, r
 }
 
 func deployUI(globals map[string]interface{}, i *HelmInstaller, release *internal.ReleaseInfo) error {
-	tls := make(map[string]interface{})
-	if i.Config.Endpoints.KuberlogicTLS.CaFile != "" {
-		data, err := os.ReadFile(i.Config.Endpoints.KuberlogicTLS.CaFile)
-		if err != nil {
-			return errors.Wrap(err, "cannot read the ca file")
-		}
-		tls["ca"] = string(data)
+	tls, err := prepareTLS(i.Config.Endpoints.KuberlogicTLS)
+	if err != nil {
+		return errors.Wrap(err, "cannot prepare TLS")
 	}
-	if i.Config.Endpoints.KuberlogicTLS.CrtFile != "" {
-		data, err := os.ReadFile(i.Config.Endpoints.KuberlogicTLS.CrtFile)
-		if err != nil {
-			return errors.Wrap(err, "cannot read the certificate file")
-		}
-		tls["crt"] = string(data)
-	}
-	if i.Config.Endpoints.KuberlogicTLS.KeyFile != "" {
-		data, err := os.ReadFile(i.Config.Endpoints.KuberlogicTLS.KeyFile)
-		if err != nil {
-			return errors.Wrap(err, "cannot read the certificate key file")
-		}
-		tls["key"] = string(data)
-	}
-
 	values := map[string]interface{}{
 		"config": map[string]interface{}{
 			"monitoringConsoleEndpoint": "https://" + i.Config.Endpoints.MonitoringConsole + "/login",
@@ -273,29 +253,10 @@ func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
 }
 
 func deployMonitoring(globals map[string]interface{}, i *HelmInstaller, release *internal.ReleaseInfo) error {
-	tls := make(map[string]interface{})
-	if i.Config.Endpoints.MonitoringConsoleTLS.CaFile != "" {
-		data, err := os.ReadFile(i.Config.Endpoints.MonitoringConsoleTLS.CaFile)
-		if err != nil {
-			return errors.Wrap(err, "cannot read the ca file")
-		}
-		tls["ca"] = string(data)
+	tls, err := prepareTLS(i.Config.Endpoints.MonitoringConsoleTLS)
+	if err != nil {
+		return errors.Wrap(err, "cannot prepare TLS")
 	}
-	if i.Config.Endpoints.MonitoringConsoleTLS.CrtFile != "" {
-		data, err := os.ReadFile(i.Config.Endpoints.MonitoringConsoleTLS.CrtFile)
-		if err != nil {
-			return errors.Wrap(err, "cannot read the certificate file")
-		}
-		tls["crt"] = string(data)
-	}
-	if i.Config.Endpoints.MonitoringConsoleTLS.KeyFile != "" {
-		data, err := os.ReadFile(i.Config.Endpoints.MonitoringConsoleTLS.KeyFile)
-		if err != nil {
-			return errors.Wrap(err, "cannot read the certificate key file")
-		}
-		tls["key"] = string(data)
-	}
-
 	values := map[string]interface{}{
 		"victoriametrics": map[string]interface{}{
 			"service": map[string]interface{}{
