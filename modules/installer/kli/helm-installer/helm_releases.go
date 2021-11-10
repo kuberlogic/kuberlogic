@@ -260,7 +260,7 @@ func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
 				"secret":                    grafanaSecretName,
 				"defaultDatasourceEndpoint": "http://" + victoriaMetricsServiceName,
 			},
-			"platform": i.Platform,
+			"platform": i.Config.Platform,
 		},
 	}
 
