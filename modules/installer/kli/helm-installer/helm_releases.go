@@ -217,7 +217,6 @@ func deployUI(globals map[string]interface{}, i *HelmInstaller, release *interna
 	}
 
 	i.Log.Infof("Deploying Kuberlogic Kuberlogic...")
-	// TODO: could be https
 	release.UpdateUIAddress("https://" + i.Config.Endpoints.Kuberlogic)
 	return releaseHelmChart(helmUIChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }

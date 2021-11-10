@@ -54,6 +54,10 @@ compile: helm-embed
         -X github.com/kuberlogic/kuberlogic/modules/installer/cmd.version=$(VERSION)"  \
         -o bin/kuberlogic-installer-$(GOOS)-$(GOARCH)
 
-release:
+release: release-darwin release-linux
+
+release-darwin:
 	$(MAKE) compile GOOS=darwin
+
+release-linux:
 	$(MAKE) compile GOOS=linux

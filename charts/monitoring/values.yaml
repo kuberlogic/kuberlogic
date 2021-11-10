@@ -75,7 +75,7 @@ grafana:
       annotations: {}
     grafanaLogin:
       annotations: {}
-    enabled: false
+    enabled: true
     class:
     host:
     tls:

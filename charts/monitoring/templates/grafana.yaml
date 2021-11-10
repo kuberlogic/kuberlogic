@@ -167,7 +167,9 @@ metadata:
     # kuberlogic-selfsigned issuer also is used for sign kuberlogic webhook
     cert-manager.io/issuer: kuberlogic-selfsigned
     {{ end }}
-    {{ .Values.grafana.ingress.grafana.annotations | toYaml | nindent 4 }}
+    {{ with .Values.grafana.ingress.grafana.annotations }}
+    {{ . | toYaml | nindent 4 }}
+    {{ end }}
 spec:
   ingressClassName: {{ .Values.grafana.ingress.class }}
   tls:
@@ -200,7 +202,9 @@ metadata:
     # kuberlogic-selfsigned issuer also is used for sign kuberlogic webhook
     cert-manager.io/issuer: kuberlogic-selfsigned
     {{ end }}
-    {{ .Values.grafana.ingress.grafanaLogin.annotations | toYaml | nindent 4 }}
+    {{ with .Values.grafana.ingress.grafanaLogin.annotations}}
+    {{ .  | toYaml | nindent 4 }}
+    {{ end }}
 spec:
   ingressClassName: {{ .Values.grafana.ingress.class }}
   tls:
