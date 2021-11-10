@@ -25,18 +25,18 @@ func openCertificate(file string) (*x509.Certificate, error) {
 	return cert, nil
 }
 
-func checkCertificates(caFile, crtFile, keyFile string) error {
-	if caFile != "" && crtFile != "" && keyFile != "" {
-		contentCa, err := os.ReadFile(caFile)
+func checkCertificates(tlsConf *TLS) error {
+	if tlsConf != nil {
+		contentCa, err := os.ReadFile(tlsConf.CaFile)
 		if err != nil {
 			return errors.Wrap(err, "cannot read the CA file")
 		}
-		_, err = os.ReadFile(keyFile)
+		_, err = os.ReadFile(tlsConf.KeyFile)
 		if err != nil {
 			return errors.Wrap(err, "cannot read the secret file")
 		}
 
-		leaf, err := openCertificate(crtFile)
+		leaf, err := openCertificate(tlsConf.CrtFile)
 		if err != nil {
 			return errors.Wrap(err, "incorrect certificate")
 		}

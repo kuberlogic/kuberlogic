@@ -118,15 +118,11 @@ func (c *Config) setDefaults(log logger.Logger) error {
 }
 
 func (c *Config) checkKuberlogicTLS() error {
-	if err := checkCertificates(c.Endpoints.KuberlogicTLS.CaFile,
-		c.Endpoints.KuberlogicTLS.CrtFile,
-		c.Endpoints.KuberlogicTLS.KeyFile); err != nil {
+	if err := checkCertificates(c.Endpoints.KuberlogicTLS); err != nil {
 		return err
 	}
 
-	if err := checkCertificates(c.Endpoints.MonitoringConsoleTLS.CaFile,
-		c.Endpoints.MonitoringConsoleTLS.CrtFile,
-		c.Endpoints.MonitoringConsoleTLS.KeyFile); err != nil {
+	if err := checkCertificates(c.Endpoints.MonitoringConsoleTLS); err != nil {
 		return err
 	}
 	return nil
