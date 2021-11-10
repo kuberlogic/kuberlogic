@@ -116,7 +116,7 @@ func checkLoadBalancerServiceType(clientset kubernetes.Interface, log logger.Log
 	const (
 		testServiceName = "kubernetes-test-service"
 		testNamespace   = "default"
-		waitTimeoutSec  = 120
+		waitTimeoutSec  = 300
 	)
 	log.Infof("Creating test service %s/%s", testServiceName, testNamespace)
 	svc, err := createTestLoadBalancer(testServiceName, testNamespace, clientset)
