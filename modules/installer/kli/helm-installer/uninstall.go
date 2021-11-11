@@ -39,7 +39,7 @@ func (i *HelmInstaller) Uninstall(args []string) error {
 		}
 
 		i.Log.Infof("uninstalling platform components")
-		if err := uninstallKuberlogicKeycloak(i.ReleaseNamespace, force, i.HelmActionConfig, i.ClientSet, i.Log); err != nil {
+		if err := uninstallHelmChart(helmKuberlogicKeycloakCHart, force, i.HelmActionConfig, i.Log); err != nil {
 			return errors.Wrap(err, "error uninstalling Kuberlogic Keycloak")
 		}
 		if err := uninstallHelmChart(helmCertManagerChart, force, i.HelmActionConfig, i.Log); err != nil {

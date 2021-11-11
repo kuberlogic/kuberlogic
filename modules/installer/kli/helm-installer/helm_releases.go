@@ -98,9 +98,6 @@ func deployAuth(globals map[string]interface{}, i *HelmInstaller, releaseInfo *i
 	if err := releaseHelmChart(helmKuberlogicKeycloakCHart, i.ReleaseNamespace, kuberlogicKeycloakChart, kuberlogicKeycloakValues, globals, i.HelmActionConfig, i.Log); err != nil {
 		return errors.Wrap(err, "error deploying kuberlogic-keycloak")
 	}
-	if err := waitForKeycloakResources(i.ReleaseNamespace, i.ClientSet); err != nil {
-		return errors.Wrap(err, "keycloak provisioning error")
-	}
 	return nil
 }
 

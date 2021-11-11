@@ -151,6 +151,11 @@ jobs:
           MY_VERSION: ${{ matrix.my_version }}
           TYPE: ${{ matrix.type }}
 
+      - name: Uninstall Kuberlogic
+        working-directory: ./modules/installer
+        run: |
+          ./bin/kuberlogic-installer-linux-amd64 uninstall -c sample-config.yaml
+
       - name: Upload coverage
         run: |
           bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-operator.out -F operator
