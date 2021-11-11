@@ -77,6 +77,7 @@ var (
 		"imagePullSecrets": []map[string]interface{}{
 			{"name": internal.ImagePullSecret},
 		},
+		"kubectlImage": "quay.io/bitnami/kubectl:1.21.1",
 		"monitoringSelector": map[string]interface{}{
 			"key":   "core.kuberlogic.com/scrape",
 			"value": "yes",

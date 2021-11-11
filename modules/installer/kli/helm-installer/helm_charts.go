@@ -250,6 +250,8 @@ func uninstallHelmChart(name string, force bool, actConfig *action.Configuration
 	}
 
 	deleteAction := action.NewUninstall(actConfig)
+	deleteAction.Wait = true
+	deleteAction.Timeout = time.Second * helmActionTimeoutSec
 
 	resp, err := deleteAction.Run(name)
 	log.Debugf("Helm action response: %+v", resp)
