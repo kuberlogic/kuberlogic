@@ -77,7 +77,8 @@ describe('BackupStorageDialogComponent', () => {
             aws_access_key_id: 'aws_access_key_id',
             aws_secret_access_key: 'aws_secret_access_key',
             bucket: 'bucket',
-            endpoint: 'endpoint',
+            endpoint: 'http://endpoint.com',
+            region: 'test'
         };
         beforeEach(() => {
             component.formGroup.patchValue(data);

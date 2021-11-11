@@ -18,10 +18,12 @@ import { EnvShape } from './env-shape';
 
 declare const configApiUrl: string;
 declare const monitoringConsoleUrl: string;
+declare const helpUrl: string;
 
 export const environment: EnvShape = {
     production: true,
     name: 'prod',
     apiUrl: configApiUrl,
     monitoringConsoleUrl,
+    helpUrl: (typeof helpUrl !== 'undefined') ? helpUrl : ''
 };

@@ -25,6 +25,7 @@ export const environment: EnvShape = {
     name: '',
     apiUrl: 'http://kuberlogic-test.com:30007/api/v1',
     monitoringConsoleUrl: 'http://monitoring-console.com/',
+    helpUrl: 'https://docs.kuberlogic.com'
 };
 
 /*

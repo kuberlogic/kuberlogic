@@ -30,6 +30,7 @@ const backupConfig: ServiceBackupConfigModel = {
     bucket: 'bucket',
     endpoint: 'endpoint',
     schedule: '0 12 * * *',
+    region: 'test'
 };
 
 describe('BackupConfigService', () => {

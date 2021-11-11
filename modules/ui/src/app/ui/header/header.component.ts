@@ -24,12 +24,16 @@ import { environment } from '@environments/environment';
     styleUrls: ['./header.component.scss'],
 })
 export class HeaderComponent implements OnInit {
+    consoleMonitoringUrl: any;
+    helpUrl: any;
 
     constructor(
         private authService: AuthService,
     ) { }
 
     ngOnInit(): void {
+        this.consoleMonitoringUrl = this.getConsoleMonitoringUrl();
+        this.helpUrl = this.getHelpUrl();
     }
 
     onLogout(): void {
@@ -38,5 +42,9 @@ export class HeaderComponent implements OnInit {
 
     getConsoleMonitoringUrl() {
         return `${environment.monitoringConsoleUrl}?token=${this.authService.getToken()}`;
+    }
+
+    getHelpUrl() {
+        return environment.helpUrl;
     }
 }

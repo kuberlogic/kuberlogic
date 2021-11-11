@@ -16,7 +16,11 @@
 
 <header class="header">
     <div class="header__part">
-        <div class="header__logo"></div>
+        <div class="header__logo">
+            <a class="header__logo--link"
+               [routerLink]="['/services']"
+            ></a>
+        </div>
         <div class="header__links">
             <a class="menu-item"
                mat-ripple
@@ -28,17 +32,17 @@
             <a class="menu-item"
                mat-ripple
                target="_blank"
-               href="{{ getConsoleMonitoringUrl() }}">
+               href="{{ consoleMonitoringUrl }}">
                 <span class="menu-item__overlay"></span>
                 <span class="menu-item__title">Monitoring Console</span>
             </a>
         </div>
     </div>
     <div class="header__part">
-        <a class="menu-item"
+        <a *ngIf="helpUrl" class="menu-item"
            mat-ripple
-           [routerLink]="['/help']"
-           >
+           target="_blank"
+           href="{{ helpUrl }}">
             <span class="menu-item__overlay"></span>
             <span class="menu-item__title">Help?</span>
         </a>
