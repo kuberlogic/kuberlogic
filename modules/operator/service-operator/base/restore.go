@@ -109,3 +109,7 @@ func (r *BaseRestore) NewJob(name, ns string) batchv1.Job {
 	}
 	return j
 }
+
+func (p *BaseRestore) SetImage(repo, image, version string) {
+	p.Image = repo + "/" + image + ":" + version
+}

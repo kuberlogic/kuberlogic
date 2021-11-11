@@ -46,6 +46,7 @@ type Config struct {
 	} `envconfig:"optional"`
 
 	Grafana Grafana `envconfig:"optional"`
+	Version string  `envconfig:"optional"`
 }
 
 type EmailNotificationChannelConfig struct {
@@ -59,11 +60,15 @@ type EmailNotificationChannelConfig struct {
 	Password string `envconfig:"optional"`
 }
 
-func NewConfig() (*Config, error) {
+func NewConfig(version string) (*Config, error) {
 	cfg := new(Config)
 
 	if err := envconfig.Init(cfg); err != nil {
 		return nil, err
+	}
+
+	if cfg.Version == "" {
+		cfg.Version = version
 	}
 	return cfg, nil
 }

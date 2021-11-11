@@ -25,7 +25,6 @@ import (
 
 const (
 	backupImage = "backup-mysql"
-	backupTag   = "latest"
 )
 
 type Backup struct {
@@ -33,8 +32,8 @@ type Backup struct {
 	Cluster *Mysql
 }
 
-func (p *Backup) SetBackupImage() {
-	p.Image = util.GetKuberlogicImage(backupImage, backupTag)
+func (p *Backup) SetBackupImage(repo, version string) {
+	p.SetImage(repo, backupImage, version)
 }
 
 func (p *Backup) SetBackupEnv(cm *kuberlogicv1.KuberLogicBackupSchedule) {

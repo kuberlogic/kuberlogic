@@ -1,5 +1,8 @@
 .EXPORT_ALL_VARIABLES:
 
+# needed for injecting version to operator config
+VERSION=latest
+
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
 IMG = $(IMG_REPO)/minio:1.0.0
