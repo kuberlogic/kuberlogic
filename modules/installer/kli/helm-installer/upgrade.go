@@ -41,7 +41,7 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 
 	err = func() error {
 		// do not pass imagePullSecretReference if it is disabled
-		if i.Registry.Server == "" {
+		if i.Config.Registry.Server == "" {
 			delete(globalValues, "imagePullSecrets")
 		}
 

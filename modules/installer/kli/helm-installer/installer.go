@@ -33,27 +33,11 @@ const (
 )
 
 type HelmInstaller struct {
-	Log logger.Logger
-
+	Log              logger.Logger
 	ClientSet        *kubernetes.Clientset
 	HelmActionConfig *action.Configuration
-
+	Config           cfg.Config
 	ReleaseNamespace string
-	Registry         struct {
-		Server   string
-		Username string
-		Password string
-	}
-	Endpoints struct {
-		API               string
-		UI                string
-		MonitoringConsole string
-	}
-	Auth struct {
-		AdminPassword    string
-		DemoUserPassword string
-	}
-	Platform string
 }
 
 func New(config *cfg.Config, log logger.Logger) (*HelmInstaller, error) {
@@ -81,42 +65,11 @@ func New(config *cfg.Config, log logger.Logger) (*HelmInstaller, error) {
 		return nil, fmt.Errorf("error building Helm cli: %v", err)
 	}
 
-	i := &HelmInstaller{
-		Log: log,
-
+	return &HelmInstaller{
+		Log:              log,
 		ClientSet:        k8sclientset,
 		HelmActionConfig: helmActionConfig,
-
+		Config:           *config,
 		ReleaseNamespace: *config.Namespace,
-		Registry: struct {
-			Server   string
-			Username string
-			Password string
-		}{
-			Server:   config.Registry.Server,
-			Username: config.Registry.Username,
-			Password: config.Registry.Password,
-		},
-		Endpoints: struct {
-			API               string
-			UI                string
-			MonitoringConsole string
-		}{
-			API:               config.Endpoints.API,
-			UI:                config.Endpoints.UI,
-			MonitoringConsole: config.Endpoints.MonitoringConsole,
-		},
-		Auth: struct {
-			AdminPassword    string
-			DemoUserPassword string
-		}{
-			AdminPassword: config.Auth.AdminPassword,
-		},
-		Platform: config.Platform,
-	}
-	if config.Auth.DemoUserPassword != nil {
-		i.Auth.DemoUserPassword = *config.Auth.DemoUserPassword
-	}
-
-	return i, nil
+	}, nil
 }

@@ -15,3 +15,29 @@
  */
 
 package helm_installer
+
+import (
+	"fmt"
+	"github.com/kuberlogic/kuberlogic/modules/installer/cfg"
+	"github.com/pkg/errors"
+	"os"
+)
+
+func prepareTLS(config *cfg.TLS) (map[string]interface{}, error) {
+	tls := make(map[string]interface{})
+	if config != nil {
+		certs := map[string]string{
+			"ca":  config.CaFile,
+			"crt": config.CrtFile,
+			"key": config.KeyFile,
+		}
+		for key, filename := range certs {
+			data, err := os.ReadFile(filename)
+			if err != nil {
+				return nil, errors.Wrap(err, fmt.Sprintf("cannot read the file %s", filename))
+			}
+			tls[key] = string(data)
+		}
+	}
+	return tls, nil
+}

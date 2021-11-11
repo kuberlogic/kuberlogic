@@ -31,22 +31,28 @@ var (
 
 	defaultKubeconfigPath   = fmt.Sprintf("%s/%s", os.Getenv("HOME"), ".kube/config")
 	defaultDebugLogsEnabled = false
-	defaultHelmReleaseName  = "kuberlogic"
-
-	defaultPlatform    = "generic"
-	supportedPlatforms = []string{defaultPlatform, "aws"}
+	defaultPlatform         = "generic"
+	supportedPlatforms      = []string{defaultPlatform, "aws"}
 )
 
+type TLS struct {
+	CaFile  string `yaml:"ca.crt"`
+	CrtFile string `yaml:"tls.crt"`
+	KeyFile string `yaml:"tls.key"`
+}
+
 type Config struct {
-	DebugLogs      *bool   `yaml:"debugLogs,omitempty"`
-	KubeconfigPath *string `yaml:"kubeconfigPath,omitempty"`
+	DebugLogs      *bool   `yaml:"debug-logs,omitempty"`
+	KubeconfigPath *string `yaml:"kubeconfig-path,omitempty"`
 
 	Namespace *string `yaml:"namespace"`
 
 	Endpoints struct {
-		API               string `yaml:"api""`
-		UI                string `yaml:"ui"`
-		MonitoringConsole string `yaml:"monitoringConsole"`
+		Kuberlogic    string `yaml:"kuberlogic"`
+		KuberlogicTLS *TLS   `yaml:"kuberlogic-tls,omitempty"`
+
+		MonitoringConsole    string `yaml:"monitoring-console"`
+		MonitoringConsoleTLS *TLS   `yaml:"monitoring-console-tls,omitempty"`
 	} `yaml:"endpoints"`
 
 	Registry struct {
@@ -56,8 +62,8 @@ type Config struct {
 	} `yaml:"registry,omitempty"`
 
 	Auth struct {
-		AdminPassword    string  `yaml:"adminPassword"`
-		DemoUserPassword *string `yaml:"demoUserPassword,omitempty"`
+		AdminPassword    string  `yaml:"admin-password"`
+		DemoUserPassword *string `yaml:"demo-user-password,omitempty"`
 	} `yaml:"auth"`
 
 	Platform string `yaml:"platform,omitempty"`
@@ -72,7 +78,7 @@ func (c *Config) setDefaults(log logger.Logger) error {
 	}
 
 	if c.KubeconfigPath == nil {
-		log.Debugf("Using default value for kubeconfigPath: %s", defaultKubeconfigPath)
+		log.Debugf("Using default value for kubeconfig-path: %s", defaultKubeconfigPath)
 		v := &defaultKubeconfigPath
 		c.KubeconfigPath = v
 	}
@@ -82,8 +88,8 @@ func (c *Config) setDefaults(log logger.Logger) error {
 		configError = requiredParamNotSet
 	}
 
-	if c.Endpoints.UI == "" || c.Endpoints.API == "" {
-		log.Errorf("`endpoints.api` and `endpoints.ui` must be set and can't be-empty")
+	if c.Endpoints.Kuberlogic == "" {
+		log.Errorf("`endpoints.main` must be set and can't be-empty")
 		return errors.New("endpoints configuration is not set")
 	}
 
@@ -111,6 +117,21 @@ func (c *Config) setDefaults(log logger.Logger) error {
 	return configError
 }
 
+func (c *Config) checkKuberlogicTLS() error {
+	if err := checkCertificates(c.Endpoints.KuberlogicTLS); err != nil {
+		return err
+	}
+
+	if err := checkCertificates(c.Endpoints.MonitoringConsoleTLS); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Config) check() error {
+	return c.checkKuberlogicTLS()
+}
+
 func NewConfigFromFile(file string, log logger.Logger) (*Config, error) {
 	f, err := os.Open(file)
 	if err != nil {
@@ -125,6 +146,9 @@ func NewConfigFromFile(file string, log logger.Logger) (*Config, error) {
 	}
 
 	if err := cfg.setDefaults(log); err != nil {
+		return nil, err
+	}
+	if err := cfg.check(); err != nil {
 		return nil, err
 	}
 	return cfg, nil

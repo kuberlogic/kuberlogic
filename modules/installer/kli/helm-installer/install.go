@@ -36,7 +36,11 @@ func (i *HelmInstaller) Install(args []string) error {
 	}
 
 	// prepare environment for release and start release process
-	if err := internal.PrepareEnvironment(i.ReleaseNamespace, i.Registry.Server, i.Registry.Password, i.Registry.Username, i.ClientSet); err != nil {
+	if err := internal.PrepareEnvironment(i.ReleaseNamespace,
+		i.Config.Registry.Server,
+		i.Config.Registry.Password,
+		i.Config.Registry.Username,
+		i.ClientSet); err != nil {
 		return errors.Wrap(err, "error preparing environment")
 	}
 	release, err := internal.StartRelease(i.ReleaseNamespace, i.ClientSet)
@@ -46,7 +50,7 @@ func (i *HelmInstaller) Install(args []string) error {
 
 	err = func() error {
 		// do not pass imagePullSecretReference if it is disabled
-		if i.Registry.Server == "" {
+		if i.Config.Registry.Server == "" {
 			delete(globalValues, "imagePullSecrets")
 		}
 
@@ -88,7 +92,7 @@ func (i *HelmInstaller) Install(args []string) error {
 			}
 
 			if err := deployUI(globalValues, i, release); err != nil {
-				return errors.Wrap(err, "error installing UI")
+				return errors.Wrap(err, "error installing Kuberlogic")
 			}
 		}
 		return nil
