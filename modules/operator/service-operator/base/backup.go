@@ -20,14 +20,13 @@ import (
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	"github.com/kuberlogic/kuberlogic/modules/operator/util"
 	v1 "k8s.io/api/batch/v1"
-	"k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
 )
 
 type BaseBackup struct {
-	CronJob v1beta1.CronJob
+	CronJob v1.CronJob
 
 	Image          string
 	ServiceAccount string
@@ -47,21 +46,21 @@ func (p *BaseBackup) IsRunning(j *v1.Job) bool {
 	return j.Status.Active > 0
 }
 
-func (p *BaseBackup) NewCronJob(name, ns, schedule string) v1beta1.CronJob {
+func (p *BaseBackup) NewCronJob(name, ns, schedule string) v1.CronJob {
 	labels := map[string]string{
 		"backup-name": name,
 	}
 	var backOffLimit int32 = 2
 
-	c := v1beta1.CronJob{
+	c := v1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: ns,
 		},
-		Spec: v1beta1.CronJobSpec{
+		Spec: v1.CronJobSpec{
 			Schedule:          schedule,
-			ConcurrencyPolicy: v1beta1.ForbidConcurrent,
-			JobTemplate: v1beta1.JobTemplateSpec{
+			ConcurrencyPolicy: v1.ForbidConcurrent,
+			JobTemplate: v1.JobTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels,
 				},
@@ -94,11 +93,11 @@ func (p *BaseBackup) NewCronJob(name, ns, schedule string) v1beta1.CronJob {
 	return c
 }
 
-func (p *BaseBackup) GetCronJob() *v1beta1.CronJob {
+func (p *BaseBackup) GetCronJob() *v1.CronJob {
 	return &p.CronJob
 }
 
-func (p *BaseBackup) New(backup *kuberlogicv1.KuberLogicBackupSchedule) v1beta1.CronJob {
+func (p *BaseBackup) New(backup *kuberlogicv1.KuberLogicBackupSchedule) v1.CronJob {
 	return p.NewCronJob(
 		backup.Name,
 		backup.Namespace,
@@ -118,7 +117,7 @@ func (p *BaseBackup) Init(cm *kuberlogicv1.KuberLogicBackupSchedule) {
 	p.CronJob = p.New(cm)
 }
 
-func (p *BaseBackup) InitFrom(job *v1beta1.CronJob) {
+func (p *BaseBackup) InitFrom(job *v1.CronJob) {
 	p.CronJob = *job
 }
 
@@ -153,4 +152,8 @@ func (p *BaseBackup) UpdateTemplate(cm *kuberlogicv1.KuberLogicBackupSchedule) {
 
 func (p *BaseBackup) SetServiceAccount(name string) {
 	p.ServiceAccount = name
+}
+
+func (p *BaseBackup) SetImage(repo, image, version string) {
+	p.Image = repo + "/" + image + ":" + version
 }

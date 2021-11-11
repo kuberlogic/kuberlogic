@@ -25,7 +25,6 @@ import (
 
 const (
 	restoreImage = "backup-restore-mysql"
-	restoreTag   = "latest"
 )
 
 type Restore struct {
@@ -33,8 +32,8 @@ type Restore struct {
 	Cluster *Mysql
 }
 
-func (p *Restore) SetRestoreImage() {
-	p.Image = util.GetKuberlogicImage(restoreImage, restoreTag)
+func (p *Restore) SetRestoreImage(repo, version string) {
+	p.SetImage(repo, restoreImage, version)
 }
 
 func (p *Restore) SetRestoreEnv(cm *cloudlinuxv1.KuberLogicBackupRestore) {

@@ -18,9 +18,11 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/operator/cfg"
 	"github.com/kuberlogic/kuberlogic/modules/operator/monitoring"
 	serviceOperator "github.com/kuberlogic/kuberlogic/modules/operator/service-operator"
 	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/interfaces"
@@ -43,11 +45,16 @@ type KuberLogicBackupScheduleReconciler struct {
 	Log                 logr.Logger
 	Scheme              *runtime.Scheme
 	mu                  sync.Mutex
+	cfg                 *cfg.Config
 	MonitoringCollector *monitoring.KuberLogicCollector
 }
 
 const (
 	backupScheduleFinalizer = "kuberlogic.com/backupschedule-finalizer"
+)
+
+var (
+	errKlbServiceNotFound = errors.New("configured kuberlogicservice not found")
 )
 
 // +kubebuilder:rbac:groups=cloudlinux.com,resources=kuberlogicbackupschedules,verbs=get;list;watch;create;update;patch;delete
@@ -79,7 +86,7 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 		r.MonitoringCollector.ForgetKuberlogicBackup(monitoringKey)
 		return ctrl.Result{}, err
 	}
-	defer r.MonitoringCollector.MonitorKuberlogicBackup(monitoringKey, klb)
+	_ = r.MonitoringCollector.MonitorKuberlogicBackup(monitoringKey, klb)
 
 	clusterName := klb.Spec.ClusterName
 	kl := &kuberlogicv1.KuberLogicService{}
@@ -95,7 +102,7 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 	if err != nil && k8serrors.IsNotFound(err) {
 		log.Info("Cluster is not found",
 			"Cluster", clusterName)
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, errKlbServiceNotFound
 	}
 
 	// check if klb is about to be deleted and we should finalize it
@@ -151,7 +158,7 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 	op.InitFrom(found)
 
 	backupSchedule := op.GetBackupSchedule()
-	backupSchedule.SetBackupImage()
+	backupSchedule.SetBackupImage(r.cfg.ImageRepo, r.cfg.Version)
 	backupSchedule.SetBackupEnv(klb)
 	backupSchedule.SetServiceAccount(kt.GetServiceAccountName())
 
@@ -176,9 +183,6 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 		} else if err != nil {
 			log.Error(err, "Failed to create new CronJob")
 			return ctrl.Result{}, err
-		} else {
-			// cronJob created successfully - return and requeue
-			return ctrl.Result{Requeue: true}, nil
 		}
 	}
 
@@ -236,7 +240,7 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 	return ctrl.Result{}, nil
 }
 
-func (r *KuberLogicBackupScheduleReconciler) cronJob(ctx context.Context, op interfaces.BackupSchedule, klb *kuberlogicv1.KuberLogicBackupSchedule, log logr.Logger) (*v1beta1.CronJob, error) {
+func (r *KuberLogicBackupScheduleReconciler) cronJob(ctx context.Context, op interfaces.BackupSchedule, klb *kuberlogicv1.KuberLogicBackupSchedule, log logr.Logger) (*v12.CronJob, error) {
 	op.Init(klb)
 
 	// Set kuberlogic backup instance as the owner and controller
@@ -294,4 +298,15 @@ func (r *KuberLogicBackupScheduleReconciler) SetupWithManager(mgr ctrl.Manager) 
 		For(&kuberlogicv1.KuberLogicBackupSchedule{}).
 		Owns(&v1beta1.CronJob{}).
 		Complete(r)
+}
+
+func NewKuberlogicBackupScheduleReconciler(c client.Client, l logr.Logger, s *runtime.Scheme, cfg *cfg.Config, mc *monitoring.KuberLogicCollector) *KuberLogicBackupScheduleReconciler {
+	return &KuberLogicBackupScheduleReconciler{
+		Client:              c,
+		Log:                 l,
+		Scheme:              s,
+		mu:                  sync.Mutex{},
+		cfg:                 cfg,
+		MonitoringCollector: mc,
+	}
 }

@@ -120,6 +120,8 @@ jobs:
       - name: Build installer & images
         run: |
           make docker-build installer-build
+        env:
+          VERSION: ${{ github.run_id }}
 
       - name: Move cache
         run: |
@@ -150,6 +152,7 @@ jobs:
           PG_VERSION: ${{ matrix.pg_version }}
           MY_VERSION: ${{ matrix.my_version }}
           TYPE: ${{ matrix.type }}
+          VERSION: ${{ github.run_id }}
 
       - name: Uninstall Kuberlogic
         working-directory: ./modules/installer

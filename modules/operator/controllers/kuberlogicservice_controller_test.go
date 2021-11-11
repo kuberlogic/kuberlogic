@@ -58,7 +58,7 @@ var (
 	}
 )
 
-func initTestReconciler() *KuberLogicServiceReconciler {
+func initTestKlsReconciler() *KuberLogicServiceReconciler {
 
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -84,7 +84,7 @@ func initTestReconciler() *KuberLogicServiceReconciler {
 }
 
 func TestKlsReconcileAbsent(t *testing.T) {
-	r := initTestReconciler()
+	r := initTestKlsReconciler()
 
 	ctx := context.TODO()
 	klsId := types.NamespacedName{
@@ -101,7 +101,7 @@ func TestKlsReconcileAbsent(t *testing.T) {
 }
 
 func TestKlsReconcileUnknownType(t *testing.T) {
-	r := initTestReconciler()
+	r := initTestKlsReconciler()
 
 	ctx := context.TODO()
 	klsId := types.NamespacedName{
@@ -130,7 +130,7 @@ func TestKlsReconcileUnknownType(t *testing.T) {
 }
 
 func TestKlsReconcileMysql(t *testing.T) {
-	r := initTestReconciler()
+	r := initTestKlsReconciler()
 
 	ctx := context.TODO()
 	klsId := types.NamespacedName{
@@ -169,7 +169,7 @@ func TestKlsReconcileMysql(t *testing.T) {
 }
 
 func TestKlsReconcilePsql(t *testing.T) {
-	r := initTestReconciler()
+	r := initTestKlsReconciler()
 
 	ctx := context.TODO()
 	klsId := types.NamespacedName{
@@ -212,7 +212,7 @@ func TestKlsReconcilePsql(t *testing.T) {
 }
 
 func TestKlsReconcileNotReady(t *testing.T) {
-	r := initTestReconciler()
+	r := initTestKlsReconciler()
 
 	ctx := context.TODO()
 	klsId := types.NamespacedName{
@@ -249,7 +249,7 @@ func TestKlsReconcileNotReady(t *testing.T) {
 }
 
 func TestKlsReconcileUpdate(t *testing.T) {
-	r := initTestReconciler()
+	r := initTestKlsReconciler()
 
 	ctx := context.TODO()
 	// we'll change replicas for mysql resource
