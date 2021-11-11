@@ -99,7 +99,7 @@ func prepareTLS(config *cfg.TLS) (map[string]interface{}, error) {
 			if err != nil {
 				return nil, errors.Wrap(err, fmt.Sprintf("cannot read the file %s", filename))
 			}
-			tls[key] = data
+			tls[key] = string(data)
 		}
 	}
 	return tls, nil
