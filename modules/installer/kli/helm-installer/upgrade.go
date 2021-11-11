@@ -88,9 +88,9 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 				return errors.Wrap(err, "error upgrading apiserver")
 			}
 
-			i.Log.Infof("Upgrading Kuberlogic")
+			i.Log.Infof("Upgrading UI")
 			if err := deployUI(globalValues, i, release); err != nil {
-				return errors.Wrap(err, "error upgrading Kuberlogic")
+				return errors.Wrap(err, "error upgrading UI")
 			}
 		}
 

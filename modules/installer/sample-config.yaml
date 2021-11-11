@@ -23,12 +23,14 @@ namespace: kuberlogic
 # and it is expected that Kuberlogic ingress traffic will be received via these endpoints
 endpoints:
   kuberlogic: kuberlogic.com
+  # custom TLS certificates for UI. If not set will be generated self-signed
   #kuberlogic-tls:
   #  ca.crt: /root/certs/rootCA.crt
   #  tls.crt: /root/certs/kuberlogic.crt
   #  tls.key: /root/certs/kuberlogic.key
 
   monitoring-console: mc.kuberlogic.com
+  # custom TLS certificates for monitoring tool. If not set will be generated self-signed
   #monitoring-console-tls:
   #  ca.crt: /root/certs/rootCA.crt
   #  tls.crt: /root/certs/kuberlogic.crt
