@@ -235,7 +235,7 @@ func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
 		"config": map[string]interface{}{
 			"grafana": map[string]interface{}{
 				"enabled":                   true,
-				"endpoint":                  fmt.Sprintf("https://%s:%d/", grafanaServiceName, grafanaServicePort),
+				"endpoint":                  fmt.Sprintf("http://%s:%d/", grafanaServiceName, grafanaServicePort),
 				"secret":                    grafanaSecretName,
 				"defaultDatasourceEndpoint": "http://" + victoriaMetricsServiceName,
 			},
