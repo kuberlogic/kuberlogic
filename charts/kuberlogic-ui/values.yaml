@@ -3,6 +3,7 @@ replicas: 1
 config:
   apiEndpoint: http://127.0.0.1:8080
   grafanaEndpoint: http://127.0.0.1:8080
+  helpEndpoint: https://docs.kuberlogic.com
 
 image:
   repository: quay.io/kuberlogic/ui
