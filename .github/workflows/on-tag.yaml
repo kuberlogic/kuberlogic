@@ -198,6 +198,10 @@ jobs:
           path: ./modules/installer/bin
           key: installer-${{ github.sha }}
 
+      - name: Generate installer script
+        run: |
+          make generate-installer-script INSTALLER_SCRIPT=/tmp/installer.sh
+
       - name: Release
         uses: anton-yurchenko/git-release@v4.1.0
         if: steps.cache-installer.outputs.cache-hit == 'true'
@@ -207,3 +211,4 @@ jobs:
         with:
           args: |
             ./modules/installer/bin/*
+            /tmp/installer.sh
