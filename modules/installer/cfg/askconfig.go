@@ -5,16 +5,14 @@ import (
 	"fmt"
 	logger "github.com/kuberlogic/kuberlogic/modules/installer/log"
 	"github.com/pkg/errors"
-	"golang.org/x/term"
-	"os"
+	"io"
 	"strings"
-	"syscall"
 )
 
 func readString(reader *bufio.Reader, defaultValue string) (*string, error) {
 	line, err := reader.ReadString('\n')
 	if err != nil {
-		return nil, errors.New("could not read for debug logs")
+		return nil, errors.New("could not read from reader")
 	}
 	line = strings.TrimSpace(line)
 	if line == "" {
@@ -24,20 +22,10 @@ func readString(reader *bufio.Reader, defaultValue string) (*string, error) {
 	return &line, nil
 }
 
-func readPassword() (*string, error) {
-	bytePassword, err := term.ReadPassword(syscall.Stdin)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot read the password")
-	}
-
-	password := strings.TrimSpace(string(bytePassword))
-	return &password, nil
-}
-
-func AskConfig(log logger.Logger, defaultCfgLocation string) *Config {
+func AskConfig(screen io.Reader, log logger.Logger, defaultCfgLocation string) *Config {
 	config := new(Config)
 
-	reader := bufio.NewReader(os.Stdin)
+	reader := bufio.NewReader(screen)
 	log.Infof("Config is not found, please answer several questions")
 
 	fmt.Println(fmt.Sprintf(`kubeconfig path: (default=%s)`, DefaultKubeconfigPath))
@@ -75,9 +63,10 @@ func AskConfig(log logger.Logger, defaultCfgLocation string) *Config {
 		log.Infof(`Using "%s" for monitoring endpoint`, *endpoint)
 	}
 
+	//passwordTerminal := term.NewTerminal(screen, "")
 	defaultAdminPassword := ""
 	log.Infof(fmt.Sprintf(`Admin password: (default=%s)`, defaultAdminPassword))
-	if adminPassword, err := readPassword(); err != nil {
+	if adminPassword, err := readString(reader, ""); err != nil {
 		log.Fatalf("cannot parse Admin password: %+v", err)
 	} else {
 		config.Auth.AdminPassword = *adminPassword
@@ -86,7 +75,7 @@ func AskConfig(log logger.Logger, defaultCfgLocation string) *Config {
 
 	defaultDemoUserPassword := ""
 	log.Infof(fmt.Sprintf(`Demo user password: (default=%s)`, defaultDemoUserPassword))
-	if demoUserPassword, err := readPassword(); err != nil {
+	if demoUserPassword, err := readString(reader, ""); err != nil {
 		log.Fatalf("cannot parse Demo user password: %+v", err)
 	} else {
 		config.Auth.DemoUserPassword = demoUserPassword

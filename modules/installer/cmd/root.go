@@ -22,7 +22,9 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/installer/kli"
 	logger "github.com/kuberlogic/kuberlogic/modules/installer/log"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 	"os"
+	"syscall"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -74,7 +76,11 @@ func initState() {
 			log.Fatalf("Error reading config file: %+v", err)
 		}
 	} else {
-		config = cfg.AskConfig(log, getDefaultCfgLocation())
+		if !terminal.IsTerminal(syscall.Stdin) {
+			log.Fatalf("stdin/stdout should be terminal")
+		}
+
+		config = cfg.AskConfig(os.Stdin, log, getDefaultCfgLocation())
 	}
 
 	log = logger.NewLogger(*config.DebugLogs)
