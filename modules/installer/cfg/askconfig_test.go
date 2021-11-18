@@ -54,12 +54,10 @@ func TestAskConfig(t *testing.T) {
 		t.Errorf("value is incorrect, actual vs expected: %v vs %v", config.Auth.AdminPassword,
 			adminPassword)
 	}
-
 	if *config.Auth.DemoUserPassword != demoPassword {
 		t.Errorf("value is incorrect, actual vs expected: %v vs %v", config.Auth.DemoUserPassword,
 			demoPassword)
 	}
-
 	if config.Platform != "generic" {
 		t.Errorf("value is incorrect, actual vs expected: %v vs %v", config.Platform, "generic")
 	}
