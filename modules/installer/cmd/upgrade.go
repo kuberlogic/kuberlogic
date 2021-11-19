@@ -24,11 +24,11 @@ import (
 func newUpgradeCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:       "upgrade",
-		ValidArgs: []string{installAllArg, installCertManagerArg, installDepsArg, installKuberlogicArg},
-		Args:      cobra.ExactValidArgs(1),
+		ValidArgs: []string{AllArg, certManagerArg, depsArg, kuberlogicArg},
+		Args:      cobra.OnlyValidArgs,
 		Short:     "upgrades already installed Kuberlogic release",
 		Run: func(cmd *cobra.Command, args []string) {
-			kuberlogicInstaller.Exit(kuberlogicInstaller.Upgrade(args))
+			kuberlogicInstaller.Exit(kuberlogicInstaller.Upgrade(cmd, args))
 		},
 	}
 }

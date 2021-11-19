@@ -22,12 +22,13 @@ import (
 
 // newUninstallCmd returns the delete command
 func newUninstallCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:       "uninstall",
-		Short:     "uninstall a Kuberlogic release",
-		ValidArgs: []string{"force"},
+	command := &cobra.Command{
+		Use:   "uninstall",
+		Short: "uninstall a Kuberlogic release",
 		Run: func(cmd *cobra.Command, args []string) {
-			kuberlogicInstaller.Exit(kuberlogicInstaller.Uninstall(args))
+			kuberlogicInstaller.Exit(kuberlogicInstaller.Uninstall(cmd, args))
 		},
 	}
+	command.Flags().BoolP("force", "f", false, "force uninstall kuberlogic")
+	return command
 }
