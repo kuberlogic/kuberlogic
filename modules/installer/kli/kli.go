@@ -20,13 +20,14 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/installer/cfg"
 	helm_installer "github.com/kuberlogic/kuberlogic/modules/installer/kli/helm-installer"
 	logger "github.com/kuberlogic/kuberlogic/modules/installer/log"
+	"github.com/spf13/cobra"
 )
 
 type KuberlogicInstaller interface {
-	Install(args []string) error
-	Upgrade(args []string) error
-	Uninstall(args []string) error
-	Status(args []string) error
+	Install(cmd *cobra.Command, args []string) error
+	Upgrade(cmd *cobra.Command, args []string) error
+	Uninstall(cmd *cobra.Command, args []string) error
+	Status(cmd *cobra.Command, args []string) error
 	Exit(err error)
 }
 

@@ -7,7 +7,7 @@ Configuration file must be prepared to run the installer. It is YAML formatted f
 You can find a sample file with all the configuration references [here](sample-config.yaml).
 
 ## Installation
-`kuberlogic-installer install all`
+`kuberlogic-installer install`
 Kuberlogic mixes together a lot of components, so the whole installation process is broke down to three phases:
 * dependencies
 * core
@@ -15,7 +15,7 @@ Kuberlogic mixes together a lot of components, so the whole installation process
   You can specify any of those and there is also `all` phase that includes all of the above.
 
 ## Upgrade
-`kuberlogic-installer upgrade all`
+`kuberlogic-installer upgrade`
 Upgrade command will upgrade an existing Kuberlogic installation. The command will fail if a release is not found.
 This command also supports phases just as the `install` command.
 

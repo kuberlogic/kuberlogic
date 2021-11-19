@@ -20,15 +20,19 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/installer/internal"
 	logger "github.com/kuberlogic/kuberlogic/modules/installer/log"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 	"helm.sh/helm/v3/pkg/action"
 	"k8s.io/client-go/kubernetes"
 )
 
-func (i *HelmInstaller) Install(args []string) error {
+func (i *HelmInstaller) Install(_ *cobra.Command, args []string) error {
 	i.Log.Debugf("entering install phase with args: %+v", args)
 
-	// for now we only expect single arg = see cmd/install.go
-	installPhase := args[0]
+	installPhase := "all"
+	if len(args) > 0 {
+		installPhase = args[0]
+	}
+	i.Log.Debugf("using install phase: %s", installPhase)
 
 	// run pre install checks
 	if err := runInstallChecks(i.ClientSet, i.HelmActionConfig, i.Log); err != nil {
