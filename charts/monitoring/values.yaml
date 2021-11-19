@@ -100,3 +100,8 @@ grafana:
   auth:
     enabled: true
     headerName: ""
+
+monitoringScrapeAnnotation: ""
+monitoringScrapeSchemeAnnotation: ""
+monitoringScrapePathAnnotation: ""
+monitoringScrapePortAnnotation: ""
