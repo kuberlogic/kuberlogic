@@ -29,7 +29,7 @@ import (
 var (
 	requiredParamNotSet = fmt.Errorf("some required parameter(s) not set")
 
-	defaultKubeconfigPath   = fmt.Sprintf("%s/%s", os.Getenv("HOME"), ".kube/config")
+	DefaultKubeconfigPath   = fmt.Sprintf("%s/%s", os.Getenv("HOME"), ".kube/config")
 	defaultDebugLogsEnabled = false
 	defaultPlatform         = "generic"
 	supportedPlatforms      = []string{defaultPlatform, "aws"}
@@ -69,18 +69,16 @@ type Config struct {
 	Platform string `yaml:"platform,omitempty"`
 }
 
-func (c *Config) setDefaults(log logger.Logger) error {
+func (c *Config) SetDefaults(log logger.Logger) error {
 	var configError error
 	if c.DebugLogs == nil {
 		log.Debugf("Using default value for debugLogs: %s", defaultDebugLogsEnabled)
-		v := &defaultDebugLogsEnabled
-		c.DebugLogs = v
+		c.DebugLogs = &defaultDebugLogsEnabled
 	}
 
 	if c.KubeconfigPath == nil {
-		log.Debugf("Using default value for kubeconfig-path: %s", defaultKubeconfigPath)
-		v := &defaultKubeconfigPath
-		c.KubeconfigPath = v
+		log.Debugf("Using default value for kubeconfig-path: %s", DefaultKubeconfigPath)
+		c.KubeconfigPath = &DefaultKubeconfigPath
 	}
 
 	if c.Namespace == nil {
@@ -145,11 +143,25 @@ func NewConfigFromFile(file string, log logger.Logger) (*Config, error) {
 		return nil, err
 	}
 
-	if err := cfg.setDefaults(log); err != nil {
+	if err := cfg.SetDefaults(log); err != nil {
 		return nil, err
 	}
 	if err := cfg.check(); err != nil {
 		return nil, err
 	}
 	return cfg, nil
+}
+
+func newFileFromConfig(cfg *Config, file string) error {
+	f, err := os.Create(file)
+	if err != nil {
+		return errors.Wrap(err, "cannot create config file")
+	}
+	defer f.Close()
+
+	err = yaml.NewEncoder(f).Encode(cfg)
+	if err != nil {
+		return errors.Wrap(err, "cannot encode config to file")
+	}
+	return nil
 }
