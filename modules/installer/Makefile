@@ -1,42 +1,43 @@
 CHARTS_DIR="../../charts"
 GOARCH=amd64
 GOOS=linux
+HELM=helm --debug
 
 helm-deps:
 	cd $(CHARTS_DIR) && \
-	helm dependency update monitoring
+	$(HELM) dependency update monitoring
 
 helm-lint:
 	cd $(CHARTS_DIR) && \
-	helm lint crds && \
-	helm lint kong && \
-	helm lint kuberlogic-ingress-controller && \
-	helm lint kuberlogic-ui && \
-	helm lint kuberlogic-apiserver && \
-	helm lint keycloak-operator && \
-	helm lint kuberlogic-keycloak && \
-	helm lint monitoring && \
-	helm lint mysql-operator && \
-	helm lint postgres-operator && \
-	helm lint kuberlogic-operator
+	$(HELM) lint crds && \
+	$(HELM) lint kong && \
+	$(HELM) lint kuberlogic-ingress-controller && \
+	$(HELM) lint kuberlogic-ui && \
+	$(HELM) lint kuberlogic-apiserver && \
+	$(HELM) lint keycloak-operator && \
+	$(HELM) lint kuberlogic-keycloak && \
+	$(HELM) lint monitoring && \
+	$(HELM) lint mysql-operator && \
+	$(HELM) lint postgres-operator && \
+	$(HELM) lint kuberlogic-operator
 
 helm-package: helm-deps helm-lint
 	cd $(CHARTS_DIR) && find . -name "*.tgz" -delete ; \
-	helm package crds && \
-	helm package kong && \
-	helm package kuberlogic-ingress-controller && \
-	helm package cert-manager && \
-	helm package keycloak-operator && \
-	helm package kuberlogic-keycloak && \
-	helm package monitoring && \
-	helm package mysql-operator && \
-	helm package postgres-operator && \
-	helm package kuberlogic-ui --app-version $(VERSION) && \
-    helm package kuberlogic-apiserver --app-version $(VERSION) && \
-	helm package kuberlogic-operator --app-version $(VERSION)
+	$(HELM) package crds && \
+	$(HELM) package kong && \
+	$(HELM) package kuberlogic-ingress-controller && \
+	$(HELM) package cert-manager && \
+	$(HELM) package keycloak-operator && \
+	$(HELM) package kuberlogic-keycloak && \
+	$(HELM) package monitoring && \
+	$(HELM) package mysql-operator && \
+	$(HELM) package postgres-operator && \
+	$(HELM) package kuberlogic-ui --app-version $(VERSION) && \
+    $(HELM) package kuberlogic-apiserver --app-version $(VERSION) && \
+	$(HELM) package kuberlogic-operator --app-version $(VERSION)
 
 helm-embed: helm-package
-	rm kli/helm-installer/*tgz ; \
+	rm kli/$(HELM)-installer/*tgz ; \
 	mv $(CHARTS_DIR)/*.tgz kli/helm-installer
 
 test: helm-embed

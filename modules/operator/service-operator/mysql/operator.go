@@ -96,8 +96,8 @@ func (p *Mysql) Init(kls *kuberlogicv1.KuberLogicService, plat string) {
 			},
 			PodSpec: mysqlv1.PodSpec{
 				Annotations: map[string]string{
-					"monitoring.cloudlinux.com/scrape": "true",
-					"monitoring.cloudlinux.com/port":   "9999",
+					"monitoring.kuberlogic.com/scrape": "true",
+					"monitoring.kuberlogic.com/port":   "9999",
 				},
 				Containers: []corev1.Container{
 					{

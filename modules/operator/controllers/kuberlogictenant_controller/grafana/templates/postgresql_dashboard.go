@@ -288,7 +288,7 @@ const (
           "exemplar": true,
           "expr": "100 * eagle_pod_container_resource_usage_memory_bytes{namespace=\"{{ .TenantID }}\",pod=~\"kuberlogic-$service-[0-9]+\",container=\"postgres\"} / eagle_pod_container_resource_limits_memory_bytes{namespace=\"{{ .TenantID }}\",pod=~\"kuberlogic-$service-[0-9]+\",container=\"postgres\"} ",
           "interval": "",
-          "legendFormat": "{{ "{{pod}}}" }}",
+          "legendFormat": "{{ "{{pod}}" }}",
           "refId": "A"
         }
       ],
@@ -369,7 +369,7 @@ const (
           "exemplar": true,
           "expr": "100 * eagle_pod_container_resource_usage_cpu_cores{namespace=\"{{ .TenantID }}\",pod=~\"kuberlogic-$service-[0-9]+\",container=\"postgres\"} / eagle_pod_container_resource_limits_cpu_cores{namespace=\"{{ .TenantID }}\",pod=~\"kuberlogic-$service-[0-9]+\",container=\"postgres\"} ",
           "interval": "",
-          "legendFormat": "{{ "{{pod}}}" }}",
+          "legendFormat": "{{ "{{pod}}" }}",
           "refId": "A"
         }
       ],
@@ -732,30 +732,29 @@ const (
       {
         "allValue": null,
         "current": {
-          "selected": true,
-          "text": "",
-          "value": ""
+          "selected": false,
+          "text": "dd",
+          "value": "dd"
         },
+        "datasource": "kuberlogic-monitoring",
+        "definition": "kuberlogic_ready{namespace=\"{{ .TenantID }}",cluster_type=\"postgresql\"}",
+        "description": null,
         "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Service Name",
         "multi": false,
         "name": "service",
-        "options": [
-        {{ range $index, $element := .ServiceList }}
-        {{ if $index }},{{ end }}
-          {
-            "selected": false,
-            "text": "{{ $element }}",
-            "value": "{{ $element }}"
-          }
-        {{ end }}
-        ],
-        "query": "{{ range .ServiceList }}{{ . }},{{ end }}",
-        "queryValue": "",
+        "options": [],
+        "query": {
+          "query": "kuberlogic_ready{namespace=\"{{ .TenantID }}\",cluster_type=\"postgresql\"}",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "/name=\"([^\"]*).*/",
         "skipUrlSync": false,
-        "type": "custom"
+        "sort": 0,
+        "type": "query"
       }
     ]
   },

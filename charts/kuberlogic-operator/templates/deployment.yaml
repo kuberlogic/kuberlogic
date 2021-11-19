@@ -11,8 +11,14 @@ spec:
       {{- include "operator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        {{ if .Values.monitoringScrapeAnnotation }}
+        {{ .Values.monitoringScrapeAnnotation | quote | nindent 8 }}: "true"
+        {{ .Values.monitoringScrapeSchemeAnnotation | quote | nindent 8 }}: "https"
+        {{ .Values.monitoringScrapePortAnnotation | quote | nindent 8 }}: {{ .Values.monitoring.externalPort | quote }}
+        {{ .Values.monitoringScrapePathAnnotation | quote | nindent 8 }}: "/metrics"
+        {{ end }}
+      {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
