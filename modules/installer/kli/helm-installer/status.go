@@ -18,9 +18,10 @@ package helm_installer
 
 import (
 	"github.com/kuberlogic/kuberlogic/modules/installer/internal"
+	"github.com/spf13/cobra"
 )
 
-func (i *HelmInstaller) Status(args []string) error {
+func (i *HelmInstaller) Status(_ *cobra.Command, args []string) error {
 	i.Log.Debugf("entering status phase with args: %+v", args)
 
 	release, installed, err := internal.DiscoverReleaseInfo(i.ReleaseNamespace, i.ClientSet)

@@ -66,6 +66,7 @@ GOPRIVATE=github.com/kuberlogic
 
 SENTRY_DSN =
 NAMESPACE ?= kuberlogic
+INSTALLER_SCRIPT = /tmp/installer.sh
 
 all: manager
 
@@ -156,6 +157,10 @@ installer-build:
 	BUILD_TIME=$(shell date +"%d-%m-%yT%T%z") \
 	REVISION=$(COMMIT_SHA) \
 	$(MAKE) release
+
+generate-installer-script:
+	@cd modules/installer; \
+	sed 's/tag="latest"/tag="$(VERSION)"/g' installer.sh > $(INSTALLER_SCRIPT);
 
 updater-build:
 	cd modules/updater && \

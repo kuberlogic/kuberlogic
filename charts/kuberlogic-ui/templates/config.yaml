@@ -1,7 +1,7 @@
 apiVersion: v1
 data:
   config.js: |
-    let configApiUrl = '{{ .Values.config.apiEndpoint }}/api/v1';
+    let configApiUrl = '/api/v1';
     let monitoringConsoleUrl = '{{ .Values.config.monitoringConsoleEndpoint }}';
     let helpUrl = '{{ .Values.config.helpEndpoint }}';
 kind: ConfigMap

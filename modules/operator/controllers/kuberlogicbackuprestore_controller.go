@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
+	"github.com/kuberlogic/kuberlogic/modules/operator/cfg"
 	"github.com/kuberlogic/kuberlogic/modules/operator/monitoring"
 	serviceOperator "github.com/kuberlogic/kuberlogic/modules/operator/service-operator"
 	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/interfaces"
@@ -41,6 +42,7 @@ type KuberLogicBackupRestoreReconciler struct {
 	Log                 logr.Logger
 	Scheme              *runtime.Scheme
 	mu                  sync.Mutex
+	cfg                 *cfg.Config
 	MonitoringCollector *monitoring.KuberLogicCollector
 }
 
@@ -148,7 +150,7 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 	op.InitFrom(found)
 
 	backupRestore := op.GetBackupRestore()
-	backupRestore.SetRestoreImage()
+	backupRestore.SetRestoreImage(r.cfg.ImageRepo, r.cfg.Version)
 	backupRestore.SetRestoreEnv(klr)
 	backupRestore.SetServiceAccount(kt.GetServiceAccountName())
 
@@ -237,4 +239,15 @@ func (r *KuberLogicBackupRestoreReconciler) SetupWithManager(mgr ctrl.Manager) e
 		For(&kuberlogicv1.KuberLogicBackupRestore{}).
 		Owns(&v1.Job{}).
 		Complete(r)
+}
+
+func NewKuberlogicBackupRestoreReconciler(c client.Client, l logr.Logger, s *runtime.Scheme, cfg *cfg.Config, mc *monitoring.KuberLogicCollector) *KuberLogicBackupRestoreReconciler {
+	return &KuberLogicBackupRestoreReconciler{
+		Client:              c,
+		Log:                 l,
+		Scheme:              s,
+		mu:                  sync.Mutex{},
+		cfg:                 cfg,
+		MonitoringCollector: mc,
+	}
 }

@@ -77,10 +77,10 @@ var (
 		"imagePullSecrets": []map[string]interface{}{
 			{"name": internal.ImagePullSecret},
 		},
-		"monitoringSelector": map[string]interface{}{
-			"key":   "core.kuberlogic.com/scrape",
-			"value": "yes",
-		},
-		"monitoringPortAnnotation": "core.kuberlogic.com/scrape-port",
+		"kubectlImage":                     "quay.io/bitnami/kubectl:1.21.1",
+		"monitoringScrapeAnnotation":       "monitoring.kuberlogic.com/scrape",
+		"monitoringScrapeSchemeAnnotation": "monitoring.kuberlogic.com/scheme",
+		"monitoringScrapePathAnnotation":   "monitoring.kuberlogic.com/path",
+		"monitoringScrapePortAnnotation":   "monitoring.kuberlogic.com/port",
 	}
 )

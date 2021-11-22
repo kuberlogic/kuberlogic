@@ -26,7 +26,6 @@ import (
 
 const (
 	backupImage      = "backup-postgresql"
-	backupTag        = "latest"
 	postgreSuperUser = "postgres" // TODO: Could be grabbed from config map "postgres-operator"
 )
 
@@ -35,8 +34,8 @@ type Backup struct {
 	Cluster *Postgres
 }
 
-func (p *Backup) SetBackupImage() {
-	p.Image = util.GetKuberlogicImage(backupImage, backupTag)
+func (p *Backup) SetBackupImage(repo, version string) {
+	p.SetImage(repo, backupImage, version)
 }
 
 func (p *Backup) SetBackupEnv(cm *kuberlogicv1.KuberLogicBackupSchedule) {

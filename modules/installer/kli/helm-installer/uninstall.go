@@ -19,17 +19,15 @@ package helm_installer
 import (
 	"github.com/kuberlogic/kuberlogic/modules/installer/internal"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 )
 
-func (i *HelmInstaller) Uninstall(args []string) error {
-	force := false
-	for _, a := range args {
-		if a == "force" {
-			force = true
-		}
-	}
-
+func (i *HelmInstaller) Uninstall(cmd *cobra.Command, args []string) error {
 	i.Log.Debugf("entering uninstall phase with args: %+v", args)
+
+	force, _ := cmd.Flags().GetBool("force")
+	i.Log.Debugf("using flag force: %t", force)
+
 	err := func() error {
 		i.Log.Infof("uninstalling core components")
 		for _, c := range []string{helmApiserverChart, helmOperatorChart, helmUIChart} {
@@ -39,7 +37,7 @@ func (i *HelmInstaller) Uninstall(args []string) error {
 		}
 
 		i.Log.Infof("uninstalling platform components")
-		if err := uninstallKuberlogicKeycloak(i.ReleaseNamespace, force, i.HelmActionConfig, i.ClientSet, i.Log); err != nil {
+		if err := uninstallHelmChart(helmKuberlogicKeycloakCHart, force, i.HelmActionConfig, i.Log); err != nil {
 			return errors.Wrap(err, "error uninstalling Kuberlogic Keycloak")
 		}
 		if err := uninstallHelmChart(helmCertManagerChart, force, i.HelmActionConfig, i.Log); err != nil {

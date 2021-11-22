@@ -26,7 +26,7 @@ func newStatusCmd() *cobra.Command {
 		Use:   "status",
 		Short: "shows a status of installed Kuberlogic release",
 		Run: func(cmd *cobra.Command, args []string) {
-			kuberlogicInstaller.Exit(kuberlogicInstaller.Status(args))
+			kuberlogicInstaller.Exit(kuberlogicInstaller.Status(cmd, args))
 		},
 	}
 }

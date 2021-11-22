@@ -164,7 +164,9 @@ func releaseHelmChart(name, ns string, chartReader io.Reader, locals, globals ma
 
 	// release exists and it is in pending state
 	if r != nil && r.Info.Status.IsPending() {
-		uninstallHelmChart(name, true, conf, log)
+		if err := uninstallHelmChart(name, true, conf, log); err != nil {
+			return errors.Wrap(err, "cannot uninstall pending chart")
+		}
 		r = nil
 	}
 
@@ -193,15 +195,15 @@ func releaseHelmChart(name, ns string, chartReader io.Reader, locals, globals ma
 // upgradeHelmChart upgrades a Helm chart with given values
 func upgradeHelmChart(name, ns string, chart *chart.Chart, values map[string]interface{}, c *action.Configuration, log logger.Logger) error {
 	// create install action
-	action := action.NewUpgrade(c)
-	action.Install = true
-	action.Namespace = ns
-	action.SkipCRDs = false
-	action.Timeout = time.Second * helmActionTimeoutSec
-	action.Wait = true
-	log.Debugf("Upgrade action configuration: %+v", action)
+	action_ := action.NewUpgrade(c)
+	action_.Install = true
+	action_.Namespace = ns
+	action_.SkipCRDs = false
+	action_.Timeout = time.Second * helmActionTimeoutSec
+	action_.Wait = true
+	log.Debugf("Upgrade action configuration: %+v", action_)
 
-	rel, err := action.Run(name, chart, values)
+	rel, err := action_.Run(name, chart, values)
 	log.Debugf("Upgrade error for chart %s release %+v: %+v", name, rel, err)
 	if err != nil {
 		return fmt.Errorf("error upgrading %s:  %v", name, err)
@@ -235,12 +237,12 @@ func installHelmChart(name, ns string, chart *chart.Chart, values map[string]int
 
 // uninstallHelmChart uninstalls a Helm Release with name `name`
 func uninstallHelmChart(name string, force bool, actConfig *action.Configuration, log logger.Logger) error {
-	release, err := findHelmRelease(name, actConfig, log)
+	release_, err := findHelmRelease(name, actConfig, log)
 	if err != nil {
 		return err
 	}
 	// release is not found
-	if release == nil {
+	if release_ == nil {
 		log.Debugf("Release %s is not found", name)
 
 		if force {
@@ -250,6 +252,8 @@ func uninstallHelmChart(name string, force bool, actConfig *action.Configuration
 	}
 
 	deleteAction := action.NewUninstall(actConfig)
+	deleteAction.Wait = true
+	deleteAction.Timeout = time.Second * helmActionTimeoutSec
 
 	resp, err := deleteAction.Run(name)
 	log.Debugf("Helm action response: %+v", resp)

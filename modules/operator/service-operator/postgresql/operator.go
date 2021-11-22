@@ -126,8 +126,8 @@ func (p *Postgres) Init(kls *kuberlogicv1.KuberLogicService, platform string) {
 				Slots:                map[string]map[string]string{},
 			},
 			PodAnnotations: map[string]string{
-				"monitoring.cloudlinux.com/scrape": "true",
-				"monitoring.cloudlinux.com/port":   "9187",
+				"monitoring.kuberlogic.com/scrape": "true",
+				"monitoring.kuberlogic.com/port":   "9187",
 			},
 			Sidecars: []postgresv1.Sidecar{
 				{

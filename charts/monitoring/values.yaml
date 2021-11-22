@@ -75,7 +75,13 @@ grafana:
       annotations: {}
     grafanaLogin:
       annotations: {}
-    enabled: false
+    enabled: true
+    class:
+    host:
+    tls:
+      ca:
+      crt:
+      key:
 
   secretName: grafana-credentials
   admin:
@@ -94,3 +100,8 @@ grafana:
   auth:
     enabled: true
     headerName: ""
+
+monitoringScrapeAnnotation: ""
+monitoringScrapeSchemeAnnotation: ""
+monitoringScrapePathAnnotation: ""
+monitoringScrapePortAnnotation: ""

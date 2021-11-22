@@ -70,7 +70,7 @@ func deployAuth(globals map[string]interface{}, i *HelmInstaller, releaseInfo *i
 		"realm": map[string]interface{}{
 			"id":            keycloakRealmName,
 			"name":          keycloakRealmName,
-			"adminPassword": i.Auth.AdminPassword,
+			"adminPassword": i.Config.Auth.AdminPassword,
 		},
 		"clientId":     keycloakClientId,
 		"clientSecret": keycloakClientSecret,
@@ -81,10 +81,10 @@ func deployAuth(globals map[string]interface{}, i *HelmInstaller, releaseInfo *i
 			"name": keycloakNodePortServiceName,
 		},
 	}
-	if i.Auth.DemoUserPassword != "" {
+	if i.Config.Auth.DemoUserPassword != nil {
 		kuberlogicKeycloakValues["testUser"] = map[string]interface{}{
 			"create":   true,
-			"password": i.Auth.DemoUserPassword,
+			"password": *i.Config.Auth.DemoUserPassword,
 			"email":    keycloakDemoUser,
 		}
 		releaseInfo.UpdateDemoUser(keycloakDemoUser)
@@ -97,9 +97,6 @@ func deployAuth(globals map[string]interface{}, i *HelmInstaller, releaseInfo *i
 	i.Log.Infof("Deploying Kuberlogic Keycloak resources...")
 	if err := releaseHelmChart(helmKuberlogicKeycloakCHart, i.ReleaseNamespace, kuberlogicKeycloakChart, kuberlogicKeycloakValues, globals, i.HelmActionConfig, i.Log); err != nil {
 		return errors.Wrap(err, "error deploying kuberlogic-keycloak")
-	}
-	if err := waitForKeycloakResources(i.ReleaseNamespace, i.ClientSet); err != nil {
-		return errors.Wrap(err, "keycloak provisioning error")
 	}
 	return nil
 }
@@ -178,15 +175,19 @@ func deployIngressController(globals map[string]interface{}, i *HelmInstaller, r
 }
 
 func deployUI(globals map[string]interface{}, i *HelmInstaller, release *internal.ReleaseInfo) error {
+	tls, err := prepareTLS(i.Config.Endpoints.KuberlogicTLS)
+	if err != nil {
+		return errors.Wrap(err, "cannot prepare TLS")
+	}
 	values := map[string]interface{}{
 		"config": map[string]interface{}{
-			"apiEndpoint":               "http://" + i.Endpoints.API,
-			"monitoringConsoleEndpoint": "http://" + i.Endpoints.MonitoringConsole + "/login",
+			"monitoringConsoleEndpoint": "https://" + i.Config.Endpoints.MonitoringConsole + "/login",
 		},
 		"ingress": map[string]interface{}{
 			"enabled": true,
-			"host":    i.Endpoints.UI,
+			"host":    i.Config.Endpoints.Kuberlogic,
 			"class":   ingressClass,
+			"tls":     tls,
 		},
 	}
 
@@ -195,8 +196,8 @@ func deployUI(globals map[string]interface{}, i *HelmInstaller, release *interna
 		return errors.Wrap(err, "error loading ui chart")
 	}
 
-	i.Log.Infof("Deploying Kuberlogic UI...")
-	release.UpdateUIAddress("http://" + i.Endpoints.UI)
+	i.Log.Infof("Deploying Kuberlogic Kuberlogic...")
+	release.UpdateUIAddress("https://" + i.Config.Endpoints.Kuberlogic)
 	return releaseHelmChart(helmUIChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
@@ -215,11 +216,6 @@ func deployApiserver(globals map[string]interface{}, i *HelmInstaller, release *
 				},
 			},
 		},
-		"ingress": map[string]interface{}{
-			"enabled": true,
-			"host":    i.Endpoints.API,
-			"class":   ingressClass,
-		},
 	}
 
 	chart, err := apiserverChartReader()
@@ -228,7 +224,6 @@ func deployApiserver(globals map[string]interface{}, i *HelmInstaller, release *
 	}
 
 	i.Log.Infof("Deploying Kuberlogic apiserver...")
-	release.UpdateAPIAddress("http://" + i.Endpoints.API)
 	return releaseHelmChart(helmApiserverChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 
@@ -244,7 +239,7 @@ func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
 				"secret":                    grafanaSecretName,
 				"defaultDatasourceEndpoint": "http://" + victoriaMetricsServiceName,
 			},
-			"platform": i.Platform,
+			"platform": i.Config.Platform,
 		},
 	}
 
@@ -258,6 +253,10 @@ func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
 }
 
 func deployMonitoring(globals map[string]interface{}, i *HelmInstaller, release *internal.ReleaseInfo) error {
+	tls, err := prepareTLS(i.Config.Endpoints.MonitoringConsoleTLS)
+	if err != nil {
+		return errors.Wrap(err, "cannot prepare TLS")
+	}
 	values := map[string]interface{}{
 		"victoriametrics": map[string]interface{}{
 			"service": map[string]interface{}{
@@ -287,8 +286,9 @@ func deployMonitoring(globals map[string]interface{}, i *HelmInstaller, release 
 			},
 			"ingress": map[string]interface{}{
 				"enabled": true,
-				"host":    i.Endpoints.MonitoringConsole,
+				"host":    i.Config.Endpoints.MonitoringConsole,
 				"class":   ingressClass,
+				"tls":     tls,
 				"grafanaLogin": map[string]interface{}{
 					"annotations": map[string]interface{}{
 						"konghq.com/plugins": fmt.Sprintf("%s,%s", kongKeycloakIntrospectPlugin, kongJWTCleanupPlugin),
@@ -304,7 +304,7 @@ func deployMonitoring(globals map[string]interface{}, i *HelmInstaller, release 
 	}
 
 	i.Log.Infof("Deploying Kuberlogic monitoring...")
-	release.UpdateMCAddress("http://" + i.Endpoints.MonitoringConsole)
+	release.UpdateMCAddress("https://" + i.Config.Endpoints.MonitoringConsole)
 	return releaseHelmChart(helmMonitoringChart, i.ReleaseNamespace, chart, values, globals, i.HelmActionConfig, i.Log)
 }
 

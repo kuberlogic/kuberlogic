@@ -26,7 +26,6 @@ import (
 
 const (
 	restoreImage = "backup-restore-postgresql"
-	restoreTag   = "latest"
 )
 
 type Restore struct {
@@ -34,8 +33,8 @@ type Restore struct {
 	Cluster *Postgres
 }
 
-func (p *Restore) SetRestoreImage() {
-	p.Image = util.GetKuberlogicImage(restoreImage, restoreTag)
+func (p *Restore) SetRestoreImage(repo, version string) {
+	p.SetImage(repo, restoreImage, version)
 }
 
 func (p *Restore) SetRestoreEnv(cm *kuberlogicv1.KuberLogicBackupRestore) {

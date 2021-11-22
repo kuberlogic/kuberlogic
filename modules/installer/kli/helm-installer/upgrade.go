@@ -19,10 +19,16 @@ package helm_installer
 import (
 	"github.com/kuberlogic/kuberlogic/modules/installer/internal"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 )
 
-func (i *HelmInstaller) Upgrade(args []string) error {
+func (i *HelmInstaller) Upgrade(_ *cobra.Command, args []string) error {
 	i.Log.Debugf("entering upgrade phase with args: %+v", args)
+	upgradePhase := "all"
+	if len(args) > 0 {
+		upgradePhase = args[0]
+	}
+	i.Log.Debugf("using install phase: %s", upgradePhase)
 
 	// check if release is installed
 	release, found, err := internal.DiscoverReleaseInfo(i.ReleaseNamespace, i.ClientSet)
@@ -36,12 +42,9 @@ func (i *HelmInstaller) Upgrade(args []string) error {
 		return errors.Wrap(err, "error starting upgrade")
 	}
 
-	// for now we only expect single arg = see cmd/install.go
-	upgradePhase := args[0]
-
 	err = func() error {
 		// do not pass imagePullSecretReference if it is disabled
-		if i.Registry.Server == "" {
+		if i.Config.Registry.Server == "" {
 			delete(globalValues, "imagePullSecrets")
 		}
 
