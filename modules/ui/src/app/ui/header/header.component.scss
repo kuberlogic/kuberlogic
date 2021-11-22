@@ -27,6 +27,16 @@
         margin-right: 20px;
         background: url('../../../assets/svg/logo.svg') no-repeat;
         background-size: contain;
+        position: relative;
+
+        &--link {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            left: 0;
+            background: transparent;
+        }
     }
 
     &__links {

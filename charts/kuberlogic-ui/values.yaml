@@ -1,6 +1,7 @@
 replicas: 1
 
 config:
+  helpEndpoint: https://docs.kuberlogic.com
   grafanaEndpoint: https://127.0.0.1:8080
   monitoringConsoleEndpoint:
 
