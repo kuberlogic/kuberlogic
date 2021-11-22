@@ -58,6 +58,7 @@ type EmailNotificationChannelConfig struct {
 	} `envconfig:"optional"`
 	Username string `envconfig:"optional"`
 	Password string `envconfig:"optional"`
+	From     string `envconfig:"default=operator@example.com,optional"`
 }
 
 func NewConfig(version string) (*Config, error) {

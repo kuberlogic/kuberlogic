@@ -228,19 +228,34 @@ func deployApiserver(globals map[string]interface{}, i *HelmInstaller, release *
 }
 
 func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
+	operatorConfig := map[string]interface{}{
+		"grafana": map[string]interface{}{
+			"enabled":                   true,
+			"endpoint":                  fmt.Sprintf("http://%s:%d/", grafanaServiceName, grafanaServicePort),
+			"secret":                    grafanaSecretName,
+			"defaultDatasourceEndpoint": "http://" + victoriaMetricsServiceName,
+		},
+		"platform": i.Config.Platform,
+	}
+	if i.Config.SMTP != nil {
+		operatorConfig["smtp"] = map[string]interface{}{
+			"enabled":  true,
+			"host":     i.Config.SMTP.Host,
+			"port":     i.Config.SMTP.Port,
+			"username": i.Config.SMTP.Username,
+			"password": i.Config.SMTP.Password,
+			"from":     i.Config.SMTP.From,
+			"tls": map[string]interface{}{
+				"insecure": i.Config.SMTP.TLS.Insecure,
+				"enabled":  i.Config.SMTP.TLS.Enabled,
+			},
+		}
+	}
 	values := map[string]interface{}{
 		"image": map[string]interface{}{
 			"repository": operatorRepository,
 		},
-		"config": map[string]interface{}{
-			"grafana": map[string]interface{}{
-				"enabled":                   true,
-				"endpoint":                  fmt.Sprintf("http://%s:%d/", grafanaServiceName, grafanaServicePort),
-				"secret":                    grafanaSecretName,
-				"defaultDatasourceEndpoint": "http://" + victoriaMetricsServiceName,
-			},
-			"platform": i.Config.Platform,
-		},
+		"config": operatorConfig,
 	}
 
 	chart, err := operatorChartReader()

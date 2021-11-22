@@ -69,6 +69,26 @@ spec:
           - name: GRAFANA_DEFAULT_DATASOURCE_ENDPOINT
             value: {{ .Values.config.grafana.defaultDatasourceEndpoint }}
           {{ end }}
+          {{ with .Values.config.smtp }}
+          - name: NOTIFICATION_CHANNELS_EMAIL_ENABLED
+            value: {{ .enabled | quote }}
+          - name: NOTIFICATION_CHANNELS_EMAIL_HOST
+            value: {{ .host | quote }}
+          - name: NOTIFICATION_CHANNELS_EMAIL_PORT
+            value: {{ .port | quote }}
+          - name: NOTIFICATION_CHANNELS_EMAIL_USERNAME
+            value: {{ .username | quote }}
+          - name: NOTIFICATION_CHANNELS_EMAIL_PASSWORD
+            value: {{ .password | quote }}
+          - name: NOTIFICATION_CHANNELS_EMAIL_FROM
+            value: {{ .from | quote }}
+          {{ with .tls }}
+          - name: NOTIFICATION_CHANNELS_EMAIL_TLS_INSECURE
+            value: {{ .insecure | quote }}
+          - name: NOTIFICATION_CHANNELS_EMAIL_TLS_ENABLED
+            value: {{ .enabled | quote }}
+          {{ end }}
+          {{ end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

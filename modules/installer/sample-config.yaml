@@ -43,3 +43,21 @@ auth:
   demo-user-password: secret
   # admin-password is password for Keycloak realm administrator: `kuberlogic`
   admin-password: adminPassword
+
+# Email notifications channel. `smtp` parameters will be used to configure a channel for Kuberlogic
+# notifications about recent events and potential issues.
+# SMTP parameters are only exposed to Kuberlogic operator.
+#smtp:
+  # SMTP server address
+  # host: "localhost"
+  # SMTP server port
+  # port: 25
+  # SMTP server authentication details
+  # username: "demo"
+  # password: "demo"
+  # Email `from`: address for outgoing emails by KuberLogic
+  # from: "demo@example.com"
+  # TLS settings for SMTP connection
+  # tls:
+  #   insecure: false
+  #   enabled: false

@@ -32,11 +32,16 @@ func generatePassword(log logger.Logger) string {
 }
 
 func AskConfig(screen io.Reader, log logger.Logger, defaultCfgLocation string) *Config {
+	// some formatting directives
+
+	const (
+		prompt = ":>"
+	)
 	config := new(Config)
 
 	reader := bufio.NewReader(screen)
 	log.Infof("Config is not found, please answer several questions")
-	fmt.Printf(fmt.Sprintf(`kubeconfig path: (default=%s):> `, DefaultKubeconfigPath))
+	fmt.Printf(fmt.Sprintf(`kubeconfig path: (default=%s)%s `, prompt, DefaultKubeconfigPath))
 	if kubeconfigPath, err := readString(reader, DefaultKubeconfigPath); err != nil {
 		log.Fatalf("cannot parse kubeconfigPath: %+v", err)
 	} else {
@@ -44,7 +49,7 @@ func AskConfig(screen io.Reader, log logger.Logger, defaultCfgLocation string) *
 	}
 
 	defaultNamespace := "kuberlogic"
-	fmt.Printf(fmt.Sprintf(`Namespace: (default=%s):> `, defaultNamespace))
+	fmt.Printf(fmt.Sprintf(`Namespace: (default=%s)%s `, prompt, defaultNamespace))
 	if ns, err := readString(reader, defaultNamespace); err != nil {
 		log.Fatalf("cannot parse Namespace: %+v", err)
 	} else {
@@ -52,7 +57,7 @@ func AskConfig(screen io.Reader, log logger.Logger, defaultCfgLocation string) *
 	}
 
 	defaultKuberlogicEndpoint := "example.com"
-	fmt.Printf(fmt.Sprintf(`Kuberlogic endpoint: (default=%s):> `, defaultKuberlogicEndpoint))
+	fmt.Printf(fmt.Sprintf(`Kuberlogic endpoint: (default=%s)%s `, prompt, defaultKuberlogicEndpoint))
 	if endpoint, err := readString(reader, defaultKuberlogicEndpoint); err != nil {
 		log.Fatalf("cannot parse Kuberlogic endpoint: %+v", err)
 	} else {
@@ -60,7 +65,7 @@ func AskConfig(screen io.Reader, log logger.Logger, defaultCfgLocation string) *
 	}
 
 	defaultMonitoringEndpoint := "mc.example.com"
-	fmt.Printf(fmt.Sprintf(`Monitoring endpoint: (default=%s):> `, defaultMonitoringEndpoint))
+	fmt.Printf(fmt.Sprintf(`Monitoring endpoint: (default=%s)%s `, prompt, defaultMonitoringEndpoint))
 	if endpoint, err := readString(reader, defaultMonitoringEndpoint); err != nil {
 		log.Fatalf("cannot parse Monitoring endpoint: %+v", err)
 	} else {
@@ -68,7 +73,7 @@ func AskConfig(screen io.Reader, log logger.Logger, defaultCfgLocation string) *
 	}
 
 	defaultAdminPassword := generatePassword(log)
-	fmt.Printf(fmt.Sprintf(`Admin password: (default=%s):> `, defaultAdminPassword))
+	fmt.Printf(fmt.Sprintf(`Admin password: (default=%s)%s `, prompt, defaultAdminPassword))
 	if adminPassword, err := readString(reader, defaultAdminPassword); err != nil {
 		log.Fatalf("cannot parse Admin password: %+v", err)
 	} else {
@@ -76,14 +81,16 @@ func AskConfig(screen io.Reader, log logger.Logger, defaultCfgLocation string) *
 	}
 
 	defaultDemoUserPassword := generatePassword(log)
-	fmt.Printf(fmt.Sprintf(`Demo user password: (default=%s):> `, defaultDemoUserPassword))
+	fmt.Printf(fmt.Sprintf(`Demo user password: (default=%s)%s `, prompt, defaultDemoUserPassword))
 	if demoUserPassword, err := readString(reader, defaultDemoUserPassword); err != nil {
 		log.Fatalf("cannot parse Demo user password: %+v", err)
 	} else {
 		config.Auth.DemoUserPassword = demoUserPassword
 	}
-	if err := config.SetDefaults(log); err != nil {
-		log.Fatalf("cannot set default values for config %+v", err)
+
+	config.setDefaults(log)
+	if err := config.check(); err != nil {
+		log.Fatalf("error checking config", err)
 	}
 
 	if err := newFileFromConfig(config, defaultCfgLocation); err != nil {

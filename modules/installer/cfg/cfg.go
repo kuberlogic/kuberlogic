@@ -20,17 +20,18 @@ import (
 	"fmt"
 	logger "github.com/kuberlogic/kuberlogic/modules/installer/log"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"os"
 	"strings"
 )
 
 // default configuration variables
 var (
-	requiredParamNotSet = fmt.Errorf("some required parameter(s) not set")
+	errRequiredParamNotSet = fmt.Errorf("some required parameter(s) not set")
 
 	DefaultKubeconfigPath   = fmt.Sprintf("%s/%s", os.Getenv("HOME"), ".kube/config")
 	defaultDebugLogsEnabled = false
+	defaultSMTPFromUser     = "notifications"
 	defaultPlatform         = "generic"
 	supportedPlatforms      = []string{defaultPlatform, "aws"}
 )
@@ -39,6 +40,18 @@ type TLS struct {
 	CaFile  string `yaml:"ca.crt"`
 	CrtFile string `yaml:"tls.crt"`
 	KeyFile string `yaml:"tls.key"`
+}
+
+type SMTP struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	From     string `yaml:"from"`
+	TLS      struct {
+		Enabled  bool `yaml:"enabled"`
+		Insecure bool `yaml:"insecure"`
+	} `yaml:"tls,omitempty"`
 }
 
 type Config struct {
@@ -66,11 +79,12 @@ type Config struct {
 		DemoUserPassword *string `yaml:"demo-user-password,omitempty"`
 	} `yaml:"auth"`
 
+	SMTP *SMTP `yaml:"smtp,omitempty"`
+
 	Platform string `yaml:"platform,omitempty"`
 }
 
-func (c *Config) SetDefaults(log logger.Logger) error {
-	var configError error
+func (c *Config) setDefaults(log logger.Logger) {
 	if c.DebugLogs == nil {
 		log.Debugf("Using default value for debugLogs: %s", defaultDebugLogsEnabled)
 		c.DebugLogs = &defaultDebugLogsEnabled
@@ -81,38 +95,16 @@ func (c *Config) SetDefaults(log logger.Logger) error {
 		c.KubeconfigPath = &DefaultKubeconfigPath
 	}
 
-	if c.Namespace == nil {
-		log.Errorf("`namespace` config value can't be empty")
-		configError = requiredParamNotSet
-	}
-
-	if c.Endpoints.Kuberlogic == "" {
-		log.Errorf("`endpoints.main` must be set and can't be-empty")
-		return errors.New("endpoints configuration is not set")
-	}
-
-	if c.Endpoints.MonitoringConsole == "" {
-		log.Errorf("`endpoints.monitoringConsole` must be set and can't be empty")
-		return errors.New("endpoints.monitoringConsole is not set")
-	}
-
 	if c.Platform == "" {
 		log.Debugf("Using default value for platform: %s", defaultPlatform)
 		c.Platform = defaultPlatform
-	} else {
-		matched := false
-		for _, p := range supportedPlatforms {
-			if strings.ToUpper(p) == strings.ToUpper(c.Platform) {
-				matched = true
-			}
-		}
-		if !matched {
-			log.Errorf("Unsupported platform. List of supported platforms: %v", supportedPlatforms)
-			return errors.New("unsupported platform")
-		}
 	}
 
-	return configError
+	if c.SMTP != nil {
+		defaultSMTPFrom := defaultSMTPFromUser + "@" + c.Endpoints.Kuberlogic
+		log.Debugf("Using default value for `smtp.from`: %s", defaultSMTPFrom)
+		c.SMTP.From = defaultSMTPFrom
+	}
 }
 
 func (c *Config) checkKuberlogicTLS() error {
@@ -126,8 +118,53 @@ func (c *Config) checkKuberlogicTLS() error {
 	return nil
 }
 
+func (c *Config) checkPlatform() error {
+	if c.Platform == "" {
+		return nil
+	}
+	matched := false
+	for _, p := range supportedPlatforms {
+		if strings.ToUpper(p) == strings.ToUpper(c.Platform) {
+			matched = true
+		}
+	}
+	if !matched {
+		return errors.New(fmt.Sprintf("platform is not in the supported list: %v", supportedPlatforms))
+	}
+	return nil
+}
+
+func (c *Config) checkSMTP() error {
+	if c.SMTP == nil {
+		return nil
+	}
+	basicErr := errors.New("`smtp` setting is not valid")
+	if c.SMTP.Host == "" {
+		return errors.Wrap(basicErr, "`host` must be set")
+	}
+	if c.SMTP.Port == 0 {
+		return errors.Wrap(basicErr, "`port` is not correct or not set")
+	}
+	return nil
+}
+
 func (c *Config) check() error {
-	return c.checkKuberlogicTLS()
+	if c.Endpoints.Kuberlogic == "" || c.Endpoints.MonitoringConsole == "" {
+		return errors.Wrap(errRequiredParamNotSet, "`kuberlogic` and `monitoring-console` endpoints names must be configured")
+	}
+
+	if c.Namespace == nil {
+		return errors.Wrap(errRequiredParamNotSet, "`namespace` must be configured")
+	}
+
+	if err := c.checkPlatform(); err != nil {
+		return errors.Wrap(err, "error checking platform configuration")
+	}
+
+	if err := c.checkKuberlogicTLS(); err != nil {
+		return errors.Wrap(err, "error checking TLS configuration")
+	}
+	return nil
 }
 
 func NewConfigFromFile(file string, log logger.Logger) (*Config, error) {
@@ -143,12 +180,10 @@ func NewConfigFromFile(file string, log logger.Logger) (*Config, error) {
 		return nil, err
 	}
 
-	if err := cfg.SetDefaults(log); err != nil {
-		return nil, err
-	}
 	if err := cfg.check(); err != nil {
 		return nil, err
 	}
+	cfg.setDefaults(log)
 	return cfg, nil
 }
 

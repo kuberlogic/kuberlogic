@@ -37,7 +37,7 @@ helm-package: helm-deps helm-lint
 	$(HELM) package kuberlogic-operator --app-version $(VERSION)
 
 helm-embed: helm-package
-	rm kli/$(HELM)-installer/*tgz ; \
+	rm kli/helm-installer/*tgz ; \
 	mv $(CHARTS_DIR)/*.tgz kli/helm-installer
 
 test: helm-embed

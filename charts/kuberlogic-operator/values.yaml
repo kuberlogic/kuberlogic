@@ -51,6 +51,9 @@ config:
     endpoint: http://127.0.0.1
 
     secret: secret
+  smtp:
+    enabled: false
+    tls: {}
 
 updater:
   image: {}

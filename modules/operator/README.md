@@ -17,6 +17,7 @@ Kuberlogic’s heart is `operator`. It is responsible for keeping services in a 
 | NOTIFICATION_CHANNELS_EMAIL_TLS_ENABLED | bool | false | Use TLS when connecting to SMTP server. Optional. |
 | NOTIFICATION_CHANNELS_EMAIL_USERNAME | string | “” | SMTP server connection username. Optional. |
 | NOTIFICATION_CHANNELS_EMAIL_PASSWORD | string | “” | SMTP server connection password. Optional. |
+| NOTIFICATION_CHANNELS_EMAIL_FROM | string | "operator@example.com" | `From:` address for email notifications. Optional. |
 | GRAFANA_ENABLED | bool | false | Enable Grafana integration for Kuberlogic operator. Optional. |
 | GRAFANA_ENDPOINT | string | “” | Grafana URL. Optional. |
 | GRAFANA_LOGIN | string | “” | Grafana admin username. Optional. |
