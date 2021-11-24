@@ -19,6 +19,7 @@ package interfaces
 import (
 	"github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -50,12 +51,12 @@ type PlatformOperator interface {
 }
 
 type BackupSchedule interface {
-	New(backup *v1.KuberLogicBackupSchedule) batchv1.CronJob
+	New(backup *v1.KuberLogicBackupSchedule) batchv1beta1.CronJob
 	Init(*v1.KuberLogicBackupSchedule)
-	InitFrom(*batchv1.CronJob)
+	InitFrom(*batchv1beta1.CronJob)
 	IsEqual(cm *v1.KuberLogicBackupSchedule) bool
 	Update(cm *v1.KuberLogicBackupSchedule)
-	GetCronJob() *batchv1.CronJob
+	GetCronJob() *batchv1beta1.CronJob
 	IsSuccessful(job *batchv1.Job) bool
 	IsRunning(job *batchv1.Job) bool
 

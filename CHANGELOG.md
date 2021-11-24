@@ -1,3 +1,8 @@
+## [1.0.4] - 2021-11-24
+### Added
+* Support Kubernetes version 1.19-1.22 [#122](https://github.com/kuberlogic/kuberlogic/pull/122)
+
+
 ## [1.0.3] - 2021-11-22
 ### Added
 * Add GKE support [#108](https://github.com/kuberlogic/kuberlogic/pull/108)
