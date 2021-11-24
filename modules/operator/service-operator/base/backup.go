@@ -19,52 +19,53 @@ package base
 import (
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	"github.com/kuberlogic/kuberlogic/modules/operator/util"
-	v1 "k8s.io/api/batch/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
 )
 
 type BaseBackup struct {
-	CronJob v1.CronJob
+	CronJob batchv1beta1.CronJob
 
 	Image          string
 	ServiceAccount string
 	EnvVar         []corev1.EnvVar
 }
 
-func (p *BaseBackup) IsSuccessful(j *v1.Job) bool {
+func (p *BaseBackup) IsSuccessful(j *batchv1.Job) bool {
 	for _, c := range j.Status.Conditions {
-		if c.Type == v1.JobComplete {
+		if c.Type == batchv1.JobComplete {
 			return true
 		}
 	}
 	return false
 }
 
-func (p *BaseBackup) IsRunning(j *v1.Job) bool {
+func (p *BaseBackup) IsRunning(j *batchv1.Job) bool {
 	return j.Status.Active > 0
 }
 
-func (p *BaseBackup) NewCronJob(name, ns, schedule string) v1.CronJob {
+func (p *BaseBackup) NewCronJob(name, ns, schedule string) batchv1beta1.CronJob {
 	labels := map[string]string{
 		"backup-name": name,
 	}
 	var backOffLimit int32 = 2
 
-	c := v1.CronJob{
+	c := batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: ns,
 		},
-		Spec: v1.CronJobSpec{
+		Spec: batchv1beta1.CronJobSpec{
 			Schedule:          schedule,
-			ConcurrencyPolicy: v1.ForbidConcurrent,
-			JobTemplate: v1.JobTemplateSpec{
+			ConcurrencyPolicy: batchv1beta1.ForbidConcurrent,
+			JobTemplate: batchv1beta1.JobTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels,
 				},
-				Spec: v1.JobSpec{
+				Spec: batchv1.JobSpec{
 					BackoffLimit: &backOffLimit,
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
@@ -93,11 +94,11 @@ func (p *BaseBackup) NewCronJob(name, ns, schedule string) v1.CronJob {
 	return c
 }
 
-func (p *BaseBackup) GetCronJob() *v1.CronJob {
+func (p *BaseBackup) GetCronJob() *batchv1beta1.CronJob {
 	return &p.CronJob
 }
 
-func (p *BaseBackup) New(backup *kuberlogicv1.KuberLogicBackupSchedule) v1.CronJob {
+func (p *BaseBackup) New(backup *kuberlogicv1.KuberLogicBackupSchedule) batchv1beta1.CronJob {
 	return p.NewCronJob(
 		backup.Name,
 		backup.Namespace,
@@ -117,7 +118,7 @@ func (p *BaseBackup) Init(cm *kuberlogicv1.KuberLogicBackupSchedule) {
 	p.CronJob = p.New(cm)
 }
 
-func (p *BaseBackup) InitFrom(job *v1.CronJob) {
+func (p *BaseBackup) InitFrom(job *batchv1beta1.CronJob) {
 	p.CronJob = *job
 }
 

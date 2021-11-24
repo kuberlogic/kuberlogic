@@ -26,7 +26,8 @@ import (
 	serviceoperator "github.com/kuberlogic/kuberlogic/modules/operator/service-operator"
 	"github.com/pkg/errors"
 	postgres "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
-	v12 "k8s.io/api/batch/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -202,7 +203,7 @@ func TestKuberlogicBackupScheduleReconciler_ReconcileValid(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 	// verify that cronjob exists
-	cj := &v12.CronJob{}
+	cj := &batchv1beta1.CronJob{}
 	if err := r.Client.Get(testKlbCtx, klbId, cj); err != nil {
 		t.Errorf("error getting backup cronjob: %v", err)
 	}
@@ -262,7 +263,7 @@ func TestKuberlogicBackupScheduleReconciler_ReconcileRunning(t *testing.T) {
 		t.Errorf("error creating test mysql: %v", err)
 	}
 
-	j := &v12.Job{
+	j := &batchv1.Job{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "demo",
 			Namespace: klb.Namespace,
@@ -340,7 +341,7 @@ func TestKuberlogicBackupScheduleReconciler_ReconcileFinished(t *testing.T) {
 		t.Errorf("error creating test mysql: %v", err)
 	}
 
-	j := &v12.Job{
+	j := &batchv1.Job{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "demo",
 			Namespace: klb.Namespace,
@@ -364,7 +365,7 @@ func TestKuberlogicBackupScheduleReconciler_ReconcileFinished(t *testing.T) {
 		t.Errorf("backup must not be successful")
 	}
 
-	j.Status.Conditions = append(j.Status.Conditions, v12.JobCondition{Type: v12.JobComplete})
+	j.Status.Conditions = append(j.Status.Conditions, batchv1.JobCondition{Type: batchv1.JobComplete})
 	if err := r.Client.Status().Update(testKlbCtx, j); err != nil {
 		t.Errorf("error updating job status")
 	}

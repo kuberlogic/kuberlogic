@@ -27,8 +27,9 @@ import (
 	serviceOperator "github.com/kuberlogic/kuberlogic/modules/operator/service-operator"
 	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/interfaces"
 	"github.com/kuberlogic/kuberlogic/modules/operator/util"
-	v12 "k8s.io/api/batch/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/batch/v1beta1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -240,7 +241,7 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 	return ctrl.Result{}, nil
 }
 
-func (r *KuberLogicBackupScheduleReconciler) cronJob(ctx context.Context, op interfaces.BackupSchedule, klb *kuberlogicv1.KuberLogicBackupSchedule, log logr.Logger) (*v12.CronJob, error) {
+func (r *KuberLogicBackupScheduleReconciler) cronJob(ctx context.Context, op interfaces.BackupSchedule, klb *kuberlogicv1.KuberLogicBackupSchedule, log logr.Logger) (*batchv1beta1.CronJob, error) {
 	op.Init(klb)
 
 	// Set kuberlogic backup instance as the owner and controller
@@ -262,8 +263,8 @@ func (r *KuberLogicBackupScheduleReconciler) cronJob(ctx context.Context, op int
 	return c, nil
 }
 
-func (r *KuberLogicBackupScheduleReconciler) getBackupJob(ctx context.Context, klb *kuberlogicv1.KuberLogicBackupSchedule) (*v12.Job, error) {
-	jobs := v12.JobList{}
+func (r *KuberLogicBackupScheduleReconciler) getBackupJob(ctx context.Context, klb *kuberlogicv1.KuberLogicBackupSchedule) (*batchv1.Job, error) {
+	jobs := batchv1.JobList{}
 	selector := &client.ListOptions{}
 
 	client.InNamespace(klb.Namespace).ApplyToList(selector)
