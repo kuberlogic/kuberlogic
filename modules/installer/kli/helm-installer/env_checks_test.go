@@ -47,12 +47,14 @@ func TestCheckKubernetesVersion(t *testing.T) {
 	}
 
 	versionsTable := map[string]bool{
-		"1.19.0":                    false,
+		"1.18.0":                    false,
+		"1.19.0":                    true,
 		"1.20.1":                    true,
 		"1.20.1-eks":                true,
 		"1.21.0":                    true,
 		"1.21.0-somelongprerelease": true,
-		"1.22.0":                    false,
+		"1.22.0":                    true,
+		"1.23.0":                    false,
 	}
 	for v, expected := range versionsTable {
 		if actual := testVersionAllowed(v); actual != expected {

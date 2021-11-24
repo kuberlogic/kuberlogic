@@ -21,13 +21,13 @@ KuberLogic is an open-source platform that deploys and manages software on top o
 
 ## Requirements
 KuberLogic leverages a lot of top notch open-source projects and it requires a specific environment to run on top of:
-* Kubernetes v1.20.x with:
+* Kubernetes cluster with:
+  * 1.19, 1.20, 1.21, 1.22 versions are supported
   * StorageClass configured as a default
   * LoadBalancer Services
   * At least 2 nodes in cluster with 4G of RAM, 2 CPUs and 5G of disk space each
   * Minikube or Kind installations with docker driver installations are not supported due to performance penalties.
 * S3 compatible storage for backups (optional)
-* Helm v3.4 CLI tool
 
 ## Installation
 
