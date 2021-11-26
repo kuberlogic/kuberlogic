@@ -349,6 +349,9 @@ func TestKuberlogicBackupScheduleReconciler_ReconcileFinished(t *testing.T) {
 				"backup-name": klb.Name,
 			},
 		},
+		Status: batchv1.JobStatus{
+			Active: 1,
+		},
 	}
 	if err := r.Client.Create(testKlbCtx, j); err != nil {
 		t.Errorf("error creating backup job: %v", err)
@@ -361,10 +364,11 @@ func TestKuberlogicBackupScheduleReconciler_ReconcileFinished(t *testing.T) {
 		t.Errorf("error getting klb: %v", err)
 	}
 
-	if klb.IsSuccessful() {
-		t.Errorf("backup must not be successful")
+	if !klb.IsRunning() {
+		t.Errorf("backup must be running")
 	}
 
+	j.Status.Active = 0
 	j.Status.Conditions = append(j.Status.Conditions, batchv1.JobCondition{Type: batchv1.JobComplete})
 	if err := r.Client.Status().Update(testKlbCtx, j); err != nil {
 		t.Errorf("error updating job status")
@@ -378,7 +382,10 @@ func TestKuberlogicBackupScheduleReconciler_ReconcileFinished(t *testing.T) {
 		t.Errorf("error getting klb: %v", err)
 	}
 
-	if !klb.IsSuccessful() {
+	if klb.IsRunning() {
+		t.Errorf("do not expect klb to be running")
+	}
+	if !klb.IsFailed() {
 		t.Errorf("expect klb to be succesful")
 	}
 }

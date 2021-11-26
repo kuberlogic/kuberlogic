@@ -192,16 +192,12 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 			log.Error(err, "error updating kuberlogicservice restore condition")
 			return ctrl.Result{}, err
 		}
-	} else if backupRestore.IsSuccessful() != backupRestore.IsFailed() { // restore job can be either failed or successful
+	} else if backupRestore.IsFinished() {
 		kl.RestoreFinished()
-		if err := r.Status().Update(ctx, kl); err != nil {
-			log.Error(err, "error updating kuberlogicservice restore condition")
-			return ctrl.Result{}, err
-		}
-		if backupRestore.IsSuccessful() {
-			klr.MarkSuccessfulFinish()
-		} else {
+		if backupRestore.IsFailed() {
 			klr.MarkFailed()
+		} else {
+			klr.MarkSuccessfulFinish()
 		}
 	}
 

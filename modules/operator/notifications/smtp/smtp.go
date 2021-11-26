@@ -24,6 +24,7 @@ import (
 type smtpChannel struct {
 	host string
 	port int
+	from string
 	tls  struct {
 		insecure bool
 		enabled  bool
@@ -42,7 +43,8 @@ func (s *smtpChannel) SendNotification(options map[string]string, head, body str
 	subject := head
 
 	msg := []byte(
-		"To: " + to + "\r\n" +
+		"From: " + s.from + "\r\n" +
+			"To: " + to + "\r\n" +
 			"Subject: " + subject + "\r\n" +
 			"\r\n" +
 			body + "\r\n")
@@ -65,10 +67,11 @@ func (s *smtpChannel) auth() smtpLib.Auth {
 	return smtpLib.PlainAuth("", s.username, s.password, s.host)
 }
 
-func NewSmtpChannel(host string, port int, tlsEnabled, tlsInsecure bool, username, password string) (*smtpChannel, error) {
+func NewSmtpChannel(host string, port int, from string, tlsEnabled, tlsInsecure bool, username, password string) (*smtpChannel, error) {
 	c := &smtpChannel{
 		host: host,
 		port: port,
+		from: from,
 		tls: struct {
 			insecure bool
 			enabled  bool

@@ -34,9 +34,18 @@ type BaseBackup struct {
 	EnvVar         []corev1.EnvVar
 }
 
-func (p *BaseBackup) IsSuccessful(j *batchv1.Job) bool {
+func (p *BaseBackup) IsFailed(j *batchv1.Job) bool {
 	for _, c := range j.Status.Conditions {
-		if c.Type == batchv1.JobComplete {
+		if c.Type == batchv1.JobFailed {
+			return true
+		}
+	}
+	return false
+}
+
+func (p BaseBackup) IsFinished(j *batchv1.Job) bool {
+	for _, c := range j.Status.Conditions {
+		if c.Type == batchv1.JobFailed || c.Type == batchv1.JobComplete {
 			return true
 		}
 	}

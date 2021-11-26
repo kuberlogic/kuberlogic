@@ -66,36 +66,40 @@ type KuberLogicBackupScheduleList struct {
 }
 
 const (
-	lastJobStateCond = "LastBackupSuccessful"
-	runningCondType  = "Running"
+	klbLastJobStateCond = "LastBackupFailed"
+	klbRunningCondType  = "Running"
+	klbTriggered        = "TriggeredAtLeastOnce"
 )
 
 func (klb *KuberLogicBackupSchedule) MarkFailed(r string) {
-	klb.setConditionStatus(lastJobStateCond, false, r, BackupFailedStatus)
+	klb.setConditionStatus(klbLastJobStateCond, false, r, BackupFailedStatus)
+	klb.setConditionStatus(klbTriggered, true, "true", "true")
 }
 
 func (klb *KuberLogicBackupSchedule) MarkUnknown(m string) {
-	klb.setConditionStatus(lastJobStateCond, false, m, BackupUnknownStatus)
+	klb.setConditionStatus(klbLastJobStateCond, false, m, BackupUnknownStatus)
 }
 
 func (klb *KuberLogicBackupSchedule) MarkSuccessful(m string) {
-	klb.setConditionStatus(lastJobStateCond, true, m, BackupSuccessStatus)
+	klb.setConditionStatus(klbLastJobStateCond, true, m, BackupSuccessStatus)
+	klb.setConditionStatus(klbTriggered, true, "true", "true")
 }
 
 func (klb *KuberLogicBackupSchedule) MarkRunning(j string) {
-	klb.setConditionStatus(runningCondType, true, j+" backup job is running", "BackupJobRunning")
+	klb.setConditionStatus(klbRunningCondType, true, j+" backup job is running", "BackupJobRunning")
 }
 
 func (klb *KuberLogicBackupSchedule) MarkNotRunning() {
-	klb.setConditionStatus(runningCondType, false, "", "NoJobRunning")
+	klb.setConditionStatus(klbRunningCondType, false, "", "NoJobRunning")
 }
 
 func (klb *KuberLogicBackupSchedule) IsRunning() bool {
-	return meta.IsStatusConditionTrue(klb.Status.Conditions, runningCondType)
+	return meta.IsStatusConditionTrue(klb.Status.Conditions, klbRunningCondType)
 }
 
-func (klb *KuberLogicBackupSchedule) IsSuccessful() bool {
-	return meta.IsStatusConditionTrue(klb.Status.Conditions, lastJobStateCond)
+func (klb *KuberLogicBackupSchedule) IsFailed() bool {
+	return meta.IsStatusConditionTrue(klb.Status.Conditions, klbLastJobStateCond) &&
+		meta.IsStatusConditionTrue(klb.Status.Conditions, klbTriggered)
 }
 
 func (klb *KuberLogicBackupSchedule) setConditionStatus(cond string, status bool, msg, reason string) {

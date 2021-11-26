@@ -41,16 +41,17 @@ func (r *BaseRestore) InitFrom(job *batchv1.Job) {
 	r.Job = *job
 }
 
-func (r *BaseRestore) IsSuccessful() bool {
+// IsFinished returns true if a backup Job is already finished based on Complete or Failed conditions
+func (r BaseRestore) IsFinished() bool {
 	for _, c := range r.Job.Status.Conditions {
-		if c.Type == batchv1.JobComplete {
+		if c.Type == batchv1.JobFailed || c.Type == batchv1.JobComplete {
 			return true
 		}
 	}
 	return false
 }
 
-func (r *BaseRestore) IsFailed() bool {
+func (r BaseRestore) IsFailed() bool {
 	for _, c := range r.Job.Status.Conditions {
 		if c.Type == batchv1.JobFailed {
 			return true
@@ -59,7 +60,7 @@ func (r *BaseRestore) IsFailed() bool {
 	return false
 }
 
-func (r *BaseRestore) IsRunning() bool {
+func (r BaseRestore) IsRunning() bool {
 	return r.Job.Status.Active > 0
 }
 
@@ -110,6 +111,6 @@ func (r *BaseRestore) NewJob(name, ns string) batchv1.Job {
 	return j
 }
 
-func (p *BaseRestore) SetImage(repo, image, version string) {
-	p.Image = repo + "/" + image + ":" + version
+func (r *BaseRestore) SetImage(repo, image, version string) {
+	r.Image = repo + "/" + image + ":" + version
 }

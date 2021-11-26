@@ -29,10 +29,10 @@ var labels = []string{
 	"cluster_type",
 }
 
-var backupLabels = []string{
+var backupRestoreLabels = []string{
 	"name",
 	"namespace",
-	"cluster",
+	"service",
 }
 
 var (
@@ -58,27 +58,17 @@ var (
 		nil)
 
 	// BaseBackup
-	cmBackupSuccess = prometheus.NewDesc(
-		"kuberlogicbackupschedule_success",
-		"KuberLogicServices backup success",
-		backupLabels,
-		nil)
-	cmBackupStatus = prometheus.NewDesc(
-		"kuberlogicbackupschedule_status",
-		"KuberLogicServices backup status",
-		backupLabels,
+	cmBackupFailed = prometheus.NewDesc(
+		"kuberlogicbackupschedule_failed",
+		"Recent kuberLogicservice backup has failed",
+		backupRestoreLabels,
 		nil)
 
 	// Restore
-	cmRestoreSuccess = prometheus.NewDesc(
-		"kuberlogicbackuprestore_success",
-		"KuberLogicServices restore success",
-		backupLabels,
-		nil)
-	cmRestoreStatus = prometheus.NewDesc(
-		"kuberlogicbackuprestore_status",
-		"KuberLogicServices backup's restore status",
-		backupLabels,
+	cmRestoreFailed = prometheus.NewDesc(
+		"kuberlogicbackuprestore_failed",
+		"kuberlogicrestore has failed",
+		backupRestoreLabels,
 		nil)
 )
 
@@ -120,10 +110,8 @@ func (c *KuberLogicCollector) Describe(ch chan<- *prometheus.Desc) {
 		cmReplicas,
 		cmMemLimit,
 		cmCPULimit,
-		cmBackupSuccess,
-		cmBackupStatus,
-		cmRestoreSuccess,
-		cmRestoreStatus,
+		cmBackupFailed,
+		cmRestoreFailed,
 	}
 	for _, desc := range descriptors {
 		ch <- desc
@@ -150,18 +138,12 @@ func (c *KuberLogicCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	for _, res := range c.klb {
 		ch <- prometheus.MustNewConstMetric(
-			cmBackupSuccess, prometheus.GaugeValue, calcStatus(res),
-			res.Name, res.Namespace, res.Spec.ClusterName)
-		ch <- prometheus.MustNewConstMetric(
-			cmBackupStatus, prometheus.GaugeValue, 1,
+			cmBackupFailed, prometheus.GaugeValue, calcStatus(res),
 			res.Name, res.Namespace, res.Spec.ClusterName)
 	}
 	for _, res := range c.klr {
 		ch <- prometheus.MustNewConstMetric(
-			cmRestoreSuccess, prometheus.GaugeValue, calcStatus(res),
-			res.Name, res.Namespace, res.Spec.ClusterName)
-		ch <- prometheus.MustNewConstMetric(
-			cmRestoreStatus, prometheus.GaugeValue, 1,
+			cmRestoreFailed, prometheus.GaugeValue, calcStatus(res),
 			res.Name, res.Namespace, res.Spec.ClusterName)
 	}
 
@@ -196,14 +178,14 @@ func NewCollector() *KuberLogicCollector {
 func calcStatus(cmb interface{}) float64 {
 	switch val := cmb.(type) {
 	case *kuberlogicv1.KuberLogicBackupRestore:
-		switch val.IsSuccessful() {
+		switch val.IsFailed() {
 		case true:
 			return 1
 		default:
 			return 0
 		}
 	case *kuberlogicv1.KuberLogicBackupSchedule:
-		switch val.IsSuccessful() {
+		switch val.IsFailed() {
 		case true:
 			return 1
 		default:

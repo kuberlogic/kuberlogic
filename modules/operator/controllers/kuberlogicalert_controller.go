@@ -167,6 +167,9 @@ func notifyEmail(addr, subj, body string, mgr *notifications.NotificationManager
 	if err != nil {
 		return err
 	}
+	if ch == nil {
+		return nil
+	}
 
 	opts := map[string]string{
 		"to": addr,

@@ -57,8 +57,9 @@ type BackupSchedule interface {
 	IsEqual(cm *v1.KuberLogicBackupSchedule) bool
 	Update(cm *v1.KuberLogicBackupSchedule)
 	GetCronJob() *batchv1beta1.CronJob
-	IsSuccessful(job *batchv1.Job) bool
 	IsRunning(job *batchv1.Job) bool
+	IsFinished(job *batchv1.Job) bool
+	IsFailed(job *batchv1.Job) bool
 
 	SetBackupImage(repo, version string)
 	SetBackupEnv(cm *v1.KuberLogicBackupSchedule)
@@ -70,9 +71,9 @@ type BackupRestore interface {
 	Init(*v1.KuberLogicBackupRestore)
 	InitFrom(*batchv1.Job)
 	GetJob() *batchv1.Job
-	IsSuccessful() bool
 	IsFailed() bool
 	IsRunning() bool
+	IsFinished() bool
 
 	SetRestoreImage(repo, version string)
 	SetRestoreEnv(cm *v1.KuberLogicBackupRestore)

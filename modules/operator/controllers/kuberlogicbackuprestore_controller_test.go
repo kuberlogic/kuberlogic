@@ -129,7 +129,7 @@ func TestKuberlogicBackupRestoreReconciler_ReconcileValid(t *testing.T) {
 	if _, err := r.Reconcile(context.TODO(), controllerruntime.Request{NamespacedName: klrId}); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	// verify that cronjob exists
+	// verify that job exists
 	j := &v12.Job{}
 	if err := r.Client.Get(context.TODO(), klrId, j); err != nil {
 		t.Errorf("error getting backup cronjob: %v", err)

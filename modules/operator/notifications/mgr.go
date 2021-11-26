@@ -37,7 +37,7 @@ func (m *NotificationManager) GetNotificationChannel(name string) (NotificationC
 			return nil, fmt.Errorf("email notification channel is not enabled")
 		}
 		ch, err = smtp.NewSmtpChannel(
-			m.emailSettings.Host, m.emailSettings.Port,
+			m.emailSettings.Host, m.emailSettings.Port, m.emailSettings.From,
 			m.emailSettings.TLS.Enabled, m.emailSettings.TLS.Insecure,
 			m.emailSettings.Username, m.emailSettings.Password)
 	default:

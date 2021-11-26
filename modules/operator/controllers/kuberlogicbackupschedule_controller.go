@@ -214,26 +214,30 @@ func (r *KuberLogicBackupScheduleReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, nil
 	}
 
+	log.Info("Found backup job")
 	if running := backupSchedule.IsRunning(job); running {
 		// notify kls that it has a running backup
 		kl.BackupRunning(klb.Name)
 		if err := r.Status().Update(ctx, kl); err != nil {
+			log.Error(err, "error updating kuberlogicservice backup status", "kuberlogicservice", kl.GetName())
 			return ctrl.Result{}, err
 		}
 		klb.MarkRunning(job.Name)
-	} else {
+	} else if backupSchedule.IsFinished(job) {
 		kl.BackupFinished()
 		if err := r.Status().Update(ctx, kl); err != nil {
+			log.Error(err, "error updating kuberlogicservice backup status", "kuberlogicservice", kl.GetName())
 			return ctrl.Result{}, err
 		}
 		klb.MarkNotRunning()
+
+		if backupSchedule.IsFailed(job) {
+			klb.MarkFailed(job.Name)
+		} else {
+			klb.MarkSuccessful(job.Name)
+		}
 	}
 
-	if successful := backupSchedule.IsSuccessful(job); successful {
-		klb.MarkSuccessful(job.Name)
-	} else {
-		klb.MarkFailed(job.Name)
-	}
 	if err := r.Status().Update(ctx, klb); err != nil {
 		return ctrl.Result{}, err
 	}

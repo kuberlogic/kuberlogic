@@ -68,30 +68,30 @@ type KuberLogicBackupRestoreList struct {
 }
 
 const (
-	pendingCondType    = "Pending"
-	finishedCondType   = "Finished"
-	successfulCondType = "Successful"
+	klrPendingCondType    = "Pending"
+	klrFinishedCondType   = "Finished"
+	klrSuccessfulCondType = "Successful"
 )
 
 func (klr *KuberLogicBackupRestore) MarkSuccessfulFinish() {
-	klr.setConditionStatus(finishedCondType, true, "", "RestoreFinished")
-	klr.setConditionStatus(successfulCondType, true, "", "JobSuccessful")
-	klr.setConditionStatus(pendingCondType, false, pendingCondType, pendingCondType)
+	klr.setConditionStatus(klrFinishedCondType, true, "", "RestoreFinished")
+	klr.setConditionStatus(klrSuccessfulCondType, true, "", "JobSuccessful")
+	klr.setConditionStatus(klrPendingCondType, false, klrPendingCondType, klrPendingCondType)
 }
 
 func (klr *KuberLogicBackupRestore) MarkFailed() {
-	klr.setConditionStatus(finishedCondType, true, "", "RestoreFinished")
-	klr.setConditionStatus(successfulCondType, false, "", "JobFailed")
-	klr.setConditionStatus(pendingCondType, false, pendingCondType, pendingCondType)
+	klr.setConditionStatus(klrFinishedCondType, true, "", "RestoreFinished")
+	klr.setConditionStatus(klrSuccessfulCondType, false, "", "JobFailed")
+	klr.setConditionStatus(klrPendingCondType, false, klrPendingCondType, klrPendingCondType)
 }
 
 func (klr *KuberLogicBackupRestore) MarkRunning() {
-	klr.setConditionStatus(finishedCondType, false, "restore is in progress", "JobIsRunning")
-	klr.setConditionStatus(pendingCondType, false, finishedCondType, finishedCondType)
+	klr.setConditionStatus(klrFinishedCondType, false, "restore is in progress", "JobIsRunning")
+	klr.setConditionStatus(klrPendingCondType, false, klrFinishedCondType, klrFinishedCondType)
 }
 
 func (klr *KuberLogicBackupRestore) MarkPending() {
-	klr.setConditionStatus(pendingCondType, true, pendingCondType, pendingCondType)
+	klr.setConditionStatus(klrPendingCondType, true, klrPendingCondType, klrPendingCondType)
 }
 
 func (klr *KuberLogicBackupRestore) setConditionStatus(cond string, status bool, msg, reason string) {
@@ -107,13 +107,14 @@ func (klr *KuberLogicBackupRestore) setConditionStatus(cond string, status bool,
 	meta.SetStatusCondition(&klr.Status.Conditions, c)
 }
 
-func (klr *KuberLogicBackupRestore) IsSuccessful() bool {
-	return meta.IsStatusConditionTrue(klr.Status.Conditions, successfulCondType)
+func (klr *KuberLogicBackupRestore) IsFailed() bool {
+	return meta.IsStatusConditionFalse(klr.Status.Conditions, klrSuccessfulCondType) &&
+		meta.IsStatusConditionTrue(klr.Status.Conditions, klrFinishedCondType)
 }
 
 // returns completion description and time
 func (klr *KuberLogicBackupRestore) GetCompletionStatus() (string, *time.Time) {
-	c := meta.FindStatusCondition(klr.Status.Conditions, finishedCondType)
+	c := meta.FindStatusCondition(klr.Status.Conditions, klrFinishedCondType)
 	if c == nil {
 		return RestoreUnknownStatus, nil
 	}
@@ -121,7 +122,7 @@ func (klr *KuberLogicBackupRestore) GetCompletionStatus() (string, *time.Time) {
 		return RestoreRunningStatus, nil
 	}
 
-	successCond := meta.FindStatusCondition(klr.Status.Conditions, successfulCondType)
+	successCond := meta.FindStatusCondition(klr.Status.Conditions, klrSuccessfulCondType)
 	if successCond == nil {
 		return RestoreUnknownStatus, nil
 	}
