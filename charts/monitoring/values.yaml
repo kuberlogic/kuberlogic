@@ -28,6 +28,7 @@ victoriametrics:
     image:
       repository: "quay.io/kuberlogic/vmalert"
       tag: "v1.66.2"
+    port: 8880
   vmserver:
     image:
       repository: "quay.io/kuberlogic/victoria-metrics"
@@ -36,7 +37,6 @@ victoriametrics:
     volumeSize: 10Gi
   service:
     name: kuberlogic-victoriametrics
-    port: 80
   serviceAccount:
     name: kuberlogic-victoriametrics
 
@@ -49,12 +49,14 @@ alertmanager:
     name: kuberlogic-alertmanager
     port: 80
   configmap: kuberlogic-alertmanager-config
+  serviceAccount:
+    name: alertmanager
+  volumeSize: 1G
 
 alertreceiver:
   port: 3000
   image:
     repository: "quay.io/kuberlogic/alert-receiver"
-    tag: "0.0.18"
 
 grafana:
   enabled: true

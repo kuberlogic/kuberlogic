@@ -44,12 +44,17 @@ spec:
             - -remoteWrite.url=http://localhost:{{ .Values.victoriametrics.vmserver.port }}
             - -remoteRead.url=http://localhost:{{ .Values.victoriametrics.vmserver.port }}
             - -notifier.url=http://{{ .Values.alertmanager.service.name }}:{{ .Values.alertmanager.service.port }}
+            - -external.url=http://{{ .Values.victoriametrics.service.name }}:{{ .Values.victoriametrics.vmalert.port }}
+            - -httpListenAddr=:{{ .Values.victoriametrics.vmalert.port }}
             - -rule=/etc/vmalert/alert.rules
           volumeMounts:
             - mountPath: /etc/vmalert
               name: vmalert-rules-volume
           terminationMessagePath: /dev/termaniation-log
           terminationMessagePolicy: File
+          ports:
+            - containerPort: {{ .Values.victoriametrics.vmalert.port }}
+              protocol: TCP
         - args:
             - -httpListenAddr=:{{ .Values.victoriametrics.vmserver.port }}
             - -promscrape.config=/etc/config/victoriametrics.yaml
@@ -111,10 +116,14 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   ports:
-    - name: http
-      port: {{ .Values.victoriametrics.service.port }}
+    - name: vmserver
+      port: {{ .Values.victoriametrics.vmserver.port }}
       protocol: TCP
       targetPort: {{ .Values.victoriametrics.vmserver.port }}
+    - name: vmalert
+      port: {{ .Values.victoriametrics.vmalert.port }}
+      protocol: TCP
+      targetPort: {{ .Values.victoriametrics.vmalert.port }}
   selector:
     app.kubernetes.io/component: kuberlogic-victoriametrics
   type: ClusterIP

@@ -1,0 +1,42 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.alertmanager.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Values.alertmanager.serviceAccount.name }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - kuberlogic.com
+    resources:
+      - kuberlogicalerts
+    verbs:
+      - create
+      - update
+      - delete
+      - get
+      - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Values.alertmanager.serviceAccount.name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.alertmanager.serviceAccount.name }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Values.alertmanager.serviceAccount.name }}

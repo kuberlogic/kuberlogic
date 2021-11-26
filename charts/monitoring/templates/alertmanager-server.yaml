@@ -18,16 +18,24 @@ spec:
       labels:
         app.kubernetes.io/name: "kuberlogic-alertmanager"
     spec:
+      serviceAccountName: {{ .Values.alertmanager.serviceAccount.name }}
       containers:
         - image: {{ .Values.alertmanager.image.repository }}:{{ .Values.alertmanager.image.tag }}
           name: alertmanager
+          command:
+            - /bin/alertmanager
+          args:
+            - --config.file=/etc/alertmanager/alertmanager.yml
+            - --storage.path=/data
           ports:
             - containerPort: {{ .Values.alertmanager.port }}
           volumeMounts:
             - mountPath: /etc/alertmanager/alertmanager.yml
               name: alertmanager-config
               subPath: alertmanager.yml
-        - image: {{ .Values.alertreceiver.image.repository }}:{{ .Values.alertreceiver.image.tag }}
+            - mountPath: /data
+              name: alertmanager-data
+        - image: {{ .Values.alertreceiver.image.repository }}:{{ .Values.alertreceiver.image.tag | default .Chart.AppVersion }}
           name: kuberlogic-alerting
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -37,6 +45,24 @@ spec:
         - configMap:
             name: {{ .Values.alertmanager.configmap }}
           name: alertmanager-config
+        - persistentVolumeClaim:
+            claimName: alertmanager-data
+          name: alertmanager-data
+---
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: alertmanager-data
+  namespace: {{ .Release.Namespace }}
+  labels:
+  {{- include "monitoring.labels" .  | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.alertmanager.volumeSize }}
 ---
 apiVersion: v1
 kind: Service
@@ -45,9 +71,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   ports:
-    - name: alertui
-      port: 9093
+    - name: alertmanager
+      port: {{ .Values.alertmanager.service.port }}
       protocol: TCP
-      targetPort: 9093
+      targetPort: {{ .Values.alertmanager.port }}
   selector:
     app.kubernetes.io/name: "kuberlogic-alertmanager"
