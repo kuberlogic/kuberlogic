@@ -19,7 +19,6 @@ main() {
   sudo curl -L -o /usr/local/bin/kuberlogic-installer \
     https://github.com/kuberlogic/kuberlogic/releases/download/$tag/kuberlogic-installer-$platform-amd64
   sudo chmod +x /usr/local/bin/kuberlogic-installer
-  /usr/local/bin/kuberlogic-installer install all
 }
 
 main "$@"
