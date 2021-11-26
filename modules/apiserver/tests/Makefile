@@ -15,13 +15,22 @@ KUBERLOGIC_DEBUG_LOGS = True
 ARGS ?= -short
 
 INTERNAL_MINIO_IP=$(shell kubectl get pod -l app=minio -o go-template="{{range .items}}{{.status.podIP}}{{end}}")
-INTERNAL_VICTORIAMETRICS_IP=$(shell kubectl get svc kuberlogic-victoriametrics -o go-template="{{.spec.clusterIP}}")
-VICTORIAMETRICS_ENDPOINT=http://$(INTERNAL_VICTORIAMETRICS_IP)
 # access/secret also added in the deployment.yaml
 MINIO_ACCESS_KEY = BKIKJAA5BMMU2RHO6IBB
 MINIO_SECRET_KEY = V7f1CwQqAcwo80UEIJEjc5gVQUSSx5ohQ9GSrr12
 MINIO_ENDPOINT = http://$(INTERNAL_MINIO_IP):9000
 BUCKET ?= test
+
+# monitoring configuration
+INTERNAL_VICTORIAMETRICS_IP=$(shell kubectl get svc kuberlogic-victoriametrics -o go-template="{{.spec.clusterIP}}")
+VICTORIAMETRICS_ENDPOINT=http://$(INTERNAL_VICTORIAMETRICS_IP):8428
+
+# SMTP server for tests
+NOTIFICATION_CHANNELS_EMAIL_ENABLED=true
+NOTIFICATION_CHANNELS_EMAIL_HOST=mailcatcher-smtp
+NOTIFICATION_CHANNELS_EMAIL_PORT=1025
+INTERNAL_MAILCATCHER_IP=$(shell kubectl get svc mailcatcher -o go-template="{{.spec.clusterIP}}")
+MAILCATCHER_URL=http://$(INTERNAL_MAILCATCHER_IP):1080
 
 SENTRY_DSN = https://50ec3b92240a4b4d97dbee02a07fc54f@kl.sentry.cloudlinux.com/5
 
@@ -111,6 +120,9 @@ show-minio-credentials:
 	@echo "AWS_SECRET_ACCESS_KEY:" $(MINIO_SECRET_KEY)
 	@echo "Endpoint:" $(MINIO_ENDPOINT)
 	@echo "Default bucket:" $(BUCKET)
+
+deploy-smtp:
+	kubectl apply -f config/mailcatcher/mailcatcher.yaml
 
 patch-endpoint:
 	MINIKUBE_IP=$$(minikube ip) envsubst < config/webhook/endpoint.yaml | kubectl apply -f -

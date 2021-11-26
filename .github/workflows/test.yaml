@@ -135,10 +135,12 @@ jobs:
         run: |
           ./bin/kuberlogic-installer-linux-amd64 install all -c sample-config.yaml
 
-      - name: Setup minio & create bucket for backup storage
+      - name: Setup dependencies for backup, restore and alerting tests
         working-directory: ./modules/apiserver/tests
         run: |
           make deploy-minio create-bucket
+          make deploy-smtp
+
 
       - name: PATCH - Undeploy operator & apiserver, creating certs, change endpoint for ability using webhook locally in the tests
         working-directory: ./modules/apiserver/tests

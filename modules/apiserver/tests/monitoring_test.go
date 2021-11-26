@@ -18,6 +18,7 @@ package tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -28,14 +29,17 @@ type tMonitoring struct {
 	// vmEndpoint points to a deployed and configured VictoriaMetrics
 	vmEndpoint string
 
+	// test SMTP server
+	mailcatcherEndpoint string
+
 	// kuberlogicservices that are expected to be present and monitored
-	mysqlServiceName string
-	pgServiceName    string
+	mysqlService tService
+	pgService    tService
 }
 
 func (tm tMonitoring) CheckTargets() func(t *testing.T) {
 	return func(t *testing.T) {
-		res, err := http.DefaultClient.Get(tm.vmEndpoint + "/api/v1/targets")
+		res, err := http.Get(tm.vmEndpoint + "/api/v1/targets")
 		if err != nil || res.StatusCode != http.StatusOK {
 			t.Fatalf("error getting victoriametrics targets: %v status code %d", err, res.StatusCode)
 		}
@@ -83,9 +87,9 @@ func (tm tMonitoring) CheckTargets() func(t *testing.T) {
 			// kube-state-metrics monitoring instance
 			kubeStateMetrics = "kube-state-metrics:8443"
 			// mysql first pod
-			mysql = tm.mysqlServiceName + "-mysql-0"
+			mysql = tm.mysqlService.name + "-mysql-0"
 			// postgres first pod
-			pg = "kuberlogic-" + tm.pgServiceName
+			pg = "kuberlogic-" + tm.pgService.name
 		)
 
 		expectedActiveTargets := map[string]bool{
@@ -134,11 +138,58 @@ func (tm tMonitoring) CheckTargets() func(t *testing.T) {
 	}
 }
 
+func (tm *tMonitoring) CheckAlertNotification() func(t *testing.T) {
+	return func(t *testing.T) {
+		// create a restore job that will fail
+		api := newApi(t)
+		api.setBearerToken()
+		api.setRequestBody(`     {
+        "key": "s3://nonexistend",
+        "database": "nonexistent"
+     }`)
+		api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/restores", tm.pgService.ns, tm.pgService.name))
+		api.responseCodeShouldBe(200)
+
+		// poll mailcatcher for the failed restore alert
+		type MailcatcherMessage struct {
+			Sender     string   `json:"sender"`
+			Recipients []string `json:"recipients"`
+			Subject    string   `json:"subject"`
+		}
+		messages := make([]*MailcatcherMessage, 0)
+		var found bool
+
+		for i := 0; i < 300; i += 1 {
+			if found {
+				break
+			}
+			r, err := http.Get(tm.mailcatcherEndpoint + "/messages")
+			if err != nil {
+				t.Errorf("error getting mailcatcher messages: %v", err)
+			}
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				t.Errorf("error reading mailcatcher response data: %v", err)
+			}
+			r.Body.Close()
+			if err := json.Unmarshal(body, &messages); err != nil {
+				t.Errorf("error decoding mailcatcher response data: %v", err)
+			}
+			for _, m := range messages {
+				if fmt.Sprintf("CRITICAL: SERVICE %s ALERT kuberlogicrestore-failed", tm.pgService.name) == m.Subject {
+					found = true
+				}
+			}
+		}
+	}
+}
+
 func TestMonitoringStack(t *testing.T) {
 	tm := &tMonitoring{
-		vmEndpoint:       os.Getenv("VICTORIAMETRICS_ENDPOINT"),
-		mysqlServiceName: mysqlTestService.name,
-		pgServiceName:    pgTestService.name,
+		vmEndpoint:          os.Getenv("VICTORIAMETRICS_ENDPOINT"),
+		mailcatcherEndpoint: os.Getenv("MAILCATCHER_ENDPOINT"),
+		mysqlService:        mysqlTestService,
+		pgService:           pgTestService,
 	}
 
 	t.Run("victoriaMetrics active targets", tm.CheckTargets())
