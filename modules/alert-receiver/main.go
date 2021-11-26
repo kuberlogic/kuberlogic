@@ -20,15 +20,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"mime"
 	"net/http"
 )
 
-func enforceJSONHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Incoming request received!")
+const (
+	alertResolvedState = "resolved"
+	alertFiringState   = "firing"
+)
 
+func enforceJSONHandler(next http.Handler, log Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Infof("New alert processing request")
 		contentType := r.Header.Get("Content-Type")
 
 		if contentType != "" {
@@ -48,46 +53,59 @@ func enforceJSONHandler(next http.Handler) http.Handler {
 	})
 }
 
-func processAlertmanagerWebhook(w http.ResponseWriter, r *http.Request) {
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Fatal("Error reading body!")
-	}
-	defer r.Body.Close()
-
-	log.Printf("Raw body: %s\n", string(b))
-
-	alert := &AlertWebhook{}
-	if err := json.Unmarshal(b, &alert); err != nil {
-		log.Fatal("Error unmarshalling Alertmanager webhook data!")
-	}
-
-	for _, a := range alert.Alerts {
-		switch a.Status {
-		case "resolved":
-			err = a.resolve()
-		case "firing":
-			err = a.create()
-		default:
-			log.Fatalf("Unknown alert status: %s", alert.Status)
+func setupAlertsProcessor(kubeClientSet kubernetes.Interface, kubeRestClient rest.Interface, log Logger, cfg *Config) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		b, processingErr := ioutil.ReadAll(r.Body)
+		if processingErr != nil {
+			log.Errorf("Error reading body!")
 		}
-	}
+		defer r.Body.Close()
 
-	if err != nil {
-		w.WriteHeader(http.StatusBadGateway)
-		w.Write([]byte(fmt.Sprintf("Unexpected error during %s alert processing", alert.CommonLabels.Alertname)))
+		log.Debugf("Raw body: %s\n", string(b))
+
+		alert := &AlertWebhookData{}
+		if processingErr = json.Unmarshal(b, &alert); processingErr != nil {
+			log.Errorf("Error unmarshalling Alertmanager webhook data with body: `%v`", string(b))
+		}
+
+		for _, a := range alert.Alerts {
+			switch a.Status {
+			case alertResolvedState:
+				processingErr = a.resolve(kubeRestClient, log)
+			case alertFiringState:
+				processingErr = a.create(kubeRestClient, kubeClientSet, log, cfg)
+			default:
+				log.Fatalf("Unknown alert status: %s", alert.Status)
+			}
+		}
+
+		if processingErr != nil {
+			log.Errorf("Unexpected error `%v` during alert `%s` processing", processingErr, alert.CommonLabels.Alertname)
+			w.WriteHeader(http.StatusBadGateway)
+			w.Write([]byte(fmt.Sprintf("Unexpected error during %s alert processing", alert.CommonLabels.Alertname)))
+		}
 	}
 }
 
 func main() {
-	initKubernetesClient()
+	log := newLogger(true)
+	kubeClientSet, kubeRestClient, err := newKubernetesClients()
+	if err != nil {
+		log.Fatalf("Error creating Kubernetes clients: %v", err)
+	}
+	cfg, err := newConfig()
+	if err != nil {
+		log.Fatalf("Error creating config: %v", err)
+	}
+	log = newLogger(cfg.DebugLogs)
 
 	mux := http.NewServeMux()
 
-	alertmanagerHandler := http.HandlerFunc(processAlertmanagerWebhook)
-	mux.Handle("/", enforceJSONHandler(alertmanagerHandler))
+	alertmanagerHandler := http.HandlerFunc(setupAlertsProcessor(kubeClientSet, kubeRestClient, log, cfg))
+	mux.Handle("/", enforceJSONHandler(alertmanagerHandler, log))
 
-	log.Println("Listening on :3000 port...")
-	err := http.ListenAndServe(":3000", mux)
-	log.Fatal(err)
+	log.Infof("Listening on :%d port", cfg.Port)
+	if err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), mux); err != nil {
+		log.Fatalf("Fatal error during startup: %v", err)
+	}
 }

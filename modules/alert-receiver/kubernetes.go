@@ -21,23 +21,22 @@ import (
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/client-go/kubernetes"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	"log"
 )
 
 var kuberLogicAlertCR = "kuberlogicalerts"
-var kubeRestClient *rest.RESTClient
 
-func initKubernetesClient() {
+func newKubernetesClients() (kubernetes.Interface, rest.Interface, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		log.Fatalf("Error initializing Kubernetes client: %s", err)
+		return nil, nil, err
 	}
 
 	err = kuberlogicv1.AddToScheme(k8scheme.Scheme)
 	if err != nil {
-		log.Fatalf("Error adding clientset types to schema! %s", err)
+		return nil, nil, err
 	}
 
 	crdConfig := *config
@@ -46,13 +45,18 @@ func initKubernetesClient() {
 	crdConfig.NegotiatedSerializer = serializer.NewCodecFactory(k8scheme.Scheme)
 	crdConfig.UserAgent = rest.DefaultKubernetesUserAgent()
 
-	kubeRestClient, err = rest.UnversionedRESTClientFor(&crdConfig)
+	kubeRestClient, err := rest.UnversionedRESTClientFor(&crdConfig)
 	if err != nil {
-		log.Fatalf("Error initializing Kubernetes client: %s", err)
+		return nil, nil, err
 	}
+	kubeClientSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, nil, err
+	}
+	return kubeClientSet, kubeRestClient, err
 }
 
-func createAlertCR(name, namespace, alertName, alertValue, cluster, pod string) error {
+func createAlertCR(name, namespace, alertName, alertValue, cluster, pod, summary string, kubeRestClient rest.Interface) error {
 	klAlert := kuberlogicv1.KuberLogicAlert{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -63,22 +67,21 @@ func createAlertCR(name, namespace, alertName, alertValue, cluster, pod string) 
 			AlertValue: alertValue,
 			Cluster:    cluster,
 			Pod:        pod,
+			Summary:    summary,
 		},
 	}
 
-	res := kubeRestClient.Post().
+	return kubeRestClient.Post().
 		Namespace(namespace).
 		Resource(kuberLogicAlertCR).
 		Body(&klAlert).
-		Do(context.TODO())
-	return res.Error()
+		Do(context.TODO()).Error()
 }
 
-func deleteAlertCR(name, namespace string) error {
-	res := kubeRestClient.Delete().
+func deleteAlertCR(name, namespace string, kubeRestClient rest.Interface) error {
+	return kubeRestClient.Delete().
 		Name(name).
 		Namespace(namespace).
 		Resource(kuberLogicAlertCR).
-		Do(context.TODO())
-	return res.Error()
+		Do(context.TODO()).Error()
 }

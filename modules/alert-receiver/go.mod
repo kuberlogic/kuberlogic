@@ -8,6 +8,9 @@ replace github.com/bitpoke/mysql-operator v0.5.1 => github.com/ynnt/mysql-operat
 
 require (
 	github.com/kuberlogic/kuberlogic/modules/operator v0.0.21-0.20210709150852-c26569dcc3c3
+	github.com/pkg/errors v0.9.1
+	github.com/sirupsen/logrus v1.7.0
+	github.com/vrischmann/envconfig v1.3.0
 	k8s.io/apimachinery v0.21.2
 	k8s.io/client-go v0.21.2
 )

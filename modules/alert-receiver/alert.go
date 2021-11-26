@@ -17,27 +17,30 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
-	"log"
+	"github.com/pkg/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"net/http"
 	"time"
 )
 
+type CommonLabels struct {
+	ResourceName string `json:"resourcename"`
+	Alertname    string `json:"alertname"`
+	Scope        string `json:"scope"`
+	Namespace    string `json:"namespace"`
+	Text         string `json:"text"`
+	Severity     string `json:"severity"`
+}
+
 type Alert struct {
 	Status string `json:"status"`
 	Labels struct {
-		Alertgroup          string `json:"alertgroup"`
-		Alertname           string `json:"alertname"`
-		ClusterType         string `json:"cluster_type"`
-		ControlPlane        string `json:"control_plane"`
-		Instance            string `json:"instance"`
-		Job                 string `json:"job"`
-		KubernetesNamespace string `json:"kubernetes_namespace"`
-		KubernetesPodName   string `json:"kubernetes_pod_name"`
-		Name                string `json:"name"`
-		Namespace           string `json:"namespace"`
-		PodTemplateHash     string `json:"pod_template_hash"`
+		CommonLabels
 	} `json:"labels"`
 	Annotations struct {
 	} `json:"annotations"`
@@ -47,7 +50,7 @@ type Alert struct {
 	Fingerprint  string    `json:"fingerprint"`
 }
 
-type AlertWebhook struct {
+type AlertWebhookData struct {
 	Receiver    string  `json:"receiver"`
 	Status      string  `json:"status"`
 	Alerts      []Alert `json:"alerts"`
@@ -55,17 +58,7 @@ type AlertWebhook struct {
 		Alertname string `json:"alertname"`
 	} `json:"groupLabels"`
 	CommonLabels struct {
-		Alertgroup          string `json:"alertgroup"`
-		Alertname           string `json:"alertname"`
-		ClusterType         string `json:"cluster_type"`
-		ControlPlane        string `json:"control_plane"`
-		Instance            string `json:"instance"`
-		Job                 string `json:"job"`
-		KubernetesNamespace string `json:"kubernetes_namespace"`
-		KubernetesPodName   string `json:"kubernetes_pod_name"`
-		Name                string `json:"name"`
-		Namespace           string `json:"namespace"`
-		PodTemplateHash     string `json:"pod_template_hash"`
+		CommonLabels
 	} `json:"commonLabels"`
 	CommonAnnotations struct {
 	} `json:"commonAnnotations"`
@@ -83,67 +76,111 @@ type AlertStatus struct {
 	State      string `json:"state"`
 	Value      string `json:"value"`
 	Labels     struct {
-		Alertgroup          string `json:"alertgroup"`
-		ClusterType         string `json:"cluster_type"`
-		ControlPlane        string `json:"control_plane"`
-		Instance            string `json:"instance"`
-		Job                 string `json:"job"`
-		KubernetesNamespace string `json:"kubernetes_namespace"`
-		KubernetesPodName   string `json:"kubernetes_pod_name"`
-		Name                string `json:"name"`
-		Namespace           string `json:"namespace"`
-		PodTemplateHash     string `json:"pod_template_hash"`
 	} `json:"labels"`
 	Annotations struct {
 	} `json:"annotations"`
 	ActiveAt time.Time `json:"activeAt"`
 }
 
-func (a Alert) getName() string {
-	return fmt.Sprintf("%s-%s-%s", a.Labels.Name, a.Labels.Alertname)
+const (
+	instanceScope = "instance"
+	serviceScope  = "service"
+)
+
+var (
+	errUnknownScope = errors.New("unknown scope")
+)
+
+func (a Alert) alertname() string {
+	return a.Labels.Alertname
 }
 
-func (a Alert) create() error {
-	name := a.getName()
-	status := &AlertStatus{}
+func (a Alert) scope() string {
+	return a.Labels.Scope
+}
 
-	if err := a.getStatus(status); err != nil {
-		log.Printf("Couldn't fetch alert status")
-		return err
+func (a Alert) targetResource() string {
+	return a.Labels.ResourceName
+}
+
+func (a Alert) namespace() string {
+	return a.Labels.Namespace
+}
+
+func (a Alert) fullName() string {
+	return a.Fingerprint
+}
+
+func (a Alert) summary() string {
+	return a.Labels.Text
+}
+
+func (a Alert) create(kubeRest rest.Interface, kubeClient kubernetes.Interface, log Logger, c *Config) error {
+	status, err := a.getStatus()
+	if err != nil {
+		return errors.Wrap(err, "error getting status")
 	}
 
-	if err := createAlertCR(name, "default", a.Labels.Alertname, status.Value, a.Labels.Name, status.Labels.KubernetesPodName); err != nil {
-		log.Printf("Error creating kuberlogic alert: %s", err)
-		return err
+	klsName, err := a.getServiceName(kubeClient, c.ServiceIdentifierLabel)
+	if err != nil {
+		return errors.Wrap(err, "error getting corresponding kuberlogicservicename")
 	}
-	log.Printf("Alert %s succesfully created!", name)
+	podName := a.getPodName()
+
+	if err := createAlertCR(a.fullName(), a.namespace(), a.alertname(), status.Value, klsName, podName, a.summary(), kubeRest); err != nil {
+		log.Errorf("Error creating kuberlogic alert: %s", err)
+		return errors.Wrap(err, "error creating kuberlogic alert")
+	}
+	log.Infof("Alert %s successfully created!", a.fullName())
 	return nil
 }
 
-func (a Alert) resolve() error {
-	name := a.getName()
-
-	err := deleteAlertCR(name, a.Labels.Namespace)
-	if err != nil {
-		log.Printf("Error resolving kuberlogic alert: %s", err)
-		return err
+func (a Alert) resolve(kubeRest rest.Interface, log Logger) error {
+	err := deleteAlertCR(a.fullName(), a.namespace(), kubeRest)
+	if err != nil && !k8serrors.IsNotFound(err) {
+		log.Errorf("Error resolving kuberlogic alert: %s", err)
+		return errors.Wrap(err, "error deleting kuberlogicalert resource")
 	}
 
-	log.Printf("Alert %s succesfully resolved!", name)
+	log.Infof("Alert %s successfully resolved!", a.fullName())
 	return nil
 }
 
-func (a Alert) getStatus(s *AlertStatus) error {
-	r, err := http.Get(a.GeneratorURL)
-	if err != nil {
-		log.Printf("Error fetching status for %s", a.Labels.Name)
-		return err
+func (a Alert) getServiceName(client kubernetes.Interface, serviceLabel string) (string, error) {
+	if a.scope() == serviceScope {
+		return a.targetResource(), nil
 	}
 
+	pod, err := client.CoreV1().Pods(a.namespace()).Get(context.Background(), a.targetResource(), v1.GetOptions{})
+	if err != nil {
+		return "", errors.Wrap(err, "error finding pod")
+	}
+	svcName := pod.Labels[serviceLabel]
+	if svcName == "" {
+		return "", errors.New("service label not found")
+	}
+	return svcName, nil
+}
+
+func (a Alert) getPodName() string {
+	if a.scope() == serviceScope {
+		return ""
+	}
+	return a.targetResource()
+}
+
+func (a Alert) getStatus() (*AlertStatus, error) {
+	client := http.Client{
+		Timeout: time.Second * 5,
+	}
+	r, err := client.Get(a.GeneratorURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "error fetching status")
+	}
+
+	s := &AlertStatus{}
 	if err := json.NewDecoder(r.Body).Decode(s); err != nil {
-		log.Printf("Error unmarshalling status for %s: %s", a.Labels.Name)
-		return err
+		return nil, errors.Wrap(err, "error decoding status response")
 	}
-	log.Printf("Succcesfuly got status for %s", a.Labels.Name)
-	return nil
+	return s, nil
 }
