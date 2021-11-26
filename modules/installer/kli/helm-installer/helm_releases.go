@@ -22,6 +22,7 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/installer/internal"
 	"github.com/pkg/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strconv"
 	"time"
 )
 
@@ -233,7 +234,7 @@ func deployOperator(globals map[string]interface{}, i *HelmInstaller) error {
 			"enabled":                   true,
 			"endpoint":                  fmt.Sprintf("http://%s:%d/", grafanaServiceName, grafanaServicePort),
 			"secret":                    grafanaSecretName,
-			"defaultDatasourceEndpoint": "http://" + victoriaMetricsServiceName,
+			"defaultDatasourceEndpoint": "http://" + victoriaMetricsServiceName + ":" + strconv.Itoa(victoriaMetricsPort),
 		},
 		"platform": i.Config.Platform,
 	}
@@ -276,6 +277,9 @@ func deployMonitoring(globals map[string]interface{}, i *HelmInstaller, release 
 		"victoriametrics": map[string]interface{}{
 			"service": map[string]interface{}{
 				"name": victoriaMetricsServiceName,
+			},
+			"vmserver": map[string]interface{}{
+				"port": victoriaMetricsPort,
 			},
 		},
 		"grafana": map[string]interface{}{

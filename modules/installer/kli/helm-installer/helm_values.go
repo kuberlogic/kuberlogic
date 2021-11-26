@@ -62,6 +62,7 @@ const (
 
 	// monitoring victoriametrics values
 	victoriaMetricsServiceName = "kuberlogic-victoriametrics"
+	victoriaMetricsPort        = 8428
 
 	// operator
 	operatorRepository = registryName + "/" + registryOrg
