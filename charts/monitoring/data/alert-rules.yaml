@@ -1,0 +1,31 @@
+---
+groups:
+  - name: kuberlogic-alerts
+    rules:
+      - alert: kuberlogicservice-not-ready
+        expr: kuberlogic_ready < 1
+        for: 1m
+        labels:
+          resourcename: "{{ $labels.name }}"
+          namespace: "{{ $labels.namespace }}"
+          text: "Service '{{ $labels.name }}' is not in Ready sstate longer than 5 minutes!"
+          severity: high
+          scope: service
+      - alert: kuberlogicbackup-failed
+        expr: kuberlogicbackupschedule_failed > 0
+        for: 1m
+        labels:
+          resourcename: "{{ $labels.service }}"
+          namespace: "{{ $labels.namespace }}"
+          text: "Scheduled backup for service {{ $labels.service }} has failed!"
+          severity: medium
+          scope: service
+      - alert: kuberlogicrestore-failed
+        expr: kuberlogicbackuprestore_failed > 0
+        for: 1m
+        labels:
+          resourcename: "{{ $labels.service }}"
+          namespace: "{{ $labels.namespace }}"
+          text: "Restore job for service {{ $labels.service }} has failed!"
+          severity: medium
+          scope: service

@@ -97,10 +97,4 @@ metadata:
   {{- include "monitoring.labels" . | nindent 4 }}
 data:
   alert.rules: |
-    ---
-    groups:
-    - name: kuberlogic-alerts
-      rules:
-      - alert: kuberlogic-memory-usage
-        expr: (sum(eagle_pod_container_resource_usage_memory_bytes{pod=~"kuberlogic-my.*"}) by (pod)) / max(kubelogic_memory_limit_bytes{name="kuberlogic-my"}) > 0.3
-        for: 1m
+    {{ .Files.Get "data/alert-rules.yaml" | nindent 4 }}
