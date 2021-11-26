@@ -3,6 +3,7 @@ data:
   config.js: |
     let configApiUrl = '/api/v1';
     let monitoringConsoleUrl = '{{ .Values.config.monitoringConsoleEndpoint }}';
+    let helpUrl = '{{ .Values.config.helpEndpoint }}';
 kind: ConfigMap
 metadata:
   name: "{{ include "kuberlogic-ui.fullname" . }}"

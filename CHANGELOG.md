@@ -1,3 +1,20 @@
+## [1.0.4] - 2021-11-24
+### Added
+* Support Kubernetes version 1.19-1.22 [#122](https://github.com/kuberlogic/kuberlogic/pull/122)
+
+
+## [1.0.3] - 2021-11-22
+### Added
+* Add GKE support [#108](https://github.com/kuberlogic/kuberlogic/pull/108)
+* Add simple installation script / Ask for a config parameters interactively when not found [#115](https://github.com/kuberlogic/kuberlogic/pull/115)
+### Fixed / Improved
+* Increase wait time for the loadbalancer check [#109](https://github.com/kuberlogic/kuberlogic/pull/109)
+* Use versioned backup/restore images [#110](https://github.com/kuberlogic/kuberlogic/pull/110)
+* Use post-install Helm hooks for managing release dependencies [#111](https://github.com/kuberlogic/kuberlogic/pull/111)
+* Redirect users to the help page after Help button pressed [#112](https://github.com/kuberlogic/kuberlogic/pull/112)
+* Use http communications between operator and grafana [#114](https://github.com/kuberlogic/kuberlogic/pull/114)
+* Configure monitoring selectors via installer [#117](https://github.com/kuberlogic/kuberlogic/pull/117)
+
 ## [1.0.2] - 2021-11-09
 ### Added
 * Kubernetes 1.21 support [#96](https://github.com/kuberlogic/kuberlogic/pull/96)

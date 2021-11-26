@@ -53,8 +53,10 @@ jobs:
         include:
           - type: postgresql
             pg_version: 13
+            k8s_version: 1.19.1
           - type: mysql
             my_version: 5.7.31
+            k8s_version: 1.22.1
     steps:
       - uses: azure/setup-helm@v1
         with:
@@ -92,7 +94,7 @@ jobs:
         uses: manusa/actions-setup-minikube@v2.3.0
         with:
           minikube version: 'v1.23.2'
-          kubernetes version: 'v1.21.1'
+          kubernetes version: ${{ matrix.k8s_version }}
           github token: ${{ secrets.GITHUB_TOKEN }}
 
           # It's need for the local usage for the webhook:

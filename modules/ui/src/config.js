@@ -16,3 +16,4 @@
 
 let configApiUrl = '/api/v1';
 let monitoringConsoleUrl = 'http://monitoring-console.com/';
+let helpUrl = 'https://docs.kuberlogic.com';
