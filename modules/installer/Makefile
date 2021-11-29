@@ -29,9 +29,9 @@ helm-package: helm-deps helm-lint
 	$(HELM) package cert-manager && \
 	$(HELM) package keycloak-operator && \
 	$(HELM) package kuberlogic-keycloak && \
-	$(HELM) package monitoring && \
 	$(HELM) package mysql-operator && \
 	$(HELM) package postgres-operator && \
+	$(HELM) package monitoring --app-version $(VERSION) && \
 	$(HELM) package kuberlogic-ui --app-version $(VERSION) && \
     $(HELM) package kuberlogic-apiserver --app-version $(VERSION) && \
 	$(HELM) package kuberlogic-operator --app-version $(VERSION)
