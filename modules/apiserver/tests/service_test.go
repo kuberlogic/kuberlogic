@@ -39,6 +39,7 @@ type tService struct {
 	newLimits   map[string]string
 	force       bool
 	version     string
+	podName     string
 }
 
 var pgTestService = tService{
@@ -53,6 +54,7 @@ var pgTestService = tService{
 	newLimits:   map[string]string{"cpu": "0.3", "memory": "0.5", "volumeSize": "1"},
 	force:       false, // do not create a service
 	//version:     "12.1.3",
+	podName: "kuberlogic-" + pgService.name + "-0",
 }
 
 var mysqlTestService = tService{
@@ -67,6 +69,7 @@ var mysqlTestService = tService{
 	newLimits:   map[string]string{"cpu": "0.3", "memory": "0.5", "volumeSize": "1"},
 	force:       false, // do not create a service
 	//version:     "5.7.26",
+	podName: mysqlService.name + "-mysql-0",
 }
 
 func TestDoesNotAllowMethodDelete(t *testing.T) {

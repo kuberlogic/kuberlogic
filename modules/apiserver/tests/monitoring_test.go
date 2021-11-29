@@ -33,13 +33,9 @@ type tMonitoring struct {
 
 	// test SMTP server
 	mailcatcherEndpoint string
-
-	// kuberlogicservices that are expected to be present and monitored
-	mysqlService tService
-	pgService    tService
 }
 
-func (tm tMonitoring) CheckTargets() func(t *testing.T) {
+func (tm tMonitoring) CheckTargets(svc tService) func(t *testing.T) {
 	return func(t *testing.T) {
 		res, err := http.Get(tm.vmEndpoint + "/api/v1/targets")
 		if err != nil || res.StatusCode != http.StatusOK {
@@ -88,10 +84,6 @@ func (tm tMonitoring) CheckTargets() func(t *testing.T) {
 			kubeEagle = "kube-eagle:8443"
 			// kube-state-metrics monitoring instance
 			kubeStateMetrics = "kube-state-metrics:8443"
-			// mysql first pod
-			mysql = tm.mysqlService.name + "-mysql-0"
-			// postgres first pod
-			pg = "kuberlogic-" + tm.pgService.name
 		)
 
 		expectedActiveTargets := map[string]bool{
@@ -101,9 +93,8 @@ func (tm tMonitoring) CheckTargets() func(t *testing.T) {
 			kubeEagle:        false,
 			kubeStateMetrics: false,
 
-			// at least one pod for kuberlogicservice
-			mysql: false,
-			pg:    false,
+			// service related targets
+			svc.podName: false,
 		}
 
 		for _, t := range data.Data.ActiveTargets {
@@ -116,11 +107,8 @@ func (tm tMonitoring) CheckTargets() func(t *testing.T) {
 			case nodeJob:
 				expectedActiveTargets[nodeJob] = true
 			case podJob:
-				switch t.Labels["kubernetes_pod_name"] {
-				case mysql:
-					expectedActiveTargets[mysql] = true
-				case pg:
-					expectedActiveTargets[pg] = true
+				if t.Labels["kubernetes_pod_name"] == svc.podName {
+					expectedActiveTargets[svc.podName] = true
 				}
 			case scrapePool:
 				switch t.Labels["instance"] {
@@ -140,7 +128,7 @@ func (tm tMonitoring) CheckTargets() func(t *testing.T) {
 	}
 }
 
-func (tm *tMonitoring) CheckAlertNotification() func(t *testing.T) {
+func (tm *tMonitoring) CheckAlertNotification(svc tService) func(t *testing.T) {
 	return func(t *testing.T) {
 		// create a restore job that will fail
 		api := newApi(t)
@@ -149,7 +137,7 @@ func (tm *tMonitoring) CheckAlertNotification() func(t *testing.T) {
         "key": "s3://nonexistend",
         "database": "nonexistent"
      }`)
-		api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/restores", tm.pgService.ns, tm.pgService.name))
+		api.sendRequestTo(http.MethodPost, fmt.Sprintf("/services/%s:%s/restores", svc.ns, svc.name))
 		api.responseCodeShouldBe(200)
 
 		// poll mailcatcher for the failed restore alert
@@ -180,7 +168,7 @@ func (tm *tMonitoring) CheckAlertNotification() func(t *testing.T) {
 				t.Errorf("error decoding mailcatcher response data: %v", err)
 			}
 			for _, m := range messages {
-				if fmt.Sprintf("CRITICAL: SERVICE %s ALERT kuberlogicrestore-failed", tm.pgService.name) == m.Subject {
+				if fmt.Sprintf("CRITICAL: SERVICE %s ALERT kuberlogicrestore-failed", svc.name) == m.Subject {
 					found = true
 				}
 			}
@@ -193,10 +181,10 @@ func TestMonitoringStack(t *testing.T) {
 	tm := &tMonitoring{
 		vmEndpoint:          os.Getenv("VICTORIAMETRICS_ENDPOINT"),
 		mailcatcherEndpoint: os.Getenv("MAILCATCHER_ENDPOINT"),
-		mysqlService:        mysqlTestService,
-		pgService:           pgTestService,
 	}
 
-	t.Run("victoriaMetrics active targets", tm.CheckTargets())
-	t.Run("alerts notifications", tm.CheckAlertNotification())
+	for _, svc := range []tService{pgTestService, mysqlTestService} {
+		t.Run(svc.type_+": victoriaMetrics active targets", tm.CheckTargets(svc))
+		t.Run(svc.type_+": alerts notifications", tm.CheckAlertNotification(svc))
+	}
 }
