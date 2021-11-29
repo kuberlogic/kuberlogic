@@ -51,7 +51,7 @@ alertmanager:
   configmap: kuberlogic-alertmanager-config
   serviceAccount:
     name: alertmanager
-  volumeSize: 1G
+  volumeSize: 1Gi
 
 alertreceiver:
   port: 3000
