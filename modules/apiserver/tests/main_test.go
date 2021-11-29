@@ -56,7 +56,7 @@ var services = []Service{
 // default api contact values
 var (
 	apiUrl = &url.URL{
-		Scheme: "http:",
+		Scheme: "http",
 		Host:   "localhost:8081",
 	}
 )
