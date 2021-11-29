@@ -184,7 +184,7 @@ func TestMonitoringStack(t *testing.T) {
 	}
 
 	for _, svc := range []tService{pgTestService, mysqlTestService} {
-		t.Run(svc.type_+": victoriaMetrics active targets", tm.CheckTargets(svc))
-		t.Run(svc.type_+": alerts notifications", tm.CheckAlertNotification(svc))
+		t.Run(svc.type_+" victoriaMetrics active targets", tm.CheckTargets(svc))
+		t.Run(svc.type_+" alerts notifications", tm.CheckAlertNotification(svc))
 	}
 }
