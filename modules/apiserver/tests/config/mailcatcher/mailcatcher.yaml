@@ -1,0 +1,57 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: mailcatcher
+  labels:
+    app: mailcatcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mailcatcher
+  revisionHistoryLimit: 1
+  template:
+    metadata:
+      labels:
+        app: mailcatcher
+    spec:
+      containers:
+        - name: mailcatcher
+          image: quay.io/kuberlogic/datadarius-tiny-mailcatcher:latest
+          ports:
+            - containerPort: 1025
+            - containerPort: 1080
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: postfix
+  labels:
+    app: mailcatcher
+spec:
+  ports:
+    # As we are using a port mapping here, we need it handled by kube-proxy!
+    # We cannot use clusterIP: None for a headless service here.
+    - port: 25
+      name: mailcatcher-smtp
+      targetPort: 1025
+      protocol: TCP
+  selector:
+    app: mailcatcher
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: mailcatcher
+  labels:
+    app: mailcatcher
+spec:
+  type: NodePort
+  ports:
+    - name: mailcatcher-web
+      port: 1080
+      targetPort: 1080
+      protocol: TCP
+  selector:
+    app: mailcatcher
