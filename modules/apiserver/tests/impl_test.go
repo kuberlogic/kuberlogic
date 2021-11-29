@@ -129,7 +129,6 @@ func (a *API) sendRequestTo(method, endpoint string) {
 	}
 
 	resp, err := a.httpClient.Do(req)
-	fmt.Println(resp, err)
 	if err != nil {
 		a.t.Error(err)
 	}

@@ -57,7 +57,7 @@ var services = []Service{
 var (
 	apiUrl = &url.URL{
 		Scheme: "http",
-		Host:   "127.0.0.1:8081",
+		Host:   "127.0.0.1:8001",
 	}
 )
 
