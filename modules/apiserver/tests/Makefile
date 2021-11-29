@@ -50,7 +50,7 @@ test:
 		$(ARGS) ./...
 
 remote-test:
-	REMOTE_HOST=$(shell kubectl get pod -l app.kubernetes.io/instance=kuberlogic-apiserver -o jsonpath='{.items[].status.podIP}'):8001 \
+	REMOTE_HOST=https://$(shell kubectl get svc -l app.kubernetes.io/instance=kong -o jsonpath='{.items[].spec.clusterIP'):443 \
 	$(MAKE) test
 
 coverage-report: test

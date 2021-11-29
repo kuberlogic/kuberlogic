@@ -18,6 +18,7 @@ package tests
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/generated/models"
@@ -35,19 +36,19 @@ import (
 )
 
 type baseUrl struct {
-	scheme string
-	host   string
-	port   int
-	base   string
+	url  *url.URL
+	base string
 }
 
 func (bu *baseUrl) buildUrl(endpoint string) string {
 	endpoint = strings.TrimSuffix(endpoint, "/")
 	endpoint = strings.TrimPrefix(endpoint, "/")
-	return fmt.Sprintf("%s://%s:%d%s%s/", bu.scheme, bu.host, bu.port, bu.base, endpoint)
+	url := fmt.Sprintf("%s%s%s/", bu.url.String(), bu.base, endpoint)
+	return url
 }
 
 type API struct {
+	httpClient   *http.Client
 	baseUrl      baseUrl
 	request      *http.Request
 	response     *http.Response
@@ -73,8 +74,7 @@ func (a *API) getAuthToken(user, password string) (string, error) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := newHttpClient()
-	res, err := client.Do(req)
+	res, err := a.httpClient.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -128,8 +128,8 @@ func (a *API) sendRequestTo(method, endpoint string) {
 		req.Header.Add("Authorization", a.token)
 	}
 
-	client := newHttpClient()
-	resp, err := client.Do(req)
+	resp, err := a.httpClient.Do(req)
+	fmt.Println(resp, err)
 	if err != nil {
 		a.t.Error(err)
 	}
@@ -284,13 +284,23 @@ func GetSession(ns, serviceName, db string) (session interfaces.Session, err err
 }
 
 func newApi(t *testing.T) *API {
+	const reqTimeout = 5
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+	httpClient := &http.Client{
+		Transport: tr,
+		Timeout:   reqTimeout * time.Second,
+	}
+
 	return &API{
-		t: t,
+		httpClient: httpClient,
+		t:          t,
 		baseUrl: baseUrl{
-			scheme: "http",
-			host:   apiHost,
-			port:   apiPort,
-			base:   "/api/v1/",
+			url:  apiUrl,
+			base: "/api/v1/",
 		},
 	}
 }

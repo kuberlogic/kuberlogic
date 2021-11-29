@@ -18,11 +18,12 @@ package tests
 
 import (
 	"flag"
+	"fmt"
 	cmd2 "github.com/kuberlogic/kuberlogic/modules/apiserver/cmd"
 	"github.com/kuberlogic/kuberlogic/modules/operator/cmd"
 	"github.com/prometheus/common/log"
+	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -54,8 +55,10 @@ var services = []Service{
 
 // default api contact values
 var (
-	apiHost = "localhost"
-	apiPort = 8001
+	apiUrl = &url.URL{
+		Scheme: "http:",
+		Host:   "localhost:8081",
+	}
 )
 
 // these values are related to keycloak values in config/keycloak manifests
@@ -75,16 +78,11 @@ func setup() {
 		log.Info("Waiting 15 seconds for the starting goroutines...")
 		time.Sleep(15 * time.Second)
 	} else {
-		hostPort := strings.Split(apiAddr, ":")
-		if len(hostPort) != 2 {
-			panic("REMOTE_HOST must be in host:port form")
+		url, err := url.Parse(apiAddr)
+		if err != nil {
+			panic(fmt.Sprintf("REMOTE_HOST is not a valid url: %v", err))
 		}
-		apiHost = hostPort[0]
-		p, e := strconv.Atoi(hostPort[1])
-		if e != nil && p == 0 {
-			panic("API_PORT int variable must be set for remote tests")
-		}
-		apiPort = p
+		apiUrl = url
 	}
 
 	if isWait := os.Getenv("WAIT_BEFORE_CREATE"); isWait == "true" {
