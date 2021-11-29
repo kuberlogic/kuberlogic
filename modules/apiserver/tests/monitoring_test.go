@@ -176,7 +176,7 @@ func (tm *tMonitoring) CheckAlertNotification() func(t *testing.T) {
 				t.Errorf("error reading mailcatcher response data: %v", err)
 			}
 			r.Body.Close()
-			if err := json.Unmarshal(body, messages); err != nil {
+			if err := json.Unmarshal(body, &messages); err != nil {
 				t.Errorf("error decoding mailcatcher response data: %v", err)
 			}
 			for _, m := range messages {
