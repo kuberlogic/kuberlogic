@@ -1,4 +1,18 @@
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: alertmanager-data
+  namespace: {{ .Release.Namespace }}
+  labels:
+  {{- include "monitoring.labels" .  | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.alertmanager.volumeSize }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -48,21 +62,6 @@ spec:
         - persistentVolumeClaim:
             claimName: alertmanager-data
           name: alertmanager-data
----
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: alertmanager-data
-  namespace: {{ .Release.Namespace }}
-  labels:
-  {{- include "monitoring.labels" .  | nindent 4 }}
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: {{ .Values.alertmanager.volumeSize }}
 ---
 apiVersion: v1
 kind: Service
