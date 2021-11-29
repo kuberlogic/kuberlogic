@@ -125,11 +125,10 @@ func (r *ReleaseInfo) UpdateDemoUser(user string) {
 }
 
 func (r *ReleaseInfo) ShowBanner() string {
-	return fmt.Sprintf(`Kuberlogic URL: %s
+	return fmt.Sprintf(`
+Kuberlogic URL: %s
 Kuberlogic Monitoring Console URL: %s
-Kuberlogic connection Ingress address: %s
-
-Please make sure that URL domain names are pointing to the Ingress IP!
+Kuberlogic address: %s
 
 Demo user login: %s
 Demo user password can be found in the configuration file.`, r.uiURL, r.mcURL, r.ingressEndpoint, r.demoUser)

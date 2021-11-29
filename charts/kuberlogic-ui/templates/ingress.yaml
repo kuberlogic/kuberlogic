@@ -30,12 +30,9 @@ metadata:
 spec:
   ingressClassName: {{ .Values.ingress.class }}
   tls:
-    - hosts:
-        - {{ .Values.ingress.host }}
-      secretName: kuberlogic-cert
+    - secretName: kuberlogic-cert
   rules:
-    - host: {{ .Values.ingress.host }}
-      http:
+    - http:
         paths:
           - path: /api/v1
             pathType: Prefix
