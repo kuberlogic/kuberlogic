@@ -19,10 +19,12 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/prometheus/common/log"
 	"io"
 	"net/http"
 	"os"
 	"testing"
+	"time"
 )
 
 type tMonitoring struct {
@@ -161,8 +163,10 @@ func (tm *tMonitoring) CheckAlertNotification() func(t *testing.T) {
 
 		for i := 0; i < 300; i += 1 {
 			if found {
+				log.Infof("Alert notification received")
 				break
 			}
+			time.Sleep(time.Duration(1) * time.Second)
 			r, err := http.Get(tm.mailcatcherEndpoint + "/messages")
 			if err != nil {
 				t.Errorf("error getting mailcatcher messages: %v", err)
@@ -172,7 +176,7 @@ func (tm *tMonitoring) CheckAlertNotification() func(t *testing.T) {
 				t.Errorf("error reading mailcatcher response data: %v", err)
 			}
 			r.Body.Close()
-			if err := json.Unmarshal(body, &messages); err != nil {
+			if err := json.Unmarshal(body, messages); err != nil {
 				t.Errorf("error decoding mailcatcher response data: %v", err)
 			}
 			for _, m := range messages {
@@ -180,6 +184,7 @@ func (tm *tMonitoring) CheckAlertNotification() func(t *testing.T) {
 					found = true
 				}
 			}
+			log.Infof("Still no alert notification after: %ds", i)
 		}
 	}
 }
@@ -193,4 +198,5 @@ func TestMonitoringStack(t *testing.T) {
 	}
 
 	t.Run("victoriaMetrics active targets", tm.CheckTargets())
+	t.Run("alerts notifications", tm.CheckAlertNotification())
 }
