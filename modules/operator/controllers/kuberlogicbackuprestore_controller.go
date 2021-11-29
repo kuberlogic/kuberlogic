@@ -176,9 +176,6 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 			log.Error(err, "Failed to create new Job", "Name", klr.Name,
 				"Namespace", klr.Namespace)
 			return ctrl.Result{}, err
-		} else {
-			// job created successfully - return and requeue
-			return ctrl.Result{Requeue: true}, nil
 		}
 	}
 	backupRestore.InitFrom(job)
@@ -199,6 +196,8 @@ func (r *KuberLogicBackupRestoreReconciler) Reconcile(ctx context.Context, req c
 		} else {
 			klr.MarkSuccessfulFinish()
 		}
+	} else {
+		klr.MarkPending()
 	}
 
 	err = r.Status().Update(ctx, klr)

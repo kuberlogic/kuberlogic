@@ -214,6 +214,14 @@ func TestKuberlogicBackupScheduleReconciler_ReconcileValid(t *testing.T) {
 	if img := cj.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image; img != r.cfg.ImageRepo+"/backup-mysql:"+r.cfg.Version {
 		t.Errorf("actual backup image (%v) does not match desired", img)
 	}
+
+	if err := r.Client.Get(testKlbCtx, klbId, klb); err != nil {
+		t.Errorf("error getting kuberlogicbackupschedule")
+	}
+
+	if klb.IsRunning() {
+		t.Errorf("backup is not expected to be running or finished")
+	}
 }
 
 func TestKuberlogicBackupScheduleReconciler_ReconcileRunning(t *testing.T) {

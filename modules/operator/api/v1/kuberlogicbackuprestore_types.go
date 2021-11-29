@@ -112,6 +112,10 @@ func (klr *KuberLogicBackupRestore) IsFailed() bool {
 		meta.IsStatusConditionTrue(klr.Status.Conditions, klrFinishedCondType)
 }
 
+func (klr *KuberLogicBackupRestore) IsPending() bool {
+	return meta.IsStatusConditionTrue(klr.Status.Conditions, klrPendingCondType)
+}
+
 // returns completion description and time
 func (klr *KuberLogicBackupRestore) GetCompletionStatus() (string, *time.Time) {
 	c := meta.FindStatusCondition(klr.Status.Conditions, klrFinishedCondType)

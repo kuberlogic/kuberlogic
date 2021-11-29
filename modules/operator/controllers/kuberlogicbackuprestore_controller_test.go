@@ -134,6 +134,13 @@ func TestKuberlogicBackupRestoreReconciler_ReconcileValid(t *testing.T) {
 	if err := r.Client.Get(context.TODO(), klrId, j); err != nil {
 		t.Errorf("error getting backup cronjob: %v", err)
 	}
+	if err := r.Client.Get(context.TODO(), klrId, klr); err != nil {
+		t.Errorf("error getting kuberlogicrestore: %v", err)
+	}
+
+	if !klr.IsPending() {
+		t.Errorf("klr is expected to be Pending")
+	}
 }
 
 func createKuberlogicsbackuprestoreWithEnv(c client.Client, klr *kuberlogicv1.KuberLogicBackupRestore) error {
