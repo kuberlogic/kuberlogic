@@ -1,0 +1,60 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - kuberlogic.com
+  resources:
+  - kuberlogicservices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kuberlogic.com
+  resources:
+  - kuberlogicservices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - kuberlogic.com
+  resources:
+  - kuberlogicservices/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - kuberlogic.com
+  resources:
+  - kuberlogicservicetypes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kuberlogic.com
+  resources:
+  - kuberlogicservicetypes/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - kuberlogic.com
+  resources:
+  - kuberlogicservicetypes/status
+  verbs:
+  - get
+  - patch
+  - update
