@@ -13,6 +13,10 @@ spec:
       path: "spec.replicas"
       type: float
       defaultValue: 1
+    version:
+      path: "spec.mysqlVersion"
+      type: string
+      defaultValue: "5.7"
     volumeSize:
       path: "spec.volumeSpec.persistentVolumeClaim.resources.requests.storage"
       type: string

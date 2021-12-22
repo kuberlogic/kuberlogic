@@ -208,19 +208,10 @@ func (r *KuberLogicServiceReconciler) SetFields(
 
 		}
 		path := typeValue.Path
-
-		switch typeValue.Type {
-		case "float":
-			value = value.(float64)
-		case "string":
-			value = value.(string)
-		}
-
 		if err := setField(svc, value, path); err != nil {
 			log.Error(err, "error setting value")
 			return err
 		}
-
 	}
 
 	for k, _ := range spec {
