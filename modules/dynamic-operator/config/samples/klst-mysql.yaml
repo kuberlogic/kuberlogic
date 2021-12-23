@@ -26,7 +26,7 @@ spec:
       type: json
       defaultValue:
         requests:
-          memory: 9Mi
+          memory: 50Mi
           cpu: 50Mi
         limits:
           memory: 128Mi
