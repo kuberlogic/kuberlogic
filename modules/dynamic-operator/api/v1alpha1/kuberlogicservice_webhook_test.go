@@ -14,29 +14,33 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package v1alpha1
 
 import (
 	"context"
 	"encoding/json"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"time"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"time"
 )
 
-var _ = Describe("KuberlogicServiceType controller", func() {
+var _ = Describe("KuberlogicService webhook", func() {
 	const (
-		klstName      = "mysql-percona"
+		klsName       = "test-service"
+		klsNamespace  = "default"
+		klstName      = "mysql"
 		klstNamespace = "default"
 
 		defaultReplicas   = "1"
 		defaultVersion    = "5.7"
 		defaultVolumeSize = "1G"
+
+		replicas   = 2
+		volumeSize = "2G"
+		secretName = "test-secret-mysql-name"
 
 		timeout  = time.Second * 10
 		duration = time.Second * 10
@@ -55,25 +59,26 @@ var _ = Describe("KuberlogicServiceType controller", func() {
 	}
 
 	var defaultSpec = map[string]interface{}{
-		"secretName": "demo",
+		"secretName": secretName,
 	}
 
-	Context("When updating KuberLogicServiceType", func() {
-		It("Should created a new KuberLogicType resource", func() {
+	Context("When updating KuberLogicService", func() {
+		BeforeEach(func() {
 			By("By creating a new KuberLogicType")
 
 			defaultResourcesBytes, _ := json.Marshal(defaultResources)
 			defaultSpecBytes, _ := json.Marshal(defaultSpec)
 			defaultVolumeSizeBytes, _ := json.Marshal(defaultVolumeSize)
+			defaultVersionBytes, _ := json.Marshal(defaultVersion)
 
-			spec := v1alpha1.KuberLogicServiceTypeSpec{
+			spec := KuberLogicServiceTypeSpec{
 				Type: "mysql",
-				Api: v1alpha1.KuberLogicServiceTypeApiRef{
+				Api: KuberLogicServiceTypeApiRef{
 					Group:   "mysql.presslabs.org",
 					Version: "v1alpha1",
 					Kind:    "MysqlCluster",
 				},
-				SpecRef: map[string]v1alpha1.KuberlogicServiceTypeParam{
+				SpecRef: map[string]KuberlogicServiceTypeParam{
 					"replicas": {
 						Path: "spec.replicas",
 						Type: "float",
@@ -85,7 +90,7 @@ var _ = Describe("KuberlogicServiceType controller", func() {
 						Path: "spec.mysqlVersion",
 						Type: "string",
 						DefaultValue: apiextensionsv1.JSON{
-							Raw: []byte(defaultVersion),
+							Raw: []byte(defaultVersionBytes),
 						},
 					},
 					"volumeSize": {
@@ -106,8 +111,8 @@ var _ = Describe("KuberlogicServiceType controller", func() {
 				DefaultSpec: apiextensionsv1.JSON{
 					Raw: defaultSpecBytes,
 				},
-				StatusRef: v1alpha1.KuberlogicServiceTypeStatusRef{
-					Conditions: &v1alpha1.KuberLogicServiceTypeConditions{
+				StatusRef: KuberlogicServiceTypeStatusRef{
+					Conditions: &KuberLogicServiceTypeConditions{
 						Path:           "status.conditions",
 						ReadyCondition: "Ready",
 						ReadyValue:     "True",
@@ -116,7 +121,7 @@ var _ = Describe("KuberlogicServiceType controller", func() {
 			}
 
 			ctx := context.Background()
-			klst := &v1alpha1.KuberLogicServiceType{
+			klst := &KuberLogicServiceType{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: "kuberlogic.com/v1alpha1",
 					Kind:       "KuberLogicServiceType",
@@ -132,7 +137,7 @@ var _ = Describe("KuberlogicServiceType controller", func() {
 
 			By("By checking a new KuberLogicType")
 			lookupKey := types.NamespacedName{Name: klstName, Namespace: klstNamespace}
-			createdKlst := &v1alpha1.KuberLogicServiceType{}
+			createdKlst := &KuberLogicServiceType{}
 
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, lookupKey, createdKlst)
@@ -142,6 +147,87 @@ var _ = Describe("KuberlogicServiceType controller", func() {
 				return true
 			}, timeout, interval).Should(BeTrue())
 			Expect(createdKlst.Spec).Should(Equal(spec))
+		})
+		It("Should create KuberLogicService resource", func() {
+
+			By("By creating a new KuberLogicService")
+
+			rawSpec := map[string]interface{}{
+				"type":       "mysql",
+				"replicas":   replicas,
+				"volumeSize": volumeSize,
+			}
+
+			specBytes, _ := json.Marshal(rawSpec)
+			specKuberlogic := apiextensionsv1.JSON{
+				Raw: specBytes,
+			}
+			//
+			//ctx := context.Background()
+			kls := &KuberLogicService{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "kuberlogic.com/v1alpha1",
+					Kind:       "KuberLogicService",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      klsName,
+					Namespace: klsNamespace,
+				},
+				Spec: specKuberlogic,
+			}
+
+			Expect(k8sClient.Create(ctx, kls)).Should(Succeed())
+
+			By("By checking a new KuberLogicService")
+			lookupKlsKey := types.NamespacedName{Name: klsName, Namespace: klsNamespace}
+			createdKls := &KuberLogicService{}
+
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, lookupKlsKey, createdKls)
+				if err != nil {
+					return false
+				}
+				return true
+			}, timeout, interval).Should(BeTrue())
+
+			// checking mutation webhook which adds default fields
+			expectedSpec := map[string]interface{}{
+				"type":       "mysql",
+				"replicas":   replicas,
+				"volumeSize": volumeSize,
+				"resources":  defaultResources,
+				"version":    defaultVersion,
+			}
+
+			expectedSpecBytes, _ := json.Marshal(expectedSpec)
+			expectedSpecKuberlogic := apiextensionsv1.JSON{
+				Raw: expectedSpecBytes,
+			}
+			Expect(createdKls.Spec).Should(Equal(expectedSpecKuberlogic))
+
+			var value map[string]interface{}
+			err := json.Unmarshal(createdKls.Spec.Raw, &value)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			Expect(value["type"]).Should(Equal("mysql"))
+		})
+		AfterEach(func() {
+			By("Remove KuberlogicServiceType")
+
+			removedKlst := &KuberLogicServiceType{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      klstName,
+					Namespace: klstNamespace,
+				},
+			}
+
+			Eventually(func() bool {
+				err := k8sClient.Delete(ctx, removedKlst)
+				if err != nil {
+					return false
+				}
+				return true
+			}, timeout, interval).Should(BeTrue())
 		})
 	})
 })

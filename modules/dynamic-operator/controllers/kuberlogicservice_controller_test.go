@@ -230,7 +230,7 @@ var _ = Describe("KuberlogicService controller", func() {
 			mysqlSpec := svc.UnstructuredContent()["spec"].(map[string]interface{})
 			Expect(mysqlSpec["secretName"]).Should(Equal(secretName))
 			Expect(mysqlSpec["replicas"]).Should(Equal(int64(replicas)))
-			Expect(mysqlSpec["mysqlVersion"]).Should(Equal(defaultVersion))
+			Expect(mysqlSpec["mysqlVersion"]).Should(BeNil()) // webhook is not configured
 			Expect(mysqlSpec["volumeSpec"]).Should(Equal(map[string]interface{}{
 				"persistentVolumeClaim": map[string]interface{}{
 					"resources": map[string]interface{}{
