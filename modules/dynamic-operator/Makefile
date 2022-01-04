@@ -128,3 +128,13 @@ GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef
+
+.PHONY: patch-webhook-endpoint
+patch-webhook-endpoint:
+	MINIKUBE_IP=$$(minikube ip) envsubst < config/webhook/patched-endpoint.yaml | kubectl apply -f -
+
+.PHONY: generate-local-webhook-certs
+generate-local-webhook-certs:
+	mkdir -p /tmp/k8s-webhook-server/serving-certs/; \
+	kubectl get secret webhook-server-cert -o=jsonpath="{.data['tls\.key']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.key
+	kubectl get secret webhook-server-cert -o=jsonpath="{.data['tls\.crt']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.crt
