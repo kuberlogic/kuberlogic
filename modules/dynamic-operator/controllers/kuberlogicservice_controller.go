@@ -22,26 +22,23 @@ import (
 	"fmt"
 	"github.com/getsentry/sentry-go"
 	"github.com/go-logr/logr"
+	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"strings"
-	"time"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	logger "sigs.k8s.io/controller-runtime/pkg/log"
-
-	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	"time"
 )
 
 // KuberLogicServiceReconciler reconciles a KuberLogicService object
 type KuberLogicServiceReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme  *runtime.Scheme
+	Plugins map[string]commons.PluginService
 }
 
 func HandlePanic(log logr.Logger) {
@@ -72,7 +69,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			log.Info(req.Namespace, req.Name, " is absent")
+			log.Info(req.Namespace, req.Name, "is absent")
 
 			return ctrl.Result{}, nil
 		}
@@ -82,46 +79,45 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	spec := make(map[string]interface{}, 0)
-	if err := json.Unmarshal(kls.Spec.Raw, &spec); err != nil {
-		log.Error(err, "error unmarshaling spec")
-		return ctrl.Result{}, err
-	}
-
-	klst := &kuberlogiccomv1alpha1.KuberLogicServiceType{}
-	err = r.Get(ctx, types.NamespacedName{
-		Name:      kls.GetServiceType(spec),
-		Namespace: req.Namespace,
-	}, klst)
-	if err != nil {
-		log.Error(err, "Failed to get KuberLogicServiceType")
-		return ctrl.Result{}, err
-	}
-
-	defaultSpec := make(map[string]interface{}, 0)
-	if err := json.Unmarshal(klst.Spec.DefaultSpec.Raw, &defaultSpec); err != nil {
-		log.Error(err, "error unmarshaling defaultSpec")
-		return ctrl.Result{}, err
-	}
-
-	// define a basic svc object to work with it
-	svc := &unstructured.Unstructured{}
-	svc.SetGroupVersionKind(klst.ServiceGVK())
-	svc.SetName(kls.Name)
-	svc.SetNamespace(kls.Namespace)
-	if err := unstructured.SetNestedField(svc.UnstructuredContent(), defaultSpec, "spec"); err != nil {
-		log.Error(err, "error setting default spec", "defaultSpec", defaultSpec)
-		return ctrl.Result{}, err
-	}
-
-	log.Info("debug", "service", svc.UnstructuredContent())
-	if err := r.Client.Get(ctx, req.NamespacedName, svc); k8serrors.IsNotFound(err) {
-		log.Info("creating new service", "type", kls.GetServiceType(spec))
-
-		err = r.SetFields(spec, svc, klst, log)
-		if err != nil {
-			log.Error(err, "error parsing fields")
+	if len(kls.Spec.Advanced.Raw) > 0 {
+		if err := json.Unmarshal(kls.Spec.Advanced.Raw, &spec); err != nil {
+			log.Error(err, "error unmarshalling spec")
 			return ctrl.Result{}, err
 		}
+	}
+
+	log.Info("spec", "spec", kls.Spec)
+	log.Info("plugin type", "type", kls.Spec.Type)
+
+	//return ctrl.Result{}, nil
+
+	plugin := r.Plugins[kls.Spec.Type]
+	resp := plugin.Empty(commons.PluginRequest{
+		Name:      kls.Name,
+		Namespace: kls.Namespace,
+	})
+	if resp.Error != nil {
+		log.Error(resp.Error, "error from rpc call 'Empty'")
+		return ctrl.Result{}, resp.Error
+	}
+
+	svc := resp.Object
+	if err := r.Client.Get(ctx, req.NamespacedName, svc); k8serrors.IsNotFound(err) {
+		log.Info("creating new service", "type", kls.Spec.Type)
+
+		resp := plugin.ForCreate(commons.PluginRequest{
+			Name:       kls.Name,
+			Namespace:  kls.Namespace,
+			Replicas:   kls.Spec.Replicas,
+			VolumeSize: kls.Spec.VolumeSize,
+			Version:    kls.Spec.Version,
+			Parameters: spec,
+		})
+		if resp.Error != nil {
+			log.Error(resp.Error, "error from rpc call 'ForCreate'")
+			return ctrl.Result{}, resp.Error
+		}
+		svc := resp.Object
 
 		if err := ctrl.SetControllerReference(kls, svc, r.Scheme); err != nil {
 			log.Error(err, "error setting controller reference")
@@ -129,51 +125,53 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		}
 
 		if err := r.Create(ctx, svc); err != nil {
-			log.Error(err, "error creaing service object")
+			log.Error(err, "error creating service object")
 			return ctrl.Result{}, err
 		}
 	} else if err != nil {
 		log.Error(err, "failed to get service object")
 		return ctrl.Result{}, err
-	}
-	log.Info("service object exists")
-	log.Info("syncing kuberlogicservice parameters")
+	} else {
 
-	err = r.SetFields(spec, svc, klst, log)
-	if err != nil {
-		log.Error(err, "error parsing fields")
-		return ctrl.Result{}, err
-	}
+		resp = plugin.ForUpdate(commons.PluginRequest{
+			Name:       kls.Name,
+			Namespace:  kls.Namespace,
+			Object:     svc,
+			Replicas:   kls.Spec.Replicas,
+			VolumeSize: kls.Spec.VolumeSize,
+			Version:    kls.Spec.Version,
+			Parameters: spec,
+		})
+		if resp.Error != nil {
+			log.Error(resp.Error, "error from rpc call 'ForUpdate'")
+			return ctrl.Result{}, resp.Error
+		}
+		svc = resp.Object
 
-	log.Info("updating the service", "svc", svc.UnstructuredContent())
-	if err := r.Update(ctx, svc); err != nil {
-		log.Error(err, "error updating service object")
-		return ctrl.Result{}, err
+		log.Info("updating the service", "svc", svc.UnstructuredContent())
+		if err := r.Update(ctx, svc); err != nil {
+			log.Error(err, "error updating service object")
+			return ctrl.Result{}, err
+		}
 	}
 
 	log.Info("syncing status", "object", svc.UnstructuredContent())
-
-	kls.MarkNotReady("Ready condition not found")
-	conditions, found, err := unstructured.NestedSlice(svc.UnstructuredContent(), strings.Split(klst.Spec.StatusRef.Conditions.Path, ".")...)
-	if err != nil {
-		log.Error(err, "conditions is not found in service object")
-		return ctrl.Result{}, err
+	resp = plugin.Status(commons.PluginRequest{
+		Name:       kls.Name,
+		Namespace:  kls.Namespace,
+		Object:     svc,
+		Parameters: spec,
+	})
+	if resp.Error != nil {
+		log.Error(resp.Error, "error from rpc call 'ForUpdate'")
+		return ctrl.Result{}, resp.Error
 	}
-	if !found {
-		log.Info("Ready condition is not found in service object")
-		kls.MarkNotReady("ReadyConditionNotFound")
+	if resp.IsReady {
+		kls.MarkReady("ReadyConditionMet")
 	} else {
-		for _, c := range conditions {
-			cond := c.(map[string]interface{})
-			if cond["type"].(string) == klst.Spec.StatusRef.Conditions.ReadyCondition {
-				if cond["status"] == klst.Spec.StatusRef.Conditions.ReadyValue {
-					kls.MarkReady("ReadyConditionMet")
-				} else {
-					kls.MarkNotReady("ReadyConditionNotMet")
-				}
-			}
-		}
+		kls.MarkNotReady("ReadyConditionNotMet")
 	}
+
 	if err := r.Status().Update(ctx, kls); err != nil {
 		log.Error(err, "error syncing status")
 		return ctrl.Result{}, err
@@ -182,28 +180,6 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	return ctrl.Result{}, nil
 }
 
-func setField(svc *unstructured.Unstructured, value interface{}, path string) error {
-	pathSliced := strings.Split(path, ".")
-	return unstructured.SetNestedField(svc.UnstructuredContent(), value, pathSliced...)
-}
-
-func (r *KuberLogicServiceReconciler) SetFields(
-	spec map[string]interface{},
-	svc *unstructured.Unstructured,
-	klst *kuberlogiccomv1alpha1.KuberLogicServiceType,
-	log logr.Logger,
-) error {
-	for k, typeValue := range klst.Spec.SpecRef {
-		value, _ := spec[k]
-		if err := setField(svc, value, typeValue.Path); err != nil {
-			log.Error(err, "error setting value")
-			return err
-		}
-	}
-	return nil
-}
-
-// SetupWithManager sets up the controller with the Manager.
 func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager) (controller.Controller, error) {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kuberlogiccomv1alpha1.KuberLogicService{}).
