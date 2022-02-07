@@ -18,7 +18,13 @@ package main
 
 import (
 	"flag"
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"os"
+	"os/exec"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -45,6 +51,21 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(kuberlogiccomv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
+}
+
+// handshakeConfigs are used to just do a basic handshake between
+// a plugin and host. If the handshake fails, a user friendly error is shown.
+// This prevents users from executing bad plugins or executing a plugin
+// directory. It is a UX feature, not a security feature.
+var handshakeConfig = plugin.HandshakeConfig{
+	ProtocolVersion:  1,
+	MagicCookieKey:   "KUBERLOGIC_SERVICE_PLUGIN",
+	MagicCookieValue: "com.kuberlogic.service.plugin",
+}
+
+// pluginMap is the map of plugins we can dispense.
+var pluginMap = map[string]plugin.Plugin{
+	"postgresql": &commons.Plugin{},
 }
 
 func main() {
@@ -77,23 +98,67 @@ func main() {
 		os.Exit(1)
 	}
 
+	// init postgresql plugin configuration
+	// Create an hclog.Logger
+	logger := hclog.New(&hclog.LoggerOptions{
+		Name:   "plugin",
+		Output: os.Stdout,
+		Level:  hclog.Debug,
+	})
+
+	// We're a host! Start by launching the plugin process.
+	client := plugin.NewClient(&plugin.ClientConfig{
+		HandshakeConfig: handshakeConfig,
+		Plugins:         pluginMap,
+		Cmd:             exec.Command("./plugin/postgres"),
+		Logger:          logger,
+	})
+	defer client.Kill()
+
+	// Connect via RPC
+	rpcClient, err := client.Client()
+	if err != nil {
+		setupLog.Error(err, "unable connecting to plugin")
+		os.Exit(1)
+	}
+
+	// Request the plugin
+	raw, err := rpcClient.Dispense("postgresql")
+	if err != nil {
+		setupLog.Error(err, "unable requesting to plugin")
+		os.Exit(1)
+	}
+
+	var pluginInstances = map[string]commons.PluginService{
+		"postgresql": raw.(commons.PluginService),
+	}
+
 	serviceController, err := (&controllers.KuberLogicServiceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:  mgr.GetClient(),
+		Scheme:  mgr.GetScheme(),
+		Plugins: pluginInstances,
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KuberLogicService")
 		os.Exit(1)
 	}
-	if err = (&controllers.KuberLogicServiceTypeReconciler{
-		Client:            mgr.GetClient(),
-		Scheme:            mgr.GetScheme(),
-		ServiceController: serviceController,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "KuberLogicServiceType")
-		os.Exit(1)
+
+	// registering watchers for the dependent resources
+	for pluginType, instance := range pluginInstances {
+		setupLog.Info("registering watcher", "type", pluginType)
+		err := serviceController.Watch(&source.Kind{
+			Type: instance.Type().Object,
+		}, &handler.EnqueueRequestForOwner{
+			OwnerType:    &kuberlogiccomv1alpha1.KuberLogicService{},
+			IsController: true,
+		})
+		if err != nil {
+			setupLog.Error(err, "unable to watch the resource", "type", pluginType)
+			os.Exit(1)
+		}
 	}
-	if err = (&kuberlogiccomv1alpha1.KuberLogicService{}).SetupWebhookWithManager(mgr); err != nil {
+
+	if err = (&kuberlogiccomv1alpha1.KuberLogicService{}).SetupWebhookWithManager(mgr, pluginInstances); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "KuberLogicService")
 		os.Exit(1)
 	}
