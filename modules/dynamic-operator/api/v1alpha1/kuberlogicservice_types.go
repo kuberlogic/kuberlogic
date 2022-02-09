@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	v11 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,9 +64,6 @@ type KuberLogicService struct {
 
 	Spec   KuberLogicServiceSpec   `json:"spec,omitempty"`
 	Status KuberLogicServiceStatus `json:"status,omitempty"`
-
-	// it uses for webhook (defaulting, validations)
-	pluginInstances map[string]commons.PluginService `json:"-"`
 }
 
 func (in *KuberLogicService) setConditionStatus(cond string, status bool, msg, reason string) {
