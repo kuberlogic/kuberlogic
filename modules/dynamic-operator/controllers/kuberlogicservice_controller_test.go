@@ -17,11 +17,11 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
 	"encoding/json"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -31,18 +31,12 @@ import (
 
 var _ = Describe("KuberlogicService controller", func() {
 	const (
-		klsName       = "test-service"
-		klsNamespace  = "default"
-		klstName      = "mysql"
-		klstNamespace = "default"
+		klsName      = "test-service"
+		klsNamespace = "default"
 
-		defaultReplicas   = "1"
-		defaultVersion    = "5.7"
+		defaultReplicas   = 1
+		defaultVersion    = "13"
 		defaultVolumeSize = "1G"
-
-		replicas   = 2
-		volumeSize = "2G"
-		secretName = "test-secret-mysql-name"
 
 		timeout  = time.Second * 10
 		duration = time.Second * 10
@@ -60,111 +54,21 @@ var _ = Describe("KuberlogicService controller", func() {
 		},
 	}
 
-	var defaultSpec = map[string]interface{}{
-		"secretName": secretName,
-	}
-
 	Context("When updating KuberLogicService", func() {
-		BeforeEach(func() {
-			By("By creating a new KuberLogicType")
-
-			defaultResourcesBytes, _ := json.Marshal(defaultResources)
-			defaultSpecBytes, _ := json.Marshal(defaultSpec)
-			defaultVolumeSizeBytes, _ := json.Marshal(defaultVolumeSize)
-			defaultVersionBytes, _ := json.Marshal(defaultVersion)
-
-			spec := v1alpha1.KuberLogicServiceTypeSpec{
-				Type: "mysql",
-				Api: v1alpha1.KuberLogicServiceTypeApiRef{
-					Group:   "mysql.presslabs.org",
-					Version: "v1alpha1",
-					Kind:    "MysqlCluster",
-				},
-				SpecRef: map[string]v1alpha1.KuberlogicServiceTypeParam{
-					"replicas": {
-						Path: "spec.replicas",
-						Type: "float",
-						DefaultValue: apiextensionsv1.JSON{
-							Raw: []byte(defaultReplicas),
-						},
-					},
-					"version": {
-						Path: "spec.mysqlVersion",
-						Type: "string",
-						DefaultValue: apiextensionsv1.JSON{
-							Raw: []byte(defaultVersionBytes),
-						},
-					},
-					"volumeSize": {
-						Path: "spec.volumeSpec.persistentVolumeClaim.resources.requests.storage",
-						Type: "string",
-						DefaultValue: apiextensionsv1.JSON{
-							Raw: defaultVolumeSizeBytes,
-						},
-					},
-					"resources": {
-						Path: "spec.podSpec.resources",
-						Type: "json",
-						DefaultValue: apiextensionsv1.JSON{
-							Raw: defaultResourcesBytes,
-						},
-					},
-				},
-				DefaultSpec: apiextensionsv1.JSON{
-					Raw: defaultSpecBytes,
-				},
-				StatusRef: v1alpha1.KuberlogicServiceTypeStatusRef{
-					Conditions: &v1alpha1.KuberLogicServiceTypeConditions{
-						Path:           "status.conditions",
-						ReadyCondition: "Ready",
-						ReadyValue:     "True",
-					},
-				},
-			}
-
-			ctx := context.Background()
-			klst := &v1alpha1.KuberLogicServiceType{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "kuberlogic.com/v1alpha1",
-					Kind:       "KuberLogicServiceType",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      klstName,
-					Namespace: klstNamespace,
-				},
-				Spec: spec,
-			}
-
-			Expect(k8sClient.Create(ctx, klst)).Should(Succeed())
-
-			By("By checking a new KuberLogicType")
-			lookupKey := types.NamespacedName{Name: klstName, Namespace: klstNamespace}
-			createdKlst := &v1alpha1.KuberLogicServiceType{}
-
-			Eventually(func() bool {
-				err := k8sClient.Get(ctx, lookupKey, createdKlst)
-				if err != nil {
-					return false
-				}
-				return true
-			}, timeout, interval).Should(BeTrue())
-			Expect(createdKlst.Spec).Should(Equal(spec))
-		})
 		It("Should create KuberLogicService resource", func() {
 
 			By("By creating a new KuberLogicService")
 
-			rawSpec := map[string]interface{}{
-				"type":       "mysql",
-				"replicas":   replicas,
-				"volumeSize": volumeSize,
+			//defaultResourcesBytes, _ := json.Marshal(defaultResources)
+			rawAdvanced := map[string]interface{}{
+				"resources": defaultResources,
 			}
 
-			specBytes, _ := json.Marshal(rawSpec)
-			specKuberlogic := apiextensionsv1.JSON{
-				Raw: specBytes,
+			advancedBytes, _ := json.Marshal(rawAdvanced)
+			advanced := apiextensionsv1.JSON{
+				Raw: advancedBytes,
 			}
-			//
+
 			//ctx := context.Background()
 			kls := &v1alpha1.KuberLogicService{
 				TypeMeta: metav1.TypeMeta{
@@ -175,7 +79,13 @@ var _ = Describe("KuberlogicService controller", func() {
 					Name:      klsName,
 					Namespace: klsNamespace,
 				},
-				Spec: specKuberlogic,
+				Spec: v1alpha1.KuberLogicServiceSpec{
+					Type:       "postgresql",
+					Replicas:   defaultReplicas,
+					VolumeSize: defaultVolumeSize,
+					Version:    defaultVersion,
+					Advanced:   advanced,
+				},
 			}
 
 			Expect(k8sClient.Create(ctx, kls)).Should(Succeed())
@@ -191,73 +101,39 @@ var _ = Describe("KuberlogicService controller", func() {
 				}
 				return true
 			}, timeout, interval).Should(BeTrue())
-			Expect(createdKls.Spec).Should(Equal(specKuberlogic))
+			Expect(createdKls.Spec.Type).Should(Equal("postgresql"))
 
-			var value map[string]interface{}
-			err := json.Unmarshal(createdKls.Spec.Raw, &value)
-			Expect(err).ShouldNot(HaveOccurred())
+			By("By checking a new cluster")
+			lookupKey := types.NamespacedName{Name: klsName, Namespace: klsNamespace}
 
-			Expect(value["type"]).Should(Equal("mysql"))
-
-			By("By checking a new KuberLogicType")
-			lookupKey := types.NamespacedName{Name: klstName, Namespace: klstNamespace}
-			createdKlst := &v1alpha1.KuberLogicServiceType{}
-
-			Eventually(func() bool {
-				err := k8sClient.Get(ctx, lookupKey, createdKlst)
-				if err != nil {
-					return false
-				}
-				return true
-			}, timeout, interval).Should(BeTrue())
-
-			By("By checking a new mysql cluster")
-			lookupKeyMysql := types.NamespacedName{Name: klsName, Namespace: klsNamespace}
+			//svc := &postgresv1.Postgresql{}
 
 			svc := &unstructured.Unstructured{}
-			svc.SetGroupVersionKind(createdKlst.ServiceGVK())
+			svc.SetGroupVersionKind(
+				postgresv1.SchemeGroupVersion.WithKind(postgresv1.PostgresCRDResourceKind),
+			)
 			svc.SetName(kls.Name)
 			svc.SetNamespace(kls.Namespace)
 
 			Eventually(func() bool {
-				err := k8sClient.Get(ctx, lookupKeyMysql, svc)
+				err := k8sClient.Get(ctx, lookupKey, svc)
 				if err != nil {
 					return false
 				}
 				return true
 			}, timeout, interval).Should(BeTrue())
 
-			mysqlSpec := svc.UnstructuredContent()["spec"].(map[string]interface{})
-			Expect(mysqlSpec["secretName"]).Should(Equal(secretName))
-			Expect(mysqlSpec["replicas"]).Should(Equal(int64(replicas)))
-			Expect(mysqlSpec["mysqlVersion"]).Should(BeNil()) // webhook is not configured
-			Expect(mysqlSpec["volumeSpec"]).Should(Equal(map[string]interface{}{
-				"persistentVolumeClaim": map[string]interface{}{
-					"resources": map[string]interface{}{
-						"requests": map[string]interface{}{
-							"storage": volumeSize,
-						},
-					},
-				},
+			pgSpec := svc.UnstructuredContent()["spec"].(map[string]interface{})
+			//fmt.Println("------", pgSpec)
+
+			Expect(pgSpec["numberOfInstances"]).Should(Equal(int64(defaultReplicas)))
+			postgresqlSection := pgSpec["postgresql"].(map[string]interface{})
+			Expect(postgresqlSection["version"]).Should(Equal(defaultVersion))
+			Expect(pgSpec["volume"]).Should(Equal(map[string]interface{}{
+				"size": defaultVolumeSize,
 			}))
-		})
-		AfterEach(func() {
-			By("Remove KuberlogicServiceType")
+			Expect(pgSpec["resources"]).Should(Equal(defaultResources))
 
-			removedKlst := &v1alpha1.KuberLogicServiceType{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      klstName,
-					Namespace: klstNamespace,
-				},
-			}
-
-			Eventually(func() bool {
-				err := k8sClient.Delete(ctx, removedKlst)
-				if err != nil {
-					return false
-				}
-				return true
-			}, timeout, interval).Should(BeTrue())
 		})
 	})
 })
