@@ -27,10 +27,12 @@ import (
 
 var log = ctrl.Log.WithName("kuberlogicservice-webhook")
 
-//var cl client.Client
+var pluginInstances map[string]commons.PluginService
 
-func (r *KuberLogicService) SetupWebhookWithManager(mgr ctrl.Manager, pluginInstances map[string]commons.PluginService) error {
-	r.pluginInstances = pluginInstances
+func (r *KuberLogicService) SetupWebhookWithManager(mgr ctrl.Manager, plugins map[string]commons.PluginService) error {
+	for k, v := range plugins {
+		pluginInstances[k] = v
+	}
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -44,7 +46,7 @@ var _ webhook.Defaulter = &KuberLogicService{}
 func (r *KuberLogicService) Default() {
 	log.Info("default", "name", r.Name)
 
-	plugin, ok := r.pluginInstances[r.Spec.Type]
+	plugin, ok := pluginInstances[r.Spec.Type]
 	if !ok {
 		log.Info("Plugin is not loaded", "type", r.Spec.Type)
 		return
@@ -99,7 +101,7 @@ var _ webhook.Validator = &KuberLogicService{}
 func (r *KuberLogicService) ValidateCreate() error {
 	log.Info("validate create", "name", r.Name)
 
-	plugin, ok := r.pluginInstances[r.Spec.Type]
+	plugin, ok := pluginInstances[r.Spec.Type]
 	if !ok {
 		err := errors.New("Plugin is not loaded")
 		log.Info(err.Error(), "type", r.Spec.Type)
@@ -117,7 +119,7 @@ func (r *KuberLogicService) ValidateCreate() error {
 func (r *KuberLogicService) ValidateUpdate(old runtime.Object) error {
 	log.Info("validate update", "name", r.Name)
 
-	plugin, ok := r.pluginInstances[r.Spec.Type]
+	plugin, ok := pluginInstances[r.Spec.Type]
 	if !ok {
 		err := errors.New("Plugin is not loaded")
 		log.Info(err.Error(), "type", r.Spec.Type)
@@ -135,7 +137,7 @@ func (r *KuberLogicService) ValidateUpdate(old runtime.Object) error {
 func (r *KuberLogicService) ValidateDelete() error {
 	log.Info("validate delete", "name", r.Name)
 
-	plugin, ok := r.pluginInstances[r.Spec.Type]
+	plugin, ok := pluginInstances[r.Spec.Type]
 	if !ok {
 		err := errors.New("Plugin is not loaded")
 		log.Info(err.Error(), "type", r.Spec.Type)
