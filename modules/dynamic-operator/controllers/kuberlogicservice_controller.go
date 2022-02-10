@@ -29,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	logger "sigs.k8s.io/controller-runtime/pkg/log"
 	"time"
 )
@@ -96,9 +95,10 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		Name:      kls.Name,
 		Namespace: kls.Namespace,
 	})
-	if resp.Error != nil {
-		log.Error(resp.Error, "error from rpc call 'Empty'")
-		return ctrl.Result{}, resp.Error
+	if resp.Error != "" {
+		err := errors.New(resp.Error)
+		log.Error(err, "error from rpc call 'Empty'")
+		return ctrl.Result{}, err
 	}
 
 	svc := resp.Object
@@ -113,9 +113,10 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			Version:    kls.Spec.Version,
 			Parameters: spec,
 		})
-		if resp.Error != nil {
-			log.Error(resp.Error, "error from rpc call 'ForCreate'")
-			return ctrl.Result{}, resp.Error
+		if resp.Error != "" {
+			err := errors.New(resp.Error)
+			log.Error(err, "error from rpc call 'ForCreate'")
+			return ctrl.Result{}, err
 		}
 		svc := resp.Object
 
@@ -142,9 +143,10 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			Version:    kls.Spec.Version,
 			Parameters: spec,
 		})
-		if resp.Error != nil {
-			log.Error(resp.Error, "error from rpc call 'ForUpdate'")
-			return ctrl.Result{}, resp.Error
+		if resp.Error != "" {
+			err := errors.New(resp.Error)
+			log.Error(err, "error from rpc call 'ForUpdate'")
+			return ctrl.Result{}, err
 		}
 		svc = resp.Object
 
@@ -162,9 +164,10 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		Object:     svc,
 		Parameters: spec,
 	})
-	if resp.Error != nil {
-		log.Error(resp.Error, "error from rpc call 'ForUpdate'")
-		return ctrl.Result{}, resp.Error
+	if resp.Error != "" {
+		err := errors.New(resp.Error)
+		log.Error(err, "error from rpc call 'ForUpdate'")
+		return ctrl.Result{}, err
 	}
 	if resp.IsReady {
 		kls.MarkReady("ReadyConditionMet")
@@ -180,8 +183,12 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	return ctrl.Result{}, nil
 }
 
-func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager) (controller.Controller, error) {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&kuberlogiccomv1alpha1.KuberLogicService{}).
-		Build(r)
+func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager, objects ...client.Object) error {
+	builder := ctrl.NewControllerManagedBy(mgr).For(
+		&kuberlogiccomv1alpha1.KuberLogicService{})
+
+	for _, object := range objects {
+		builder = builder.Owns(object)
+	}
+	return builder.Complete(r)
 }

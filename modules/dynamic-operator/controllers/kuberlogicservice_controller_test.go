@@ -106,8 +106,6 @@ var _ = Describe("KuberlogicService controller", func() {
 			By("By checking a new cluster")
 			lookupKey := types.NamespacedName{Name: klsName, Namespace: klsNamespace}
 
-			//svc := &postgresv1.Postgresql{}
-
 			svc := &unstructured.Unstructured{}
 			svc.SetGroupVersionKind(
 				postgresv1.SchemeGroupVersion.WithKind(postgresv1.PostgresCRDResourceKind),

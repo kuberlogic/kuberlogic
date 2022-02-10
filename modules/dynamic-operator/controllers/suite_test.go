@@ -26,8 +26,6 @@ import (
 	"path/filepath"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -127,24 +125,18 @@ var _ = BeforeSuite(func() {
 		"postgresql": raw.(commons.PluginService),
 	}
 
-	serviceController, err := (&KuberLogicServiceReconciler{
+	// registering watchers for the dependent resources
+	var dependantObjects []client.Object
+	for _, instance := range pluginInstances {
+		dependantObjects = append(dependantObjects, instance.Type().Object)
+	}
+
+	err = (&KuberLogicServiceReconciler{
 		Client:  k8sManager.GetClient(),
 		Scheme:  k8sManager.GetScheme(),
 		Plugins: pluginInstances,
-	}).SetupWithManager(k8sManager)
+	}).SetupWithManager(k8sManager, dependantObjects...)
 	Expect(err).ToNot(HaveOccurred())
-
-	// registering watchers for the dependent resources
-	for _, instance := range pluginInstances {
-		//setupLog.Info("registering watcher", "type", pluginType)
-		err := serviceController.Watch(&source.Kind{
-			Type: instance.Type().Object,
-		}, &handler.EnqueueRequestForOwner{
-			OwnerType:    &kuberlogiccomv1alpha1.KuberLogicService{},
-			IsController: true,
-		})
-		Expect(err).ToNot(HaveOccurred())
-	}
 
 	go func() {
 		defer GinkgoRecover()
