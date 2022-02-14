@@ -10,6 +10,7 @@ require (
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.15.0
 	github.com/pkg/errors v0.9.1
+	github.com/vrischmann/envconfig v1.3.0 // indirect
 	github.com/zalando/postgres-operator v1.7.1 // indirect
 	k8s.io/api v0.22.3
 	k8s.io/apiextensions-apiserver v0.22.3

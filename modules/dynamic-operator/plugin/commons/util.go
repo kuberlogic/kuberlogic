@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func FromUnstructured(u map[string]interface{}, obj interface{}) error {
@@ -38,6 +39,19 @@ func ToUnstructured(obj interface{}, gvk schema.GroupVersionKind) (*unstructured
 	u := &unstructured.Unstructured{Object: content}
 	u.SetGroupVersionKind(gvk)
 	return u, nil
+}
+
+func ResponseFromObject(object client.Object, gvk schema.GroupVersionKind) *PluginResponse {
+	o, err := ToUnstructured(object, gvk)
+	if err != nil {
+		return &PluginResponse{
+			Error: err.Error(),
+		}
+	}
+	return &PluginResponse{
+		Object: o,
+	}
+
 }
 
 func ServePlugin(name string, pl PluginService) {
