@@ -104,19 +104,33 @@ func (p *PostgresqlService) ValidateDelete(req commons.PluginRequest) *commons.P
 }
 
 func (p *PostgresqlService) Type() *commons.PluginResponse {
-	return commons.ResponseFromObject(&postgresv1.Postgresql{}, gvk())
+	object, err := commons.ToUnstructured(&postgresv1.Postgresql{}, gvk())
+	if err != nil {
+		return &commons.PluginResponse{
+			Error: err.Error(),
+		}
+	}
+	return &commons.PluginResponse{
+		Object: object,
+	}
 }
 
 func (p *PostgresqlService) Empty(req commons.PluginRequest) *commons.PluginResponse {
 	p.logger.Debug("call Empty")
-
-	return commons.ResponseFromObject(
-		&postgresv1.Postgresql{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      req.Name,
-				Namespace: req.Namespace,
-			},
-		}, gvk())
+	object, err := commons.ToUnstructured(&postgresv1.Postgresql{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      req.Name,
+			Namespace: req.Namespace,
+		},
+	}, gvk())
+	if err != nil {
+		return &commons.PluginResponse{
+			Error: err.Error(),
+		}
+	}
+	return &commons.PluginResponse{
+		Object: object,
+	}
 }
 
 func (p *PostgresqlService) merge(object *postgresv1.Postgresql, req commons.PluginRequest) error {
@@ -156,7 +170,6 @@ func (p *PostgresqlService) IsReady() bool {
 
 func (p *PostgresqlService) Status(req commons.PluginRequest) *commons.PluginResponse {
 	p.logger.Debug("call Status")
-
 	object := &postgresv1.Postgresql{}
 	err := commons.FromUnstructured(req.Object.UnstructuredContent(), object)
 	if err != nil {
@@ -193,7 +206,18 @@ func (p *PostgresqlService) ForUpdate(req commons.PluginRequest) *commons.Plugin
 
 	}
 	p.logger.Info("ForUpdate", "object", object)
-	return commons.ResponseFromObject(object, gvk())
+
+	response, err := commons.ToUnstructured(object, gvk())
+	if err != nil {
+		p.logger.Error(err.Error())
+		return &commons.PluginResponse{
+			Error: err.Error(),
+		}
+	}
+
+	return &commons.PluginResponse{
+		Object: response,
+	}
 }
 
 func (p *PostgresqlService) ForCreate(req commons.PluginRequest) *commons.PluginResponse {
@@ -208,7 +232,17 @@ func (p *PostgresqlService) ForCreate(req commons.PluginRequest) *commons.Plugin
 
 	}
 
-	return commons.ResponseFromObject(object, gvk())
+	reps, err := commons.ToUnstructured(object, gvk())
+	if err != nil {
+		p.logger.Error(err.Error())
+		return &commons.PluginResponse{
+			Error: err.Error(),
+		}
+	}
+	p.logger.Info("unstructured object", "obj", reps)
+	return &commons.PluginResponse{
+		Object: reps,
+	}
 }
 
 func (p *PostgresqlService) Init(req commons.PluginRequest) *postgresv1.Postgresql {

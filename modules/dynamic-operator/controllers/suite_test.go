@@ -20,7 +20,6 @@ import (
 	"context"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
-	cfg2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"os"
 	"os/exec"
@@ -46,13 +45,19 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	cfg           *rest.Config
-	k8sClient     client.Client // You'll be using this client in your tests.
-	testEnv       *envtest.Environment
-	ctx           context.Context
-	cancel        context.CancelFunc
-	pluginClients []*plugin.Client
+	cfg          *rest.Config
+	k8sClient    client.Client // You'll be using this client in your tests.
+	testEnv      *envtest.Environment
+	ctx          context.Context
+	cancel       context.CancelFunc
+	pluginClient *plugin.Client
 )
+
+var handshakeConfig = plugin.HandshakeConfig{
+	ProtocolVersion:  1,
+	MagicCookieKey:   "KUBERLOGIC_SERVICE_PLUGIN",
+	MagicCookieValue: "com.kuberlogic.service.plugin",
+}
 
 var pluginMap = map[string]plugin.Plugin{
 	"postgresql": &commons.Plugin{},
@@ -68,9 +73,6 @@ func TestAPIs(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
-
-	config, err := cfg2.NewConfig()
-	Expect(err).NotTo(HaveOccurred())
 
 	ctx, cancel = context.WithCancel(context.TODO())
 
@@ -98,33 +100,29 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	// Create an hclog.Logger
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:   "plugin",
 		Output: os.Stdout,
 		Level:  hclog.Debug,
 	})
 
-	pluginInstances := make(map[string]commons.PluginService)
-	for _, item := range config.Plugins {
-		// We're a host! Start by launching the plugin process.
-		pluginClient := plugin.NewClient(&plugin.ClientConfig{
-			HandshakeConfig: commons.HandshakeConfig,
-			Plugins:         pluginMap,
-			Cmd:             exec.Command(item.Path),
-			Logger:          logger,
-		})
-		pluginClients = append(pluginClients, pluginClient)
+	pluginClient = plugin.NewClient(&plugin.ClientConfig{
+		HandshakeConfig: handshakeConfig,
+		Plugins:         pluginMap,
+		Cmd:             exec.Command("../plugin/postgres"),
+		Logger:          logger,
+	})
 
-		// Connect via RPC
-		rpcClient, err := pluginClient.Client()
-		Expect(err).ToNot(HaveOccurred())
+	// Connect via RPC
+	rpcClient, err := pluginClient.Client()
+	Expect(err).ToNot(HaveOccurred())
 
-		// Request the plugin
-		raw, err := rpcClient.Dispense(item.Name)
-		Expect(err).ToNot(HaveOccurred())
+	// Request the plugin
+	raw, err := rpcClient.Dispense("postgresql")
+	Expect(err).ToNot(HaveOccurred())
 
-		pluginInstances[item.Name] = raw.(commons.PluginService)
+	var pluginInstances = map[string]commons.PluginService{
+		"postgresql": raw.(commons.PluginService),
 	}
 
 	// registering watchers for the dependent resources
@@ -151,9 +149,7 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	cancel()
 	By("tearing down the test environment")
-	for _, cl := range pluginClients {
-		cl.Kill()
-	}
+	pluginClient.Kill()
 
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
