@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	v11 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,23 +27,6 @@ const readyCondType = "Ready"
 // KuberLogicServiceStatus defines the observed state of KuberLogicService
 type KuberLogicServiceStatus struct {
 	Conditions []metav1.Condition `json:"conditions"`
-}
-
-type KuberLogicServiceSpec struct {
-	// Type of the cluster
-	// +kubebuilder:validation:Enum=postgresql;mysql;redis
-	Type string `json:"type"`
-	// Amount of replicas
-	// +kubebuilder:validation:Maximum=5
-	Replicas int32 `json:"replicas"`
-	// Volume size
-	VolumeSize string `json:"volumeSize,omitempty"`
-	// 2 or 3 digits: 5 or 5.7 or 5.7.31
-	// +kubebuilder:validation:Pattern=^\d+[\.\d+]*$
-	Version string `json:"version,omitempty"`
-
-	// any advanced configuration is supported
-	Advanced v11.JSON `json:"advanced,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -63,11 +45,12 @@ type KuberLogicService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   KuberLogicServiceSpec   `json:"spec,omitempty"`
+	Spec   v11.JSON                `json:"spec,omitempty"`
 	Status KuberLogicServiceStatus `json:"status,omitempty"`
+}
 
-	// it uses for webhook (defaulting, validations)
-	pluginInstances map[string]commons.PluginService
+func (in KuberLogicService) GetServiceType(spec map[string]interface{}) string {
+	return spec["type"].(string)
 }
 
 func (in *KuberLogicService) setConditionStatus(cond string, status bool, msg, reason string) {
