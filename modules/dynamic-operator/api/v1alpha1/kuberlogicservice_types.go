@@ -67,7 +67,7 @@ type KuberLogicService struct {
 	Status KuberLogicServiceStatus `json:"status,omitempty"`
 
 	// it uses for webhook (defaulting, validations)
-	pluginInstances map[string]commons.PluginService `json:"-"`
+	pluginInstances map[string]commons.PluginService
 }
 
 func (in *KuberLogicService) setConditionStatus(cond string, status bool, msg, reason string) {
