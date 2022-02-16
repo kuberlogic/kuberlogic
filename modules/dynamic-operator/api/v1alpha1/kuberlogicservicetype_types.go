@@ -22,7 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-type KuberLogicServiceTypeApiRef struct {
+type kuberLogicServiceTypeApiRef struct {
 	Group   string `json:"group"`
 	Version string `json:"version"`
 	Kind    string `json:"kind"`
@@ -48,7 +48,7 @@ type KuberlogicServiceTypeStatusRef struct {
 type KuberLogicServiceTypeSpec struct {
 	Type string `json:"type"`
 
-	Api         KuberLogicServiceTypeApiRef           `json:"api"`
+	Api         kuberLogicServiceTypeApiRef           `json:"api"`
 	SpecRef     map[string]KuberlogicServiceTypeParam `json:"specRef"`
 	StatusRef   KuberlogicServiceTypeStatusRef        `json:"statusRef"`
 	DefaultSpec v1.JSON                               `json:"defaultSpec"`
@@ -85,13 +85,6 @@ func (k KuberLogicServiceType) ServiceGVK() schema.GroupVersionKind {
 		Group:   k.Spec.Api.Group,
 		Version: k.Spec.Api.Version,
 		Kind:    k.Spec.Api.Kind,
-	}
-}
-
-func (k KuberLogicServiceType) ServiceGV() schema.GroupVersion {
-	return schema.GroupVersion{
-		Group:   k.Spec.Api.Group,
-		Version: k.Spec.Api.Version,
 	}
 }
 
