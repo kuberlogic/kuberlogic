@@ -20,12 +20,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"net"
-	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
@@ -48,24 +43,11 @@ import (
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
-var (
-	cfg          *rest.Config
-	k8sClient    client.Client
-	testEnv      *envtest.Environment
-	ctx          context.Context
-	cancel       context.CancelFunc
-	pluginClient *plugin.Client
-)
-
-var handshakeConfig = plugin.HandshakeConfig{
-	ProtocolVersion:  1,
-	MagicCookieKey:   "KUBERLOGIC_SERVICE_PLUGIN",
-	MagicCookieValue: "com.kuberlogic.service.plugin",
-}
-
-var pluginMap = map[string]plugin.Plugin{
-	"postgresql": &commons.Plugin{},
-}
+var cfg *rest.Config
+var k8sClient client.Client
+var testEnv *envtest.Environment
+var ctx context.Context
+var cancel context.CancelFunc
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -106,31 +88,6 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
-	logger := hclog.New(&hclog.LoggerOptions{
-		Name:   "plugin",
-		Output: os.Stdout,
-		Level:  hclog.Debug,
-	})
-
-	pluginClient = plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: handshakeConfig,
-		Plugins:         pluginMap,
-		Cmd:             exec.Command("../../plugin/postgres"),
-		Logger:          logger,
-	})
-
-	// Connect via RPC
-	rpcClient, err := pluginClient.Client()
-	Expect(err).ToNot(HaveOccurred())
-
-	// Request the plugin
-	raw, err := rpcClient.Dispense("postgresql")
-	Expect(err).ToNot(HaveOccurred())
-
-	var pluginInstances = map[string]commons.PluginService{
-		"postgresql": raw.(commons.PluginService),
-	}
-
 	// start webhook server using Manager
 	webhookInstallOptions := &testEnv.WebhookInstallOptions
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
@@ -143,7 +100,7 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	err = (&KuberLogicService{}).SetupWebhookWithManager(mgr, pluginInstances)
+	err = (&KuberLogicService{}).SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:webhook
@@ -171,8 +128,6 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	cancel()
 	By("tearing down the test environment")
-	pluginClient.Kill()
-
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })

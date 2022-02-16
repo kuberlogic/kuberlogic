@@ -30,7 +30,9 @@ var log = ctrl.Log.WithName("kuberlogicservice-webhook")
 var pluginInstances map[string]commons.PluginService
 
 func (r *KuberLogicService) SetupWebhookWithManager(mgr ctrl.Manager, plugins map[string]commons.PluginService) error {
-	pluginInstances = plugins
+	for k, v := range plugins {
+		pluginInstances[k] = v
+	}
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
