@@ -51,9 +51,8 @@ func (r *KuberLogicService) Default() {
 	}
 
 	resp := plugin.Default()
-	if resp.Error != "" {
-		err := errors.New(resp.Error)
-		log.Error(err, "error rpc call 'Default'")
+	if resp.Error != nil {
+		log.Error(resp.Error, "error rpc call 'Default'")
 		return
 	}
 	if r.Spec.Replicas == 0 {
@@ -111,11 +110,7 @@ func (r *KuberLogicService) ValidateCreate() error {
 	if err != nil {
 		return err
 	}
-	response := plugin.ValidateCreate(*req)
-	if response.Error != "" {
-		return errors.New(response.Error)
-	}
-	return nil
+	return plugin.ValidateCreate(*req).Error
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
@@ -133,11 +128,7 @@ func (r *KuberLogicService) ValidateUpdate(old runtime.Object) error {
 	if err != nil {
 		return err
 	}
-	response := plugin.ValidateUpdate(*req)
-	if response.Error != "" {
-		return errors.New(response.Error)
-	}
-	return nil
+	return plugin.ValidateUpdate(*req).Error
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
@@ -155,11 +146,7 @@ func (r *KuberLogicService) ValidateDelete() error {
 	if err != nil {
 		return err
 	}
-	response := plugin.ValidateDelete(*req)
-	if response.Error != "" {
-		return errors.New(response.Error)
-	}
-	return nil
+	return plugin.ValidateDelete(*req).Error
 }
 
 func makeRequest(kls *KuberLogicService) (*commons.PluginRequest, error) {

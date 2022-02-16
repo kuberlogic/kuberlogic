@@ -23,6 +23,9 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"os"
 	"os/exec"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -31,7 +34,6 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -105,16 +107,16 @@ func main() {
 	})
 
 	// We're a host! Start by launching the plugin process.
-	pluginClient := plugin.NewClient(&plugin.ClientConfig{
+	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: handshakeConfig,
 		Plugins:         pluginMap,
 		Cmd:             exec.Command("./plugin/postgres"),
 		Logger:          logger,
 	})
-	defer pluginClient.Kill()
+	defer client.Kill()
 
 	// Connect via RPC
-	rpcClient, err := pluginClient.Client()
+	rpcClient, err := client.Client()
 	if err != nil {
 		setupLog.Error(err, "unable connecting to plugin")
 		os.Exit(1)
@@ -131,21 +133,29 @@ func main() {
 		"postgresql": raw.(commons.PluginService),
 	}
 
-	// registering watchers for the dependent resources
-	var dependantObjects []client.Object
-	for pluginType, instance := range pluginInstances {
-		setupLog.Info("adding to register watcher", "type", pluginType)
-		dependantObjects = append(dependantObjects, instance.Type().Object)
-	}
-
-	err = (&controllers.KuberLogicServiceReconciler{
+	serviceController, err := (&controllers.KuberLogicServiceReconciler{
 		Client:  mgr.GetClient(),
 		Scheme:  mgr.GetScheme(),
 		Plugins: pluginInstances,
-	}).SetupWithManager(mgr, dependantObjects...)
+	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KuberLogicService")
 		os.Exit(1)
+	}
+
+	// registering watchers for the dependent resources
+	for pluginType, instance := range pluginInstances {
+		setupLog.Info("registering watcher", "type", pluginType)
+		err := serviceController.Watch(&source.Kind{
+			Type: instance.Type().Object,
+		}, &handler.EnqueueRequestForOwner{
+			OwnerType:    &kuberlogiccomv1alpha1.KuberLogicService{},
+			IsController: true,
+		})
+		if err != nil {
+			setupLog.Error(err, "unable to watch the resource", "type", pluginType)
+			os.Exit(1)
+		}
 	}
 
 	if err = (&kuberlogiccomv1alpha1.KuberLogicService{}).SetupWebhookWithManager(mgr, pluginInstances); err != nil {

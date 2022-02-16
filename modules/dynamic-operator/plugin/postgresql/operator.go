@@ -1,32 +1,20 @@
-/*
-Copyright 2021.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
-package plugin
+package main
 
 import (
+	"encoding/gob"
 	"fmt"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"os"
 	"strings"
 
 	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin"
+
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 )
 
@@ -46,10 +34,6 @@ type PostgresqlService struct {
 	service postgresv1.Postgresql
 }
 
-func (p *PostgresqlService) SetLogger(logger hclog.Logger) {
-	p.logger = logger
-}
-
 func (p *PostgresqlService) Default() *commons.PluginResponseDefault {
 	p.logger.Debug("call Default")
 
@@ -67,7 +51,7 @@ func (p *PostgresqlService) Default() *commons.PluginResponseDefault {
 	if err != nil {
 		p.logger.Error("cannot convert object", "err", err)
 		return &commons.PluginResponseDefault{
-			Error: err.Error(),
+			Error: err,
 		}
 	}
 
@@ -84,30 +68,33 @@ func (p *PostgresqlService) Default() *commons.PluginResponseDefault {
 
 func (p *PostgresqlService) ValidateCreate(req commons.PluginRequest) *commons.PluginResponse {
 	p.logger.Debug("call ValidateCreate")
+	var err error
 	return &commons.PluginResponse{
-		Error: "",
+		Error: err,
 	}
 }
 
 func (p *PostgresqlService) ValidateUpdate(req commons.PluginRequest) *commons.PluginResponse {
 	p.logger.Debug("call ValidateUpdate")
+	var err error
 	return &commons.PluginResponse{
-		Error: "",
+		Error: err,
 	}
 }
 
 func (p *PostgresqlService) ValidateDelete(req commons.PluginRequest) *commons.PluginResponse {
 	p.logger.Debug("call ValidateDelete")
+	var err error
 	return &commons.PluginResponse{
-		Error: "",
+		Error: err,
 	}
 }
 
 func (p *PostgresqlService) Type() *commons.PluginResponse {
-	object, err := commons.ToUnstructured(&postgresv1.Postgresql{}, gvk())
+	object, err := p.ToUnstructured(&postgresv1.Postgresql{})
 	if err != nil {
 		return &commons.PluginResponse{
-			Error: err.Error(),
+			Error: err,
 		}
 	}
 	return &commons.PluginResponse{
@@ -117,15 +104,15 @@ func (p *PostgresqlService) Type() *commons.PluginResponse {
 
 func (p *PostgresqlService) Empty(req commons.PluginRequest) *commons.PluginResponse {
 	p.logger.Debug("call Empty")
-	object, err := commons.ToUnstructured(&postgresv1.Postgresql{
+	object, err := p.ToUnstructured(&postgresv1.Postgresql{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Name,
 			Namespace: req.Namespace,
 		},
-	}, gvk())
+	})
 	if err != nil {
 		return &commons.PluginResponse{
-			Error: err.Error(),
+			Error: err,
 		}
 	}
 	return &commons.PluginResponse{
@@ -142,7 +129,7 @@ func (p *PostgresqlService) merge(object *postgresv1.Postgresql, req commons.Plu
 		switch k {
 		case "resources":
 			result := &postgresv1.Resources{}
-			err := commons.FromUnstructured(v.(map[string]interface{}), result)
+			err := p.FromUnstructured(v.(map[string]interface{}), result)
 			if err != nil {
 				return errors.New(fmt.Sprintf("cannot convert %v to postgresv1.Resources", v))
 			}
@@ -171,11 +158,11 @@ func (p *PostgresqlService) IsReady() bool {
 func (p *PostgresqlService) Status(req commons.PluginRequest) *commons.PluginResponse {
 	p.logger.Debug("call Status")
 	object := &postgresv1.Postgresql{}
-	err := commons.FromUnstructured(req.Object.UnstructuredContent(), object)
+	err := p.FromUnstructured(req.Object.UnstructuredContent(), object)
 	if err != nil {
 		p.logger.Error(err.Error())
 		return &commons.PluginResponse{
-			Error: err.Error(),
+			Error: err,
 		}
 	}
 
@@ -189,29 +176,22 @@ func (p *PostgresqlService) Status(req commons.PluginRequest) *commons.PluginRes
 func (p *PostgresqlService) ForUpdate(req commons.PluginRequest) *commons.PluginResponse {
 	p.logger.Debug("call ForUpdate")
 	object := &postgresv1.Postgresql{}
-	err := commons.FromUnstructured(req.Object.UnstructuredContent(), object)
+	err := p.FromUnstructured(req.Object.UnstructuredContent(), object)
 	if err != nil {
 		p.logger.Error(err.Error())
 		return &commons.PluginResponse{
-			Error: err.Error(),
+			Error: err,
 		}
 	}
 
-	err = p.merge(object, req)
-	if err != nil {
-		p.logger.Error(err.Error())
-		return &commons.PluginResponse{
-			Error: err.Error(),
-		}
-
-	}
+	p.merge(object, req)
 	p.logger.Info("ForUpdate", "object", object)
 
-	response, err := commons.ToUnstructured(object, gvk())
+	response, err := p.ToUnstructured(object)
 	if err != nil {
 		p.logger.Error(err.Error())
 		return &commons.PluginResponse{
-			Error: err.Error(),
+			Error: err,
 		}
 	}
 
@@ -223,20 +203,13 @@ func (p *PostgresqlService) ForUpdate(req commons.PluginRequest) *commons.Plugin
 func (p *PostgresqlService) ForCreate(req commons.PluginRequest) *commons.PluginResponse {
 	p.logger.Debug("call ForCreate")
 	object := p.Init(req)
-	err := p.merge(object, req)
+	p.merge(object, req)
+
+	reps, err := p.ToUnstructured(object)
 	if err != nil {
 		p.logger.Error(err.Error())
 		return &commons.PluginResponse{
-			Error: err.Error(),
-		}
-
-	}
-
-	reps, err := commons.ToUnstructured(object, gvk())
-	if err != nil {
-		p.logger.Error(err.Error())
-		return &commons.PluginResponse{
-			Error: err.Error(),
+			Error: err,
 		}
 	}
 	p.logger.Info("unstructured object", "obj", reps)
@@ -271,7 +244,16 @@ func (p *PostgresqlService) Init(req commons.PluginRequest) *postgresv1.Postgres
 					"log_statement":   "all",
 				},
 			},
-
+			//Resources: postgresv1.Resources{
+			//	ResourceRequests: postgresv1.ResourceDescription{
+			//		CPU:    "250m",
+			//		Memory: "128Mi",
+			//	},
+			//	ResourceLimits: postgresv1.ResourceDescription{
+			//		CPU:    "250m",
+			//		Memory: "128Mi",
+			//	},
+			//},
 			Patroni: postgresv1.Patroni{
 				InitDB: map[string]string{
 					"encoding":       "UTF8",
@@ -334,6 +316,57 @@ func (p *PostgresqlService) Init(req commons.PluginRequest) *postgresv1.Postgres
 	}
 }
 
+func (p *PostgresqlService) FromUnstructured(u map[string]interface{}, obj interface{}) error {
+	return runtime.DefaultUnstructuredConverter.FromUnstructured(u, obj)
+}
+
+func (p *PostgresqlService) ToUnstructured(obj *postgresv1.Postgresql) (*unstructured.Unstructured, error) {
+	content, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	u := &unstructured.Unstructured{Object: content}
+	u.SetGroupVersionKind(
+		postgresv1.SchemeGroupVersion.WithKind(postgresv1.PostgresCRDResourceKind),
+	)
+
+	return u, nil
+}
+
+// handshakeConfigs are used to just do a basic handshake between
+// a plugin and host. If the handshake fails, a user friendly error is shown.
+// This prevents users from executing bad plugins or executing a plugin
+// directory. It is a UX feature, not a security feature.
+var handshakeConfig = plugin.HandshakeConfig{
+	ProtocolVersion:  1,
+	MagicCookieKey:   "KUBERLOGIC_SERVICE_PLUGIN",
+	MagicCookieValue: "com.kuberlogic.service.plugin",
+}
+
+func main() {
+	logger := hclog.New(&hclog.LoggerOptions{
+		Level:      hclog.Trace,
+		Output:     os.Stderr,
+		JSONFormat: true,
+	})
+
+	postgresql := &PostgresqlService{
+		logger: logger,
+	}
+	// pluginMap is the map of plugins we can dispense.
+	var pluginMap = map[string]plugin.Plugin{
+		"postgresql": &commons.Plugin{Impl: postgresql},
+	}
+
+	logger.Debug("starting the plugin", "type", "postgresql")
+
+	plugin.Serve(&plugin.ServeConfig{
+		HandshakeConfig: handshakeConfig,
+		Plugins:         pluginMap,
+	})
+}
+
 func getImage(base, v string) string {
 	return fmt.Sprintf("%s/%s:%s", strings.TrimSuffix(imageRepo, "/"), base, v)
 }
@@ -342,6 +375,6 @@ func genUserCredentialsSecretName(user, cluster string) string {
 	return fmt.Sprintf("%s.%s.credentials", user, cluster)
 }
 
-func gvk() schema.GroupVersionKind {
-	return postgresv1.SchemeGroupVersion.WithKind(postgresv1.PostgresCRDResourceKind)
+func init() {
+	gob.Register(commons.PluginRequest{})
 }

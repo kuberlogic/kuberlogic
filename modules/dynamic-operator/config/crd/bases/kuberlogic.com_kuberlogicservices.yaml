@@ -69,33 +69,7 @@ spec:
           metadata:
             type: object
           spec:
-            properties:
-              advanced:
-                description: any advanced configuration is supported
-                x-kubernetes-preserve-unknown-fields: true
-              replicas:
-                description: Amount of replicas
-                format: int32
-                maximum: 5
-                type: integer
-              type:
-                description: Type of the cluster
-                enum:
-                - postgresql
-                - mysql
-                - redis
-                type: string
-              version:
-                description: '2 or 3 digits: 5 or 5.7 or 5.7.31'
-                pattern: ^\d+[\.\d+]*$
-                type: string
-              volumeSize:
-                description: Volume size
-                type: string
-            required:
-            - replicas
-            - type
-            type: object
+            x-kubernetes-preserve-unknown-fields: true
           status:
             description: KuberLogicServiceStatus defines the observed state of KuberLogicService
             properties:
