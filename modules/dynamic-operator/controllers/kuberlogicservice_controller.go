@@ -193,11 +193,34 @@ func (r *KuberLogicServiceReconciler) SetFields(
 	klst *kuberlogiccomv1alpha1.KuberLogicServiceType,
 	log logr.Logger,
 ) error {
+
 	for k, typeValue := range klst.Spec.SpecRef {
-		value, _ := spec[k]
-		if err := setField(svc, value, typeValue.Path); err != nil {
+		value, ok := spec[k]
+		if !ok {
+			log.Info("key is not found in type spec, using default", "key", k)
+
+			var v interface{}
+			if err := json.Unmarshal(typeValue.DefaultValue.Raw, &v); err != nil {
+				log.Error(err, "error unmarshaling default value")
+				return err
+			}
+			value = v
+
+		}
+		path := typeValue.Path
+		if err := setField(svc, value, path); err != nil {
 			log.Error(err, "error setting value")
 			return err
+		}
+	}
+
+	for k, _ := range spec {
+		if k == "type" { // skip specific "type" parameter
+			continue
+		}
+		_, ok := klst.Spec.SpecRef[k]
+		if !ok {
+			return errors.New(fmt.Sprintf("key is not found in type spec: key=%s, spec=%v", k, klst.Spec.SpecRef))
 		}
 	}
 	return nil

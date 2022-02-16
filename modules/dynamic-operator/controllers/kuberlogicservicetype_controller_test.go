@@ -142,6 +142,8 @@ var _ = Describe("KuberlogicServiceType controller", func() {
 				return true
 			}, timeout, interval).Should(BeTrue())
 			Expect(createdKlst.Spec).Should(Equal(spec))
+
+			//Expect(nil).NotTo(BeNil())
 		})
 	})
 })
