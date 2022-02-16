@@ -18,16 +18,9 @@ package controllers
 
 import (
 	"context"
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
-	"os"
-	"os/exec"
 	"path/filepath"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -47,23 +40,12 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	cfg          *rest.Config
-	k8sClient    client.Client // You'll be using this client in your tests.
-	testEnv      *envtest.Environment
-	ctx          context.Context
-	cancel       context.CancelFunc
-	pluginClient *plugin.Client
+	cfg       *rest.Config
+	k8sClient client.Client // You'll be using this client in your tests.
+	testEnv   *envtest.Environment
+	ctx       context.Context
+	cancel    context.CancelFunc
 )
-
-var handshakeConfig = plugin.HandshakeConfig{
-	ProtocolVersion:  1,
-	MagicCookieKey:   "KUBERLOGIC_SERVICE_PLUGIN",
-	MagicCookieValue: "com.kuberlogic.service.plugin",
-}
-
-var pluginMap = map[string]plugin.Plugin{
-	"postgresql": &commons.Plugin{},
-}
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -102,49 +84,18 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	logger := hclog.New(&hclog.LoggerOptions{
-		Name:   "plugin",
-		Output: os.Stdout,
-		Level:  hclog.Debug,
-	})
-
-	pluginClient = plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: handshakeConfig,
-		Plugins:         pluginMap,
-		Cmd:             exec.Command("../plugin/postgres"),
-		Logger:          logger,
-	})
-
-	// Connect via RPC
-	rpcClient, err := pluginClient.Client()
-	Expect(err).ToNot(HaveOccurred())
-
-	// Request the plugin
-	raw, err := rpcClient.Dispense("postgresql")
-	Expect(err).ToNot(HaveOccurred())
-
-	var pluginInstances = map[string]commons.PluginService{
-		"postgresql": raw.(commons.PluginService),
-	}
-
 	serviceController, err := (&KuberLogicServiceReconciler{
-		Client:  k8sManager.GetClient(),
-		Scheme:  k8sManager.GetScheme(),
-		Plugins: pluginInstances,
+		Client: k8sManager.GetClient(),
+		Scheme: k8sManager.GetScheme(),
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
-	// registering watchers for the dependent resources
-	for _, instance := range pluginInstances {
-		//setupLog.Info("registering watcher", "type", pluginType)
-		err := serviceController.Watch(&source.Kind{
-			Type: instance.Type().Object,
-		}, &handler.EnqueueRequestForOwner{
-			OwnerType:    &kuberlogiccomv1alpha1.KuberLogicService{},
-			IsController: true,
-		})
-		Expect(err).ToNot(HaveOccurred())
-	}
+	err = (&KuberLogicServiceTypeReconciler{
+		Client:            k8sManager.GetClient(),
+		Scheme:            k8sManager.GetScheme(),
+		ServiceController: serviceController,
+	}).SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
 
 	go func() {
 		defer GinkgoRecover()
@@ -157,8 +108,6 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	cancel()
 	By("tearing down the test environment")
-	pluginClient.Kill()
-
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })
