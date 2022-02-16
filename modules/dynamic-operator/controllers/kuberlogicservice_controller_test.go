@@ -138,7 +138,10 @@ var _ = Describe("KuberlogicService controller", func() {
 			Expect(k8sClient.Create(ctx, klst)).Should(Succeed())
 
 			By("By checking a new KuberLogicType")
-			lookupKey := types.NamespacedName{Name: klstName, Namespace: klstNamespace}
+			lookupKey := types.NamespacedName{
+				Name:      klstName,
+				Namespace: klstNamespace,
+			}
 			createdKlst := &v1alpha1.KuberLogicServiceType{}
 
 			Eventually(func() bool {
@@ -225,7 +228,7 @@ var _ = Describe("KuberlogicService controller", func() {
 					return false
 				}
 				return true
-			}, timeout, interval).Should(BeTrue())
+			}, time.Second*30, interval).Should(BeTrue())
 
 			mysqlSpec := svc.UnstructuredContent()["spec"].(map[string]interface{})
 			Expect(mysqlSpec["secretName"]).Should(Equal(secretName))
