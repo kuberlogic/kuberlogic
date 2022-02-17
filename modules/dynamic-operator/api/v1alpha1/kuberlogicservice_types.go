@@ -1,22 +1,11 @@
 /*
-Copyright 2021.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+ * CloudLinux Software Inc 2019-2021 All Rights Reserved
+ */
 
 package v1alpha1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	v11 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,6 +30,9 @@ type KuberLogicServiceSpec struct {
 	// 2 or 3 digits: 5 or 5.7 or 5.7.31
 	// +kubebuilder:validation:Pattern=^\d+[\.\d+]*$
 	Version string `json:"version,omitempty"`
+
+	// Resources (requests/limits)
+	Resources v1.ResourceRequirements `json:"resources,omitempty"`
 
 	// any advanced configuration is supported
 	Advanced v11.JSON `json:"advanced,omitempty"`

@@ -1,28 +1,16 @@
 /*
-Copyright 2021.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+ * CloudLinux Software Inc 2019-2021 All Rights Reserved
+ */
 
 package controllers
 
 import (
-	"encoding/json"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -43,14 +31,16 @@ var _ = Describe("KuberlogicService controller", func() {
 		interval = time.Millisecond * 250
 	)
 
-	var defaultResources = map[string]interface{}{
-		"requests": map[string]interface{}{
-			"memory": "50Mi",
-			"cpu":    "50m",
+	var resources = &v1.ResourceRequirements{
+		Requests: v1.ResourceList{
+			v1.ResourceCPU:    resource.MustParse("100m"),
+			v1.ResourceMemory: resource.MustParse("128Mi"),
 		},
-		"limits": map[string]interface{}{
-			"memory": "128Mi",
-			"cpu":    "250m",
+		Limits: v1.ResourceList{
+			// CPU 250m required minimum for zalando/posgtresql
+			// Memory 250Mi required minimum for zalando/posgtresql
+			v1.ResourceCPU:    resource.MustParse("250m"),
+			v1.ResourceMemory: resource.MustParse("256Mi"),
 		},
 	}
 
@@ -60,14 +50,14 @@ var _ = Describe("KuberlogicService controller", func() {
 			By("By creating a new KuberLogicService")
 
 			//defaultResourcesBytes, _ := json.Marshal(defaultResources)
-			rawAdvanced := map[string]interface{}{
-				"resources": defaultResources,
-			}
-
-			advancedBytes, _ := json.Marshal(rawAdvanced)
-			advanced := apiextensionsv1.JSON{
-				Raw: advancedBytes,
-			}
+			//rawAdvanced := map[string]interface{}{
+			//	"resources": defaultResources,
+			//}
+			//
+			//advancedBytes, _ := json.Marshal(rawAdvanced)
+			//advanced := apiextensionsv1.JSON{
+			//	Raw: advancedBytes,
+			//}
 
 			//ctx := context.Background()
 			kls := &v1alpha1.KuberLogicService{
@@ -84,7 +74,8 @@ var _ = Describe("KuberlogicService controller", func() {
 					Replicas:   defaultReplicas,
 					VolumeSize: defaultVolumeSize,
 					Version:    defaultVersion,
-					Advanced:   advanced,
+					Resources:  resources,
+					//Advanced:   advanced,
 				},
 			}
 
@@ -130,7 +121,7 @@ var _ = Describe("KuberlogicService controller", func() {
 			Expect(pgSpec["volume"]).Should(Equal(map[string]interface{}{
 				"size": defaultVolumeSize,
 			}))
-			Expect(pgSpec["resources"]).Should(Equal(defaultResources))
+			Expect(pgSpec["resources"]).Should(Equal(resources))
 
 		})
 	})

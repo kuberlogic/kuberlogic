@@ -1,18 +1,10 @@
 /*
-Copyright 2021.
+ * CloudLinux Software Inc 2019-2021 All Rights Reserved
+ */
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+/*
+ * CloudLinux Software Inc 2019-2021 All Rights Reserved
+ */
 
 package controllers
 
@@ -91,32 +83,30 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	//return ctrl.Result{}, nil
 
 	plugin := r.Plugins[kls.Spec.Type]
-	resp := plugin.Empty(commons.PluginRequest{
-		Name:      kls.Name,
-		Namespace: kls.Namespace,
-	})
-	if resp.Error != "" {
-		err := errors.New(resp.Error)
-		log.Error(err, "error from rpc call 'Empty'")
-		return ctrl.Result{}, err
+	resp := plugin.Type()
+	if resp.Error() != nil {
+		log.Error(resp.Error(), "error from rpc call 'Empty'")
+		return ctrl.Result{}, resp.Error()
 	}
 
 	svc := resp.Object
+	svc.SetName(kls.Name)
+	svc.SetNamespace(kls.Namespace)
 	if err := r.Client.Get(ctx, req.NamespacedName, svc); k8serrors.IsNotFound(err) {
 		log.Info("creating new service", "type", kls.Spec.Type)
 
-		resp := plugin.ForCreate(commons.PluginRequest{
+		resp := plugin.Convert(commons.PluginRequest{
 			Name:       kls.Name,
 			Namespace:  kls.Namespace,
 			Replicas:   kls.Spec.Replicas,
 			VolumeSize: kls.Spec.VolumeSize,
 			Version:    kls.Spec.Version,
+			Resources:  kls.Spec.Resources,
 			Parameters: spec,
 		})
-		if resp.Error != "" {
-			err := errors.New(resp.Error)
-			log.Error(err, "error from rpc call 'ForCreate'")
-			return ctrl.Result{}, err
+		if resp.Error() != nil {
+			log.Error(resp.Error(), "error from rpc call 'ForCreate'")
+			return ctrl.Result{}, resp.Error()
 		}
 		svc := resp.Object
 
@@ -134,19 +124,19 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	} else {
 
-		resp = plugin.ForUpdate(commons.PluginRequest{
+		resp = plugin.Convert(commons.PluginRequest{
 			Name:       kls.Name,
 			Namespace:  kls.Namespace,
 			Object:     svc,
 			Replicas:   kls.Spec.Replicas,
 			VolumeSize: kls.Spec.VolumeSize,
 			Version:    kls.Spec.Version,
+			Resources:  kls.Spec.Resources,
 			Parameters: spec,
 		})
-		if resp.Error != "" {
-			err := errors.New(resp.Error)
-			log.Error(err, "error from rpc call 'ForUpdate'")
-			return ctrl.Result{}, err
+		if resp.Error() != nil {
+			log.Error(resp.Error(), "error from rpc call 'ForUpdate'")
+			return ctrl.Result{}, resp.Error()
 		}
 		svc = resp.Object
 
@@ -158,18 +148,17 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	log.Info("syncing status", "object", svc.UnstructuredContent())
-	resp = plugin.Status(commons.PluginRequest{
+	status := plugin.Status(commons.PluginRequest{
 		Name:       kls.Name,
 		Namespace:  kls.Namespace,
 		Object:     svc,
 		Parameters: spec,
 	})
-	if resp.Error != "" {
-		err := errors.New(resp.Error)
-		log.Error(err, "error from rpc call 'ForUpdate'")
-		return ctrl.Result{}, err
+	if resp.Error() != nil {
+		log.Error(resp.Error(), "error from rpc call 'ForUpdate'")
+		return ctrl.Result{}, resp.Error()
 	}
-	if resp.IsReady {
+	if status.IsReady {
 		kls.MarkReady("ReadyConditionMet")
 	} else {
 		kls.MarkNotReady("ReadyConditionNotMet")

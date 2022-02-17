@@ -1,18 +1,6 @@
 /*
-Copyright 2021.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+ * CloudLinux Software Inc 2019-2021 All Rights Reserved
+ */
 
 package v1alpha1
 
@@ -20,7 +8,9 @@ import (
 	"encoding/json"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
@@ -51,19 +41,22 @@ func (r *KuberLogicService) Default() {
 	}
 
 	resp := plugin.Default()
-	if resp.Error != "" {
-		err := errors.New(resp.Error)
-		log.Error(err, "error rpc call 'Default'")
+	if resp.Error() != nil {
+		log.Error(resp.Error(), "error rpc call 'Default'")
 		return
-	}
-	if r.Spec.Replicas == 0 {
-		r.Spec.Replicas = resp.Replicas
 	}
 	if r.Spec.VolumeSize == "" {
 		r.Spec.VolumeSize = resp.VolumeSize
 	}
 	if r.Spec.Version == "" {
 		r.Spec.Version = resp.Version
+	}
+
+	log.Info("====", "resp ", resp)
+	log.Info("====", "in 1", r.Spec.Resources)
+	log.Info("====", "out 2", resp.Resources)
+	if reflect.DeepEqual(r.Spec.Resources, v1.ResourceRequirements{}) {
+		r.Spec.Resources = resp.Resources
 	}
 
 	spec := make(map[string]interface{}, 0)
@@ -111,9 +104,8 @@ func (r *KuberLogicService) ValidateCreate() error {
 	if err != nil {
 		return err
 	}
-	response := plugin.ValidateCreate(*req)
-	if response.Error != "" {
-		return errors.New(response.Error)
+	if err = plugin.ValidateCreate(*req).Error(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -133,9 +125,9 @@ func (r *KuberLogicService) ValidateUpdate(old runtime.Object) error {
 	if err != nil {
 		return err
 	}
-	response := plugin.ValidateUpdate(*req)
-	if response.Error != "" {
-		return errors.New(response.Error)
+
+	if err = plugin.ValidateUpdate(*req).Error(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -155,9 +147,9 @@ func (r *KuberLogicService) ValidateDelete() error {
 	if err != nil {
 		return err
 	}
-	response := plugin.ValidateDelete(*req)
-	if response.Error != "" {
-		return errors.New(response.Error)
+
+	if err := plugin.ValidateDelete(*req).Error(); err != nil {
+		return err
 	}
 	return nil
 }

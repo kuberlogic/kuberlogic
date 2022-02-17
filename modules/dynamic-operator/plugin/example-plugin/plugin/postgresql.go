@@ -1,18 +1,6 @@
 /*
-Copyright 2021.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+ * CloudLinux Software Inc 2019-2021 All Rights Reserved
+ */
 
 package plugin
 
@@ -21,8 +9,9 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
 	apiv1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"strings"
 
@@ -53,76 +42,55 @@ func (p *PostgresqlService) SetLogger(logger hclog.Logger) {
 func (p *PostgresqlService) Default() *commons.PluginResponseDefault {
 	p.logger.Debug("call Default")
 
-	content, err := runtime.DefaultUnstructuredConverter.ToUnstructured(
-		&postgresv1.Resources{
-			ResourceRequests: postgresv1.ResourceDescription{
-				CPU:    "100m",
-				Memory: "128Mi",
-			},
-			ResourceLimits: postgresv1.ResourceDescription{
-				CPU:    "250m",
-				Memory: "256Mi",
-			},
-		})
-	if err != nil {
-		p.logger.Error("cannot convert object", "err", err)
-		return &commons.PluginResponseDefault{
-			Error: err.Error(),
-		}
-	}
-
-	p.logger.Debug("content", "c", content)
-	return &commons.PluginResponseDefault{
+	v := &commons.PluginResponseDefault{
 		Replicas:   1,
 		VolumeSize: "1Gi",
 		Version:    "13",
-		Parameters: map[string]interface{}{
-			"resources": content,
+		Resources: v1.ResourceRequirements{
+			Requests: v1.ResourceList{
+				"cpu":    resource.MustParse("100m"),
+				"memory": resource.MustParse("128Mi"),
+			},
+			Limits: v1.ResourceList{
+				"cpu":    resource.MustParse("250m"),
+				"memory": resource.MustParse("256Mi"),
+			},
 		},
 	}
+	//v.Resources.Marshal()
+	p.logger.Info("===== response v ===", "v", v)
+	p.logger.Info("===== response resources ===", "resources", v.Resources)
+	return v
 }
 
-func (p *PostgresqlService) ValidateCreate(req commons.PluginRequest) *commons.PluginResponse {
-	p.logger.Debug("call ValidateCreate")
-	return &commons.PluginResponse{
-		Error: "",
-	}
+func (p *PostgresqlService) ValidateCreate(req commons.PluginRequest) *commons.PluginResponseValidation {
+	p.logger.Debug("call ValidateCreate", "ns", req.Namespace, "name", req.Name)
+	return &commons.PluginResponseValidation{}
 }
 
-func (p *PostgresqlService) ValidateUpdate(req commons.PluginRequest) *commons.PluginResponse {
-	p.logger.Debug("call ValidateUpdate")
-	return &commons.PluginResponse{
-		Error: "",
-	}
+func (p *PostgresqlService) ValidateUpdate(req commons.PluginRequest) *commons.PluginResponseValidation {
+	p.logger.Debug("call ValidateUpdate", "ns", req.Namespace, "name", req.Name)
+	return &commons.PluginResponseValidation{}
 }
 
-func (p *PostgresqlService) ValidateDelete(req commons.PluginRequest) *commons.PluginResponse {
-	p.logger.Debug("call ValidateDelete")
-	return &commons.PluginResponse{
-		Error: "",
-	}
+func (p *PostgresqlService) ValidateDelete(req commons.PluginRequest) *commons.PluginResponseValidation {
+	p.logger.Debug("call ValidateDelete", "ns", req.Namespace, "name", req.Name)
+	return &commons.PluginResponseValidation{}
 }
 
 func (p *PostgresqlService) Type() *commons.PluginResponse {
+	p.logger.Debug("call Type")
 	return commons.ResponseFromObject(&postgresv1.Postgresql{}, gvk())
-}
-
-func (p *PostgresqlService) Empty(req commons.PluginRequest) *commons.PluginResponse {
-	p.logger.Debug("call Empty")
-
-	return commons.ResponseFromObject(
-		&postgresv1.Postgresql{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      req.Name,
-				Namespace: req.Namespace,
-			},
-		}, gvk())
 }
 
 func (p *PostgresqlService) merge(object *postgresv1.Postgresql, req commons.PluginRequest) error {
 	object.Spec.NumberOfInstances = req.Replicas
 	object.Spec.Volume.Size = req.VolumeSize
 	object.Spec.PgVersion = req.Version
+
+	to, from := object.Spec.Resources, req.Resources
+	to.ResourceLimits.CPU, to.ResourceLimits.Memory = from.Limits.Cpu().String(), from.Limits.Memory().String()
+	to.ResourceRequests.CPU, to.ResourceRequests.Memory = from.Requests.Cpu().String(), from.Requests.Memory().String()
 
 	for k, v := range req.Parameters {
 		switch k {
@@ -141,8 +109,8 @@ func (p *PostgresqlService) merge(object *postgresv1.Postgresql, req commons.Plu
 	return nil
 }
 
-func (p *PostgresqlService) IsReady() bool {
-	switch p.service.Status.PostgresClusterStatus {
+func (p *PostgresqlService) IsReady(service *postgresv1.Postgresql) bool {
+	switch service.Status.PostgresClusterStatus {
 	case postgresv1.ClusterStatusCreating, postgresv1.ClusterStatusUpdating, postgresv1.ClusterStatusUnknown:
 		return false
 	case postgresv1.ClusterStatusAddFailed, postgresv1.ClusterStatusUpdateFailed, postgresv1.ClusterStatusSyncFailed, postgresv1.ClusterStatusInvalid:
@@ -154,60 +122,53 @@ func (p *PostgresqlService) IsReady() bool {
 	}
 }
 
-func (p *PostgresqlService) Status(req commons.PluginRequest) *commons.PluginResponse {
-	p.logger.Debug("call Status")
+func (p *PostgresqlService) Status(req commons.PluginRequest) *commons.PluginResponseStatus {
+	p.logger.Debug("call Status", "ns", req.Namespace, "name", req.Name)
 
 	object := &postgresv1.Postgresql{}
 	err := commons.FromUnstructured(req.Object.UnstructuredContent(), object)
 	if err != nil {
 		p.logger.Error(err.Error())
-		return &commons.PluginResponse{
-			Error: err.Error(),
+		return &commons.PluginResponseStatus{
+			Err: err.Error(),
 		}
 	}
 
-	isReady := p.IsReady()
+	isReady := p.IsReady(object)
 	p.logger.Info("isReady", "result", isReady)
-	return &commons.PluginResponse{
+	return &commons.PluginResponseStatus{
 		IsReady: isReady,
 	}
 }
 
-func (p *PostgresqlService) ForUpdate(req commons.PluginRequest) *commons.PluginResponse {
-	p.logger.Debug("call ForUpdate")
-	object := &postgresv1.Postgresql{}
-	err := commons.FromUnstructured(req.Object.UnstructuredContent(), object)
-	if err != nil {
-		p.logger.Error(err.Error())
-		return &commons.PluginResponse{
-			Error: err.Error(),
+func (p *PostgresqlService) Convert(req commons.PluginRequest) *commons.PluginResponse {
+	p.logger.Debug("call Convert", "ns", req.Namespace, "name", req.Name)
+
+	var object *postgresv1.Postgresql
+	if req.Object != nil {
+		// using existing object
+		object = &postgresv1.Postgresql{}
+		err := commons.FromUnstructured(req.Object.UnstructuredContent(), object)
+		if err != nil {
+			p.logger.Error(err.Error())
+			return &commons.PluginResponse{
+				Err: err.Error(),
+			}
 		}
+	} else {
+		// creating a new one
+		object = p.Init(req)
 	}
 
-	err = p.merge(object, req)
-	if err != nil {
-		p.logger.Error(err.Error())
-		return &commons.PluginResponse{
-			Error: err.Error(),
-		}
-
-	}
-	p.logger.Info("ForUpdate", "object", object)
-	return commons.ResponseFromObject(object, gvk())
-}
-
-func (p *PostgresqlService) ForCreate(req commons.PluginRequest) *commons.PluginResponse {
-	p.logger.Debug("call ForCreate")
-	object := p.Init(req)
 	err := p.merge(object, req)
 	if err != nil {
 		p.logger.Error(err.Error())
 		return &commons.PluginResponse{
-			Error: err.Error(),
+			Err: err.Error(),
 		}
 
 	}
-
+	p.logger.Info("Convert", "object", object)
 	return commons.ResponseFromObject(object, gvk())
 }
 
