@@ -52,11 +52,8 @@ func (r *KuberLogicService) Default() {
 		r.Spec.Version = resp.Version
 	}
 
-	log.Info("====", "resp ", resp)
-	log.Info("====", "in 1", r.Spec.Resources)
-	log.Info("====", "out 2", resp.Resources)
 	if reflect.DeepEqual(r.Spec.Resources, v1.ResourceRequirements{}) {
-		r.Spec.Resources = resp.Resources
+		r.Spec.Resources = *resp.GetResources()
 	}
 
 	spec := make(map[string]interface{}, 0)
@@ -163,12 +160,18 @@ func makeRequest(kls *KuberLogicService) (*commons.PluginRequest, error) {
 			return nil, err
 		}
 	}
-	return &commons.PluginRequest{
+	req := &commons.PluginRequest{
 		Name:       kls.Name,
 		Namespace:  kls.Namespace,
 		Replicas:   kls.Spec.Replicas,
 		VolumeSize: kls.Spec.VolumeSize,
 		Version:    kls.Spec.Version,
 		Parameters: spec,
-	}, nil
+	}
+	err := req.SetResources(&kls.Spec.Resources)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }

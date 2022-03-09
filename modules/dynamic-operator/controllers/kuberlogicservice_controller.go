@@ -95,19 +95,27 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if err := r.Client.Get(ctx, req.NamespacedName, svc); k8serrors.IsNotFound(err) {
 		log.Info("creating new service", "type", kls.Spec.Type)
 
-		resp := plugin.Convert(commons.PluginRequest{
+		req := commons.PluginRequest{
 			Name:       kls.Name,
 			Namespace:  kls.Namespace,
 			Replicas:   kls.Spec.Replicas,
 			VolumeSize: kls.Spec.VolumeSize,
 			Version:    kls.Spec.Version,
-			Resources:  kls.Spec.Resources,
 			Parameters: spec,
-		})
+		}
+		err = req.SetResources(&kls.Spec.Resources)
+		if err != nil {
+			log.Error(err, "error from converting resources")
+			return ctrl.Result{}, err
+		}
+
+		resp := plugin.Convert(req)
 		if resp.Error() != nil {
 			log.Error(resp.Error(), "error from rpc call 'ForCreate'")
 			return ctrl.Result{}, resp.Error()
 		}
+		log.Info("=========", "resp", resp)
+
 		svc := resp.Object
 
 		if err := ctrl.SetControllerReference(kls, svc, r.Scheme); err != nil {
@@ -124,16 +132,21 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	} else {
 
-		resp = plugin.Convert(commons.PluginRequest{
+		req := commons.PluginRequest{
 			Name:       kls.Name,
 			Namespace:  kls.Namespace,
 			Object:     svc,
 			Replicas:   kls.Spec.Replicas,
 			VolumeSize: kls.Spec.VolumeSize,
 			Version:    kls.Spec.Version,
-			Resources:  kls.Spec.Resources,
 			Parameters: spec,
-		})
+		}
+		err = req.SetResources(&kls.Spec.Resources)
+		if err != nil {
+			log.Error(err, "error from converting resources")
+			return ctrl.Result{}, err
+		}
+		resp = plugin.Convert(req)
 		if resp.Error() != nil {
 			log.Error(resp.Error(), "error from rpc call 'ForUpdate'")
 			return ctrl.Result{}, resp.Error()

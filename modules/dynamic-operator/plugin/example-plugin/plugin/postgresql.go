@@ -7,9 +7,7 @@ package plugin
 import (
 	"fmt"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
-	"github.com/pkg/errors"
 	apiv1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -46,20 +44,17 @@ func (p *PostgresqlService) Default() *commons.PluginResponseDefault {
 		Replicas:   1,
 		VolumeSize: "1Gi",
 		Version:    "13",
-		Resources: v1.ResourceRequirements{
-			Requests: v1.ResourceList{
-				"cpu":    resource.MustParse("100m"),
-				"memory": resource.MustParse("128Mi"),
-			},
-			Limits: v1.ResourceList{
-				"cpu":    resource.MustParse("250m"),
-				"memory": resource.MustParse("256Mi"),
-			},
-		},
 	}
-	//v.Resources.Marshal()
-	p.logger.Info("===== response v ===", "v", v)
-	p.logger.Info("===== response resources ===", "resources", v.Resources)
+	_ = v.SetResources(&apiv1.ResourceRequirements{
+		Requests: apiv1.ResourceList{
+			"cpu":    resource.MustParse("100m"),
+			"memory": resource.MustParse("128Mi"),
+		},
+		Limits: apiv1.ResourceList{
+			"cpu":    resource.MustParse("250m"),
+			"memory": resource.MustParse("256Mi"),
+		},
+	})
 	return v
 }
 
@@ -88,19 +83,29 @@ func (p *PostgresqlService) merge(object *postgresv1.Postgresql, req commons.Plu
 	object.Spec.Volume.Size = req.VolumeSize
 	object.Spec.PgVersion = req.Version
 
-	to, from := object.Spec.Resources, req.Resources
+	from, err := req.GetResources()
+	if err != nil {
+		return err
+	}
+	to := &object.Spec.Resources
 	to.ResourceLimits.CPU, to.ResourceLimits.Memory = from.Limits.Cpu().String(), from.Limits.Memory().String()
 	to.ResourceRequests.CPU, to.ResourceRequests.Memory = from.Requests.Cpu().String(), from.Requests.Memory().String()
 
+	p.logger.Info("====", "from", from)
+	p.logger.Info("====", "cpu from", from.Limits.Cpu().String())
+	p.logger.Info("====", "cpu to", to.ResourceLimits.CPU)
+	p.logger.Info("====", "cpu to original", object.Spec.Resources.ResourceLimits.CPU)
+	p.logger.Info("====", "to res", object.Spec.Resources)
+
 	for k, v := range req.Parameters {
 		switch k {
-		case "resources":
-			result := &postgresv1.Resources{}
-			err := commons.FromUnstructured(v.(map[string]interface{}), result)
-			if err != nil {
-				return errors.New(fmt.Sprintf("cannot convert %v to postgresv1.Resources", v))
-			}
-			object.Spec.Resources = *result
+		//case "resources":
+		//	result := &postgresv1.Resources{}
+		//	err := commons.FromUnstructured(v.(map[string]interface{}), result)
+		//	if err != nil {
+		//		return errors.New(fmt.Sprintf("cannot convert %v to postgresv1.Resources", v))
+		//	}
+		//	object.Spec.Resources = *result
 		default:
 			// unknown parameter
 			p.logger.Error("unknown parameter", "key", k, "value", v)

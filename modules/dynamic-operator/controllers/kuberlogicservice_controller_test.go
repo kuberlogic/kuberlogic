@@ -31,7 +31,7 @@ var _ = Describe("KuberlogicService controller", func() {
 		interval = time.Millisecond * 250
 	)
 
-	var resources = &v1.ResourceRequirements{
+	var resources = v1.ResourceRequirements{
 		Requests: v1.ResourceList{
 			v1.ResourceCPU:    resource.MustParse("100m"),
 			v1.ResourceMemory: resource.MustParse("128Mi"),
@@ -121,8 +121,17 @@ var _ = Describe("KuberlogicService controller", func() {
 			Expect(pgSpec["volume"]).Should(Equal(map[string]interface{}{
 				"size": defaultVolumeSize,
 			}))
-			Expect(pgSpec["resources"]).Should(Equal(resources))
-
+			//Expect(pgSpec["resources"]).Should(Equal(resources))
+			Expect(pgSpec["resources"]).Should(Equal(map[string]interface{}{
+				"limits": map[string]interface{}{
+					"cpu":    "250m",
+					"memory": "256Mi",
+				},
+				"requests": map[string]interface{}{
+					"memory": "128Mi",
+					"cpu":    "100m",
+				},
+			}))
 		})
 	})
 })

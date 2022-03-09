@@ -4,6 +4,8 @@
 
 package commons
 
+import "fmt"
+
 //var _ PluginService = &PluginServer{}
 
 // Here is the RPC server that PluginClient talks to, conforming to
@@ -14,7 +16,9 @@ type PluginServer struct {
 }
 
 func (s *PluginServer) Convert(req PluginRequest, resp *PluginResponse) error {
+	fmt.Println("PluginServer -- Convert -- begin")
 	*resp = *s.Impl.Convert(req)
+	fmt.Println("PluginServer -- Convert -- end")
 	return nil
 }
 
@@ -29,7 +33,9 @@ func (s *PluginServer) Type(_ PluginRequestEmpty, resp *PluginResponse) error {
 }
 
 func (s *PluginServer) Default(_ PluginRequestEmpty, resp *PluginResponseDefault) error {
+	fmt.Println("PluginServer -- Default -- begin")
 	*resp = *s.Impl.Default()
+	fmt.Println("PluginServer -- Default -- end")
 	return nil
 }
 

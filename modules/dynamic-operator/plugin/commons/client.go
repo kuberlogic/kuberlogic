@@ -5,6 +5,7 @@
 package commons
 
 import (
+	"fmt"
 	"github.com/hashicorp/go-hclog"
 	"net/rpc"
 )
@@ -56,17 +57,21 @@ func (g *PluginClient) Status(req PluginRequest) *PluginResponseStatus {
 }
 
 func (g *PluginClient) Default() *PluginResponseDefault {
+	fmt.Println("PluginClient -- Default -- begin")
 	resp := &PluginResponseDefault{}
 	err := g.client.Call("Plugin.Default", struct{}{}, resp)
 	if err != nil {
 		panic(err)
 	}
-
+	fmt.Println("PluginClient -- Default -- end")
 	return resp
 }
 
 func (g *PluginClient) Convert(req PluginRequest) *PluginResponse {
-	return g.call("Convert", req)
+	//fmt.Println("PluginClient -- Convert -- begin")
+	res := g.call("Convert", req)
+	//fmt.Println("PluginClient -- Convert -- end")
+	return res
 }
 
 func (g *PluginClient) Type() *PluginResponse {

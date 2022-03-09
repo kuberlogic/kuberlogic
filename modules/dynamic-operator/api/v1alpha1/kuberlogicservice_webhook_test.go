@@ -23,8 +23,8 @@ var _ = Describe("KuberlogicService controller", func() {
 		defaultVersion    = "13"
 		defaultVolumeSize = "1G"
 
-		timeout  = time.Second * 10
-		duration = time.Second * 10
+		timeout = time.Second * 10
+		//duration = time.Second * 10
 		interval = time.Millisecond * 250
 	)
 
@@ -79,7 +79,10 @@ var _ = Describe("KuberlogicService controller", func() {
 			}, timeout, interval).Should(BeTrue())
 
 			log.Info("resources", "res", createdKls.Spec.Resources)
-			Expect(createdKls.Spec.Resources).Should(Equal(defaultResources))
+			Expect(createdKls.Spec.Resources.Limits["cpu"]).Should(Equal(defaultResources.Limits["cpu"]))
+			Expect(createdKls.Spec.Resources.Limits["memory"]).Should(Equal(defaultResources.Limits["memory"]))
+			Expect(createdKls.Spec.Resources.Requests["cpu"]).Should(Equal(defaultResources.Requests["cpu"]))
+			Expect(createdKls.Spec.Resources.Requests["memory"]).Should(Equal(defaultResources.Requests["memory"]))
 
 			//advanced, _ := json.Marshal(map[string]interface{}{
 			//	"resources": defaultResources,
