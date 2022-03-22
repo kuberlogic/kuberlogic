@@ -100,8 +100,9 @@ show-resources:
 after-deploy:
 	kubectl config set-context --current --namespace=$(NAMESPACE)
 
-undeploy: kustomize undeploy-certmanager
-	# need to remove several resources before their operators were removed
+undeploy: kustomize
+	# need to remove several resource
+# s before their operators were removed
 	kubectl delete mysqldatabase grafana; \
 	kubectl delete mysql grafana; \
 	kubectl delete keycloakusers --all-namespaces --all; \
