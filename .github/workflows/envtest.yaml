@@ -5,62 +5,12 @@ on:
     branches: [ master ]
 
 jobs:
-#  unit-test:
-#    runs-on: ubuntu-latest
-#    env:
-#      GOPATH: /tmp/go
-#    steps:
-#      - uses: azure/setup-helm@v1
-#        with:
-#          version: v3.4.2
-#
-#      - uses: actions/setup-go@v2
-#        with:
-#          go-version: '1.16.0'
-#
-#      - name: Checkout
-#        uses: actions/checkout@v2
-#        with:
-#          fetch-depth: 2
-#
-#      - name: Cache Go modules
-#        uses: actions/cache@v2
-#        with:
-#          path: ${{ env.GOPATH }}
-#          key: go-cache-${{ github.run_id }}
-#          restore-keys: |
-#            go-cache-
-#
-#      - name: Run unit tests
-#        run: |
-#          make unit-tests
-#
-#      - name: Upload coverage
-#        run: |
-#          bash <(curl -s https://codecov.io/bash) -f modules/operator/unit-coverage.out -F unit-operator
-#          bash <(curl -s https://codecov.io/bash) -f modules/installer/unit-coverage.out -F unit-installer
-#          bash <(curl -s https://codecov.io/bash) -f modules/apiserver/unit-coverage.out -F unit-apiserver
-#        env:
-#          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
   e2e-test:
     runs-on: ubuntu-latest
     env:
       GOPATH: /tmp/go
-#    strategy:
-#      fail-fast: true
-#      matrix:
-#        include:
-#          - type: postgresql
-#            pg_version: 13
-#            k8s_version: 1.19.1
-#          - type: mysql
-#            my_version: 5.7.31
-#            k8s_version: 1.22.1
+
     steps:
-#      - uses: azure/setup-helm@v1
-#        with:
-#          version: v3.4.2
 
       - uses: actions/setup-go@v2
         with:
@@ -71,13 +21,13 @@ jobs:
         with:
           fetch-depth: 2
 
-#      - name: Cache Go modules
-#        uses: actions/cache@v2
-#        with:
-#          path: ${{ env.GOPATH }}
-#          key: go-cache-${{ github.run_id }}
-#          restore-keys: |
-#            go-cache-
+      - name: Cache Go modules
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.GOPATH }}
+          key: go-cache-${{ github.run_id }}
+          restore-keys: |
+            go-cache-
 
       - name: Build
         working-directory: ./modules/dynamic-operator
@@ -94,48 +44,3 @@ jobs:
           bash <(curl -s https://codecov.io/bash) -f modules/dynamic-operator/cover.out -F dynamic-operator
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-#
-#      - name: Uninstall Kuberlogic
-#        working-directory: ./modules/installer
-#        run: |
-#          ./bin/kuberlogic-installer-linux-amd64 uninstall -c sample-config.yaml
-#
-#      - name: Upload coverage
-#        run: |
-#          bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-operator.out -F operator
-#          bash <(curl -s https://codecov.io/bash) -f modules/apiserver/tests/coverage-apiserver.out -F apiserver
-#        env:
-#          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-#      - name: Show status
-#        run: |
-#          kubectl get pod,sts,deploy,svc,cj,job -o yaml --all-namespaces
-#          helm ls --all-namespaces --all
-#          docker images
-#        if: ${{ always() }}
-
-#      - name: Generating logs
-#        working-directory: ./modules/apiserver/tests
-#        run: |
-#          for p in $(kubectl get pods -o custom-columns=:.metadata.name); do
-#            kubectl describe pod $p > kuberlogic-$p-describe.log
-#            kubectl logs --tail=-1 --all-containers $p > kuberlogic-$p-logs.log
-#          done
-#
-#          kubectl get pod -o yaml --all-namespaces > pods-status.log
-#          kubectl get secrets -o yaml --all-namespaces > secrets.log
-#          kubectl get endpoints -o yaml --all-namespaces > endpoints.log
-#          kubectl get services -o yaml --all-namespaces > services.log
-#          kubectl get kuberlogic -o yaml --all-namespaces > kuberlogics.log
-#        if: ${{ always() }}
-#        continue-on-error: true
-#
-#      - name: Archive logs
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: ${{ matrix.type }}-${{ matrix.pg_version }}${{ matrix.my_version }}
-#          path: |
-#            ./modules/apiserver/tests/*.log
-#            ./modules/installer/bin/*
-#        if: ${{ always() }}
