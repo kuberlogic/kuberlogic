@@ -2,7 +2,7 @@ name: Env tests
 
 on:
   pull_request:
-    branches: [ KL-291 ]
+    branches: [ master ]
 
 jobs:
 #  unit-test:
