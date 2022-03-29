@@ -1,0 +1,15 @@
+apiVersion: kuberlogic.com/v1alpha1
+kind: KuberLogicService
+metadata:
+  name: demo
+spec:
+  type: mysql
+  replicas: 2
+  volumeSize: 1G
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 250m
+    limits:
+      memory: 128Mi
+      cpu: 250m

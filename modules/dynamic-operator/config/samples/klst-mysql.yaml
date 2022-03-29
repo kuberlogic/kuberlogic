@@ -1,0 +1,40 @@
+apiVersion: kuberlogic.com/v1alpha1
+kind: KuberLogicServiceType
+metadata:
+  name: mysql
+spec:
+  type: mysql
+  api:
+    group: mysql.presslabs.org
+    version: v1alpha1
+    kind: MysqlCluster
+  specRef:
+    replicas:
+      path: "spec.replicas"
+      type: float
+      defaultValue: 1
+    version:
+      path: "spec.mysqlVersion"
+      type: string
+      defaultValue: "5.7"
+    volumeSize:
+      path: "spec.volumeSpec.persistentVolumeClaim.resources.requests.storage"
+      type: string
+      defaultValue: 1G
+    resources:
+      path: "spec.podSpec.resources"
+      type: json
+      defaultValue:
+        requests:
+          memory: 50Mi
+          cpu: 50Mi
+        limits:
+          memory: 128Mi
+          cpu: 250m
+  statusRef:
+    conditions:
+      path: "status.conditions"
+      readyCondition: Ready
+      readyValue: "True"
+  defaultSpec:
+    secretName: demo
