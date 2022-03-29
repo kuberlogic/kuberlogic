@@ -13,7 +13,6 @@ namePrefix: kls-
 #  someName: someValue
 
 resources:
-#- ../cert-manager
 - ../crd
 - ../rbac
 - ../manager
