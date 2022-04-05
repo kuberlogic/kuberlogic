@@ -1,0 +1,15 @@
+package app
+
+import "k8s.io/client-go/rest"
+
+type Service struct {
+	client rest.Interface
+}
+
+func New(client rest.Interface) *Service {
+	return &Service{client: client}
+}
+
+func (srv *Service) OnShutdown() {
+	// do smth on shutdown...
+}

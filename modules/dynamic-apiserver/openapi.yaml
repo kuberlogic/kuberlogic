@@ -13,7 +13,6 @@ tags:
 host: localhost:8001
 basePath: /api/v1/
 schemes:
-  - https
   - http
 consumes:
   - application/json
@@ -28,8 +27,6 @@ paths:
       operationId: serviceList
       description: |
         List of service objects
-      security:
-        - Bearer: [ ]
       responses:
         200:
           description: search results matching criteria
@@ -56,8 +53,7 @@ paths:
         Adds service object
       parameters:
         - $ref: "#/parameters/ServiceItem"
-      security:
-        - Bearer: [ ]
+
       responses:
         201:
           description: item created
@@ -87,8 +83,7 @@ paths:
         Receives full information about the service
       parameters:
         - $ref: "#/parameters/ServiceID"
-      security:
-        - Bearer: [ ]
+
       responses:
         200:
           description: search results matching criteria
@@ -118,8 +113,7 @@ paths:
       parameters:
         - $ref: "#/parameters/ServiceID"
         - $ref: "#/parameters/ServiceItem"
-      security:
-        - Bearer: [ ]
+
       responses:
         200:
           description: item edited
@@ -148,8 +142,7 @@ paths:
         Deletes a service object
       parameters:
         - $ref: "#/parameters/ServiceID"
-      security:
-        - Bearer: [ ]
+
       responses:
         200:
           description: item deleted
@@ -273,9 +266,4 @@ parameters:
     schema:
       $ref: "#/definitions/Service"
 
-securityDefinitions:
-  Bearer:
-    type: apiKey
-    in: header
-    name: Authorization
 
