@@ -1,0 +1,15 @@
+package app
+
+import (
+	api{{ pascalize .Package }} "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/{{ .RootPackage }}/operations/{{ .Package }}"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/models"
+	"github.com/go-openapi/runtime/middleware"
+)
+
+// set this string to a required security grant for this action
+const {{ camelize .Name }}SecGrant = "nonsense"
+
+func (srv *Service){{ pascalize .Name }}Handler(params api{{ pascalize .Package }}.{{ pascalize .Name }}Params) middleware.Responder {
+
+	return middleware.NotImplemented("operation {{ .Package }} {{ pascalize .Name }} has not yet been implemented")
+}
