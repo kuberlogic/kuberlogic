@@ -25,7 +25,8 @@ import (
 var atom zap.AtomicLevel
 
 func newZapLogger(opts ...zap.Option) *zap.Logger {
-	cfg := zap.NewProductionConfig()
+	// NewDevelopmentConfig -- for production logger
+	cfg := zap.NewDevelopmentConfig()
 
 	if out := os.Getenv("KUBERLOGIC_APISERVER_LOG"); out != "" {
 		cfg.OutputPaths = []string{

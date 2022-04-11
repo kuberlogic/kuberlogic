@@ -19,10 +19,9 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/logging"
 	apiserverMiddleware "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/net/middleware"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/util/k8s"
-
-	//cloudlinuxv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
-	//"github.com/kuberlogic/kuberlogic/modules/operator/util"
+	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	"k8s.io/client-go/kubernetes"
+	k8scheme "k8s.io/client-go/kubernetes/scheme"
 )
 
 func Main(args []string) {
@@ -40,27 +39,27 @@ func Main(args []string) {
 		mainLog.Fatalw("swagger does not loaded", "error", err)
 	}
 
+	err = cloudlinuxv1alpha1.AddToScheme(k8scheme.Scheme)
+	if err != nil {
+		mainLog.Fatalw("could not add to scheme", "error", err)
+	}
+
 	k8sconf, err := k8s.GetConfig(cfg)
 	if err != nil {
 		mainLog.Fatalw("could not get config", "error", err)
 	}
 
-	//    err = cloudlinuxv1.AddToScheme(k8scheme.Scheme)
-	//    if err != nil {
-	//        mainLog.Fatalw("could not add to scheme", "error", err)
-	//    }
-
-	//    crdClient, err := util.GetKuberLogicClient(k8sconf)
-	//    if err != nil {
-	//        mainLog.Fatalw("could not generate rest client", "error", err)
-	//    }
+	crdClient, err := k8s.GetKuberLogicClient(k8sconf)
+	if err != nil {
+		mainLog.Fatalw("could not generate rest client", "error", err)
+	}
 
 	baseClient, err := kubernetes.NewForConfig(k8sconf)
 	if err != nil {
 		mainLog.Fatalw("could not get base client", "error", err)
 	}
 
-	srv := app.New(baseClient, nil, logging.WithComponentLogger("server"))
+	srv := app.New(baseClient, crdClient, logging.WithComponentLogger("server"))
 	api := operations.NewKuberlogicAPI(swaggerSpec)
 
 	api.ServiceServiceAddHandler = apiService.ServiceAddHandlerFunc(srv.ServiceAddHandler)
@@ -69,7 +68,7 @@ func Main(args []string) {
 	api.ServiceServiceGetHandler = apiService.ServiceGetHandlerFunc(srv.ServiceGetHandler)
 	api.ServiceServiceListHandler = apiService.ServiceListHandlerFunc(srv.ServiceListHandler)
 	//api.BearerAuth = srv.BearerAuthentication
-	api.Logger = logging.WithComponentLogger("api").Infow
+	api.Logger = logging.WithComponentLogger("api").Infof
 	api.ServerShutdown = srv.OnShutdown
 	server := restapi.NewServer(api)
 	defer server.Shutdown()
