@@ -4,9 +4,11 @@
 ---
 ![logo](img/kuberlogic-logo.png)
 
-KuberLogic is an open-source platform that deploys and manages software on top of the Kubernetes cluster and turns infrastructure into a managed PaaS. It allows running managed databases and popular applications deploying on-premises or at any cloud. The solution provides API, monitoring, backups, and integration with SSO right out of the box.
+KuberLogic is a powerful way to deliver your application as-a-service.
 
-![usage](img/usage.gif)
+KuberLogic is an open-source platform that helps to deliver any single-tenant application (one stack per customer) to multiple users as-a-service. It allows software vendors to accelerate their journey to Software-as-a-Service (SaaS). The solution provides backups, updates, monitoring, and integration with a billing provider right out of the box.
+
+![usage](img/KL_ Architecture.jpg)
 
 ## Features
 * Web UI
