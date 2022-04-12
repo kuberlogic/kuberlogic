@@ -15,12 +15,6 @@ KuberLogic is an open-source platform that helps to deliver any single-tenant ap
 * Scheduled backups
 * REST API for service management
 
-## An overview of KuberLogic’s architecture
-
-The namespace-per-tenant model represents a good blend of isolation and cost efficiency. For this reason, we’ve chosen to implement it in KuberLogic.
-
-![usage](img/KL_%20Architecture.jpg)
-
 ## Requirements
 KuberLogic leverages a lot of top notch open-source projects and it requires a specific environment to run on top of:
 * Kubernetes v1.20.x with:
@@ -39,20 +33,10 @@ KuberLogic leverages a lot of top notch open-source projects and it requires a s
 5. Add DNS records for KuberLogic endpoints so they are pointing to KuberLogic Ingress IP. Alternatively, if you are evaluating KuberLogic, you may want to use /etc/hosts file to provide the access locally.
 
 ## Usage
-### Web UI
-After the installation, KuberLogic installation process is available out of the box. To learn more visit [docs](https://docs.kuberlogic.com/quick-start/).
 ### REST API
 KuberLogic supports RESTful API for service management. To learn more visit:
 * [API Scheme](https://editor.swagger.io/?url=https://raw.githubusercontent.com/kuberlogic/kuberlogic/master/modules/apiserver/openapi.yaml)
 
-## Supported services
-Currently, KuberLogic supports:
-* MySQL
-* PostgreSQL
-
-Upcoming integrations:
-* Redis
-* MongoDB
 
 ## Build KuberLogic
 KuberLogic artifacts are container images and the installer binary. Requirements are:
