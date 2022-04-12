@@ -8,18 +8,18 @@ KuberLogic is a powerful way to deliver your application as-a-service.
 
 KuberLogic is an open-source platform that helps to deliver any single-tenant application (one stack per customer) to multiple users as-a-service. It allows software vendors to accelerate their journey to Software-as-a-Service (SaaS). The solution provides backups, updates, monitoring, and integration with a billing provider right out of the box.
 
-![usage](img/KL_%20Architecture.jpg)
-
 ## Features
-* Web UI
 * Automatic provisioning
 * Automatic minor updates
 * Automatic failover
 * Scheduled backups
-* Resource usage monitoring
-* Ability to scale up and down as needed
 * REST API for service management
 
+## An overview of KuberLogic’s architecture
+
+The namespace-per-tenant model represents a good blend of isolation and cost efficiency. For this reason, we’ve chosen to implement it in KuberLogic.
+
+![usage](img/KL_%20Architecture.jpg)
 
 ## Requirements
 KuberLogic leverages a lot of top notch open-source projects and it requires a specific environment to run on top of:
