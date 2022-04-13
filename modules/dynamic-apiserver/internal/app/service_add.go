@@ -10,7 +10,6 @@ import (
 
 // set this string to a required security grant for this action
 const serviceAddSecGrant = "nonsense"
-const serviceK8sResource = "kuberlogicservices"
 
 func (srv *Service) ServiceAddHandler(params apiService.ServiceAddParams) middleware.Responder {
 	ctx := params.HTTPRequest.Context()

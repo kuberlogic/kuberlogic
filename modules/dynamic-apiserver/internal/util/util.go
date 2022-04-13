@@ -8,6 +8,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/models"
 	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -75,4 +76,11 @@ func int64AsPointer(x int64) *int64 {
 
 func strAsPointer(x string) *string {
 	return &x
+}
+
+func ErrNotFound(err error) (notFoundErr bool) {
+	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == v1.StatusReasonNotFound {
+		notFoundErr = true
+	}
+	return
 }
