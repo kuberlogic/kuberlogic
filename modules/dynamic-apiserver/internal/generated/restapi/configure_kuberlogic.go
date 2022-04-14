@@ -48,16 +48,6 @@ func configureAPI(api *operations.KuberlogicAPI) http.Handler {
 			return middleware.NotImplemented("operation service.ServiceDelete has not yet been implemented")
 		})
 	}
-	if api.ServiceServiceEditHandler == nil {
-		api.ServiceServiceEditHandler = service.ServiceEditHandlerFunc(func(params service.ServiceEditParams) middleware.Responder {
-			return middleware.NotImplemented("operation service.ServiceEdit has not yet been implemented")
-		})
-	}
-	if api.ServiceServiceGetHandler == nil {
-		api.ServiceServiceGetHandler = service.ServiceGetHandlerFunc(func(params service.ServiceGetParams) middleware.Responder {
-			return middleware.NotImplemented("operation service.ServiceGet has not yet been implemented")
-		})
-	}
 	if api.ServiceServiceListHandler == nil {
 		api.ServiceServiceListHandler = service.ServiceListHandlerFunc(func(params service.ServiceListParams) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceList has not yet been implemented")
