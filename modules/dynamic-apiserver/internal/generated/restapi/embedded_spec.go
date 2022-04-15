@@ -174,7 +174,7 @@ func init() {
         }
       }
     },
-    "Resource": {
+    "Limits": {
       "type": "object",
       "required": [
         "cpu",
@@ -228,15 +228,7 @@ func init() {
           "x-nullable": true
         },
         "resources": {
-          "type": "object",
-          "properties": {
-            "limits": {
-              "$ref": "#/definitions/Resource"
-            },
-            "requests": {
-              "$ref": "#/definitions/Resource"
-            }
-          }
+          "$ref": "#/definitions/Limits"
         },
         "status": {
           "type": "string",
@@ -458,7 +450,7 @@ func init() {
         }
       }
     },
-    "Resource": {
+    "Limits": {
       "type": "object",
       "required": [
         "cpu",
@@ -512,15 +504,7 @@ func init() {
           "x-nullable": true
         },
         "resources": {
-          "type": "object",
-          "properties": {
-            "limits": {
-              "$ref": "#/definitions/Resource"
-            },
-            "requests": {
-              "$ref": "#/definitions/Resource"
-            }
-          }
+          "$ref": "#/definitions/Limits"
         },
         "status": {
           "type": "string",
@@ -534,17 +518,6 @@ func init() {
         },
         "volumeSize": {
           "type": "string"
-        }
-      }
-    },
-    "ServiceResources": {
-      "type": "object",
-      "properties": {
-        "limits": {
-          "$ref": "#/definitions/Resource"
-        },
-        "requests": {
-          "$ref": "#/definitions/Resource"
         }
       }
     },

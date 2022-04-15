@@ -103,13 +103,12 @@ paths:
             $ref: "#/definitions/Error"
 
 definitions:
-
   Advanced:
     type: object
     additionalProperties:
       type: string
 
-  Resource:
+  Limits:
     type: object
     required:
       - cpu
@@ -160,12 +159,7 @@ definitions:
         x-nullable: true
         type: integer
       resources:
-        type: object
-        properties:
-          requests:
-            $ref: "#/definitions/Resource"
-          limits:
-            $ref: "#/definitions/Resource"
+        $ref: "#/definitions/Limits"
       advanced:
         $ref: "#/definitions/Advanced"
       status:

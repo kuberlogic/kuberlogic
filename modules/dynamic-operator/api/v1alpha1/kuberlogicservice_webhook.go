@@ -8,9 +8,7 @@ import (
 	"encoding/json"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
@@ -52,8 +50,8 @@ func (r *KuberLogicService) Default() {
 		r.Spec.Version = resp.Version
 	}
 
-	if reflect.DeepEqual(r.Spec.Resources, v1.ResourceRequirements{}) {
-		r.Spec.Resources = *resp.GetResources()
+	if r.Spec.Limits == nil {
+		r.Spec.Limits = *resp.GetLimits()
 	}
 
 	spec := make(map[string]interface{}, 0)
@@ -152,7 +150,6 @@ func (r *KuberLogicService) ValidateDelete() error {
 }
 
 func makeRequest(kls *KuberLogicService) (*commons.PluginRequest, error) {
-
 	spec := make(map[string]interface{}, 0)
 	if len(kls.Spec.Advanced.Raw) > 0 {
 		if err := json.Unmarshal(kls.Spec.Advanced.Raw, &spec); err != nil {
@@ -168,7 +165,7 @@ func makeRequest(kls *KuberLogicService) (*commons.PluginRequest, error) {
 		Version:    kls.Spec.Version,
 		Parameters: spec,
 	}
-	err := req.SetResources(&kls.Spec.Resources)
+	err := req.SetLimits(&kls.Spec.Limits)
 	if err != nil {
 		return nil, err
 	}

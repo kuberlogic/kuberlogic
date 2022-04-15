@@ -5,10 +5,12 @@
 package commons
 
 import (
+	"encoding/json"
 	"github.com/hashicorp/go-hclog"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"log"
 )
 
 // PluginService is the interface that we're exposing as a plugin.
@@ -32,28 +34,25 @@ type PluginRequest struct {
 	Replicas   int32
 	VolumeSize string
 	Version    string
-	Resources  []byte
+	Limits     []byte
 
 	Parameters map[string]interface{}
 	Object     *unstructured.Unstructured
 }
 
-func (pl *PluginRequest) SetResources(resources *v1.ResourceRequirements) error {
-	bytes, err := resources.Marshal()
-	if err != nil {
-		return err
-	}
-	pl.Resources = bytes
+func (pl *PluginRequest) SetLimits(limits *v1.ResourceList) error {
+	bytes, _ := json.Marshal(limits)
+	pl.Limits = bytes
 	return nil
 }
 
-func (pl *PluginRequest) GetResources() (*v1.ResourceRequirements, error) {
-	resources := &v1.ResourceRequirements{}
-	err := resources.Unmarshal(pl.Resources)
+func (pl *PluginRequest) GetLimits() (*v1.ResourceList, error) {
+	limits := &v1.ResourceList{}
+	err := json.Unmarshal(pl.Limits, limits)
 	if err != nil {
 		return nil, err
 	}
-	return resources, nil
+	return limits, nil
 }
 
 type PluginResponseValidation struct {
@@ -95,22 +94,28 @@ type PluginResponseDefault struct {
 	Replicas   int32
 	VolumeSize string
 	Version    string
-	// *v1.ResourceRequirements
-	Resources  []byte
+	// *v1.ResourceList
+	Limits     []byte
 	Parameters map[string]interface{}
 	Err        string
 }
 
-func (pl *PluginResponseDefault) SetResources(resources *v1.ResourceRequirements) error {
-	bytes, _ := resources.Marshal()
-	pl.Resources = bytes
+func (pl *PluginResponseDefault) SetLimits(limits *v1.ResourceList) error {
+	bytes, err := json.Marshal(limits)
+	if err != nil {
+		log.Fatal("error when marshaling limits", err)
+	}
+	pl.Limits = bytes
 	return nil
 }
 
-func (pl *PluginResponseDefault) GetResources() *v1.ResourceRequirements {
-	resources := &v1.ResourceRequirements{}
-	_ = resources.Unmarshal(pl.Resources)
-	return resources
+func (pl *PluginResponseDefault) GetLimits() *v1.ResourceList {
+	limits := &v1.ResourceList{}
+	err := json.Unmarshal(pl.Limits, limits)
+	if err != nil {
+		log.Fatal("error when unmarshaling limits", err)
+	}
+	return limits
 }
 
 func (pl *PluginResponseDefault) Error() error {

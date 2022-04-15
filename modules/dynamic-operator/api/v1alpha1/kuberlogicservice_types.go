@@ -32,7 +32,7 @@ type KuberLogicServiceSpec struct {
 	Version string `json:"version,omitempty"`
 
 	// Resources (requests/limits)
-	Resources v1.ResourceRequirements `json:"resources,omitempty"`
+	Limits v1.ResourceList `json:"limits,omitempty"`
 
 	// any advanced configuration is supported
 	Advanced v11.JSON `json:"advanced,omitempty"`

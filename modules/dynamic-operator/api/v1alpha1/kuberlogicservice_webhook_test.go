@@ -28,17 +28,11 @@ var _ = Describe("KuberlogicService controller", func() {
 		interval = time.Millisecond * 250
 	)
 
-	var defaultResources = &v1.ResourceRequirements{
-		Requests: v1.ResourceList{
-			v1.ResourceCPU:    resource.MustParse("100m"),
-			v1.ResourceMemory: resource.MustParse("128Mi"),
-		},
-		Limits: v1.ResourceList{
-			// CPU 250m required minimum for zalando/posgtresql
-			// Memory 250Mi required minimum for zalando/posgtresql
-			v1.ResourceCPU:    resource.MustParse("250m"),
-			v1.ResourceMemory: resource.MustParse("256Mi"),
-		},
+	var defaultLimits = v1.ResourceList{
+		// CPU 250m required minimum for zalando/posgtresql
+		// Memory 250Mi required minimum for zalando/posgtresql
+		v1.ResourceCPU:    resource.MustParse("250m"),
+		v1.ResourceMemory: resource.MustParse("256Mi"),
 	}
 
 	Context("When updating KuberLogicService", func() {
@@ -78,11 +72,9 @@ var _ = Describe("KuberlogicService controller", func() {
 				return true
 			}, timeout, interval).Should(BeTrue())
 
-			log.Info("resources", "res", createdKls.Spec.Resources)
-			Expect(createdKls.Spec.Resources.Limits["cpu"]).Should(Equal(defaultResources.Limits["cpu"]))
-			Expect(createdKls.Spec.Resources.Limits["memory"]).Should(Equal(defaultResources.Limits["memory"]))
-			Expect(createdKls.Spec.Resources.Requests["cpu"]).Should(Equal(defaultResources.Requests["cpu"]))
-			Expect(createdKls.Spec.Resources.Requests["memory"]).Should(Equal(defaultResources.Requests["memory"]))
+			log.Info("resources", "res", createdKls.Spec.Limits)
+			Expect(createdKls.Spec.Limits["cpu"]).Should(Equal(defaultLimits["cpu"]))
+			Expect(createdKls.Spec.Limits["memory"]).Should(Equal(defaultLimits["memory"]))
 
 			//advanced, _ := json.Marshal(map[string]interface{}{
 			//	"resources": defaultResources,

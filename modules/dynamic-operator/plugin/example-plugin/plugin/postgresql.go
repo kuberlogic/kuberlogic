@@ -45,16 +45,12 @@ func (p *PostgresqlService) Default() *commons.PluginResponseDefault {
 		VolumeSize: "1Gi",
 		Version:    "13",
 	}
-	_ = v.SetResources(&apiv1.ResourceRequirements{
-		Requests: apiv1.ResourceList{
-			"cpu":    resource.MustParse("100m"),
-			"memory": resource.MustParse("128Mi"),
-		},
-		Limits: apiv1.ResourceList{
-			"cpu":    resource.MustParse("250m"),
-			"memory": resource.MustParse("256Mi"),
-		},
+	_ = v.SetLimits(&apiv1.ResourceList{
+		"cpu":    resource.MustParse("250m"),
+		"memory": resource.MustParse("256Mi"),
 	})
+
+	p.logger.Debug("limits", "res", v.Limits)
 	return v
 }
 
@@ -83,19 +79,13 @@ func (p *PostgresqlService) merge(object *postgresv1.Postgresql, req commons.Plu
 	object.Spec.Volume.Size = req.VolumeSize
 	object.Spec.PgVersion = req.Version
 
-	from, err := req.GetResources()
+	from, err := req.GetLimits()
 	if err != nil {
 		return err
 	}
 	to := &object.Spec.Resources
-	to.ResourceLimits.CPU, to.ResourceLimits.Memory = from.Limits.Cpu().String(), from.Limits.Memory().String()
-	to.ResourceRequests.CPU, to.ResourceRequests.Memory = from.Requests.Cpu().String(), from.Requests.Memory().String()
-
-	p.logger.Info("====", "from", from)
-	p.logger.Info("====", "cpu from", from.Limits.Cpu().String())
-	p.logger.Info("====", "cpu to", to.ResourceLimits.CPU)
-	p.logger.Info("====", "cpu to original", object.Spec.Resources.ResourceLimits.CPU)
-	p.logger.Info("====", "to res", object.Spec.Resources)
+	to.ResourceLimits.CPU, to.ResourceLimits.Memory = from.Cpu().String(), from.Memory().String()
+	to.ResourceRequests.CPU, to.ResourceRequests.Memory = "100m", "128Mi" // default values
 
 	for k, v := range req.Parameters {
 		switch k {
