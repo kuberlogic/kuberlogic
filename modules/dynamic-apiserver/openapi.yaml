@@ -106,14 +106,14 @@ definitions:
   Advanced:
     type: object
     additionalProperties:
-      type: string
+      type: object
 
   Limits:
     type: object
-    required:
-      - cpu
-      - memory
-      - volumeSize
+#    required:
+#      - cpu
+#      - memory
+#      - volumeSize
     properties:
       cpu:
         type: string
@@ -158,7 +158,7 @@ definitions:
         # https://goswagger.io/faq/faq_model.html#non-required-or-nullable-property
         x-nullable: true
         type: integer
-      resources:
+      limits:
         $ref: "#/definitions/Limits"
       advanced:
         $ref: "#/definitions/Advanced"

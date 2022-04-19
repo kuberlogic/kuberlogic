@@ -20,19 +20,16 @@ import (
 type Limits struct {
 
 	// cpu
-	// Required: true
 	// Pattern: ^([0-9]+$)|([0-9]+.[0-9]+$)
-	CPU *string `json:"cpu"`
+	CPU string `json:"cpu,omitempty"`
 
 	// memory
-	// Required: true
 	// Pattern: ^([0-9]+$)|([0-9]+.[0-9]+$)
-	Memory *string `json:"memory"`
+	Memory string `json:"memory,omitempty"`
 
 	// volume size
-	// Required: true
 	// Pattern: ^([0-9]+$)|([0-9]+.[0-9]+$)
-	VolumeSize *string `json:"volumeSize"`
+	VolumeSize string `json:"volumeSize,omitempty"`
 }
 
 // Validate validates this limits
@@ -58,12 +55,11 @@ func (m *Limits) Validate(formats strfmt.Registry) error {
 }
 
 func (m *Limits) validateCPU(formats strfmt.Registry) error {
-
-	if err := validate.Required("cpu", "body", m.CPU); err != nil {
-		return err
+	if swag.IsZero(m.CPU) { // not required
+		return nil
 	}
 
-	if err := validate.Pattern("cpu", "body", *m.CPU, `^([0-9]+$)|([0-9]+.[0-9]+$)`); err != nil {
+	if err := validate.Pattern("cpu", "body", m.CPU, `^([0-9]+$)|([0-9]+.[0-9]+$)`); err != nil {
 		return err
 	}
 
@@ -71,12 +67,11 @@ func (m *Limits) validateCPU(formats strfmt.Registry) error {
 }
 
 func (m *Limits) validateMemory(formats strfmt.Registry) error {
-
-	if err := validate.Required("memory", "body", m.Memory); err != nil {
-		return err
+	if swag.IsZero(m.Memory) { // not required
+		return nil
 	}
 
-	if err := validate.Pattern("memory", "body", *m.Memory, `^([0-9]+$)|([0-9]+.[0-9]+$)`); err != nil {
+	if err := validate.Pattern("memory", "body", m.Memory, `^([0-9]+$)|([0-9]+.[0-9]+$)`); err != nil {
 		return err
 	}
 
@@ -84,12 +79,11 @@ func (m *Limits) validateMemory(formats strfmt.Registry) error {
 }
 
 func (m *Limits) validateVolumeSize(formats strfmt.Registry) error {
-
-	if err := validate.Required("volumeSize", "body", m.VolumeSize); err != nil {
-		return err
+	if swag.IsZero(m.VolumeSize) { // not required
+		return nil
 	}
 
-	if err := validate.Pattern("volumeSize", "body", *m.VolumeSize, `^([0-9]+$)|([0-9]+.[0-9]+$)`); err != nil {
+	if err := validate.Pattern("volumeSize", "body", m.VolumeSize, `^([0-9]+$)|([0-9]+.[0-9]+$)`); err != nil {
 		return err
 	}
 

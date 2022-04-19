@@ -14,7 +14,7 @@ import (
 // Advanced advanced
 //
 // swagger:model Advanced
-type Advanced map[string]string
+type Advanced map[string]interface{}
 
 // Validate validates this advanced
 func (m Advanced) Validate(formats strfmt.Registry) error {

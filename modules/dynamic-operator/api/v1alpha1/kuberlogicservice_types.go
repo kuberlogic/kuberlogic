@@ -11,7 +11,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const readyCondType = "Ready"
+const (
+	readyCondType        = "Ready"
+	clusterUnknownStatus = "Unknown"
+)
 
 // KuberLogicServiceStatus defines the observed state of KuberLogicService
 type KuberLogicServiceStatus struct {
@@ -77,6 +80,14 @@ func (in *KuberLogicService) MarkReady(msg string) {
 
 func (in *KuberLogicService) MarkNotReady(msg string) {
 	in.setConditionStatus(readyCondType, false, msg, msg)
+}
+
+func (in *KuberLogicService) IsReady() (bool, string) {
+	c := meta.FindStatusCondition(in.Status.Conditions, readyCondType)
+	if c == nil {
+		return false, clusterUnknownStatus
+	}
+	return c.Status == metav1.ConditionTrue, c.Reason
 }
 
 // KuberLogicServiceList contains a list of KuberLogicService

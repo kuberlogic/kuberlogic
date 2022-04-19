@@ -163,7 +163,7 @@ func init() {
     "Advanced": {
       "type": "object",
       "additionalProperties": {
-        "type": "string"
+        "type": "object"
       }
     },
     "Error": {
@@ -176,11 +176,6 @@ func init() {
     },
     "Limits": {
       "type": "object",
-      "required": [
-        "cpu",
-        "memory",
-        "volumeSize"
-      ],
       "properties": {
         "cpu": {
           "type": "string",
@@ -211,6 +206,9 @@ func init() {
           "format": "date-time",
           "readOnly": true
         },
+        "limits": {
+          "$ref": "#/definitions/Limits"
+        },
         "name": {
           "type": "string",
           "maxLength": 20,
@@ -226,9 +224,6 @@ func init() {
         "replicas": {
           "type": "integer",
           "x-nullable": true
-        },
-        "resources": {
-          "$ref": "#/definitions/Limits"
         },
         "status": {
           "type": "string",
@@ -439,7 +434,7 @@ func init() {
     "Advanced": {
       "type": "object",
       "additionalProperties": {
-        "type": "string"
+        "type": "object"
       }
     },
     "Error": {
@@ -452,11 +447,6 @@ func init() {
     },
     "Limits": {
       "type": "object",
-      "required": [
-        "cpu",
-        "memory",
-        "volumeSize"
-      ],
       "properties": {
         "cpu": {
           "type": "string",
@@ -487,6 +477,9 @@ func init() {
           "format": "date-time",
           "readOnly": true
         },
+        "limits": {
+          "$ref": "#/definitions/Limits"
+        },
         "name": {
           "type": "string",
           "maxLength": 20,
@@ -502,9 +495,6 @@ func init() {
         "replicas": {
           "type": "integer",
           "x-nullable": true
-        },
-        "resources": {
-          "$ref": "#/definitions/Limits"
         },
         "status": {
           "type": "string",

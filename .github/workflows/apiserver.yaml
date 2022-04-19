@@ -1,0 +1,41 @@
+name: Apiserver unittests
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  e2e-test:
+    runs-on: ubuntu-latest
+    env:
+      GOPATH: /tmp/go
+
+    steps:
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.16.0'
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: Cache Go modules
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.GOPATH }}
+          key: go-cache-${{ github.run_id }}
+          restore-keys: |
+            go-cache-
+
+      - name: Run the tests with coverage
+        working-directory: ./modules/dynamic-apiserver
+        run: |
+          make test
+
+      - name: Upload coverage
+        run: |
+          bash <(curl -s https://codecov.io/bash) -f modules/dynamic-apiserver/cover.out -F dynamic-apiserver
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

@@ -23,4 +23,5 @@ require (
 	golang.org/x/net v0.0.0-20220403103023-749bd193bc2b
 	k8s.io/apimachinery v0.22.3
 	k8s.io/client-go v0.22.3
+	k8s.io/api v0.22.3
 )

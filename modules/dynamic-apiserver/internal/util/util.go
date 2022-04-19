@@ -5,9 +5,11 @@
 package util
 
 import (
+	"encoding/json"
 	"github.com/go-openapi/strfmt"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/models"
 	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	v12 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -59,22 +61,56 @@ func ServiceToKuberlogic(svc *models.Service) (*kuberlogiccomv1alpha1.KuberLogic
 
 func KuberlogicToService(kls *kuberlogiccomv1alpha1.KuberLogicService) (*models.Service, error) {
 	ret := new(models.Service)
-	ret.Name = strAsPointer(kls.Name)
-	ret.Type = strAsPointer(kls.Spec.Type)
-	ret.Replicas = int64AsPointer(int64(kls.Spec.Replicas))
+	ret.Name = StrAsPointer(kls.Name)
+	ret.Ns = kls.Namespace
+	ret.Type = StrAsPointer(kls.Spec.Type)
+	ret.Replicas = Int64AsPointer(int64(kls.Spec.Replicas))
 	ret.CreatedAt = strfmt.DateTime(kls.CreationTimestamp.Time.UTC())
 
-	//ret.Resources = kls.Spec.Resources
-	//ret.Advanced = kls.Spec.Advanced
+	if kls.Spec.VolumeSize != "" {
+		ret.VolumeSize = kls.Spec.VolumeSize
+	}
+	if kls.Spec.Limits != nil {
+		limits := new(models.Limits)
+		if !kls.Spec.Limits.Cpu().IsZero() {
+			if value, ok := kls.Spec.Limits[v12.ResourceCPU]; ok {
+				limits.CPU = value.String()
+			}
+		}
+		if !kls.Spec.Limits.Memory().IsZero() {
+			if value, ok := kls.Spec.Limits[v12.ResourceMemory]; ok {
+				limits.Memory = value.String()
+			}
+		}
+		if !kls.Spec.Limits.Storage().IsZero() {
+			if value, ok := kls.Spec.Limits[v12.ResourceStorage]; ok {
+				limits.VolumeSize = value.String()
+			}
+		}
+
+		ret.Limits = limits
+	}
+	if kls.Spec.Version != "" {
+		ret.Version = kls.Spec.Version
+	}
+
+	_, status := kls.IsReady()
+	ret.Status = status
+
+	if kls.Spec.Advanced.Raw != nil {
+		if err := json.Unmarshal(kls.Spec.Advanced.Raw, &ret.Advanced); err != nil {
+			return nil, err
+		}
+	}
 
 	return ret, nil
 }
 
-func int64AsPointer(x int64) *int64 {
+func Int64AsPointer(x int64) *int64 {
 	return &x
 }
 
-func strAsPointer(x string) *string {
+func StrAsPointer(x string) *string {
 	return &x
 }
 
