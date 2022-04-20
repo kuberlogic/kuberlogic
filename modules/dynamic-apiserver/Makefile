@@ -1,10 +1,11 @@
 
-.PHONY: create-internal-directory
-create-internal-directory:
+.PHONY: recreate-generated-directory
+recreate-generated-directory:
+	rm -r internal/generated
 	mkdir -p internal/generated
 
 .PHONY: generate
-generate: create-internal-directory
+generate: recreate-generated-directory
 	swagger generate server \
 		--spec openapi.yaml \
 		--target internal/generated \

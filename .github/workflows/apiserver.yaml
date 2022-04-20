@@ -5,7 +5,7 @@ on:
     branches: [ master ]
 
 jobs:
-  e2e-test:
+  unittests:
     runs-on: ubuntu-latest
     env:
       GOPATH: /tmp/go
