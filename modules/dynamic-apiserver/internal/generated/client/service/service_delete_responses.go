@@ -53,6 +53,12 @@ func (o *ServiceDeleteReader) ReadResponse(response runtime.ClientResponse, cons
 			return nil, err
 		}
 		return nil, result
+	case 422:
+		result := NewServiceDeleteUnprocessableEntity()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 503:
 		result := NewServiceDeleteServiceUnavailable()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -176,6 +182,27 @@ func (o *ServiceDeleteNotFound) Error() string {
 }
 
 func (o *ServiceDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	return nil
+}
+
+// NewServiceDeleteUnprocessableEntity creates a ServiceDeleteUnprocessableEntity with default headers values
+func NewServiceDeleteUnprocessableEntity() *ServiceDeleteUnprocessableEntity {
+	return &ServiceDeleteUnprocessableEntity{}
+}
+
+/* ServiceDeleteUnprocessableEntity describes a response with status code 422, with default header values.
+
+bad validation
+*/
+type ServiceDeleteUnprocessableEntity struct {
+}
+
+func (o *ServiceDeleteUnprocessableEntity) Error() string {
+	return fmt.Sprintf("[DELETE /services/{ServiceID}/][%d] serviceDeleteUnprocessableEntity ", 422)
+}
+
+func (o *ServiceDeleteUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	return nil
 }

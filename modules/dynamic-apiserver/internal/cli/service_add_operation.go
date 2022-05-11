@@ -1,8 +1,11 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/go-openapi/runtime"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/models"
@@ -36,30 +39,9 @@ func makeServiceAddCmd() (*cobra.Command, error) {
 	return cmd, nil
 }
 
-func getString(cmd *cobra.Command, flag string) (value *string, err error) {
-	if cmd.Flags().Changed(flag) {
-		value, err := cmd.Flags().GetString(flag)
-		if err != nil {
-			return nil, err
-		}
-		return &value, nil
-	}
-	return
-}
-
-func setInt64(cmd *cobra.Command, flag string) (value *int64, err error) {
-	if cmd.Flags().Changed(flag) {
-		value, err := cmd.Flags().GetInt64(flag)
-		if err != nil {
-			return nil, err
-		}
-		return &value, nil
-	}
-	return
-}
-
 // runServiceAdd uses cmd flags to call endpoint api
 func runServiceAdd(cmd *cobra.Command, args []string) error {
+	var err error
 	appCli, err := makeClient(cmd, args)
 	if err != nil {
 		return err
@@ -134,7 +116,25 @@ func runServiceAdd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Service '%s' successfully created\n", *payload.Name)
+	return printResult(payload)
+}
+
+func printResult(payload *models.Service) error {
+	var result interface{}
+	var err error
+	switch formatResponse {
+	case jsonFormat:
+		result, err = json.MarshalIndent(payload, "", "\t")
+	case yamlFormat:
+		result, err = yaml.Marshal(payload)
+	default:
+		result = fmt.Sprintf("Service '%s' successfully created\n", *payload.Name)
+	}
+
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", result)
 	return nil
 }
 
@@ -143,7 +143,8 @@ func parseServiceAddResult(resp *service.ServiceAddCreated, respErr error) (*mod
 	if respErr != nil {
 		switch respErr.(type) {
 		case *service.ServiceAddBadRequest:
-			return nil, errors.Errorf("Bad request [%v]", respErr)
+			err := respErr.(*service.ServiceAddBadRequest)
+			return nil, errors.Errorf(err.Payload.Message)
 		case *service.ServiceAddServiceUnavailable:
 			return nil, errors.Errorf("Service unavailable [%v]", respErr)
 		case *service.ServiceAddUnauthorized:
@@ -152,6 +153,11 @@ func parseServiceAddResult(resp *service.ServiceAddCreated, respErr error) (*mod
 			return nil, errors.Errorf("Forbidden [%v]", respErr)
 		case *service.ServiceAddConflict:
 			return nil, errors.Errorf("Conflict [%v]", respErr)
+		case *service.ServiceAddUnprocessableEntity:
+			err := respErr.(*service.ServiceAddUnprocessableEntity)
+			return nil, errors.Errorf("validation error: %s", err.Payload.Message)
+		case *runtime.APIError:
+			return nil, errors.Errorf("APIError [%v]", respErr)
 		default:
 			return nil, errors.Errorf("Unknown response type: %T [%v]", respErr, respErr)
 		}

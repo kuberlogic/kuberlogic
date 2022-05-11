@@ -108,6 +108,12 @@ func init() {
           "409": {
             "description": "item already exists"
           },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
           "503": {
             "description": "internal server error",
             "schema": {
@@ -148,6 +154,9 @@ func init() {
           },
           "404": {
             "description": "item not found"
+          },
+          "422": {
+            "description": "bad validation"
           },
           "503": {
             "description": "internal server error",
@@ -372,6 +381,12 @@ func init() {
           "409": {
             "description": "item already exists"
           },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
           "503": {
             "description": "internal server error",
             "schema": {
@@ -419,6 +434,9 @@ func init() {
           },
           "404": {
             "description": "item not found"
+          },
+          "422": {
+            "description": "bad validation"
           },
           "503": {
             "description": "internal server error",

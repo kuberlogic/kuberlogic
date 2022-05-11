@@ -26,6 +26,8 @@ var configFile string
 // dry run flag
 var dryRun bool
 
+var formatResponse format
+
 // name of the executable
 var exeName string = filepath.Base(os.Args[0])
 
@@ -85,6 +87,8 @@ func MakeRootCmd() (*cobra.Command, error) {
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file path")
 	// configure dry run flag
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "do not send the request to server")
+
+	rootCmd.PersistentFlags().Var(&formatResponse, "format", "Format response value: json, yaml or string. (default: string)")
 
 	// register security flags
 	// add all operation groups

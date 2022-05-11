@@ -153,6 +153,30 @@ func (o *ServiceDeleteNotFound) WriteResponse(rw http.ResponseWriter, producer r
 	rw.WriteHeader(404)
 }
 
+// ServiceDeleteUnprocessableEntityCode is the HTTP code returned for type ServiceDeleteUnprocessableEntity
+const ServiceDeleteUnprocessableEntityCode int = 422
+
+/*ServiceDeleteUnprocessableEntity bad validation
+
+swagger:response serviceDeleteUnprocessableEntity
+*/
+type ServiceDeleteUnprocessableEntity struct {
+}
+
+// NewServiceDeleteUnprocessableEntity creates ServiceDeleteUnprocessableEntity with default headers values
+func NewServiceDeleteUnprocessableEntity() *ServiceDeleteUnprocessableEntity {
+
+	return &ServiceDeleteUnprocessableEntity{}
+}
+
+// WriteResponse to the client
+func (o *ServiceDeleteUnprocessableEntity) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
+
+	rw.WriteHeader(422)
+}
+
 // ServiceDeleteServiceUnavailableCode is the HTTP code returned for type ServiceDeleteServiceUnavailable
 const ServiceDeleteServiceUnavailableCode int = 503
 

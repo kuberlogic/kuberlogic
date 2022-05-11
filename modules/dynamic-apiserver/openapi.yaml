@@ -53,7 +53,6 @@ paths:
         Adds service object
       parameters:
         - $ref: "#/parameters/ServiceItem"
-
       responses:
         201:
           description: item created
@@ -69,6 +68,10 @@ paths:
           description: bad permissions
         409:
           description: item already exists
+        422:
+          description: bad validation
+          schema:
+            $ref: "#/definitions/Error"
         503:
           description: internal server error
           schema:
@@ -97,6 +100,8 @@ paths:
           description: bad permissions
         404:
           description: item not found
+        422:
+          description: bad validation
         503:
           description: internal server error
           schema:
