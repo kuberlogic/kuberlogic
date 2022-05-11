@@ -4,20 +4,20 @@
 ---
 ![logo](img/kuberlogic-logo.png)
 
-KuberLogic is an open-source platform that deploys and manages software on top of the Kubernetes cluster and turns infrastructure into a managed PaaS. It allows running managed databases and popular applications deploying on-premises or at any cloud. The solution provides API, monitoring, backups, and integration with SSO right out of the box.
+----
 
-![usage](img/usage.gif)
+KuberLogic is a powerful way to deliver your application as-a-service.
+
+KuberLogic is an open-source platform that helps to deliver any single-tenant application (one stack per customer) to multiple users as-a-service. It allows software vendors to accelerate their journey to Software-as-a-Service (SaaS).
+
+----
 
 ## Features
-* Web UI
-* Automatic provisioning
+* Tenant and application instance orchestration
 * Automatic minor updates
 * Automatic failover
 * Scheduled backups
-* Resource usage monitoring
-* Ability to scale up and down as needed
 * REST API for service management
-
 
 ## Requirements
 KuberLogic leverages a lot of top notch open-source projects and it requires a specific environment to run on top of:
@@ -38,20 +38,10 @@ KuberLogic leverages a lot of top notch open-source projects and it requires a s
 5. Add DNS records for KuberLogic endpoints so they are pointing to KuberLogic Ingress IP. Alternatively, if you are evaluating KuberLogic, you may want to use /etc/hosts file to provide the access locally.
 
 ## Usage
-### Web UI
-After the installation, KuberLogic installation process is available out of the box. To learn more visit [docs](https://docs.kuberlogic.com/quick-start/).
 ### REST API
 KuberLogic supports RESTful API for service management. To learn more visit:
 * [API Scheme](https://editor.swagger.io/?url=https://raw.githubusercontent.com/kuberlogic/kuberlogic/master/modules/apiserver/openapi.yaml)
 
-## Supported services
-Currently, KuberLogic supports:
-* MySQL
-* PostgreSQL
-
-Upcoming integrations:
-* Redis
-* MongoDB
 
 ## Build KuberLogic
 KuberLogic artifacts are container images and the installer binary. Requirements are:
