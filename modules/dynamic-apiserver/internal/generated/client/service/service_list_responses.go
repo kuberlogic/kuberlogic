@@ -47,6 +47,12 @@ func (o *ServiceListReader) ReadResponse(response runtime.ClientResponse, consum
 			return nil, err
 		}
 		return nil, result
+	case 422:
+		result := NewServiceListUnprocessableEntity()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 503:
 		result := NewServiceListServiceUnavailable()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -158,6 +164,38 @@ func (o *ServiceListForbidden) Error() string {
 }
 
 func (o *ServiceListForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	return nil
+}
+
+// NewServiceListUnprocessableEntity creates a ServiceListUnprocessableEntity with default headers values
+func NewServiceListUnprocessableEntity() *ServiceListUnprocessableEntity {
+	return &ServiceListUnprocessableEntity{}
+}
+
+/* ServiceListUnprocessableEntity describes a response with status code 422, with default header values.
+
+bad validation
+*/
+type ServiceListUnprocessableEntity struct {
+	Payload *models.Error
+}
+
+func (o *ServiceListUnprocessableEntity) Error() string {
+	return fmt.Sprintf("[GET /services/][%d] serviceListUnprocessableEntity  %+v", 422, o.Payload)
+}
+func (o *ServiceListUnprocessableEntity) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceListUnprocessableEntity) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }

@@ -47,6 +47,11 @@ func init() {
         ],
         "summary": "searches service",
         "operationId": "serviceList",
+        "parameters": [
+          {
+            "$ref": "#/parameters/Namespace"
+          }
+        ],
         "responses": {
           "200": {
             "description": "search results matching criteria",
@@ -65,6 +70,12 @@ func init() {
           },
           "403": {
             "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "503": {
             "description": "internal server error",
@@ -257,6 +268,15 @@ func init() {
     }
   },
   "parameters": {
+    "Namespace": {
+      "maxLength": 120,
+      "minLength": 3,
+      "type": "string",
+      "description": "namespace for resource",
+      "name": "Namespace",
+      "in": "query",
+      "required": true
+    },
     "ServiceID": {
       "maxLength": 120,
       "minLength": 3,
@@ -314,6 +334,17 @@ func init() {
         ],
         "summary": "searches service",
         "operationId": "serviceList",
+        "parameters": [
+          {
+            "maxLength": 120,
+            "minLength": 3,
+            "type": "string",
+            "description": "namespace for resource",
+            "name": "Namespace",
+            "in": "query",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "search results matching criteria",
@@ -332,6 +363,12 @@ func init() {
           },
           "403": {
             "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "503": {
             "description": "internal server error",
@@ -537,6 +574,15 @@ func init() {
     }
   },
   "parameters": {
+    "Namespace": {
+      "maxLength": 120,
+      "minLength": 3,
+      "type": "string",
+      "description": "namespace for resource",
+      "name": "Namespace",
+      "in": "query",
+      "required": true
+    },
     "ServiceID": {
       "maxLength": 120,
       "minLength": 3,

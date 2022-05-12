@@ -27,6 +27,8 @@ paths:
       operationId: serviceList
       description: |
         List of service objects
+      parameters:
+        - $ref: "#/parameters/Namespace"
       responses:
         200:
           description: search results matching criteria
@@ -40,6 +42,10 @@ paths:
           description: bad authentication
         403:
           description: bad permissions
+        422:
+          description: bad validation
+          schema:
+            $ref: "#/definitions/Error"
         503:
           description: internal server error
           schema:
@@ -206,4 +212,11 @@ parameters:
     schema:
       $ref: "#/definitions/Service"
 
-
+  Namespace:
+    name: Namespace
+    in: query
+    description: namespace for resource
+    required: true
+    type: "string"
+    minLength: 3
+    maxLength: 120

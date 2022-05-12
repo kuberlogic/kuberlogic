@@ -1,11 +1,10 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/go-openapi/runtime"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/models"
@@ -14,16 +13,16 @@ import (
 )
 
 // makeServiceAddCmd returns a cmd to handle operation serviceAdd
-func makeServiceAddCmd() (*cobra.Command, error) {
+func makeServiceAddCmd(apiClient *client.ServiceAPI) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:     "serviceAdd",
 		Short:   `Adds service object`,
 		Aliases: []string{"add"},
-		RunE:    runServiceAdd,
+		RunE:    runServiceAdd(apiClient),
 	}
 
 	_ = cmd.PersistentFlags().String("name", "", "name of service")
-	_ = cmd.PersistentFlags().String("namespace", "", "namespace for service")
+	_ = cmd.PersistentFlags().String("namespace", "", "namespace of service")
 	_ = cmd.PersistentFlags().String("type", "", "type of service")
 	_ = cmd.PersistentFlags().Int64("replicas", 0, "how many replicas need for service")
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
@@ -40,102 +39,95 @@ func makeServiceAddCmd() (*cobra.Command, error) {
 }
 
 // runServiceAdd uses cmd flags to call endpoint api
-func runServiceAdd(cmd *cobra.Command, args []string) error {
-	var err error
-	appCli, err := makeClient(cmd, args)
-	if err != nil {
-		return err
-	}
-	// retrieve flag values from cmd and fill params
-	params := service.NewServiceAddParams()
-	svc := models.Service{}
-	svc.Limits = new(models.Limits)
+func runServiceAdd(apiClient *client.ServiceAPI) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		var err error
 
-	if value, err := getString(cmd, "name"); err != nil {
-		return err
-	} else if value != nil {
-		svc.Name = value
-	}
+		// retrieve flag values from cmd and fill params
+		params := service.NewServiceAddParams()
+		svc := models.Service{}
+		svc.Limits = new(models.Limits)
 
-	if value, err := getString(cmd, "namespace"); err != nil {
-		return err
-	} else if value != nil {
-		svc.Ns = *value
-	}
+		if value, err := getString(cmd, "name"); err != nil {
+			return err
+		} else if value != nil {
+			svc.Name = value
+		}
 
-	if value, err := getString(cmd, "type"); err != nil {
-		return err
-	} else if value != nil {
-		svc.Type = value
-	}
+		if value, err := getString(cmd, "namespace"); err != nil {
+			return err
+		} else if value != nil {
+			svc.Ns = *value
+		}
 
-	if value, err := setInt64(cmd, "replicas"); err != nil {
-		return err
-	} else if value != nil {
-		svc.Replicas = value
-	}
+		if value, err := getString(cmd, "type"); err != nil {
+			return err
+		} else if value != nil {
+			svc.Type = value
+		}
 
-	if value, err := getString(cmd, "version"); err != nil {
-		return err
-	} else if value != nil {
-		svc.Version = *value
-	}
+		if value, err := setInt64(cmd, "replicas"); err != nil {
+			return err
+		} else if value != nil {
+			svc.Replicas = value
+		}
 
-	if value, err := getString(cmd, "volumeSize"); err != nil {
-		return err
-	} else if value != nil {
-		svc.VolumeSize = *value
-	}
+		if value, err := getString(cmd, "version"); err != nil {
+			return err
+		} else if value != nil {
+			svc.Version = *value
+		}
 
-	if value, err := getString(cmd, "limits.cpu"); err != nil {
-		return err
-	} else if value != nil {
-		svc.Limits.CPU = *value
-	}
+		if value, err := getString(cmd, "volumeSize"); err != nil {
+			return err
+		} else if value != nil {
+			svc.VolumeSize = *value
+		}
 
-	if value, err := getString(cmd, "limits.memory"); err != nil {
-		return err
-	} else if value != nil {
-		svc.Limits.Memory = *value
-	}
+		if value, err := getString(cmd, "limits.cpu"); err != nil {
+			return err
+		} else if value != nil {
+			svc.Limits.CPU = *value
+		}
 
-	if value, err := getString(cmd, "limits.volumeSize"); err != nil {
-		return err
-	} else if value != nil {
-		svc.Limits.VolumeSize = *value
-	}
+		if value, err := getString(cmd, "limits.memory"); err != nil {
+			return err
+		} else if value != nil {
+			svc.Limits.Memory = *value
+		}
 
-	params.ServiceItem = &svc
-	if dryRun {
-		logDebugf("Params: %+v", params.ServiceItem)
-		logDebugf("dry-run flag specified. Skip sending request.")
-		return nil
-	}
-	// make request and then print result
-	payload, err := parseServiceAddResult(appCli.Service.ServiceAdd(params))
-	if err != nil {
-		return err
-	}
-	return printResult(payload)
-}
+		if value, err := getString(cmd, "limits.volumeSize"); err != nil {
+			return err
+		} else if value != nil {
+			svc.Limits.VolumeSize = *value
+		}
 
-func printResult(payload *models.Service) error {
-	var result interface{}
-	var err error
-	switch formatResponse {
-	case jsonFormat:
-		result, err = json.MarshalIndent(payload, "", "\t")
-	case yamlFormat:
-		result, err = yaml.Marshal(payload)
-	default:
-		result = fmt.Sprintf("Service '%s' successfully created\n", *payload.Name)
-	}
+		var formatResponse format
+		if value, err := getString(cmd, "format"); err != nil {
+			return err
+		} else if value != nil {
+			formatResponse = format(*value)
+		}
 
-	if err != nil {
-		return err
+		params.ServiceItem = &svc
+		if dryRun {
+			logDebugf("Params: %+v", params.ServiceItem)
+			logDebugf("dry-run flag specified. Skip sending request.")
+			return nil
+		}
+		// make request and then print result
+		payload, err := parseServiceAddResult(apiClient.Service.ServiceAdd(params))
+		if err != nil {
+			return err
+		}
+		if isDefaultPrintFormat(formatResponse) {
+			_, err := fmt.Fprintf(cmd.OutOrStdout(), "Service '%s' successfully created\n", *payload.Name)
+			return err
+		} else {
+			return printResult(cmd, formatResponse, payload)
+		}
+
 	}
-	fmt.Printf("%s\n", result)
-	return nil
 }
 
 // parseServiceAddResult parses request result and return the string content
@@ -161,7 +153,6 @@ func parseServiceAddResult(resp *service.ServiceAddCreated, respErr error) (*mod
 		default:
 			return nil, errors.Errorf("Unknown response type: %T [%v]", respErr, respErr)
 		}
-
 	}
 	return resp.Payload, nil
 }

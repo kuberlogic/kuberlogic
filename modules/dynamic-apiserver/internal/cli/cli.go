@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -26,7 +27,7 @@ var configFile string
 // dry run flag
 var dryRun bool
 
-var formatResponse format
+//var formatResponse format
 
 // name of the executable
 var exeName string = filepath.Base(os.Args[0])
@@ -43,11 +44,11 @@ func logDebugf(format string, v ...interface{}) {
 var maxDepth int = 5
 
 // makeClient constructs a client object
-func makeClient(cmd *cobra.Command, args []string) (*client.ServiceAPI, error) {
+func makeClient(httpClient *http.Client) (*client.ServiceAPI, error) {
 	hostname := viper.GetString("hostname")
 	scheme := viper.GetString("scheme")
 
-	r := httptransport.New(hostname, client.DefaultBasePath, []string{scheme})
+	r := httptransport.NewWithClient(hostname, client.DefaultBasePath, []string{scheme}, httpClient)
 	r.SetDebug(debug)
 	// set custom producer and consumer to use the default ones
 
@@ -61,7 +62,7 @@ func makeClient(cmd *cobra.Command, args []string) (*client.ServiceAPI, error) {
 }
 
 // MakeRootCmd returns the root cmd
-func MakeRootCmd() (*cobra.Command, error) {
+func MakeRootCmd(httpClient *http.Client) (*cobra.Command, error) {
 	cobra.OnInitialize(initViperConfigs)
 
 	// Use executable name as the command name
@@ -88,11 +89,17 @@ func MakeRootCmd() (*cobra.Command, error) {
 	// configure dry run flag
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "do not send the request to server")
 
+	var formatResponse format
 	rootCmd.PersistentFlags().Var(&formatResponse, "format", "Format response value: json, yaml or string. (default: string)")
+
+	apiClient, err := makeClient(httpClient)
+	if err != nil {
+		return nil, err
+	}
 
 	// register security flags
 	// add all operation groups
-	operationGroupServiceCmd, err := makeServiceCmd()
+	operationGroupServiceCmd, err := makeServiceCmd(apiClient)
 	if err != nil {
 		return nil, err
 	}
@@ -128,25 +135,25 @@ func initViperConfigs() {
 	logDebugf("Using config file: %v", viper.ConfigFileUsed())
 }
 
-func makeServiceCmd() (*cobra.Command, error) {
+func makeServiceCmd(apiClient *client.ServiceAPI) (*cobra.Command, error) {
 	operationGroupServiceCmd := &cobra.Command{
 		Use:  "service",
 		Long: ``,
 	}
 
-	operationServiceAddCmd, err := makeServiceAddCmd()
+	operationServiceAddCmd, err := makeServiceAddCmd(apiClient)
 	if err != nil {
 		return nil, err
 	}
 	operationGroupServiceCmd.AddCommand(operationServiceAddCmd)
 
-	operationServiceDeleteCmd, err := makeOperationServiceServiceDeleteCmd()
+	operationServiceDeleteCmd, err := makeServiceDeleteCmd(apiClient)
 	if err != nil {
 		return nil, err
 	}
 	operationGroupServiceCmd.AddCommand(operationServiceDeleteCmd)
 
-	operationServiceListCmd, err := makeOperationServiceServiceListCmd()
+	operationServiceListCmd, err := makeServiceListCmd(apiClient)
 	if err != nil {
 		return nil, err
 	}

@@ -6,12 +6,22 @@ package cli
 
 import (
 	"bytes"
+	"encoding/json"
+	"github.com/ghodss/yaml"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/models"
 	"io/ioutil"
+	"reflect"
+	"strings"
 	"testing"
 )
 
-func Test_InvalidValidationCommand(t *testing.T) {
-	cmd, err := MakeRootCmd()
+func TestInvalidValidation(t *testing.T) {
+	// make own http client
+	client := makeTestClient(422, map[string]string{
+		"message": "name in body is required",
+	})
+
+	cmd, err := MakeRootCmd(client)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,14 +36,37 @@ func Test_InvalidValidationCommand(t *testing.T) {
 	}
 }
 
-func Test_ExecuteCommand(t *testing.T) {
-	cmd, err := MakeRootCmd()
+func TestSuccessCreationFormatJson(t *testing.T) {
+	// make own http client
+	expected := map[string]interface{}{
+		"created_at": "2022-05-10T16:00:53.000Z",
+		"limits": map[string]interface{}{
+			"cpu":    "250m",
+			"memory": "256Mi",
+		},
+		"name":       "test",
+		"ns":         "kuberlogic",
+		"replicas":   float64(0),
+		"status":     "Unknown",
+		"type":       "postgresql",
+		"version":    "13",
+		"volumeSize": "1Gi",
+	}
+	client := makeTestClient(201, expected)
+	cmd, err := MakeRootCmd(client)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
-	cmd.SetArgs([]string{"service", "add"})
+	//cmd.SetErr(b)
+	cmd.SetArgs([]string{"service", "add",
+		"--name", "test",
+		"--type", "postgresql",
+		"--namespace", "kuberlogic",
+		"--format", "json",
+	})
 	err = cmd.Execute()
 	if err != nil {
 		t.Fatal(err)
@@ -42,7 +75,109 @@ func Test_ExecuteCommand(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(out) != "testisawesome" {
-		t.Fatalf("expected \"%s\" got \"%s\"", "testisawesome", string(out))
+	actual := make(map[string]interface{})
+	err = json.Unmarshal(out, &actual)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("expected vs actual: %s vs %s", expected, actual)
+	}
+}
+
+func TestSuccessCreationFormatYaml(t *testing.T) {
+	// make own http client
+	expected := map[string]interface{}{
+		"created_at": "2022-05-10T16:00:53.000Z",
+		"limits": map[string]interface{}{
+			"cpu":    "250m",
+			"memory": "256Mi",
+		},
+		"name":       "test",
+		"ns":         "kuberlogic",
+		"replicas":   0,
+		"status":     "Unknown",
+		"type":       "postgresql",
+		"version":    "13",
+		"volumeSize": "1Gi",
+	}
+	client := makeTestClient(201, expected)
+	cmd, err := MakeRootCmd(client)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b := bytes.NewBufferString("")
+	cmd.SetOut(b)
+	//cmd.SetErr(b)
+	cmd.SetArgs([]string{"service", "add",
+		"--name", "test",
+		"--type", "postgresql",
+		"--namespace", "kuberlogic",
+		"--format", "yaml",
+	})
+	err = cmd.Execute()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := ioutil.ReadAll(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual := new(models.Service)
+	err = yaml.Unmarshal(out, &actual)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, _ := yaml.Marshal(expected)
+	if strings.TrimSpace(string(r)) != strings.TrimSpace(string(out)) {
+		t.Fatalf("expected vs actual:\n%s \nvs\n\n%s", r, out)
+	}
+}
+
+func TestSuccessCreationFormatStr(t *testing.T) {
+	// make own http client
+	expected := map[string]interface{}{
+		"advanced":   map[string]interface{}{},
+		"created_at": "2022-05-10T16:00:53.000Z",
+		"limits": map[string]interface{}{
+			"cpu":        "250m",
+			"memory":     "256Mi",
+			"volumeSize": "",
+		},
+		"name":       "test",
+		"ns":         "kuberlogic",
+		"replicas":   0,
+		"status":     "Unknown",
+		"type":       "postgresql",
+		"version":    "13",
+		"volumeSize": "1Gi",
+	}
+	client := makeTestClient(201, expected)
+	cmd, err := MakeRootCmd(client)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b := bytes.NewBufferString("")
+	cmd.SetOut(b)
+	//cmd.SetErr(b)
+	cmd.SetArgs([]string{"service", "add",
+		"--name", "test",
+		"--type", "postgresql",
+		"--namespace", "kuberlogic",
+	})
+	err = cmd.Execute()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := ioutil.ReadAll(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedResult := "Service 'test' successfully created"
+	if strings.TrimSpace(string(out)) != expectedResult {
+		t.Fatalf("expected vs actual: %s vs %s", expectedResult, out)
 	}
 }

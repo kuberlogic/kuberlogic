@@ -89,6 +89,7 @@ func TestServiceListMany(t *testing.T) {
 
 	params := apiService.ServiceListParams{
 		HTTPRequest: &http.Request{},
+		Namespace:   namespace,
 	}
 
 	checkResponse(srv.ServiceListHandler(params), t, 200, services)

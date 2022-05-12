@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	rootCmd, err := cli.MakeRootCmd()
+	rootCmd, err := cli.MakeRootCmd(nil) // make default http client
 	if err != nil {
 		fmt.Println("Cmd construction error: ", err)
 		os.Exit(1)

@@ -1,11 +1,16 @@
 
-.PHONY: recreate-generated-directory
-recreate-generated-directory:
-	rm -r internal/generated
+.PHONY: recreate-generated-server
+recreate-generated-server:
+	rm -r internal/generated/models internal/generated/restapi
 	mkdir -p internal/generated
 
-.PHONY: generate
-generate: recreate-generated-directory
+.PHONY: recreate-generated-client
+recreate-generated-client:
+	rm -r internal/generated/client
+	mkdir -p internal/generated
+
+.PHONY: generate-server
+generate-server: recreate-generated-server
 	swagger generate server \
 		--spec openapi.yaml \
 		--target internal/generated \
@@ -14,7 +19,7 @@ generate: recreate-generated-directory
 		--name kuberlogic
 
 .PHONY: generate-client
-generate-client:
+generate-client: recreate-generated-client
 	swagger generate client \
 		--spec openapi.yaml \
 		--target internal/generated/
@@ -30,3 +35,6 @@ build-cli:
 .PHONY: run
 run:
 	go run main.go
+
+.PHONY: generate
+generate: generate-server generate-client
