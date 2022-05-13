@@ -7,6 +7,7 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/ghodss/yaml"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/models"
 	"io/ioutil"
@@ -15,10 +16,10 @@ import (
 	"testing"
 )
 
-func TestCreateInvalidValidation(t *testing.T) {
+func TestDeleteInvalidValidation(t *testing.T) {
 	// make own http client
-	client := makeTestClient(422, map[string]string{
-		"message": "name in body is required",
+	client := makeTestClient(400, map[string]string{
+		"message": "name or namespace can't be empty",
 	})
 
 	cmd, err := MakeRootCmd(client)
@@ -28,31 +29,42 @@ func TestCreateInvalidValidation(t *testing.T) {
 
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
-	cmd.SetArgs([]string{"service", "add"})
+	cmd.SetArgs([]string{"service", "delete"})
 	err = cmd.Execute()
-	expected := "validation error: name in body is required"
+	expected := "name or namespace can't be empty"
 	if err != nil && err.Error() != expected {
 		t.Fatalf("expected vs actual: %v vs %v", expected, err.Error())
 	}
 }
 
-func TestCreateSuccessFormatJson(t *testing.T) {
+func TestDeleteNotFound(t *testing.T) {
 	// make own http client
-	expected := map[string]interface{}{
-		"created_at": "2022-05-10T16:00:53.000Z",
-		"limits": map[string]interface{}{
-			"cpu":    "250m",
-			"memory": "256Mi",
-		},
-		"name":       "test",
-		"ns":         "kuberlogic",
-		"replicas":   float64(0),
-		"status":     "Unknown",
-		"type":       "postgresql",
-		"version":    "13",
-		"volumeSize": "1Gi",
+	expected := "Record not found with name 'test' and namespace 'kuberlogic'"
+	client := makeTestClient(404, map[string]string{
+		"message": expected,
+	})
+
+	cmd, err := MakeRootCmd(client)
+	if err != nil {
+		t.Fatal(err)
 	}
-	client := makeTestClient(201, expected)
+
+	b := bytes.NewBufferString("")
+	cmd.SetOut(b)
+	cmd.SetArgs([]string{"service", "delete",
+		"--name", "test",
+		"--namespace", "kuberlogic",
+	})
+	err = cmd.Execute()
+	if err != nil && err.Error() != expected {
+		t.Fatalf("expected vs actual: %v vs %v", expected, err.Error())
+	}
+}
+
+func TestDeleteSuccessFormatJson(t *testing.T) {
+	// make own http client
+	expected := map[string]interface{}{}
+	client := makeTestClient(200, expected)
 	cmd, err := MakeRootCmd(client)
 	if err != nil {
 		t.Fatal(err)
@@ -61,9 +73,8 @@ func TestCreateSuccessFormatJson(t *testing.T) {
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
 	//cmd.SetErr(b)
-	cmd.SetArgs([]string{"service", "add",
+	cmd.SetArgs([]string{"service", "delete",
 		"--name", "test",
-		"--type", "postgresql",
 		"--namespace", "kuberlogic",
 		"--format", "json",
 	})
@@ -86,23 +97,10 @@ func TestCreateSuccessFormatJson(t *testing.T) {
 	}
 }
 
-func TestCreateSuccessFormatYaml(t *testing.T) {
+func TestDeleteSuccessFormatYaml(t *testing.T) {
 	// make own http client
-	expected := map[string]interface{}{
-		"created_at": "2022-05-10T16:00:53.000Z",
-		"limits": map[string]interface{}{
-			"cpu":    "250m",
-			"memory": "256Mi",
-		},
-		"name":       "test",
-		"ns":         "kuberlogic",
-		"replicas":   0,
-		"status":     "Unknown",
-		"type":       "postgresql",
-		"version":    "13",
-		"volumeSize": "1Gi",
-	}
-	client := makeTestClient(201, expected)
+	expected := map[string]interface{}{}
+	client := makeTestClient(200, expected)
 	cmd, err := MakeRootCmd(client)
 	if err != nil {
 		t.Fatal(err)
@@ -111,9 +109,8 @@ func TestCreateSuccessFormatYaml(t *testing.T) {
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
 	//cmd.SetErr(b)
-	cmd.SetArgs([]string{"service", "add",
+	cmd.SetArgs([]string{"service", "delete",
 		"--name", "test",
-		"--type", "postgresql",
 		"--namespace", "kuberlogic",
 		"--format", "yaml",
 	})
@@ -136,25 +133,10 @@ func TestCreateSuccessFormatYaml(t *testing.T) {
 	}
 }
 
-func TestCreateSuccessFormatStr(t *testing.T) {
+func TestDeleteSuccessFormatStr(t *testing.T) {
 	// make own http client
-	expected := map[string]interface{}{
-		"advanced":   map[string]interface{}{},
-		"created_at": "2022-05-10T16:00:53.000Z",
-		"limits": map[string]interface{}{
-			"cpu":        "250m",
-			"memory":     "256Mi",
-			"volumeSize": "",
-		},
-		"name":       "test",
-		"ns":         "kuberlogic",
-		"replicas":   0,
-		"status":     "Unknown",
-		"type":       "postgresql",
-		"version":    "13",
-		"volumeSize": "1Gi",
-	}
-	client := makeTestClient(201, expected)
+	expected := map[string]interface{}{}
+	client := makeTestClient(200, expected)
 	cmd, err := MakeRootCmd(client)
 	if err != nil {
 		t.Fatal(err)
@@ -163,10 +145,10 @@ func TestCreateSuccessFormatStr(t *testing.T) {
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
 	//cmd.SetErr(b)
-	cmd.SetArgs([]string{"service", "add",
-		"--name", "test",
-		"--type", "postgresql",
-		"--namespace", "kuberlogic",
+	name, namespace := "test", "kuberlogic"
+	cmd.SetArgs([]string{"service", "delete",
+		"--name", name,
+		"--namespace", namespace,
 	})
 	err = cmd.Execute()
 	if err != nil {
@@ -176,7 +158,7 @@ func TestCreateSuccessFormatStr(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectedResult := "Service 'test' successfully created"
+	expectedResult := fmt.Sprintf("Service '%s' successfully removed", name)
 	if strings.TrimSpace(string(out)) != expectedResult {
 		t.Fatalf("expected vs actual: %s vs %s", expectedResult, out)
 	}
