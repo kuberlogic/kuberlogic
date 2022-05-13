@@ -5,6 +5,7 @@ go 1.16
 replace github.com/kuberlogic/kuberlogic/modules/dynamic-operator => ../dynamic-operator/
 
 require (
+	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/cors v1.2.0
 	github.com/go-openapi/errors v0.20.2
