@@ -2,6 +2,7 @@
 package cmd
 
 import (
+	"github.com/kuberlogic/kuberlogic/modules/operator/util"
 	"os"
 	"time"
 
@@ -26,7 +27,6 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/apiserver/internal/security"
 	"github.com/kuberlogic/kuberlogic/modules/apiserver/util/k8s"
 	cloudlinuxv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
-	"github.com/kuberlogic/kuberlogic/modules/operator/util"
 	"k8s.io/client-go/kubernetes"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"
 )

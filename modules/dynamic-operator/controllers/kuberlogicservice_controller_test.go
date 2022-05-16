@@ -31,17 +31,11 @@ var _ = Describe("KuberlogicService controller", func() {
 		interval = time.Millisecond * 250
 	)
 
-	var resources = v1.ResourceRequirements{
-		Requests: v1.ResourceList{
-			v1.ResourceCPU:    resource.MustParse("100m"),
-			v1.ResourceMemory: resource.MustParse("128Mi"),
-		},
-		Limits: v1.ResourceList{
-			// CPU 250m required minimum for zalando/posgtresql
-			// Memory 250Mi required minimum for zalando/posgtresql
-			v1.ResourceCPU:    resource.MustParse("250m"),
-			v1.ResourceMemory: resource.MustParse("256Mi"),
-		},
+	var limits = v1.ResourceList{
+		// CPU 250m required minimum for zalando/posgtresql
+		// Memory 250Mi required minimum for zalando/posgtresql
+		v1.ResourceCPU:    resource.MustParse("250m"),
+		v1.ResourceMemory: resource.MustParse("256Mi"),
 	}
 
 	Context("When updating KuberLogicService", func() {
@@ -74,7 +68,7 @@ var _ = Describe("KuberlogicService controller", func() {
 					Replicas:   defaultReplicas,
 					VolumeSize: defaultVolumeSize,
 					Version:    defaultVersion,
-					Resources:  resources,
+					Limits:     limits,
 					//Advanced:   advanced,
 				},
 			}

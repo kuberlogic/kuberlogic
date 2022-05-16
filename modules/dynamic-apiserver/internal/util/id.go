@@ -14,33 +14,29 @@
  * limitations under the License.
  */
 
-package logging
+package util
 
 import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"os"
+	"errors"
+	"fmt"
+	"strings"
 )
 
-var atom zap.AtomicLevel
-
-func newZapLogger(opts ...zap.Option) *zap.Logger {
-	// NewDevelopmentConfig -- for production logger
-	cfg := zap.NewDevelopmentConfig()
-
-	if out := os.Getenv("KUBERLOGIC_APISERVER_LOG"); out != "" {
-		cfg.OutputPaths = []string{
-			out,
-		}
+func SplitID(str string) (string, string, error) {
+	s := strings.Split(str, ":")
+	if len(s) != 2 {
+		return "", "", errors.New(fmt.Sprintf("%s is incorrect", str))
+	}
+	if s[0] == "" || s[1] == "" {
+		return "", "", errors.New(fmt.Sprint("name or namespace can't be empty"))
 	}
 
-	atom = zap.NewAtomicLevel()
-	cfg.Level = atom
-
-	logger, _ := cfg.Build(opts...)
-	return logger
+	return s[0], s[1], nil
 }
 
-func zapLoggerDebug() {
-	atom.SetLevel(zapcore.DebugLevel)
+func JoinID(ns, name string) (string, error) {
+	if ns == "" || name == "" {
+		return "", errors.New("name or namespace can't be empty")
+	}
+	return fmt.Sprintf("%s:%s", ns, name), nil
 }

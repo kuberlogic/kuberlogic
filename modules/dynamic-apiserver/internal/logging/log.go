@@ -29,6 +29,7 @@ type Logger interface {
 	Warnw(msg string, keysAndValues ...interface{})
 	Errorw(msg string, keysAndValues ...interface{})
 	Fatalw(msg string, keysAndValues ...interface{})
+	Infof(template string, args ...interface{})
 	Sync() error
 }
 

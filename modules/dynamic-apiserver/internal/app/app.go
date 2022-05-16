@@ -23,6 +23,8 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+const serviceK8sResource = "kuberlogicservices"
+
 type Service struct {
 	clientset        kubernetes.Interface
 	kuberlogicClient rest.Interface

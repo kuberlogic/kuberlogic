@@ -103,7 +103,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			Version:    kls.Spec.Version,
 			Parameters: spec,
 		}
-		err = req.SetResources(&kls.Spec.Resources)
+		err = req.SetLimits(&kls.Spec.Limits)
 		if err != nil {
 			log.Error(err, "error from converting resources")
 			return ctrl.Result{}, err
@@ -114,8 +114,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			log.Error(resp.Error(), "error from rpc call 'ForCreate'")
 			return ctrl.Result{}, resp.Error()
 		}
-		log.Info("=========", "resp", resp)
-
+		log.Info("creating service", "object", resp)
 		svc := resp.Object
 
 		if err := ctrl.SetControllerReference(kls, svc, r.Scheme); err != nil {
@@ -141,7 +140,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			Version:    kls.Spec.Version,
 			Parameters: spec,
 		}
-		err = req.SetResources(&kls.Spec.Resources)
+		err = req.SetLimits(&kls.Spec.Limits)
 		if err != nil {
 			log.Error(err, "error from converting resources")
 			return ctrl.Result{}, err
@@ -151,9 +150,10 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			log.Error(resp.Error(), "error from rpc call 'ForUpdate'")
 			return ctrl.Result{}, resp.Error()
 		}
+
+		log.Info("updating service", "object", resp)
 		svc = resp.Object
 
-		log.Info("updating the service", "svc", svc.UnstructuredContent())
 		if err := r.Update(ctx, svc); err != nil {
 			log.Error(err, "error updating service object")
 			return ctrl.Result{}, err

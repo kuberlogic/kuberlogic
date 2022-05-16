@@ -118,93 +118,6 @@ func init() {
       }
     },
     "/services/{ServiceID}/": {
-      "get": {
-        "description": "Receives full information about the service\n",
-        "tags": [
-          "service"
-        ],
-        "summary": "get service by ID",
-        "operationId": "serviceGet",
-        "parameters": [
-          {
-            "$ref": "#/parameters/ServiceID"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "search results matching criteria",
-            "schema": {
-              "$ref": "#/definitions/Service"
-            }
-          },
-          "400": {
-            "description": "invalid input, object invalid",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "bad authentication"
-          },
-          "403": {
-            "description": "bad permissions"
-          },
-          "404": {
-            "description": "item not found"
-          },
-          "503": {
-            "description": "internal server error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      },
-      "put": {
-        "description": "Edit service object\n",
-        "tags": [
-          "service"
-        ],
-        "summary": "edit a service item",
-        "operationId": "serviceEdit",
-        "parameters": [
-          {
-            "$ref": "#/parameters/ServiceID"
-          },
-          {
-            "$ref": "#/parameters/ServiceItem"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "item edited",
-            "schema": {
-              "$ref": "#/definitions/Service"
-            }
-          },
-          "400": {
-            "description": "invalid input, object invalid",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "bad authentication"
-          },
-          "403": {
-            "description": "bad permissions"
-          },
-          "404": {
-            "description": "item not found"
-          },
-          "503": {
-            "description": "internal server error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      },
       "delete": {
         "description": "Deletes a service object\n",
         "tags": [
@@ -250,7 +163,7 @@ func init() {
     "Advanced": {
       "type": "object",
       "additionalProperties": {
-        "type": "string"
+        "type": "object"
       }
     },
     "Error": {
@@ -261,13 +174,8 @@ func init() {
         }
       }
     },
-    "Resource": {
+    "Limits": {
       "type": "object",
-      "required": [
-        "cpu",
-        "memory",
-        "volumeSize"
-      ],
       "properties": {
         "cpu": {
           "type": "string",
@@ -298,6 +206,9 @@ func init() {
           "format": "date-time",
           "readOnly": true
         },
+        "limits": {
+          "$ref": "#/definitions/Limits"
+        },
         "name": {
           "type": "string",
           "maxLength": 20,
@@ -313,17 +224,6 @@ func init() {
         "replicas": {
           "type": "integer",
           "x-nullable": true
-        },
-        "resources": {
-          "type": "object",
-          "properties": {
-            "limits": {
-              "$ref": "#/definitions/Resource"
-            },
-            "requests": {
-              "$ref": "#/definitions/Resource"
-            }
-          }
         },
         "status": {
           "type": "string",
@@ -482,113 +382,6 @@ func init() {
       }
     },
     "/services/{ServiceID}/": {
-      "get": {
-        "description": "Receives full information about the service\n",
-        "tags": [
-          "service"
-        ],
-        "summary": "get service by ID",
-        "operationId": "serviceGet",
-        "parameters": [
-          {
-            "maxLength": 120,
-            "minLength": 3,
-            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
-            "type": "string",
-            "description": "service Resource ID",
-            "name": "ServiceID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "search results matching criteria",
-            "schema": {
-              "$ref": "#/definitions/Service"
-            }
-          },
-          "400": {
-            "description": "invalid input, object invalid",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "bad authentication"
-          },
-          "403": {
-            "description": "bad permissions"
-          },
-          "404": {
-            "description": "item not found"
-          },
-          "503": {
-            "description": "internal server error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      },
-      "put": {
-        "description": "Edit service object\n",
-        "tags": [
-          "service"
-        ],
-        "summary": "edit a service item",
-        "operationId": "serviceEdit",
-        "parameters": [
-          {
-            "maxLength": 120,
-            "minLength": 3,
-            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
-            "type": "string",
-            "description": "service Resource ID",
-            "name": "ServiceID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "description": "service item",
-            "name": "serviceItem",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/Service"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "item edited",
-            "schema": {
-              "$ref": "#/definitions/Service"
-            }
-          },
-          "400": {
-            "description": "invalid input, object invalid",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "bad authentication"
-          },
-          "403": {
-            "description": "bad permissions"
-          },
-          "404": {
-            "description": "item not found"
-          },
-          "503": {
-            "description": "internal server error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      },
       "delete": {
         "description": "Deletes a service object\n",
         "tags": [
@@ -641,7 +434,7 @@ func init() {
     "Advanced": {
       "type": "object",
       "additionalProperties": {
-        "type": "string"
+        "type": "object"
       }
     },
     "Error": {
@@ -652,13 +445,8 @@ func init() {
         }
       }
     },
-    "Resource": {
+    "Limits": {
       "type": "object",
-      "required": [
-        "cpu",
-        "memory",
-        "volumeSize"
-      ],
       "properties": {
         "cpu": {
           "type": "string",
@@ -689,6 +477,9 @@ func init() {
           "format": "date-time",
           "readOnly": true
         },
+        "limits": {
+          "$ref": "#/definitions/Limits"
+        },
         "name": {
           "type": "string",
           "maxLength": 20,
@@ -705,17 +496,6 @@ func init() {
           "type": "integer",
           "x-nullable": true
         },
-        "resources": {
-          "type": "object",
-          "properties": {
-            "limits": {
-              "$ref": "#/definitions/Resource"
-            },
-            "requests": {
-              "$ref": "#/definitions/Resource"
-            }
-          }
-        },
         "status": {
           "type": "string",
           "readOnly": true
@@ -728,17 +508,6 @@ func init() {
         },
         "volumeSize": {
           "type": "string"
-        }
-      }
-    },
-    "ServiceResources": {
-      "type": "object",
-      "properties": {
-        "limits": {
-          "$ref": "#/definitions/Resource"
-        },
-        "requests": {
-          "$ref": "#/definitions/Resource"
         }
       }
     },

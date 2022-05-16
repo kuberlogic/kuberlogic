@@ -27,6 +27,9 @@ type Service struct {
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
 
+	// limits
+	Limits *Limits `json:"limits,omitempty"`
+
 	// name
 	// Required: true
 	// Max Length: 20
@@ -42,9 +45,6 @@ type Service struct {
 
 	// replicas
 	Replicas *int64 `json:"replicas,omitempty"`
-
-	// resources
-	Resources *ServiceResources `json:"resources,omitempty"`
 
 	// status
 	// Read Only: true
@@ -73,15 +73,15 @@ func (m *Service) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateLimits(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateName(formats); err != nil {
 		res = append(res, err)
 	}
 
 	if err := m.validateNs(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateResources(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -121,6 +121,25 @@ func (m *Service) validateCreatedAt(formats strfmt.Registry) error {
 
 	if err := validate.FormatOf("created_at", "body", "date-time", m.CreatedAt.String(), formats); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *Service) validateLimits(formats strfmt.Registry) error {
+	if swag.IsZero(m.Limits) { // not required
+		return nil
+	}
+
+	if m.Limits != nil {
+		if err := m.Limits.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("limits")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("limits")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -167,25 +186,6 @@ func (m *Service) validateNs(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Service) validateResources(formats strfmt.Registry) error {
-	if swag.IsZero(m.Resources) { // not required
-		return nil
-	}
-
-	if m.Resources != nil {
-		if err := m.Resources.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("resources")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("resources")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
 func (m *Service) validateType(formats strfmt.Registry) error {
 
 	if err := validate.Required("type", "body", m.Type); err != nil {
@@ -207,7 +207,7 @@ func (m *Service) ContextValidate(ctx context.Context, formats strfmt.Registry) 
 		res = append(res, err)
 	}
 
-	if err := m.contextValidateResources(ctx, formats); err != nil {
+	if err := m.contextValidateLimits(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -244,14 +244,14 @@ func (m *Service) contextValidateCreatedAt(ctx context.Context, formats strfmt.R
 	return nil
 }
 
-func (m *Service) contextValidateResources(ctx context.Context, formats strfmt.Registry) error {
+func (m *Service) contextValidateLimits(ctx context.Context, formats strfmt.Registry) error {
 
-	if m.Resources != nil {
-		if err := m.Resources.ContextValidate(ctx, formats); err != nil {
+	if m.Limits != nil {
+		if err := m.Limits.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("resources")
+				return ve.ValidateName("limits")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("resources")
+				return ce.ValidateName("limits")
 			}
 			return err
 		}
@@ -280,142 +280,6 @@ func (m *Service) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary interface implementation
 func (m *Service) UnmarshalBinary(b []byte) error {
 	var res Service
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// ServiceResources service resources
-//
-// swagger:model ServiceResources
-type ServiceResources struct {
-
-	// limits
-	Limits *Resource `json:"limits,omitempty"`
-
-	// requests
-	Requests *Resource `json:"requests,omitempty"`
-}
-
-// Validate validates this service resources
-func (m *ServiceResources) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateLimits(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateRequests(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ServiceResources) validateLimits(formats strfmt.Registry) error {
-	if swag.IsZero(m.Limits) { // not required
-		return nil
-	}
-
-	if m.Limits != nil {
-		if err := m.Limits.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("resources" + "." + "limits")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("resources" + "." + "limits")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (m *ServiceResources) validateRequests(formats strfmt.Registry) error {
-	if swag.IsZero(m.Requests) { // not required
-		return nil
-	}
-
-	if m.Requests != nil {
-		if err := m.Requests.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("resources" + "." + "requests")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("resources" + "." + "requests")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-// ContextValidate validate this service resources based on the context it is used
-func (m *ServiceResources) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.contextValidateLimits(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateRequests(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ServiceResources) contextValidateLimits(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.Limits != nil {
-		if err := m.Limits.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("resources" + "." + "limits")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("resources" + "." + "limits")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (m *ServiceResources) contextValidateRequests(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.Requests != nil {
-		if err := m.Requests.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("resources" + "." + "requests")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("resources" + "." + "requests")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *ServiceResources) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *ServiceResources) UnmarshalBinary(b []byte) error {
-	var res ServiceResources
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

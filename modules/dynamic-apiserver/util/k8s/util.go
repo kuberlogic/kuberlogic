@@ -18,6 +18,9 @@ package k8s
 
 import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/config"
+	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	k8scheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -35,4 +38,14 @@ func GetConfig(cfg *config.Config) (*rest.Config, error) {
 		return nil, err
 	}
 	return conf, err
+}
+
+func GetKuberLogicClient(config *rest.Config) (rest.Interface, error) {
+	crdConfig := *config
+	crdConfig.ContentConfig.GroupVersion = &cloudlinuxv1alpha1.GroupVersion
+	crdConfig.APIPath = "/apis"
+	crdConfig.NegotiatedSerializer = serializer.NewCodecFactory(k8scheme.Scheme)
+	crdConfig.UserAgent = rest.DefaultKubernetesUserAgent()
+
+	return rest.UnversionedRESTClientFor(&crdConfig)
 }
