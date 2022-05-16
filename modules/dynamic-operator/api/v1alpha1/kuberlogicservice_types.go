@@ -19,11 +19,14 @@ const (
 // KuberLogicServiceStatus defines the observed state of KuberLogicService
 type KuberLogicServiceStatus struct {
 	Conditions []metav1.Condition `json:"conditions"`
+	// namespace that contains service resources
+	Namespace string `json:"namespace,omitempty"`
+	// date when the namespace and all related resources will be purged
+	PurgeDate string `json:"purgeDate,omitempty"`
 }
 
 type KuberLogicServiceSpec struct {
 	// Type of the cluster
-	// +kubebuilder:validation:Enum=postgresql;mysql;redis
 	Type string `json:"type"`
 	// Amount of replicas
 	// +kubebuilder:validation:Maximum=5
@@ -37,6 +40,7 @@ type KuberLogicServiceSpec struct {
 	// Resources (requests/limits)
 	Limits v1.ResourceList `json:"limits,omitempty"`
 
+	Domain string `json:"domain,omitempty"`
 	// any advanced configuration is supported
 	Advanced v11.JSON `json:"advanced,omitempty"`
 }
@@ -50,7 +54,7 @@ type KuberLogicServiceSpec struct {
 // +kubebuilder:printcolumn:name="CPU Request",type=string,JSONPath=`.spec.resources.requests.cpu`,description="CPU request"
 // +kubebuilder:printcolumn:name="Memory Request",type=string,JSONPath=`.spec.resources.requests.memory`,description="Memory request"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
-// +kubebuilder:resource:shortName=kls,categories=kuberlogic
+// +kubebuilder:resource:shortName=kls,categories=kuberlogic,scope=Cluster
 // +kubebuilder:subresource:status
 
 type KuberLogicService struct {

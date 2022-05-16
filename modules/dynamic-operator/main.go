@@ -110,7 +110,9 @@ func main() {
 	var dependantObjects []client.Object
 	for pluginType, instance := range pluginInstances {
 		setupLog.Info("adding to register watcher", "type", pluginType)
-		dependantObjects = append(dependantObjects, instance.Type().Object)
+		for _, o := range instance.Type().Objects {
+			dependantObjects = append(dependantObjects, o)
+		}
 	}
 
 	err = (&controllers.KuberLogicServiceReconciler{

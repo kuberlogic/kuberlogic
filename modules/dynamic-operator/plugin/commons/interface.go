@@ -10,7 +10,9 @@ import (
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"log"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // PluginService is the interface that we're exposing as a plugin.
@@ -30,6 +32,7 @@ type PluginRequestEmpty struct{}
 type PluginRequest struct {
 	Name      string
 	Namespace string
+	Host      string
 
 	Replicas   int32
 	VolumeSize string
@@ -37,7 +40,7 @@ type PluginRequest struct {
 	Limits     []byte
 
 	Parameters map[string]interface{}
-	Object     *unstructured.Unstructured
+	Objects    []*unstructured.Unstructured
 }
 
 func (pl *PluginRequest) SetLimits(limits *v1.ResourceList) error {
@@ -67,14 +70,24 @@ func (pl *PluginResponseValidation) Error() error {
 }
 
 type PluginResponse struct {
-	Object *unstructured.Unstructured
-	Err    string
+	Objects []*unstructured.Unstructured
+	Err     string
 }
 
 func (pl *PluginResponse) Error() error {
 	if pl.Err != "" {
 		return errors.New(pl.Err)
 	}
+	return nil
+}
+
+func (pl *PluginResponse) AddObject(object client.Object, gvk schema.GroupVersionKind) error {
+	o, err := ToUnstructured(object, gvk)
+	if err != nil {
+		pl.Err = err.Error()
+		return err
+	}
+	pl.Objects = append(pl.Objects, o)
 	return nil
 }
 

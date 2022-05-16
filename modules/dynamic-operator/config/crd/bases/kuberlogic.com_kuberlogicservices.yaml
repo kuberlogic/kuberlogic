@@ -18,7 +18,7 @@ spec:
     shortNames:
     - kls
     singular: kuberlogicservice
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - description: The cluster readiness
@@ -73,43 +73,44 @@ spec:
               advanced:
                 description: any advanced configuration is supported
                 x-kubernetes-preserve-unknown-fields: true
+              domain:
+                type: string
+              klsMeta:
+                description: KuberLogic related metadata about service ownership and
+                  its lifecycle
+                properties:
+                  created:
+                    description: date when created
+                    type: string
+                  deathOn:
+                    description: DeathOn shows the last date when a service is available
+                    type: string
+                  lastUpdated:
+                    description: date of last modification
+                    type: string
+                  requestedBy:
+                    description: What component requested a resource
+                    type: string
+                  requestedFor:
+                    description: Who owns a service
+                    type: string
+                type: object
+              limits:
+                additionalProperties:
+                  anyOf:
+                  - type: integer
+                  - type: string
+                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                  x-kubernetes-int-or-string: true
+                description: Resources (requests/limits)
+                type: object
               replicas:
                 description: Amount of replicas
                 format: int32
                 maximum: 5
                 type: integer
-              resources:
-                description: Resources (requests/limits)
-                properties:
-                  limits:
-                    additionalProperties:
-                      anyOf:
-                      - type: integer
-                      - type: string
-                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                      x-kubernetes-int-or-string: true
-                    description: 'Limits describes the maximum amount of compute resources
-                      allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                    type: object
-                  requests:
-                    additionalProperties:
-                      anyOf:
-                      - type: integer
-                      - type: string
-                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                      x-kubernetes-int-or-string: true
-                    description: 'Requests describes the minimum amount of compute
-                      resources required. If Requests is omitted for a container,
-                      it defaults to Limits if that is explicitly specified, otherwise
-                      to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                    type: object
-                type: object
               type:
                 description: Type of the cluster
-                enum:
-                - postgresql
-                - mysql
-                - redis
                 type: string
               version:
                 description: '2 or 3 digits: 5 or 5.7 or 5.7.31'
@@ -194,6 +195,13 @@ spec:
                   - type
                   type: object
                 type: array
+              namespace:
+                description: namespace that contains service resources
+                type: string
+              purgeDate:
+                description: date when the namespace and all related resources will
+                  be purged
+                type: string
             required:
             - conditions
             type: object
