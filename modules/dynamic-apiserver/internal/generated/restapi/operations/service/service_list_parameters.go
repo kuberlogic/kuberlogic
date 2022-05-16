@@ -9,7 +9,10 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/go-openapi/strfmt"
+	"github.com/go-openapi/validate"
 )
 
 // NewServiceListParams creates a new ServiceListParams object
@@ -28,6 +31,14 @@ type ServiceListParams struct {
 
 	// HTTP Request Object
 	HTTPRequest *http.Request `json:"-"`
+
+	/*namespace for resource
+	  Required: true
+	  Max Length: 120
+	  Min Length: 3
+	  In: query
+	*/
+	Namespace string
 }
 
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
@@ -39,8 +50,53 @@ func (o *ServiceListParams) BindRequest(r *http.Request, route *middleware.Match
 
 	o.HTTPRequest = r
 
+	qs := runtime.Values(r.URL.Query())
+
+	qNamespace, qhkNamespace, _ := qs.GetOK("Namespace")
+	if err := o.bindNamespace(qNamespace, qhkNamespace, route.Formats); err != nil {
+		res = append(res, err)
+	}
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+// bindNamespace binds and validates parameter Namespace from query.
+func (o *ServiceListParams) bindNamespace(rawData []string, hasKey bool, formats strfmt.Registry) error {
+	if !hasKey {
+		return errors.Required("Namespace", "query", rawData)
+	}
+	var raw string
+	if len(rawData) > 0 {
+		raw = rawData[len(rawData)-1]
+	}
+
+	// Required: true
+	// AllowEmptyValue: false
+
+	if err := validate.RequiredString("Namespace", "query", raw); err != nil {
+		return err
+	}
+	o.Namespace = raw
+
+	if err := o.validateNamespace(formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateNamespace carries on validations for parameter Namespace
+func (o *ServiceListParams) validateNamespace(formats strfmt.Registry) error {
+
+	if err := validate.MinLength("Namespace", "query", o.Namespace, 3); err != nil {
+		return err
+	}
+
+	if err := validate.MaxLength("Namespace", "query", o.Namespace, 120); err != nil {
+		return err
+	}
+
 	return nil
 }

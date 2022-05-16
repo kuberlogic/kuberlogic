@@ -17,7 +17,7 @@ func (srv *Service) ServiceListHandler(params apiService.ServiceListParams) midd
 
 	err := srv.kuberlogicClient.Get().
 		Resource(serviceK8sResource).
-		//Namespace(p.Namespace). --- ?
+		Namespace(params.Namespace).
 		Do(ctx).
 		Into(res)
 	if err != nil {

@@ -152,6 +152,50 @@ func (o *ServiceListForbidden) WriteResponse(rw http.ResponseWriter, producer ru
 	rw.WriteHeader(403)
 }
 
+// ServiceListUnprocessableEntityCode is the HTTP code returned for type ServiceListUnprocessableEntity
+const ServiceListUnprocessableEntityCode int = 422
+
+/*ServiceListUnprocessableEntity bad validation
+
+swagger:response serviceListUnprocessableEntity
+*/
+type ServiceListUnprocessableEntity struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *models.Error `json:"body,omitempty"`
+}
+
+// NewServiceListUnprocessableEntity creates ServiceListUnprocessableEntity with default headers values
+func NewServiceListUnprocessableEntity() *ServiceListUnprocessableEntity {
+
+	return &ServiceListUnprocessableEntity{}
+}
+
+// WithPayload adds the payload to the service list unprocessable entity response
+func (o *ServiceListUnprocessableEntity) WithPayload(payload *models.Error) *ServiceListUnprocessableEntity {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the service list unprocessable entity response
+func (o *ServiceListUnprocessableEntity) SetPayload(payload *models.Error) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *ServiceListUnprocessableEntity) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(422)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
+}
+
 // ServiceListServiceUnavailableCode is the HTTP code returned for type ServiceListServiceUnavailable
 const ServiceListServiceUnavailableCode int = 503
 

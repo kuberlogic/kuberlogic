@@ -173,6 +173,50 @@ func (o *ServiceAddConflict) WriteResponse(rw http.ResponseWriter, producer runt
 	rw.WriteHeader(409)
 }
 
+// ServiceAddUnprocessableEntityCode is the HTTP code returned for type ServiceAddUnprocessableEntity
+const ServiceAddUnprocessableEntityCode int = 422
+
+/*ServiceAddUnprocessableEntity bad validation
+
+swagger:response serviceAddUnprocessableEntity
+*/
+type ServiceAddUnprocessableEntity struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *models.Error `json:"body,omitempty"`
+}
+
+// NewServiceAddUnprocessableEntity creates ServiceAddUnprocessableEntity with default headers values
+func NewServiceAddUnprocessableEntity() *ServiceAddUnprocessableEntity {
+
+	return &ServiceAddUnprocessableEntity{}
+}
+
+// WithPayload adds the payload to the service add unprocessable entity response
+func (o *ServiceAddUnprocessableEntity) WithPayload(payload *models.Error) *ServiceAddUnprocessableEntity {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the service add unprocessable entity response
+func (o *ServiceAddUnprocessableEntity) SetPayload(payload *models.Error) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *ServiceAddUnprocessableEntity) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(422)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
+}
+
 // ServiceAddServiceUnavailableCode is the HTTP code returned for type ServiceAddServiceUnavailable
 const ServiceAddServiceUnavailableCode int = 503
 
