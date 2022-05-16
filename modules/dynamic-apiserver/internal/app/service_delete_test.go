@@ -12,11 +12,9 @@ import (
 )
 
 func TestServiceDeleteOK(t *testing.T) {
-	namespace := "-test-namespace-"
 	expectedObj := &cloudlinuxv1alpha1.KuberLogicService{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "simple",
-			Namespace: namespace,
+			Name: "simple",
 		},
 		Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
 			Type:     "postgresql",
@@ -34,8 +32,7 @@ func TestServiceDeleteOK(t *testing.T) {
 	}
 
 	service := &models.Service{
-		Name:     util.StrAsPointer("simple"),
-		Ns:       namespace,
+		ID:       util.StrAsPointer("simple"),
 		Replicas: util.Int64AsPointer(1),
 		Type:     util.StrAsPointer("postgresql"),
 		Status:   "Unknown",
@@ -43,42 +40,9 @@ func TestServiceDeleteOK(t *testing.T) {
 
 	params := apiService.ServiceDeleteParams{
 		HTTPRequest: &http.Request{},
-		ServiceID:   "-test-namespace-:service",
+		ServiceID:   "service",
 	}
 
 	checkResponse(srv.ServiceDeleteHandler(params), t, 200, service)
 	tc.handler.ValidateRequestCount(t, 2) // get and delete request under the hood
-}
-
-func TestServiceDeleteIncorrectID(t *testing.T) {
-	namespace := "-test-namespace-"
-	expectedObj := &cloudlinuxv1alpha1.KuberLogicService{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "simple",
-			Namespace: namespace,
-		},
-		Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
-			Type:     "postgresql",
-			Replicas: 1,
-		},
-	}
-
-	tc := createTestClient(expectedObj, 200, t)
-	defer tc.server.Close()
-
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
-	}
-
-	params := apiService.ServiceDeleteParams{
-		HTTPRequest: &http.Request{},
-		ServiceID:   "-test-namespace-service",
-	}
-
-	checkResponse(srv.ServiceDeleteHandler(params), t, 400, &models.Error{
-		Message: "incorrect service id",
-	})
-	tc.handler.ValidateRequestCount(t, 0) // none requests are passed
 }

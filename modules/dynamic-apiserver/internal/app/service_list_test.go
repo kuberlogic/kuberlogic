@@ -34,14 +34,11 @@ func TestServiceListEmpty(t *testing.T) {
 }
 
 func TestServiceListMany(t *testing.T) {
-	namespace := "-test-namespace-"
-
 	expectedObjects := &cloudlinuxv1alpha1.KuberLogicServiceList{
 		Items: []cloudlinuxv1alpha1.KuberLogicService{
 			{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "one",
-					Namespace: namespace,
+					Name: "one",
 				},
 				Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
 					Type:     "postgresql",
@@ -50,8 +47,7 @@ func TestServiceListMany(t *testing.T) {
 			},
 			{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "two",
-					Namespace: namespace,
+					Name: "two",
 				},
 				Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
 					Type:     "mysql",
@@ -72,15 +68,13 @@ func TestServiceListMany(t *testing.T) {
 
 	services := models.Services{
 		{
-			Name:     util.StrAsPointer("one"),
-			Ns:       namespace,
+			ID:       util.StrAsPointer("one"),
 			Type:     util.StrAsPointer("postgresql"),
 			Replicas: util.Int64AsPointer(1),
 			Status:   "Unknown",
 		},
 		{
-			Name:     util.StrAsPointer("two"),
-			Ns:       namespace,
+			ID:       util.StrAsPointer("two"),
 			Type:     util.StrAsPointer("mysql"),
 			Replicas: util.Int64AsPointer(2),
 			Status:   "Unknown",
@@ -89,7 +83,6 @@ func TestServiceListMany(t *testing.T) {
 
 	params := apiService.ServiceListParams{
 		HTTPRequest: &http.Request{},
-		Namespace:   namespace,
 	}
 
 	checkResponse(srv.ServiceListHandler(params), t, 200, services)

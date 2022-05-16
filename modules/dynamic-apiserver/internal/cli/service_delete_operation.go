@@ -8,7 +8,6 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client/service"
-	util2 "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/util"
 	"github.com/pkg/errors"
 
 	"github.com/spf13/cobra"
@@ -23,8 +22,7 @@ func makeServiceDeleteCmd(apiClient *client.ServiceAPI) (*cobra.Command, error) 
 		RunE:    runServiceDelete(apiClient),
 	}
 
-	_ = cmd.PersistentFlags().String("name", "", "name of service")
-	_ = cmd.PersistentFlags().String("namespace", "", "namespace of service")
+	_ = cmd.PersistentFlags().String("id", "", "service id")
 
 	return cmd, nil
 }
@@ -36,24 +34,12 @@ func runServiceDelete(apiClient *client.ServiceAPI) func(cmd *cobra.Command, arg
 		// retrieve flag values from cmd and fill params
 		params := service.NewServiceDeleteParams()
 
-		var name, namespace string
-		if value, err := getString(cmd, "name"); err != nil {
+		var id string
+		if value, err := getString(cmd, "id"); err != nil {
 			return err
 		} else if value != nil {
-			name = *value
+			id = *value
 		}
-
-		if value, err := getString(cmd, "namespace"); err != nil {
-			return err
-		} else if value != nil {
-			namespace = *value
-		}
-
-		serviceId, err := util2.JoinID(namespace, name)
-		if err != nil {
-			return err
-		}
-		params.ServiceID = serviceId
 
 		var formatResponse format
 		if value, err := getString(cmd, "format"); err != nil {
@@ -69,12 +55,12 @@ func runServiceDelete(apiClient *client.ServiceAPI) func(cmd *cobra.Command, arg
 
 		payload, e := apiClient.Service.ServiceDelete(params)
 		// make request and then print result
-		err = parseServiceDeleteResult(name, namespace, e)
+		err := parseServiceDeleteResult(id, e)
 		if err != nil {
 			return err
 		}
 		if isDefaultPrintFormat(formatResponse) {
-			_, err := fmt.Fprintf(cmd.OutOrStdout(), "Service '%s' successfully removed\n", name)
+			_, err := fmt.Fprintf(cmd.OutOrStdout(), "Service '%s' successfully removed\n", id)
 			return err
 		} else {
 			return printResult(cmd, formatResponse, payload)
@@ -83,7 +69,7 @@ func runServiceDelete(apiClient *client.ServiceAPI) func(cmd *cobra.Command, arg
 }
 
 // parseServiceListResult parses request result and return the string content
-func parseServiceDeleteResult(name, namespace string, respErr error) error {
+func parseServiceDeleteResult(id string, respErr error) error {
 	if respErr != nil {
 		switch respErr.(type) {
 		case *service.ServiceDeleteBadRequest:
@@ -96,7 +82,7 @@ func parseServiceDeleteResult(name, namespace string, respErr error) error {
 		case *service.ServiceDeleteForbidden:
 			return errors.Errorf("Forbidden [%v]", respErr)
 		case *service.ServiceDeleteNotFound:
-			return errors.Errorf("Record not found with name '%s' and namespace '%s'", name, namespace)
+			return errors.Errorf("Record not found with id '%s'", id)
 		case *service.ServiceDeleteUnprocessableEntity:
 			//err := respErr.(*service.ServiceDeleteUnprocessableEntity)
 			return errors.Errorf("validation error: %s", "")

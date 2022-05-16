@@ -17,27 +17,6 @@ import (
 	"testing"
 )
 
-func TestListInvalidValidation(t *testing.T) {
-	// make own http client
-	client := makeTestClient(422, map[string]string{
-		"message": "namespace in query is required",
-	})
-
-	cmd, err := MakeRootCmd(client)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	b := bytes.NewBufferString("")
-	cmd.SetOut(b)
-	cmd.SetArgs([]string{"service", "list"})
-	err = cmd.Execute()
-	expected := "validation error: namespace in query is required"
-	if err != nil && err.Error() != expected {
-		t.Fatalf("expected vs actual: %v vs %v", expected, err.Error())
-	}
-}
-
 func TestListFormatJson(t *testing.T) {
 	// make own http client
 	expected := []map[string]interface{}{
@@ -47,8 +26,7 @@ func TestListFormatJson(t *testing.T) {
 				"cpu":    "250m",
 				"memory": "256Mi",
 			},
-			"name":       "test-1",
-			"ns":         "kuberlogic",
+			"id":         "test-1",
 			"replicas":   float64(0),
 			"status":     "Unknown",
 			"type":       "postgresql",
@@ -61,8 +39,7 @@ func TestListFormatJson(t *testing.T) {
 				"cpu":    "250m",
 				"memory": "256Mi",
 			},
-			"name":       "test-2",
-			"ns":         "kuberlogic",
+			"id":         "test-2",
 			"replicas":   float64(0),
 			"status":     "Unknown",
 			"type":       "postgresql",
@@ -79,7 +56,6 @@ func TestListFormatJson(t *testing.T) {
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
 	cmd.SetArgs([]string{"service", "list",
-		"--namespace", "kuberlogic",
 		"--format", "json",
 	})
 	err = cmd.Execute()
@@ -113,7 +89,6 @@ func TestListEmptyFormatJson(t *testing.T) {
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
 	cmd.SetArgs([]string{"service", "list",
-		"--namespace", "kuberlogic",
 		"--format", "json",
 	})
 	err = cmd.Execute()
@@ -144,8 +119,7 @@ func TestListFormatYaml(t *testing.T) {
 				"cpu":    "250m",
 				"memory": "256Mi",
 			},
-			"name":       "test-1",
-			"ns":         "kuberlogic",
+			"id":         "test-1",
 			"replicas":   float64(0),
 			"status":     "Unknown",
 			"type":       "postgresql",
@@ -158,8 +132,7 @@ func TestListFormatYaml(t *testing.T) {
 				"cpu":    "250m",
 				"memory": "256Mi",
 			},
-			"name":       "test-2",
-			"ns":         "kuberlogic",
+			"id":         "test-2",
 			"replicas":   float64(0),
 			"status":     "Unknown",
 			"type":       "postgresql",
@@ -176,7 +149,6 @@ func TestListFormatYaml(t *testing.T) {
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
 	cmd.SetArgs([]string{"service", "list",
-		"--namespace", "kuberlogic",
 		"--format", "yaml",
 	})
 	err = cmd.Execute()
@@ -207,8 +179,7 @@ func TestListFormatStr(t *testing.T) {
 				"cpu":    "250m",
 				"memory": "256Mi",
 			},
-			"name":       "test-1",
-			"ns":         "kuberlogic",
+			"id":         "test-1",
 			"replicas":   float64(0),
 			"status":     "Unknown",
 			"type":       "postgresql",
@@ -221,8 +192,7 @@ func TestListFormatStr(t *testing.T) {
 				"cpu":    "250m",
 				"memory": "256Mi",
 			},
-			"name":       "test-2",
-			"ns":         "kuberlogic",
+			"id":         "test-2",
 			"replicas":   float64(0),
 			"status":     "Unknown",
 			"type":       "postgresql",
@@ -238,9 +208,7 @@ func TestListFormatStr(t *testing.T) {
 
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
-	cmd.SetArgs([]string{"service", "list",
-		"--namespace", "kuberlogic",
-	})
+	cmd.SetArgs([]string{"service", "list"})
 	err = cmd.Execute()
 	if err != nil {
 		t.Fatal(err)
@@ -251,12 +219,12 @@ func TestListFormatStr(t *testing.T) {
 	}
 	buff := bytes.NewBufferString("")
 	table := tablewriter.NewWriter(buff)
-	table.SetHeader([]string{"№", "Name", "Type", "Replica", "Version", "Status"})
+	table.SetHeader([]string{"№", "ID", "Type", "Replica", "Version", "Status"})
 	table.SetBorder(false)
 	for i, item := range expected {
 		table.Append([]string{
 			strconv.Itoa(i),
-			item["name"].(string),
+			item["id"].(string),
 			item["type"].(string),
 			strconv.Itoa(int(item["replicas"].(float64))),
 			item["version"].(string),

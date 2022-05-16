@@ -14,25 +14,16 @@ const serviceDeleteSecGrant = "nonsense"
 
 func (srv *Service) ServiceDeleteHandler(params apiService.ServiceDeleteParams) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
-	ns, name, err := util.SplitID(params.ServiceID)
-	if err != nil {
-		msg := "incorrect service id"
-		srv.log.Errorw(msg, "error", err)
-		return apiService.NewServiceDeleteBadRequest().WithPayload(&models.Error{
-			Message: msg,
-		})
-	}
 
 	r := new(kuberlogiccomv1alpha1.KuberLogicService)
-	err = srv.kuberlogicClient.Get().
+	err := srv.kuberlogicClient.Get().
 		Resource(serviceK8sResource).
-		Namespace(ns).
-		Name(name).
+		Name(params.ServiceID).
 		Do(ctx).
 		Into(r)
 	if err != nil && util.ErrNotFound(err) {
 		srv.log.Warnw("kuberlogic service not found",
-			"namespace", ns, "name", name, "error", err)
+			"name", params.ServiceID, "error", err)
 		return apiService.NewServiceDeleteNotFound()
 	} else if err != nil {
 		return apiService.NewServiceDeleteServiceUnavailable().WithPayload(&models.Error{
@@ -42,8 +33,7 @@ func (srv *Service) ServiceDeleteHandler(params apiService.ServiceDeleteParams) 
 
 	err = srv.kuberlogicClient.Delete().
 		Resource(serviceK8sResource).
-		Namespace(ns).
-		Name(name).
+		Name(params.ServiceID).
 		Do(ctx).
 		Error()
 	if err != nil {

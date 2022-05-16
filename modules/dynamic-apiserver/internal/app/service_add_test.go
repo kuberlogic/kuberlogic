@@ -15,11 +15,9 @@ import (
 )
 
 func TestServiceAddSimple(t *testing.T) {
-	namespace := "-test-namespace-"
 	expectedObj := &cloudlinuxv1alpha1.KuberLogicService{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "simple",
-			Namespace: namespace,
+			Name: "simple",
 		},
 		Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
 			Type:     "postgresql",
@@ -37,8 +35,7 @@ func TestServiceAddSimple(t *testing.T) {
 	}
 
 	service := &models.Service{
-		Name:     util.StrAsPointer("simple"),
-		Ns:       namespace,
+		ID:       util.StrAsPointer("simple"),
 		Replicas: util.Int64AsPointer(1),
 		Type:     util.StrAsPointer("postgresql"),
 		Status:   "Unknown",
@@ -54,11 +51,9 @@ func TestServiceAddSimple(t *testing.T) {
 }
 
 func TestServiceAddExtended(t *testing.T) {
-	namespace := "-test-namespace-"
 	expectedObj := &cloudlinuxv1alpha1.KuberLogicService{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "extended",
-			Namespace: namespace,
+			Name: "extended",
 		},
 		Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
 			Type:     "postgresql",
@@ -84,8 +79,7 @@ func TestServiceAddExtended(t *testing.T) {
 	}
 
 	service := &models.Service{
-		Name:     util.StrAsPointer("extended"),
-		Ns:       namespace,
+		ID:       util.StrAsPointer("extended"),
 		Replicas: util.Int64AsPointer(1),
 		Type:     util.StrAsPointer("postgresql"),
 		Limits: &models.Limits{
@@ -108,11 +102,9 @@ func TestServiceAddExtended(t *testing.T) {
 }
 
 func TestServiceAddAdvanced(t *testing.T) {
-	namespace := "-test-namespace-"
 	expectedObj := &cloudlinuxv1alpha1.KuberLogicService{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "advanced",
-			Namespace: namespace,
+			Name: "advanced",
 		},
 		Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
 			Type: "postgresql",
@@ -140,8 +132,7 @@ func TestServiceAddAdvanced(t *testing.T) {
 	}
 
 	service := &models.Service{
-		Name:     util.StrAsPointer("advanced"),
-		Ns:       namespace,
+		ID:       util.StrAsPointer("advanced"),
 		Type:     util.StrAsPointer("postgresql"),
 		Replicas: util.Int64AsPointer(0),
 		Status:   "Unknown",

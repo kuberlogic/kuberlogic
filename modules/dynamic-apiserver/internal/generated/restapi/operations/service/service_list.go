@@ -31,7 +31,7 @@ func NewServiceList(ctx *middleware.Context, handler ServiceListHandler) *Servic
 
 /* ServiceList swagger:route GET /services/ service serviceList
 
-searches service
+lists all services
 
 List of service objects
 

@@ -21,8 +21,6 @@ func makeServiceListCmd(apiClient *client.ServiceAPI) (*cobra.Command, error) {
 		RunE:    runServiceList(apiClient),
 	}
 
-	_ = cmd.PersistentFlags().String("namespace", "", "namespace for services")
-
 	return cmd, nil
 }
 
@@ -32,11 +30,6 @@ func runServiceList(apiClient *client.ServiceAPI) func(cmd *cobra.Command, args 
 		var err error
 
 		params := service.NewServiceListParams()
-		if value, err := getString(cmd, "namespace"); err != nil {
-			return err
-		} else if value != nil {
-			params.Namespace = *value
-		}
 
 		var formatResponse format
 		if value, err := getString(cmd, "format"); err != nil {
@@ -57,11 +50,11 @@ func runServiceList(apiClient *client.ServiceAPI) func(cmd *cobra.Command, args 
 
 		if isDefaultPrintFormat(formatResponse) {
 			table := tablewriter.NewWriter(cmd.OutOrStdout())
-			table.SetHeader([]string{"№", "Name", "Type", "Replica", "Version", "Status"})
+			table.SetHeader([]string{"№", "ID", "Type", "Replica", "Version", "Status"})
 			table.SetBorder(false)
 			for i, item := range payload {
 				table.Append([]string{
-					strconv.Itoa(i), *item.Name, *item.Type, strconv.Itoa(int(*item.Replicas)), item.Version, item.Status,
+					strconv.Itoa(i), *item.ID, *item.Type, strconv.Itoa(int(*item.Replicas)), item.Version, item.Status,
 				})
 			}
 			table.Render()
