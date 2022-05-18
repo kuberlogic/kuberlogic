@@ -1,0 +1,12 @@
+apiVersion: kuberlogic.com/v1alpha1
+kind: KuberLogicService
+metadata:
+  name: demo-compose
+spec:
+  type: docker-compose
+  replicas: 1
+  volumeSize: 1Gi
+  domain: example.com
+  limits:
+    memory: 128Mi
+    cpu: 250m

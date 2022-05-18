@@ -1,4 +1,5 @@
 resources:
+- compose-file.yaml
 - manager.yaml
 
 generatorOptions:
@@ -10,7 +11,3 @@ configMapGenerator:
   name: manager-config
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-images:
-- name: controller
-  newName: controller
-  newTag: latest
