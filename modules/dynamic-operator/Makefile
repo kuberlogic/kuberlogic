@@ -81,7 +81,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
 .PHONY: docker-build
-docker-build: #test ## Build docker image with the manager.
+docker-build: test ## Build docker image with the manager.
 	docker build . \
 		-t $(OPERATOR_IMG):$(VERSION) \
 		-t $(OPERATOR_IMG):$(IMG_LATEST_TAG)
@@ -106,7 +106,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: deploy-certmanager
-deploy-certmanager:
+deploy-certmanager: kustomize
 	$(KUSTOMIZE) build config/cert-manager | kubectl apply -f -
 
 .PHONY: deploy
@@ -132,7 +132,7 @@ controller-gen: ## Download controller-gen locally if necessary.
 KUSTOMIZE = $(shell pwd)/bin/kustomize
 .PHONY: kustomize
 kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.4)
 
 ENVTEST = $(shell pwd)/bin/setup-envtest
 .PHONY: envtest
