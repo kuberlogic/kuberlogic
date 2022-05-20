@@ -1,6 +1,7 @@
 resources:
 - compose-file.yaml
 - manager.yaml
+- services.yaml
 
 generatorOptions:
   disableNameSuffixHash: true

@@ -27,8 +27,6 @@ var configFile string
 // dry run flag
 var dryRun bool
 
-//var formatResponse format
-
 // name of the executable
 var exeName string = filepath.Base(os.Args[0])
 
@@ -47,6 +45,7 @@ var maxDepth int = 5
 func makeClient(httpClient *http.Client) (*client.ServiceAPI, error) {
 	hostname := viper.GetString("hostname")
 	scheme := viper.GetString("scheme")
+	logDebugf("hostname %s, scheme %s", hostname, scheme)
 
 	r := httptransport.NewWithClient(hostname, client.DefaultBasePath, []string{scheme}, httpClient)
 	r.SetDebug(debug)
@@ -63,12 +62,19 @@ func makeClient(httpClient *http.Client) (*client.ServiceAPI, error) {
 
 // MakeRootCmd returns the root cmd
 func MakeRootCmd(httpClient *http.Client) (*cobra.Command, error) {
-	cobra.OnInitialize(initViperConfigs)
-
 	// Use executable name as the command name
 	rootCmd := &cobra.Command{
 		Use: exeName,
 	}
+	// configure debug flag
+	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "output debug logs")
+	// configure config location
+	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file path")
+	// configure dry run flag
+	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "do not send the request to server")
+
+	//cobra.OnInitialize(initViperConfigs)
+	initViperConfigs()
 
 	// register basic flags
 	rootCmd.PersistentFlags().String("hostname", client.DefaultHost, "hostname of the service")
@@ -81,13 +87,6 @@ func MakeRootCmd(httpClient *http.Client) (*cobra.Command, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// configure debug flag
-	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "output debug logs")
-	// configure config location
-	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file path")
-	// configure dry run flag
-	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "do not send the request to server")
 
 	var formatResponse format
 	rootCmd.PersistentFlags().Var(&formatResponse, "format", "Format response value: json, yaml or string. (default: string)")
@@ -124,6 +123,7 @@ func initViperConfigs() {
 		cobra.CheckErr(err)
 
 		// Search config in home directory with name ".cobra" (without extension).
+		logDebugf("config", path.Join(home, ".config", exeName))
 		viper.AddConfigPath(path.Join(home, ".config", exeName))
 		viper.SetConfigName("config")
 	}

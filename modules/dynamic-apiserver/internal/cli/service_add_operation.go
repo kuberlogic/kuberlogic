@@ -25,7 +25,7 @@ func makeServiceAddCmd(apiClient *client.ServiceAPI) (*cobra.Command, error) {
 	_ = cmd.PersistentFlags().String("type", "", "type of service")
 	_ = cmd.PersistentFlags().Int64("replicas", 0, "how many replicas need for service")
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
-	_ = cmd.PersistentFlags().String("volumeSize", "", "")
+	_ = cmd.PersistentFlags().String("volume_size", "", "")
 
 	// limits
 	_ = cmd.PersistentFlags().String("limits.cpu", "", "cpu limits")

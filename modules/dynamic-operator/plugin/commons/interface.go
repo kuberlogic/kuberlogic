@@ -107,6 +107,7 @@ type PluginResponseDefault struct {
 	Replicas   int32
 	VolumeSize string
 	Version    string
+	Host       string
 	// *v1.ResourceList
 	Limits     []byte
 	Parameters map[string]interface{}
