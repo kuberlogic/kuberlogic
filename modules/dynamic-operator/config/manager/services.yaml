@@ -13,4 +13,4 @@ spec:
       targetPort: 8001
   selector:
     control-plane: controller-manager
-  type: NodePort
+  type: LoadBalancer

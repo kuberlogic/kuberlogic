@@ -11,6 +11,7 @@ import (
 	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	v12 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,32 +29,44 @@ func ServiceToKuberlogic(svc *models.Service) (*kuberlogiccomv1alpha1.KuberLogic
 	if svc.Version != "" {
 		c.Spec.Version = svc.Version
 	}
-	//if svc.Resources != nil {
-	//	c.Spec.Resources.Limits = make(v12.ResourceList)
-	//	c.Spec.Resources.Requests = make(v12.ResourceList)
-	//
-	//	cpu := svc.Resources.CPU
-	//	if cpu != nil {
-	//		// amount of resources and limits could be different
-	//		// for using the same values need to use the same defaults in the operator's scope
-	//		c.Spec.Resources.Limits[v12.ResourceCPU] = resource.MustParse(*svc.Limits.CPU)
-	//	}
-	//
-	//	mem := svc.Limits.Memory
-	//	if mem != nil {
-	//		// amount of resources and limits could be different
-	//		// for using the same values need to use the same defaults in the operator's scope
-	//		c.Spec.Resources.Limits[v12.ResourceMemory] = resource.MustParse(fmt.Sprintf("%vG", *svc.Limits.Memory))
-	//	}
-	//
-	//	if svc.Limits.VolumeSize != nil {
-	//		c.Spec.VolumeSize = *svc.Limits.VolumeSize + "G"
-	//	}
-	//}
+	if svc.Host != "" {
+		c.Spec.Domain = svc.Host
+	}
+	if svc.VolumeSize != "" {
+		c.Spec.VolumeSize = svc.VolumeSize
+	}
 
-	//if svc.Advanced != nil {
-	//	c.Spec.Advanced = svc.Advanced
-	//}
+	if svc.Limits != nil {
+		c.Spec.Limits = make(v12.ResourceList)
+
+		if svc.Limits.CPU != "" {
+			// amount of resources and limits could be different
+			// for using the same values need to use the same defaults in the operator's scope
+			c.Spec.Limits[v12.ResourceCPU] = resource.MustParse(svc.Limits.CPU)
+		}
+
+		if svc.Limits.Memory != "" {
+			// amount of resources and limits could be different
+			// for using the same values need to use the same defaults in the operator's scope
+			c.Spec.Limits[v12.ResourceMemory] = resource.MustParse(svc.Limits.Memory)
+		}
+
+		if svc.Limits.VolumeSize != "" {
+			c.Spec.VolumeSize = svc.Limits.VolumeSize
+		}
+	}
+
+	if svc.Advanced != nil {
+		data, err := json.Marshal(svc.Advanced)
+		if err != nil {
+			return nil, err
+		}
+		// make sure that unmarshalling object will be successfully
+		err = c.Spec.Advanced.Unmarshal(data)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return c, nil
 }
@@ -64,6 +77,10 @@ func KuberlogicToService(kls *kuberlogiccomv1alpha1.KuberLogicService) (*models.
 	ret.Type = StrAsPointer(kls.Spec.Type)
 	ret.Replicas = Int64AsPointer(int64(kls.Spec.Replicas))
 	ret.CreatedAt = strfmt.DateTime(kls.CreationTimestamp.Time.UTC())
+
+	if kls.Spec.Domain != "" {
+		ret.Host = kls.Spec.Domain
+	}
 
 	if kls.Spec.VolumeSize != "" {
 		ret.VolumeSize = kls.Spec.VolumeSize

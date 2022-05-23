@@ -13,18 +13,19 @@ import (
 )
 
 // makeServiceAddCmd returns a cmd to handle operation serviceAdd
-func makeServiceAddCmd(apiClient *client.ServiceAPI) (*cobra.Command, error) {
+func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:     "serviceAdd",
 		Short:   `Adds service object`,
 		Aliases: []string{"add"},
-		RunE:    runServiceAdd(apiClient),
+		RunE:    runServiceAdd(apiClientFunc),
 	}
 
 	_ = cmd.PersistentFlags().String("id", "", "service id")
 	_ = cmd.PersistentFlags().String("type", "", "type of service")
 	_ = cmd.PersistentFlags().Int64("replicas", 0, "how many replicas need for service")
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
+	_ = cmd.PersistentFlags().String("host", "", "host for external connection to service")
 	_ = cmd.PersistentFlags().String("volume_size", "", "")
 
 	// limits
@@ -38,9 +39,14 @@ func makeServiceAddCmd(apiClient *client.ServiceAPI) (*cobra.Command, error) {
 }
 
 // runServiceAdd uses cmd flags to call endpoint api
-func runServiceAdd(apiClient *client.ServiceAPI) func(cmd *cobra.Command, args []string) error {
+func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		var err error
+
+		apiClient, err := apiClientFunc()
+		if err != nil {
+			return err
+		}
 
 		// retrieve flag values from cmd and fill params
 		params := service.NewServiceAddParams()
@@ -69,6 +75,12 @@ func runServiceAdd(apiClient *client.ServiceAPI) func(cmd *cobra.Command, args [
 			return err
 		} else if value != nil {
 			svc.Version = *value
+		}
+
+		if value, err := getString(cmd, "host"); err != nil {
+			return err
+		} else if value != nil {
+			svc.Host = *value
 		}
 
 		if value, err := getString(cmd, "volumeSize"); err != nil {
@@ -108,6 +120,7 @@ func runServiceAdd(apiClient *client.ServiceAPI) func(cmd *cobra.Command, args [
 			logDebugf("dry-run flag specified. Skip sending request.")
 			return nil
 		}
+
 		// make request and then print result
 		payload, err := parseServiceAddResult(apiClient.Service.ServiceAdd(params))
 		if err != nil {

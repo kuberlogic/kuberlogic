@@ -13,21 +13,26 @@ import (
 )
 
 // makeServiceListCmd returns a cmd to handle operation serviceList
-func makeServiceListCmd(apiClient *client.ServiceAPI) (*cobra.Command, error) {
+func makeServiceListCmd(apiClientFunc func() (*client.ServiceAPI, error)) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:     "serviceList",
 		Short:   `List of service objects`,
 		Aliases: []string{"list"},
-		RunE:    runServiceList(apiClient),
+		RunE:    runServiceList(apiClientFunc),
 	}
 
 	return cmd, nil
 }
 
 // runServiceList uses cmd flags to call endpoint api
-func runServiceList(apiClient *client.ServiceAPI) func(cmd *cobra.Command, args []string) error {
+func runServiceList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		var err error
+
+		apiClient, err := apiClientFunc()
+		if err != nil {
+			return err
+		}
 
 		params := service.NewServiceListParams()
 
@@ -50,11 +55,12 @@ func runServiceList(apiClient *client.ServiceAPI) func(cmd *cobra.Command, args 
 
 		if isDefaultPrintFormat(formatResponse) {
 			table := tablewriter.NewWriter(cmd.OutOrStdout())
-			table.SetHeader([]string{"№", "ID", "Type", "Replica", "Version", "Status"})
+			table.SetHeader([]string{"№", "ID", "Type", "Replica", "Version", "Host", "Status"})
 			table.SetBorder(false)
 			for i, item := range payload {
 				table.Append([]string{
-					strconv.Itoa(i), *item.ID, *item.Type, strconv.Itoa(int(*item.Replicas)), item.Version, item.Status,
+					strconv.Itoa(i), *item.ID, *item.Type, strconv.Itoa(int(*item.Replicas)),
+					item.Version, item.Host, item.Status,
 				})
 			}
 			table.Render()
