@@ -81,6 +81,11 @@ func MakeRootCmd(httpClient *http.Client) (*cobra.Command, error) {
 	if err != nil {
 		return nil, err
 	}
+	rootCmd.PersistentFlags().String("token", "", "authentication apiserver token")
+	err = viper.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token"))
+	if err != nil {
+		return nil, err
+	}
 
 	// configure debug flag
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "output debug logs")

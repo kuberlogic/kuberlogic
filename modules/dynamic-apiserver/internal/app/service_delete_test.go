@@ -43,6 +43,6 @@ func TestServiceDeleteOK(t *testing.T) {
 		ServiceID:   "service",
 	}
 
-	checkResponse(srv.ServiceDeleteHandler(params), t, 200, service)
+	checkResponse(srv.ServiceDeleteHandler(params, nil), t, 200, service)
 	tc.handler.ValidateRequestCount(t, 2) // get and delete request under the hood
 }

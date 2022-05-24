@@ -74,6 +74,13 @@ spec:
             - --scheme=http
           image: apiserver:latest
           name: apiserver
+          env:
+            - name: KUBERLOGIC_APISERVER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: apiserver-token
+                  key: token
+
           ports:
             - containerPort: 8001
           resources:

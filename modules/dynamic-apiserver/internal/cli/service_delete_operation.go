@@ -6,9 +6,11 @@ package cli
 import (
 	"fmt"
 	"github.com/go-openapi/runtime"
+	client2 "github.com/go-openapi/runtime/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client/service"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 
 	"github.com/spf13/cobra"
 )
@@ -58,7 +60,7 @@ func runServiceDelete(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd
 			return nil
 		}
 
-		payload, e := apiClient.Service.ServiceDelete(params)
+		payload, e := apiClient.Service.ServiceDelete(params, client2.APIKeyAuth("X-Token", "header", viper.GetString("token")))
 		// make request and then print result
 		if err = parseServiceDeleteResult(id, e); err != nil {
 			return err

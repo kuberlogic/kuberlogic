@@ -29,7 +29,7 @@ func TestServiceListEmpty(t *testing.T) {
 		HTTPRequest: &http.Request{},
 	}
 
-	checkResponse(srv.ServiceListHandler(params), t, 200, models.Services{})
+	checkResponse(srv.ServiceListHandler(params, nil), t, 200, models.Services{})
 	tc.handler.ValidateRequestCount(t, 1)
 }
 
@@ -85,6 +85,6 @@ func TestServiceListMany(t *testing.T) {
 		HTTPRequest: &http.Request{},
 	}
 
-	checkResponse(srv.ServiceListHandler(params), t, 200, services)
+	checkResponse(srv.ServiceListHandler(params, nil), t, 200, services)
 	tc.handler.ValidateRequestCount(t, 1)
 }

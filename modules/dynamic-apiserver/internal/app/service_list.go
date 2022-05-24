@@ -11,7 +11,7 @@ import (
 // set this string to a required security grant for this action
 const serviceListSecGrant = "nonsense"
 
-func (srv *Service) ServiceListHandler(params apiService.ServiceListParams) middleware.Responder {
+func (srv *Service) ServiceListHandler(params apiService.ServiceListParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
 	res := new(kuberlogiccomv1alpha1.KuberLogicServiceList)
 

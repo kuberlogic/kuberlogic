@@ -46,7 +46,7 @@ func TestServiceAddSimple(t *testing.T) {
 		ServiceItem: service,
 	}
 
-	checkResponse(srv.ServiceAddHandler(params), t, 201, service)
+	checkResponse(srv.ServiceAddHandler(params, nil), t, 201, service)
 	tc.handler.ValidateRequestCount(t, 1)
 }
 
@@ -97,7 +97,7 @@ func TestServiceAddExtended(t *testing.T) {
 		ServiceItem: service,
 	}
 
-	checkResponse(srv.ServiceAddHandler(params), t, 201, service)
+	checkResponse(srv.ServiceAddHandler(params, nil), t, 201, service)
 	tc.handler.ValidateRequestCount(t, 1)
 }
 
@@ -144,6 +144,6 @@ func TestServiceAddAdvanced(t *testing.T) {
 		ServiceItem: service,
 	}
 
-	checkResponse(srv.ServiceAddHandler(params), t, 201, service)
+	checkResponse(srv.ServiceAddHandler(params, nil), t, 201, service)
 	tc.handler.ValidateRequestCount(t, 1)
 }

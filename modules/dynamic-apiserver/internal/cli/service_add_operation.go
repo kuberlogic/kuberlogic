@@ -3,8 +3,10 @@ package cli
 import (
 	"fmt"
 	"github.com/go-openapi/runtime"
+	client2 "github.com/go-openapi/runtime/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/models"
@@ -122,7 +124,8 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 		}
 
 		// make request and then print result
-		payload, err := parseServiceAddResult(apiClient.Service.ServiceAdd(params))
+		payload, err := parseServiceAddResult(apiClient.Service.ServiceAdd(params,
+			client2.APIKeyAuth("X-Token", "header", viper.GetString("token"))))
 		if err != nil {
 			return err
 		}

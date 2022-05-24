@@ -10,6 +10,7 @@ tags:
   - name: service
     description: Everything about service resource
 
+
 host: localhost:8001
 basePath: /api/v1/
 schemes:
@@ -18,6 +19,13 @@ consumes:
   - application/json
 produces:
   - application/json
+securityDefinitions:
+  key:
+    type: apiKey
+    in: header
+    name: x-token
+security:
+  - key: [ ]
 paths:
   /services/:
     get:
@@ -119,10 +127,10 @@ definitions:
 
   Limits:
     type: object
-#    required:
-#      - cpu
-#      - memory
-#      - volumeSize
+    #    required:
+    #      - cpu
+    #      - memory
+    #      - volumeSize
     properties:
       cpu:
         type: string
@@ -188,6 +196,9 @@ definitions:
       message:
         type: string
 
+  principal:
+    type: string
+
 parameters:
   ServiceID:
     name: ServiceID
@@ -206,3 +217,4 @@ parameters:
     description: service item
     schema:
       $ref: "#/definitions/Service"
+

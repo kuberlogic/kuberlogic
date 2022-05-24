@@ -30,11 +30,11 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
-	ServiceAdd(params *ServiceAddParams, opts ...ClientOption) (*ServiceAddCreated, error)
+	ServiceAdd(params *ServiceAddParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceAddCreated, error)
 
-	ServiceDelete(params *ServiceDeleteParams, opts ...ClientOption) (*ServiceDeleteOK, error)
+	ServiceDelete(params *ServiceDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceDeleteOK, error)
 
-	ServiceList(params *ServiceListParams, opts ...ClientOption) (*ServiceListOK, error)
+	ServiceList(params *ServiceListParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceListOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
@@ -45,7 +45,7 @@ type ClientService interface {
   Adds service object
 
 */
-func (a *Client) ServiceAdd(params *ServiceAddParams, opts ...ClientOption) (*ServiceAddCreated, error) {
+func (a *Client) ServiceAdd(params *ServiceAddParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceAddCreated, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceAddParams()
@@ -59,6 +59,7 @@ func (a *Client) ServiceAdd(params *ServiceAddParams, opts ...ClientOption) (*Se
 		Schemes:            []string{"http"},
 		Params:             params,
 		Reader:             &ServiceAddReader{formats: a.formats},
+		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -86,7 +87,7 @@ func (a *Client) ServiceAdd(params *ServiceAddParams, opts ...ClientOption) (*Se
   Deletes a service object
 
 */
-func (a *Client) ServiceDelete(params *ServiceDeleteParams, opts ...ClientOption) (*ServiceDeleteOK, error) {
+func (a *Client) ServiceDelete(params *ServiceDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceDeleteOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceDeleteParams()
@@ -100,6 +101,7 @@ func (a *Client) ServiceDelete(params *ServiceDeleteParams, opts ...ClientOption
 		Schemes:            []string{"http"},
 		Params:             params,
 		Reader:             &ServiceDeleteReader{formats: a.formats},
+		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -127,7 +129,7 @@ func (a *Client) ServiceDelete(params *ServiceDeleteParams, opts ...ClientOption
   List of service objects
 
 */
-func (a *Client) ServiceList(params *ServiceListParams, opts ...ClientOption) (*ServiceListOK, error) {
+func (a *Client) ServiceList(params *ServiceListParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceListOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewServiceListParams()
@@ -141,6 +143,7 @@ func (a *Client) ServiceList(params *ServiceListParams, opts ...ClientOption) (*
 		Schemes:            []string{"http"},
 		Params:             params,
 		Reader:             &ServiceListReader{formats: a.formats},
+		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}

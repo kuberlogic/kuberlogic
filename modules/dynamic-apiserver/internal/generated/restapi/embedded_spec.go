@@ -257,6 +257,9 @@ func init() {
       "items": {
         "$ref": "#/definitions/Service"
       }
+    },
+    "principal": {
+      "type": "string"
     }
   },
   "parameters": {
@@ -280,6 +283,18 @@ func init() {
       }
     }
   },
+  "securityDefinitions": {
+    "key": {
+      "type": "apiKey",
+      "name": "x-token",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "key": []
+    }
+  ],
   "tags": [
     {
       "description": "Everything about service resource",
@@ -540,6 +555,9 @@ func init() {
       "items": {
         "$ref": "#/definitions/Service"
       }
+    },
+    "principal": {
+      "type": "string"
     }
   },
   "parameters": {
@@ -563,6 +581,18 @@ func init() {
       }
     }
   },
+  "securityDefinitions": {
+    "key": {
+      "type": "apiKey",
+      "name": "x-token",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "key": []
+    }
+  ],
   "tags": [
     {
       "description": "Everything about service resource",

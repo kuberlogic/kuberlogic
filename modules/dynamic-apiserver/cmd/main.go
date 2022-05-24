@@ -7,11 +7,13 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	errors "github.com/go-openapi/errors"
 	"github.com/go-openapi/loads"
 	"github.com/jessevdk/go-flags"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/app"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/config"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/models"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/restapi"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/restapi/operations"
 
@@ -61,6 +63,16 @@ func Main(args []string) {
 
 	srv := app.New(baseClient, crdClient, logging.WithComponentLogger("server"))
 	api := operations.NewKuberlogicAPI(swaggerSpec)
+	// Applies when the "x-token" header is set
+	api.KeyAuth = func(token string) (*models.Principal, error) {
+		if token == os.Getenv("KUBERLOGIC_APISERVER_TOKEN") {
+			prin := models.Principal(token)
+			return &prin, nil
+		}
+		api.Logger("==== %s", os.Getenv("KUBERLOGIC_APISERVER_TOKEN"))
+		api.Logger("Access attempt with incorrect api key auth: %s", token)
+		return nil, errors.New(401, "incorrect api key auth")
+	}
 
 	api.ServiceServiceAddHandler = apiService.ServiceAddHandlerFunc(srv.ServiceAddHandler)
 	api.ServiceServiceDeleteHandler = apiService.ServiceDeleteHandlerFunc(srv.ServiceDeleteHandler)
