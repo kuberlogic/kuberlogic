@@ -2,10 +2,6 @@
  * CloudLinux Software Inc 2019-2021 All Rights Reserved
  */
 
-/*
- * CloudLinux Software Inc 2019-2021 All Rights Reserved
- */
-
 package main
 
 import (

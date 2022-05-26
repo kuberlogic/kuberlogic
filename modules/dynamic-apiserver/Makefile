@@ -30,7 +30,7 @@ test:
 
 .PHONY: build-cli
 build-cli:
-	go build -o kuberlogic internal/generated/cmd/kuberlogic/main.go
+	go build -o kuberlogic cmd/cli/main.go
 
 .PHONY: run
 run:
