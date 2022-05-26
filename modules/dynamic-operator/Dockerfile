@@ -13,15 +13,23 @@ RUN go mod download
 COPY main.go main.go
 COPY api/ api/
 COPY controllers/ controllers/
+COPY cfg/ cfg/
+COPY plugin/commons plugin/commons
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
+ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+RUN go build -a -o manager main.go
+
+# Build plugin
+COPY plugins/docker-compose plugins/docker-compose
+RUN cd plugins/docker-compose && go build -a -o docker-compose-plugin .
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
 COPY --from=builder /workspace/manager .
+COPY --from=builder /workspace/plugins/docker-compose/docker-compose-plugin .
 USER 65532:65532
 
 ENTRYPOINT ["/manager"]
