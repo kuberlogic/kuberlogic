@@ -35,7 +35,6 @@ type Environment struct {
 func SetupEnv(kls *kuberlogiccomv1alpha1.KuberLogicService, c client.Client, ctx context.Context) (*Environment, error) {
 	ns := getNamespace(kls)
 	if _, err := controllerruntime.CreateOrUpdate(ctx, c, ns, func() error {
-		ns = getNamespace(kls)
 		return controllerruntime.SetControllerReference(kls, ns, c.Scheme())
 	}); err != nil {
 		return nil, errors.Wrap(err, "error setting up kls namespace")
@@ -43,7 +42,6 @@ func SetupEnv(kls *kuberlogiccomv1alpha1.KuberLogicService, c client.Client, ctx
 
 	netpol := getNetworkPolicy(kls, ns)
 	if _, err := controllerruntime.CreateOrUpdate(ctx, c, netpol, func() error {
-		netpol = getNetworkPolicy(kls, ns)
 		return controllerruntime.SetControllerReference(kls, netpol, c.Scheme())
 	}); err != nil {
 		return nil, errors.Wrap(err, "error setting up kls networkpolicy")

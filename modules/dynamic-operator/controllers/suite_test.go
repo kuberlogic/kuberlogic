@@ -118,7 +118,7 @@ var _ = BeforeSuite(func() {
 	// registering watchers for the dependent resources
 	var dependantObjects []client.Object
 	for _, instance := range pluginInstances {
-		for _, o := range instance.Type().Objects {
+		for _, o := range instance.Types().Objects {
 			dependantObjects = append(dependantObjects, o)
 		}
 	}

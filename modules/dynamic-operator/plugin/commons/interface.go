@@ -20,7 +20,7 @@ type PluginService interface {
 	SetLogger(logger hclog.Logger)
 	Convert(req PluginRequest) *PluginResponse
 	Status(req PluginRequest) *PluginResponseStatus
-	Type() *PluginResponse
+	Types() *PluginResponse
 
 	Default() *PluginResponseDefault
 	ValidateCreate(req PluginRequest) *PluginResponseValidation

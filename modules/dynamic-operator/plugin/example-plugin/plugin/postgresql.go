@@ -69,7 +69,7 @@ func (p *PostgresqlService) ValidateDelete(req commons.PluginRequest) *commons.P
 	return &commons.PluginResponseValidation{}
 }
 
-func (p *PostgresqlService) Type() *commons.PluginResponse {
+func (p *PostgresqlService) Types() *commons.PluginResponse {
 	p.logger.Debug("call Type")
 	return commons.ResponseFromObject(&postgresv1.Postgresql{}, gvk())
 }

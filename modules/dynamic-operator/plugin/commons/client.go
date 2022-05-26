@@ -74,8 +74,8 @@ func (g *PluginClient) Convert(req PluginRequest) *PluginResponse {
 	return res
 }
 
-func (g *PluginClient) Type() *PluginResponse {
-	return g.call("Type", struct{}{})
+func (g *PluginClient) Types() *PluginResponse {
+	return g.call("Types", struct{}{})
 }
 
 func (g *PluginClient) ValidateCreate(req PluginRequest) *PluginResponseValidation {

@@ -110,7 +110,7 @@ func main() {
 	var dependantObjects []client.Object
 	for pluginType, instance := range pluginInstances {
 		setupLog.Info("adding to register watcher", "type", pluginType)
-		for _, o := range instance.Type().Objects {
+		for _, o := range instance.Types().Objects {
 			dependantObjects = append(dependantObjects, o)
 		}
 	}
