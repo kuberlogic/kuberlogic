@@ -22,6 +22,7 @@ var _ = Describe("KuberlogicService controller", func() {
 		klsName = "test-service"
 
 		defaultReplicas   = 1
+		defaultDomain     = "example.com"
 		defaultVersion    = "13"
 		defaultVolumeSize = "1G"
 
@@ -64,6 +65,7 @@ var _ = Describe("KuberlogicService controller", func() {
 				Spec: v1alpha1.KuberLogicServiceSpec{
 					Type:       "postgresql",
 					Replicas:   defaultReplicas,
+					Domain:     defaultDomain,
 					VolumeSize: defaultVolumeSize,
 					Version:    defaultVersion,
 					Limits:     limits,
