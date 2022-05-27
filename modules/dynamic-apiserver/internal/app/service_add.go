@@ -11,7 +11,7 @@ import (
 // set this string to a required security grant for this action
 const serviceAddSecGrant = "nonsense"
 
-func (srv *Service) ServiceAddHandler(params apiService.ServiceAddParams) middleware.Responder {
+func (srv *Service) ServiceAddHandler(params apiService.ServiceAddParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
 
 	c, err := util.ServiceToKuberlogic(params.ServiceItem)

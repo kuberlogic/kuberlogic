@@ -10,11 +10,12 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/models"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/restapi/operations"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/restapi/operations/service"
 )
 
-//go:generate swagger generate server --target ../../generated --name Kuberlogic --spec ../../../openapi.yaml --template-dir swagger-templates/templates/ --principal interface{}
+//go:generate swagger generate server --target ../../generated --name Kuberlogic --spec ../../../openapi.yaml --template-dir swagger-templates/templates/ --principal models.Principal
 
 func configureFlags(api *operations.KuberlogicAPI) {
 	// api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{ ... }
@@ -38,18 +39,31 @@ func configureAPI(api *operations.KuberlogicAPI) http.Handler {
 
 	api.JSONProducer = runtime.JSONProducer()
 
+	// Applies when the "x-token" header is set
+	if api.KeyAuth == nil {
+		api.KeyAuth = func(token string) (*models.Principal, error) {
+			return nil, errors.NotImplemented("api key auth (key) x-token from header param [x-token] has not yet been implemented")
+		}
+	}
+
+	// Set your custom authorizer if needed. Default one is security.Authorized()
+	// Expected interface runtime.Authorizer
+	//
+	// Example:
+	// api.APIAuthorizer = security.Authorized()
+
 	if api.ServiceServiceAddHandler == nil {
-		api.ServiceServiceAddHandler = service.ServiceAddHandlerFunc(func(params service.ServiceAddParams) middleware.Responder {
+		api.ServiceServiceAddHandler = service.ServiceAddHandlerFunc(func(params service.ServiceAddParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceAdd has not yet been implemented")
 		})
 	}
 	if api.ServiceServiceDeleteHandler == nil {
-		api.ServiceServiceDeleteHandler = service.ServiceDeleteHandlerFunc(func(params service.ServiceDeleteParams) middleware.Responder {
+		api.ServiceServiceDeleteHandler = service.ServiceDeleteHandlerFunc(func(params service.ServiceDeleteParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceDelete has not yet been implemented")
 		})
 	}
 	if api.ServiceServiceListHandler == nil {
-		api.ServiceServiceListHandler = service.ServiceListHandlerFunc(func(params service.ServiceListParams) middleware.Responder {
+		api.ServiceServiceListHandler = service.ServiceListHandlerFunc(func(params service.ServiceListParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceList has not yet been implemented")
 		})
 	}

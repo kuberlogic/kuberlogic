@@ -1,10 +1,14 @@
-VERSION ?= 0.0.2
+.EXPORT_ALL_VARIABLES:
+
+VERSION ?= 0.0.5
 
 IMG_REPO = quay.io/kuberlogic
 IMG_LATEST_TAG=latest
 
 APISERVER_NAME = dynamic-apiserver
 APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME)
+
+KUBERLOGIC_APISERVER_TOKEN=8ZTjsD3t2Q3Yq-C4-hoahcFn
 
 .PHONY: recreate-generated-server
 recreate-generated-server:
@@ -21,6 +25,7 @@ generate-server: recreate-generated-server
 	swagger generate server \
 		--spec openapi.yaml \
 		--target internal/generated \
+		-P models.Principal \
 		--config-file swagger-templates/default-server.yml \
 		--template-dir swagger-templates/templates/ \
 		--name kuberlogic

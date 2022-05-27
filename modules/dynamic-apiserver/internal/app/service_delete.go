@@ -12,7 +12,7 @@ import (
 // set this string to a required security grant for this action
 const serviceDeleteSecGrant = "nonsense"
 
-func (srv *Service) ServiceDeleteHandler(params apiService.ServiceDeleteParams) middleware.Responder {
+func (srv *Service) ServiceDeleteHandler(params apiService.ServiceDeleteParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
 
 	r := new(kuberlogiccomv1alpha1.KuberLogicService)

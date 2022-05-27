@@ -3,8 +3,10 @@ package cli
 import (
 	"fmt"
 	"github.com/go-openapi/runtime"
+	client2 "github.com/go-openapi/runtime/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/models"
@@ -23,7 +25,7 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) (*cobra
 
 	_ = cmd.PersistentFlags().String("id", "", "service id")
 	_ = cmd.PersistentFlags().String("type", "", "type of service")
-	_ = cmd.PersistentFlags().Int64("replicas", 0, "how many replicas need for service")
+	_ = cmd.PersistentFlags().Int64("replicas", 1, "how many replicas need for service")
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
 	_ = cmd.PersistentFlags().String("domain", "", "domain for external connection to service")
 	_ = cmd.PersistentFlags().String("volume_size", "", "")
@@ -69,6 +71,9 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 			return err
 		} else if value != nil {
 			svc.Replicas = value
+		} else {
+			newReplicas := int64(1) // default value for replicas
+			svc.Replicas = &newReplicas
 		}
 
 		if value, err := getString(cmd, "version"); err != nil {
@@ -122,7 +127,8 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 		}
 
 		// make request and then print result
-		payload, err := parseServiceAddResult(apiClient.Service.ServiceAdd(params))
+		payload, err := parseServiceAddResult(apiClient.Service.ServiceAdd(params,
+			client2.APIKeyAuth("X-Token", "header", viper.GetString("token"))))
 		if err != nil {
 			return err
 		}
