@@ -106,13 +106,17 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	pluginRequest := commons.PluginRequest{
 		Name:       kls.Name,
 		Namespace:  ns,
-		Host:       kls.Name + "." + kls.Spec.Domain,
 		Replicas:   kls.Spec.Replicas,
 		VolumeSize: kls.Spec.VolumeSize,
 		Version:    kls.Spec.Version,
 		Parameters: spec,
 		Objects:    nil,
 	}
+
+	if kls.Spec.Domain != "" {
+		pluginRequest.Host = kls.Name + "." + kls.Spec.Domain
+	}
+
 	if err := pluginRequest.SetLimits(&kls.Spec.Limits); err != nil {
 		log.Error(err, "error converting resources")
 		return ctrl.Result{}, err

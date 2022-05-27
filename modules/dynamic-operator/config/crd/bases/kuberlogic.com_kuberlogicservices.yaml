@@ -101,7 +101,6 @@ spec:
                 description: Volume size
                 type: string
             required:
-            - domain
             - replicas
             - type
             type: object
