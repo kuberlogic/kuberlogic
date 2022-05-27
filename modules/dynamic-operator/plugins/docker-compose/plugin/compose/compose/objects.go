@@ -127,9 +127,9 @@ func (c *ComposeModel) objectsWithGVK() []map[schema.GroupVersionKind]client.Obj
 		{
 			deploymentGVK: c.deployment,
 		},
-		{
-			ingressGVK: c.ingress,
-		},
+	}
+	if c.ingress != nil {
+		objects = append(objects, map[schema.GroupVersionKind]client.Object{ingressGVK: c.ingress})
 	}
 
 	for _, pvc := range c.persistentvolumeclaims {
@@ -362,6 +362,12 @@ func (c *ComposeModel) updateServiceDeployment(req *commons.PluginRequest) error
 }
 
 func (c *ComposeModel) updateIngress(req *commons.PluginRequest) error {
+	// Host is not set
+	if req.Host == "" {
+		c.ingress = nil
+		return nil
+	}
+
 	if len(c.service.Spec.Ports) != 1 {
 		return errTooManySvcPorts
 	}

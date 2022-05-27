@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	pluginCompose "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugins/docker-compose/plugin/compose/compose"
+	"strings"
 )
 
 type DockerComposeService struct {
@@ -91,11 +92,23 @@ func (d *DockerComposeService) Default() *commons.PluginResponseDefault {
 }
 
 func (d *DockerComposeService) ValidateCreate(req commons.PluginRequest) *commons.PluginResponseValidation {
-	return &commons.PluginResponseValidation{}
+	var validateErrors []string
+	if req.Replicas != 1 {
+		validateErrors = append(validateErrors, "only 1 replica can be set")
+	}
+	return &commons.PluginResponseValidation{
+		Err: strings.Join(validateErrors, ","),
+	}
 }
 
 func (d *DockerComposeService) ValidateUpdate(req commons.PluginRequest) *commons.PluginResponseValidation {
-	return &commons.PluginResponseValidation{}
+	var validateErrors []string
+	if req.Replicas != 1 {
+		validateErrors = append(validateErrors, "only 1 replica can be set")
+	}
+	return &commons.PluginResponseValidation{
+		Err: strings.Join(validateErrors, ","),
+	}
 }
 
 func (d *DockerComposeService) ValidateDelete(req commons.PluginRequest) *commons.PluginResponseValidation {

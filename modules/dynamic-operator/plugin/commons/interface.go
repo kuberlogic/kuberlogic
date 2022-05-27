@@ -123,6 +123,10 @@ func (pl *PluginResponseDefault) SetLimits(limits *v1.ResourceList) error {
 }
 
 func (pl *PluginResponseDefault) GetLimits() *v1.ResourceList {
+	if pl.Limits == nil && len(pl.Limits) == 0 {
+		return nil
+	}
+
 	limits := &v1.ResourceList{}
 	err := json.Unmarshal(pl.Limits, limits)
 	if err != nil {

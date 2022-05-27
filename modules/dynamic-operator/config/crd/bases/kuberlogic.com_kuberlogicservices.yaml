@@ -74,27 +74,8 @@ spec:
                 description: any advanced configuration is supported
                 x-kubernetes-preserve-unknown-fields: true
               domain:
+                pattern: '[a-z]([-a-z0-9]*[a-z0-9])?'
                 type: string
-              klsMeta:
-                description: KuberLogic related metadata about service ownership and
-                  its lifecycle
-                properties:
-                  created:
-                    description: date when created
-                    type: string
-                  deathOn:
-                    description: DeathOn shows the last date when a service is available
-                    type: string
-                  lastUpdated:
-                    description: date of last modification
-                    type: string
-                  requestedBy:
-                    description: What component requested a resource
-                    type: string
-                  requestedFor:
-                    description: Who owns a service
-                    type: string
-                type: object
               limits:
                 additionalProperties:
                   anyOf:
