@@ -219,7 +219,7 @@ func TestListFormatStr(t *testing.T) {
 	}
 	buff := bytes.NewBufferString("")
 	table := tablewriter.NewWriter(buff)
-	table.SetHeader([]string{"№", "ID", "Type", "Replica", "Version", "Status"})
+	table.SetHeader([]string{"№", "ID", "Type", "Replica", "Version", "Host", "Status"})
 	table.SetBorder(false)
 	for i, item := range expected {
 		table.Append([]string{
@@ -228,6 +228,7 @@ func TestListFormatStr(t *testing.T) {
 			item["type"].(string),
 			strconv.Itoa(int(item["replicas"].(float64))),
 			item["version"].(string),
+			"",
 			item["status"].(string),
 		})
 	}

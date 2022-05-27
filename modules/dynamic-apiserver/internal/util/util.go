@@ -9,6 +9,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/models"
 	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	errors2 "github.com/pkg/errors"
 	v12 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -59,13 +60,9 @@ func ServiceToKuberlogic(svc *models.Service) (*kuberlogiccomv1alpha1.KuberLogic
 	if svc.Advanced != nil {
 		data, err := json.Marshal(svc.Advanced)
 		if err != nil {
-			return nil, err
+			return nil, errors2.Wrap(err, "cannot deserialize advanced parameter")
 		}
-		// make sure that unmarshalling object will be successfully
-		err = c.Spec.Advanced.Unmarshal(data)
-		if err != nil {
-			return nil, err
-		}
+		c.Spec.Advanced.Raw = data
 	}
 
 	return c, nil
