@@ -21,8 +21,7 @@ func makeServiceAddCmd(apiClient *client.ServiceAPI) (*cobra.Command, error) {
 		RunE:    runServiceAdd(apiClient),
 	}
 
-	_ = cmd.PersistentFlags().String("name", "", "name of service")
-	_ = cmd.PersistentFlags().String("namespace", "", "namespace of service")
+	_ = cmd.PersistentFlags().String("id", "", "service id")
 	_ = cmd.PersistentFlags().String("type", "", "type of service")
 	_ = cmd.PersistentFlags().Int64("replicas", 0, "how many replicas need for service")
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
@@ -48,16 +47,10 @@ func runServiceAdd(apiClient *client.ServiceAPI) func(cmd *cobra.Command, args [
 		svc := models.Service{}
 		svc.Limits = new(models.Limits)
 
-		if value, err := getString(cmd, "name"); err != nil {
+		if value, err := getString(cmd, "id"); err != nil {
 			return err
 		} else if value != nil {
-			svc.Name = value
-		}
-
-		if value, err := getString(cmd, "namespace"); err != nil {
-			return err
-		} else if value != nil {
-			svc.Ns = *value
+			svc.ID = value
 		}
 
 		if value, err := getString(cmd, "type"); err != nil {
@@ -121,7 +114,7 @@ func runServiceAdd(apiClient *client.ServiceAPI) func(cmd *cobra.Command, args [
 			return err
 		}
 		if isDefaultPrintFormat(formatResponse) {
-			_, err := fmt.Fprintf(cmd.OutOrStdout(), "Service '%s' successfully created\n", *payload.Name)
+			_, err := fmt.Fprintf(cmd.OutOrStdout(), "Service '%s' successfully created\n", *payload.ID)
 			return err
 		} else {
 			return printResult(cmd, formatResponse, payload)

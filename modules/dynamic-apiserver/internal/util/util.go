@@ -17,8 +17,7 @@ import (
 func ServiceToKuberlogic(svc *models.Service) (*kuberlogiccomv1alpha1.KuberLogicService, error) {
 	c := &kuberlogiccomv1alpha1.KuberLogicService{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      *svc.Name,
-			Namespace: svc.Ns,
+			Name: *svc.ID,
 		},
 	}
 
@@ -61,8 +60,7 @@ func ServiceToKuberlogic(svc *models.Service) (*kuberlogiccomv1alpha1.KuberLogic
 
 func KuberlogicToService(kls *kuberlogiccomv1alpha1.KuberLogicService) (*models.Service, error) {
 	ret := new(models.Service)
-	ret.Name = StrAsPointer(kls.Name)
-	ret.Ns = kls.Namespace
+	ret.ID = StrAsPointer(kls.Name)
 	ret.Type = StrAsPointer(kls.Spec.Type)
 	ret.Replicas = Int64AsPointer(int64(kls.Spec.Replicas))
 	ret.CreatedAt = strfmt.DateTime(kls.CreationTimestamp.Time.UTC())

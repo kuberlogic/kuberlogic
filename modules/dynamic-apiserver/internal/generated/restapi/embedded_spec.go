@@ -45,13 +45,8 @@ func init() {
         "tags": [
           "service"
         ],
-        "summary": "searches service",
+        "summary": "lists all services",
         "operationId": "serviceList",
-        "parameters": [
-          {
-            "$ref": "#/parameters/Namespace"
-          }
-        ],
         "responses": {
           "200": {
             "description": "search results matching criteria",
@@ -214,7 +209,7 @@ func init() {
     "Service": {
       "type": "object",
       "required": [
-        "name",
+        "id",
         "type"
       ],
       "properties": {
@@ -226,20 +221,14 @@ func init() {
           "format": "date-time",
           "readOnly": true
         },
-        "limits": {
-          "$ref": "#/definitions/Limits"
-        },
-        "name": {
+        "id": {
           "type": "string",
           "maxLength": 20,
           "minLength": 2,
           "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
         },
-        "ns": {
-          "type": "string",
-          "maxLength": 33,
-          "minLength": 2,
-          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+        "limits": {
+          "$ref": "#/definitions/Limits"
         },
         "replicas": {
           "type": "integer",
@@ -268,19 +257,10 @@ func init() {
     }
   },
   "parameters": {
-    "Namespace": {
-      "maxLength": 120,
-      "minLength": 3,
-      "type": "string",
-      "description": "namespace for resource",
-      "name": "Namespace",
-      "in": "query",
-      "required": true
-    },
     "ServiceID": {
       "maxLength": 120,
       "minLength": 3,
-      "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+      "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
       "type": "string",
       "description": "service Resource ID",
       "name": "ServiceID",
@@ -332,19 +312,8 @@ func init() {
         "tags": [
           "service"
         ],
-        "summary": "searches service",
+        "summary": "lists all services",
         "operationId": "serviceList",
-        "parameters": [
-          {
-            "maxLength": 120,
-            "minLength": 3,
-            "type": "string",
-            "description": "namespace for resource",
-            "name": "Namespace",
-            "in": "query",
-            "required": true
-          }
-        ],
         "responses": {
           "200": {
             "description": "search results matching criteria",
@@ -445,7 +414,7 @@ func init() {
           {
             "maxLength": 120,
             "minLength": 3,
-            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
             "description": "service Resource ID",
             "name": "ServiceID",
@@ -520,7 +489,7 @@ func init() {
     "Service": {
       "type": "object",
       "required": [
-        "name",
+        "id",
         "type"
       ],
       "properties": {
@@ -532,20 +501,14 @@ func init() {
           "format": "date-time",
           "readOnly": true
         },
-        "limits": {
-          "$ref": "#/definitions/Limits"
-        },
-        "name": {
+        "id": {
           "type": "string",
           "maxLength": 20,
           "minLength": 2,
           "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
         },
-        "ns": {
-          "type": "string",
-          "maxLength": 33,
-          "minLength": 2,
-          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+        "limits": {
+          "$ref": "#/definitions/Limits"
         },
         "replicas": {
           "type": "integer",
@@ -574,19 +537,10 @@ func init() {
     }
   },
   "parameters": {
-    "Namespace": {
-      "maxLength": 120,
-      "minLength": 3,
-      "type": "string",
-      "description": "namespace for resource",
-      "name": "Namespace",
-      "in": "query",
-      "required": true
-    },
     "ServiceID": {
       "maxLength": 120,
       "minLength": 3,
-      "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+      "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
       "type": "string",
       "description": "service Resource ID",
       "name": "ServiceID",

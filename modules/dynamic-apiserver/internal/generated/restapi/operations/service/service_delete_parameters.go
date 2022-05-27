@@ -35,7 +35,7 @@ type ServiceDeleteParams struct {
 	  Required: true
 	  Max Length: 120
 	  Min Length: 3
-	  Pattern: [a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?
+	  Pattern: [a-z0-9]([-a-z0-9]*[a-z0-9])?
 	  In: path
 	*/
 	ServiceID string
@@ -89,7 +89,7 @@ func (o *ServiceDeleteParams) validateServiceID(formats strfmt.Registry) error {
 		return err
 	}
 
-	if err := validate.Pattern("ServiceID", "path", o.ServiceID, `[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?`); err != nil {
+	if err := validate.Pattern("ServiceID", "path", o.ServiceID, `[a-z0-9]([-a-z0-9]*[a-z0-9])?`); err != nil {
 		return err
 	}
 

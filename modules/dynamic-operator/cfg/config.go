@@ -20,7 +20,7 @@ type Config struct {
 	Plugins []struct {
 		Name string
 		Path string
-	}
+	} `envconfig:"optional"`
 }
 
 func NewConfig() (*Config, error) {

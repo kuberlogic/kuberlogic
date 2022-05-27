@@ -27,8 +27,8 @@ func (s *PluginServer) Status(req PluginRequest, resp *PluginResponseStatus) err
 	return nil
 }
 
-func (s *PluginServer) Type(_ PluginRequestEmpty, resp *PluginResponse) error {
-	*resp = *s.Impl.Type()
+func (s *PluginServer) Types(_ PluginRequestEmpty, resp *PluginResponse) error {
+	*resp = *s.Impl.Types()
 	return nil
 }
 

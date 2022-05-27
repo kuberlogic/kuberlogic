@@ -3,7 +3,6 @@
 # It should be run by config/default
 resources:
 - bases/kuberlogic.com_kuberlogicservices.yaml
-- bases/kuberlogic.com_kuberlogicservicetypes.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:

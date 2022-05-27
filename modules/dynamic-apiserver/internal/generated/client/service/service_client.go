@@ -122,7 +122,7 @@ func (a *Client) ServiceDelete(params *ServiceDeleteParams, opts ...ClientOption
 }
 
 /*
-  ServiceList searches service
+  ServiceList lists all services
 
   List of service objects
 

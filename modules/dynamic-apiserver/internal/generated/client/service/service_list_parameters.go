@@ -58,13 +58,6 @@ func NewServiceListParamsWithHTTPClient(client *http.Client) *ServiceListParams 
    Typically these are written to a http.Request.
 */
 type ServiceListParams struct {
-
-	/* Namespace.
-
-	   namespace for resource
-	*/
-	Namespace string
-
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
@@ -118,17 +111,6 @@ func (o *ServiceListParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
-// WithNamespace adds the namespace to the service list params
-func (o *ServiceListParams) WithNamespace(namespace string) *ServiceListParams {
-	o.SetNamespace(namespace)
-	return o
-}
-
-// SetNamespace adds the namespace to the service list params
-func (o *ServiceListParams) SetNamespace(namespace string) {
-	o.Namespace = namespace
-}
-
 // WriteToRequest writes these params to a swagger request
 func (o *ServiceListParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
@@ -136,16 +118,6 @@ func (o *ServiceListParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.R
 		return err
 	}
 	var res []error
-
-	// query param Namespace
-	qrNamespace := o.Namespace
-	qNamespace := qrNamespace
-	if qNamespace != "" {
-
-		if err := r.SetQueryParam("Namespace", qNamespace); err != nil {
-			return err
-		}
-	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)

@@ -19,8 +19,7 @@ import (
 
 var _ = Describe("KuberlogicService controller", func() {
 	const (
-		klsName      = "test-service"
-		klsNamespace = "default"
+		klsName = "test-service"
 
 		defaultReplicas   = 1
 		defaultVersion    = "13"
@@ -60,8 +59,7 @@ var _ = Describe("KuberlogicService controller", func() {
 					Kind:       "KuberLogicService",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      klsName,
-					Namespace: klsNamespace,
+					Name: klsName,
 				},
 				Spec: v1alpha1.KuberLogicServiceSpec{
 					Type:       "postgresql",
@@ -76,7 +74,7 @@ var _ = Describe("KuberlogicService controller", func() {
 			Expect(k8sClient.Create(ctx, kls)).Should(Succeed())
 
 			By("By checking a new KuberLogicService")
-			lookupKlsKey := types.NamespacedName{Name: klsName, Namespace: klsNamespace}
+			lookupKlsKey := types.NamespacedName{Name: klsName, Namespace: klsName}
 			createdKls := &v1alpha1.KuberLogicService{}
 
 			Eventually(func() bool {
@@ -89,14 +87,14 @@ var _ = Describe("KuberlogicService controller", func() {
 			Expect(createdKls.Spec.Type).Should(Equal("postgresql"))
 
 			By("By checking a new cluster")
-			lookupKey := types.NamespacedName{Name: klsName, Namespace: klsNamespace}
+			lookupKey := types.NamespacedName{Name: klsName, Namespace: klsName}
 
 			svc := &unstructured.Unstructured{}
 			svc.SetGroupVersionKind(
 				postgresv1.SchemeGroupVersion.WithKind(postgresv1.PostgresCRDResourceKind),
 			)
 			svc.SetName(kls.Name)
-			svc.SetNamespace(kls.Namespace)
+			svc.SetNamespace(kls.Name)
 
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, lookupKey, svc)

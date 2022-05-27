@@ -18,7 +18,7 @@ import (
 func TestCreateInvalidValidation(t *testing.T) {
 	// make own http client
 	client := makeTestClient(422, map[string]string{
-		"message": "name in body is required",
+		"message": "id in body is required",
 	})
 
 	cmd, err := MakeRootCmd(client)
@@ -30,7 +30,7 @@ func TestCreateInvalidValidation(t *testing.T) {
 	cmd.SetOut(b)
 	cmd.SetArgs([]string{"service", "add"})
 	err = cmd.Execute()
-	expected := "validation error: name in body is required"
+	expected := "validation error: id in body is required"
 	if err != nil && err.Error() != expected {
 		t.Fatalf("expected vs actual: %v vs %v", expected, err.Error())
 	}
@@ -44,8 +44,7 @@ func TestCreateSuccessFormatJson(t *testing.T) {
 			"cpu":    "250m",
 			"memory": "256Mi",
 		},
-		"name":       "test",
-		"ns":         "kuberlogic",
+		"id":         "test",
 		"replicas":   float64(0),
 		"status":     "Unknown",
 		"type":       "postgresql",
@@ -62,9 +61,8 @@ func TestCreateSuccessFormatJson(t *testing.T) {
 	cmd.SetOut(b)
 	//cmd.SetErr(b)
 	cmd.SetArgs([]string{"service", "add",
-		"--name", "test",
+		"--id", "test",
 		"--type", "postgresql",
-		"--namespace", "kuberlogic",
 		"--format", "json",
 	})
 	err = cmd.Execute()
@@ -94,8 +92,7 @@ func TestCreateSuccessFormatYaml(t *testing.T) {
 			"cpu":    "250m",
 			"memory": "256Mi",
 		},
-		"name":       "test",
-		"ns":         "kuberlogic",
+		"id":         "test",
 		"replicas":   0,
 		"status":     "Unknown",
 		"type":       "postgresql",
@@ -112,9 +109,8 @@ func TestCreateSuccessFormatYaml(t *testing.T) {
 	cmd.SetOut(b)
 	//cmd.SetErr(b)
 	cmd.SetArgs([]string{"service", "add",
-		"--name", "test",
+		"--id", "test",
 		"--type", "postgresql",
-		"--namespace", "kuberlogic",
 		"--format", "yaml",
 	})
 	err = cmd.Execute()
@@ -146,8 +142,7 @@ func TestCreateSuccessFormatStr(t *testing.T) {
 			"memory":     "256Mi",
 			"volumeSize": "",
 		},
-		"name":       "test",
-		"ns":         "kuberlogic",
+		"id":         "test",
 		"replicas":   0,
 		"status":     "Unknown",
 		"type":       "postgresql",
@@ -164,9 +159,8 @@ func TestCreateSuccessFormatStr(t *testing.T) {
 	cmd.SetOut(b)
 	//cmd.SetErr(b)
 	cmd.SetArgs([]string{"service", "add",
-		"--name", "test",
+		"--id", "test",
 		"--type", "postgresql",
-		"--namespace", "kuberlogic",
 	})
 	err = cmd.Execute()
 	if err != nil {

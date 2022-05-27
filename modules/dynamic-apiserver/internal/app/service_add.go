@@ -25,8 +25,7 @@ func (srv *Service) ServiceAddHandler(params apiService.ServiceAddParams) middle
 	result := new(kuberlogiccomv1alpha1.KuberLogicService)
 	err = srv.kuberlogicClient.Post().
 		Resource(serviceK8sResource).
-		Namespace(params.ServiceItem.Ns).
-		Name(*params.ServiceItem.Name).
+		Name(*params.ServiceItem.ID).
 		Body(c).
 		Do(ctx).
 		Into(result)

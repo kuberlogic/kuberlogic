@@ -23,12 +23,10 @@ paths:
     get:
       tags:
         - service
-      summary: searches service
+      summary: lists all services
       operationId: serviceList
       description: |
         List of service objects
-      parameters:
-        - $ref: "#/parameters/Namespace"
       responses:
         200:
           description: search results matching criteria
@@ -146,19 +144,14 @@ definitions:
   Service:
     type: object
     required:
-      - name
+      - id
       - type
     properties:
-      name:
+      id:
         type: string
         pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
         minLength: 2
         maxLength: 20
-      ns:
-        type: string
-        pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
-        maxLength: 33
-        minLength: 2
       type:
         type: string
       version:
@@ -200,7 +193,7 @@ parameters:
     description: service Resource ID
     required: true
     type: "string"
-    pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?:[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+    pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
     minLength: 3
     maxLength: 120
 
@@ -211,12 +204,3 @@ parameters:
     description: service item
     schema:
       $ref: "#/definitions/Service"
-
-  Namespace:
-    name: Namespace
-    in: query
-    description: namespace for resource
-    required: true
-    type: "string"
-    minLength: 3
-    maxLength: 120

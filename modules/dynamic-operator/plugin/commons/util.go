@@ -5,6 +5,7 @@
 package commons
 
 import (
+	"encoding/gob"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -37,9 +38,10 @@ func ResponseFromObject(object client.Object, gvk schema.GroupVersionKind) *Plug
 		}
 	}
 	return &PluginResponse{
-		Object: o,
+		Objects: []*unstructured.Unstructured{
+			o,
+		},
 	}
-
 }
 
 func ServePlugin(name string, pl PluginService) {
@@ -49,6 +51,7 @@ func ServePlugin(name string, pl PluginService) {
 		JSONFormat: true,
 	})
 
+	gob.Register(PluginRequest{})
 	pl.SetLogger(logger)
 	var pluginMap = map[string]plugin.Plugin{
 		name: &Plugin{Impl: pl},

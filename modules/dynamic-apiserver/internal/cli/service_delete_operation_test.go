@@ -19,7 +19,7 @@ import (
 func TestDeleteInvalidValidation(t *testing.T) {
 	// make own http client
 	client := makeTestClient(400, map[string]string{
-		"message": "name or namespace can't be empty",
+		"message": "id can't be empty",
 	})
 
 	cmd, err := MakeRootCmd(client)
@@ -31,7 +31,7 @@ func TestDeleteInvalidValidation(t *testing.T) {
 	cmd.SetOut(b)
 	cmd.SetArgs([]string{"service", "delete"})
 	err = cmd.Execute()
-	expected := "name or namespace can't be empty"
+	expected := "id can't be empty"
 	if err != nil && err.Error() != expected {
 		t.Fatalf("expected vs actual: %v vs %v", expected, err.Error())
 	}
@@ -39,7 +39,7 @@ func TestDeleteInvalidValidation(t *testing.T) {
 
 func TestDeleteNotFound(t *testing.T) {
 	// make own http client
-	expected := "Record not found with name 'test' and namespace 'kuberlogic'"
+	expected := "Record not found with id 'test'"
 	client := makeTestClient(404, map[string]string{
 		"message": expected,
 	})
@@ -52,8 +52,7 @@ func TestDeleteNotFound(t *testing.T) {
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
 	cmd.SetArgs([]string{"service", "delete",
-		"--name", "test",
-		"--namespace", "kuberlogic",
+		"--id", "test",
 	})
 	err = cmd.Execute()
 	if err != nil && err.Error() != expected {
@@ -74,8 +73,7 @@ func TestDeleteSuccessFormatJson(t *testing.T) {
 	cmd.SetOut(b)
 	//cmd.SetErr(b)
 	cmd.SetArgs([]string{"service", "delete",
-		"--name", "test",
-		"--namespace", "kuberlogic",
+		"--id", "test",
 		"--format", "json",
 	})
 	err = cmd.Execute()
@@ -110,8 +108,7 @@ func TestDeleteSuccessFormatYaml(t *testing.T) {
 	cmd.SetOut(b)
 	//cmd.SetErr(b)
 	cmd.SetArgs([]string{"service", "delete",
-		"--name", "test",
-		"--namespace", "kuberlogic",
+		"--id", "test",
 		"--format", "yaml",
 	})
 	err = cmd.Execute()
@@ -145,10 +142,9 @@ func TestDeleteSuccessFormatStr(t *testing.T) {
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
 	//cmd.SetErr(b)
-	name, namespace := "test", "kuberlogic"
+	id := "test"
 	cmd.SetArgs([]string{"service", "delete",
-		"--name", name,
-		"--namespace", namespace,
+		"--id", id,
 	})
 	err = cmd.Execute()
 	if err != nil {
@@ -158,7 +154,7 @@ func TestDeleteSuccessFormatStr(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectedResult := fmt.Sprintf("Service '%s' successfully removed", name)
+	expectedResult := fmt.Sprintf("Service '%s' successfully removed", id)
 	if strings.TrimSpace(string(out)) != expectedResult {
 		t.Fatalf("expected vs actual: %s vs %s", expectedResult, out)
 	}

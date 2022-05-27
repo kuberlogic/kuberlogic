@@ -69,7 +69,7 @@ func (p *PostgresqlService) ValidateDelete(req commons.PluginRequest) *commons.P
 	return &commons.PluginResponseValidation{}
 }
 
-func (p *PostgresqlService) Type() *commons.PluginResponse {
+func (p *PostgresqlService) Types() *commons.PluginResponse {
 	p.logger.Debug("call Type")
 	return commons.ResponseFromObject(&postgresv1.Postgresql{}, gvk())
 }
@@ -121,7 +121,7 @@ func (p *PostgresqlService) Status(req commons.PluginRequest) *commons.PluginRes
 	p.logger.Debug("call Status", "ns", req.Namespace, "name", req.Name)
 
 	object := &postgresv1.Postgresql{}
-	err := commons.FromUnstructured(req.Object.UnstructuredContent(), object)
+	err := commons.FromUnstructured(req.Objects[0].UnstructuredContent(), object)
 	if err != nil {
 		p.logger.Error(err.Error())
 		return &commons.PluginResponseStatus{
@@ -140,10 +140,10 @@ func (p *PostgresqlService) Convert(req commons.PluginRequest) *commons.PluginRe
 	p.logger.Debug("call Convert", "ns", req.Namespace, "name", req.Name)
 
 	var object *postgresv1.Postgresql
-	if req.Object != nil {
+	if req.Objects != nil && req.Objects[0] != nil {
 		// using existing object
 		object = &postgresv1.Postgresql{}
-		err := commons.FromUnstructured(req.Object.UnstructuredContent(), object)
+		err := commons.FromUnstructured(req.Objects[0].UnstructuredContent(), object)
 		if err != nil {
 			p.logger.Error(err.Error())
 			return &commons.PluginResponse{

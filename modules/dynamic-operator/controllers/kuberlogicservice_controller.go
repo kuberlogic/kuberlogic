@@ -15,6 +15,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/go-logr/logr"
 	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	kuberlogicserviceenv "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/controllers/kuberlogicservice-env"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -22,6 +23,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logger "sigs.k8s.io/controller-runtime/pkg/log"
+	"sync"
 	"time"
 )
 
@@ -30,6 +32,8 @@ type KuberLogicServiceReconciler struct {
 	client.Client
 	Scheme  *runtime.Scheme
 	Plugins map[string]commons.PluginService
+
+	mu sync.Mutex
 }
 
 func HandlePanic(log logr.Logger) {
@@ -52,6 +56,9 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	log.Info("Reconciliation started")
 	defer HandlePanic(log)
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	// Fetch the KuberLogicServices instance
 	kls := &kuberlogiccomv1alpha1.KuberLogicService{}
 	err := r.Get(ctx, req.NamespacedName, kls)
@@ -60,7 +67,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			log.Info(req.Namespace, req.Name, "is absent")
+			log.Info("object not found", "key", req.NamespacedName)
 
 			return ctrl.Result{}, nil
 		}
@@ -68,6 +75,14 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		log.Error(err, "Failed to get KuberLogicService")
 		return ctrl.Result{}, err
 	}
+
+	log.Info("verifying KuberLogicService environment")
+	env, err := kuberlogicserviceenv.SetupEnv(kls, r.Client, ctx)
+	if err != nil {
+		log.Error(err, "error setting up KuberlogicService environment")
+		return ctrl.Result{}, err
+	}
+	ns := env.NamespaceName
 
 	spec := make(map[string]interface{}, 0)
 	if len(kls.Spec.Advanced.Raw) > 0 {
@@ -79,92 +94,79 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	log.Info("spec", "spec", kls.Spec)
 	log.Info("plugin type", "type", kls.Spec.Type)
+	log = log.WithValues("plugin", kls.Spec.Type)
 
-	//return ctrl.Result{}, nil
+	plugin, found := r.Plugins[kls.Spec.Type]
+	if !found {
+		pluginLoadedErr := errors.New("plugin not found")
+		log.Error(pluginLoadedErr, "")
+		return ctrl.Result{}, errors.New("plugin not found")
+	}
 
-	plugin := r.Plugins[kls.Spec.Type]
-	resp := plugin.Type()
+	pluginRequest := commons.PluginRequest{
+		Name:       kls.Name,
+		Namespace:  ns,
+		Host:       kls.Name + "." + kls.Spec.Domain,
+		Replicas:   kls.Spec.Replicas,
+		VolumeSize: kls.Spec.VolumeSize,
+		Version:    kls.Spec.Version,
+		Parameters: spec,
+		Objects:    nil,
+	}
+	if err := pluginRequest.SetLimits(&kls.Spec.Limits); err != nil {
+		log.Error(err, "error converting resources")
+		return ctrl.Result{}, err
+	}
+	resp := plugin.Convert(pluginRequest)
 	if resp.Error() != nil {
-		log.Error(resp.Error(), "error from rpc call 'Empty'")
+		log.Error(resp.Error(), "error from rpc call 'Convert'", "plugin request", pluginRequest)
 		return ctrl.Result{}, resp.Error()
 	}
+	log.Info("=========", "plugin response", resp, "plugin request", pluginRequest)
 
-	svc := resp.Object
-	svc.SetName(kls.Name)
-	svc.SetNamespace(kls.Namespace)
-	if err := r.Client.Get(ctx, req.NamespacedName, svc); k8serrors.IsNotFound(err) {
-		log.Info("creating new service", "type", kls.Spec.Type)
-
-		req := commons.PluginRequest{
-			Name:       kls.Name,
-			Namespace:  kls.Namespace,
-			Replicas:   kls.Spec.Replicas,
-			VolumeSize: kls.Spec.VolumeSize,
-			Version:    kls.Spec.Version,
-			Parameters: spec,
-		}
-		err = req.SetLimits(&kls.Spec.Limits)
-		if err != nil {
-			log.Error(err, "error from converting resources")
+	// collect cluster objects
+	for _, o := range resp.Objects {
+		if err := r.Get(ctx, client.ObjectKeyFromObject(o), o); k8serrors.IsNotFound(err) {
+			// object not found conitnue iterating
+			continue
+		} else if err != nil {
+			log.Error(err, "error fetching object from cluster", "object", o)
 			return ctrl.Result{}, err
-		}
-
-		resp := plugin.Convert(req)
-		if resp.Error() != nil {
-			log.Error(resp.Error(), "error from rpc call 'ForCreate'")
-			return ctrl.Result{}, resp.Error()
-		}
-		log.Info("creating service", "object", resp)
-		svc := resp.Object
-
-		if err := ctrl.SetControllerReference(kls, svc, r.Scheme); err != nil {
-			log.Error(err, "error setting controller reference")
-			return ctrl.Result{}, err
-		}
-
-		if err := r.Create(ctx, svc); err != nil {
-			log.Error(err, "error creating service object")
-			return ctrl.Result{}, err
-		}
-	} else if err != nil {
-		log.Error(err, "failed to get service object")
-		return ctrl.Result{}, err
-	} else {
-
-		req := commons.PluginRequest{
-			Name:       kls.Name,
-			Namespace:  kls.Namespace,
-			Object:     svc,
-			Replicas:   kls.Spec.Replicas,
-			VolumeSize: kls.Spec.VolumeSize,
-			Version:    kls.Spec.Version,
-			Parameters: spec,
-		}
-		err = req.SetLimits(&kls.Spec.Limits)
-		if err != nil {
-			log.Error(err, "error from converting resources")
-			return ctrl.Result{}, err
-		}
-		resp = plugin.Convert(req)
-		if resp.Error() != nil {
-			log.Error(resp.Error(), "error from rpc call 'ForUpdate'")
-			return ctrl.Result{}, resp.Error()
-		}
-
-		log.Info("updating service", "object", resp)
-		svc = resp.Object
-
-		if err := r.Update(ctx, svc); err != nil {
-			log.Error(err, "error updating service object")
-			return ctrl.Result{}, err
+		} else {
+			// object found
+			pluginRequest.Objects = append(pluginRequest.Objects, o)
 		}
 	}
 
-	log.Info("syncing status", "object", svc.UnstructuredContent())
+	// convert found objects
+	resp = plugin.Convert(pluginRequest)
+	if resp.Error() != nil {
+		log.Error(resp.Error(), "error from rpc call 'Convert'", "plugin request", pluginRequest)
+		return ctrl.Result{}, resp.Error()
+	}
+	log.Info("=========", "plugin response", resp, "plugin request", pluginRequest)
+
+	// now create or update objects in cluster
+	for _, o := range resp.Objects {
+		desiredState := o.UnstructuredContent()
+		op, err := ctrl.CreateOrUpdate(ctx, r.Client, o, func() error {
+			log.Info("mutating object", "current", o.UnstructuredContent(), "desired", desiredState)
+			o.SetUnstructuredContent(desiredState)
+			return ctrl.SetControllerReference(kls, o, r.Scheme)
+		})
+		if err != nil {
+			log.Error(err, "error syncing object", "object", o)
+			return ctrl.Result{}, err
+		}
+		log.Info("synced object", "op", op, "object", o)
+	}
+
+	// sync status
+	log.Info("syncing status")
 	status := plugin.Status(commons.PluginRequest{
 		Name:       kls.Name,
-		Namespace:  kls.Namespace,
-		Object:     svc,
+		Namespace:  ns,
+		Objects:    resp.Objects,
 		Parameters: spec,
 	})
 	if resp.Error() != nil {
