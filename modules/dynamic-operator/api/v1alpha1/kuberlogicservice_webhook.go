@@ -53,8 +53,9 @@ func (r *KuberLogicService) Default() {
 		r.Spec.Domain = resp.Host
 	}
 
-	if r.Spec.Limits == nil {
-		r.Spec.Limits = *resp.GetLimits()
+	limits := resp.GetLimits()
+	if r.Spec.Limits == nil && limits != nil {
+		r.Spec.Limits = *limits
 	}
 
 	spec := make(map[string]interface{}, 0)
