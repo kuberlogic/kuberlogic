@@ -25,7 +25,7 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) (*cobra
 
 	_ = cmd.PersistentFlags().String("id", "", "service id")
 	_ = cmd.PersistentFlags().String("type", "", "type of service")
-	_ = cmd.PersistentFlags().Int64("replicas", 0, "how many replicas need for service")
+	_ = cmd.PersistentFlags().Int64("replicas", 1, "how many replicas need for service")
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
 	_ = cmd.PersistentFlags().String("domain", "", "domain for external connection to service")
 	_ = cmd.PersistentFlags().String("volume_size", "", "")
@@ -71,6 +71,9 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 			return err
 		} else if value != nil {
 			svc.Replicas = value
+		} else {
+			newReplicas := int64(1) // default value for replicas
+			svc.Replicas = &newReplicas
 		}
 
 		if value, err := getString(cmd, "version"); err != nil {

@@ -10,7 +10,6 @@ tags:
   - name: service
     description: Everything about service resource
 
-
 host: localhost:8001
 basePath: /api/v1/
 schemes:

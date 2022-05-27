@@ -69,7 +69,6 @@ func Main(args []string) {
 			prin := models.Principal(token)
 			return &prin, nil
 		}
-		api.Logger("==== %s", os.Getenv("KUBERLOGIC_APISERVER_TOKEN"))
 		api.Logger("Access attempt with incorrect api key auth: %s", token)
 		return nil, errors.New(401, "incorrect api key auth")
 	}

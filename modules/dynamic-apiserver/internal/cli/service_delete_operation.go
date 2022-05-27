@@ -47,6 +47,7 @@ func runServiceDelete(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd
 		} else if value != nil {
 			id = *value
 		}
+		params.ServiceID = id
 
 		var formatResponse format
 		if value, err := getString(cmd, "format"); err != nil {
