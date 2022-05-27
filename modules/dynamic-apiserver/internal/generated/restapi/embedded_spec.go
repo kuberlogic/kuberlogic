@@ -221,6 +221,9 @@ func init() {
           "format": "date-time",
           "readOnly": true
         },
+        "domain": {
+          "type": "string"
+        },
         "id": {
           "type": "string",
           "maxLength": 20,
@@ -500,6 +503,9 @@ func init() {
           "type": "string",
           "format": "date-time",
           "readOnly": true
+        },
+        "domain": {
+          "type": "string"
         },
         "id": {
           "type": "string",

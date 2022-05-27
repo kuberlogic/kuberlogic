@@ -4,6 +4,9 @@ on:
   pull_request:
     branches: [ master ]
 
+  push:
+    branches: [ master ]
+
 jobs:
   unittests:
     runs-on: ubuntu-latest
@@ -11,7 +14,6 @@ jobs:
       GOPATH: /tmp/go
 
     steps:
-
       - uses: actions/setup-go@v2
         with:
           go-version: '1.16.0'
@@ -39,3 +41,33 @@ jobs:
           bash <(curl -s https://codecov.io/bash) -f modules/dynamic-apiserver/cover.out -F dynamic-apiserver
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  build-cli:
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      GOPATH: /tmp/go
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.16.0'
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: Build CLI
+        working-directory: ./modules/dynamic-apiserver
+        run: |
+          make build-cli
+
+      - name: Release CLI
+        uses: marvinpinto/action-automatic-releases@v1.2.1
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            ./modules/dynamic-apiserver/kuberlogic

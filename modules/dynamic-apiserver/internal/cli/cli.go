@@ -27,8 +27,6 @@ var configFile string
 // dry run flag
 var dryRun bool
 
-//var formatResponse format
-
 // name of the executable
 var exeName string = filepath.Base(os.Args[0])
 
@@ -44,21 +42,23 @@ func logDebugf(format string, v ...interface{}) {
 var maxDepth int = 5
 
 // makeClient constructs a client object
-func makeClient(httpClient *http.Client) (*client.ServiceAPI, error) {
-	hostname := viper.GetString("hostname")
-	scheme := viper.GetString("scheme")
+func makeClientClosure(httpClient *http.Client) func() (*client.ServiceAPI, error) {
+	return func() (*client.ServiceAPI, error) {
+		hostname := viper.GetString("hostname")
+		scheme := viper.GetString("scheme")
+		logDebugf("hostname %s, scheme %s", hostname, scheme)
 
-	r := httptransport.NewWithClient(hostname, client.DefaultBasePath, []string{scheme}, httpClient)
-	r.SetDebug(debug)
-	// set custom producer and consumer to use the default ones
+		r := httptransport.NewWithClient(hostname, client.DefaultBasePath, []string{scheme}, httpClient)
+		r.SetDebug(debug)
+		// set custom producer and consumer to use the default ones
 
-	r.Consumers["application/json"] = runtime.JSONConsumer()
+		r.Consumers["application/json"] = runtime.JSONConsumer()
+		r.Producers["application/json"] = runtime.JSONProducer()
 
-	r.Producers["application/json"] = runtime.JSONProducer()
-
-	appCli := client.New(r, strfmt.Default)
-	logDebugf("Server url: %v://%v", scheme, hostname)
-	return appCli, nil
+		appCli := client.New(r, strfmt.Default)
+		logDebugf("Server url: %v://%v", scheme, hostname)
+		return appCli, nil
+	}
 }
 
 // MakeRootCmd returns the root cmd
@@ -92,14 +92,9 @@ func MakeRootCmd(httpClient *http.Client) (*cobra.Command, error) {
 	var formatResponse format
 	rootCmd.PersistentFlags().Var(&formatResponse, "format", "Format response value: json, yaml or string. (default: string)")
 
-	apiClient, err := makeClient(httpClient)
-	if err != nil {
-		return nil, err
-	}
-
 	// register security flags
 	// add all operation groups
-	operationGroupServiceCmd, err := makeServiceCmd(apiClient)
+	operationGroupServiceCmd, err := makeServiceCmd(makeClientClosure(httpClient))
 	if err != nil {
 		return nil, err
 	}
@@ -135,25 +130,25 @@ func initViperConfigs() {
 	logDebugf("Using config file: %v", viper.ConfigFileUsed())
 }
 
-func makeServiceCmd(apiClient *client.ServiceAPI) (*cobra.Command, error) {
+func makeServiceCmd(apiClientFunc func() (*client.ServiceAPI, error)) (*cobra.Command, error) {
 	operationGroupServiceCmd := &cobra.Command{
 		Use:  "service",
 		Long: ``,
 	}
 
-	operationServiceAddCmd, err := makeServiceAddCmd(apiClient)
+	operationServiceAddCmd, err := makeServiceAddCmd(apiClientFunc)
 	if err != nil {
 		return nil, err
 	}
 	operationGroupServiceCmd.AddCommand(operationServiceAddCmd)
 
-	operationServiceDeleteCmd, err := makeServiceDeleteCmd(apiClient)
+	operationServiceDeleteCmd, err := makeServiceDeleteCmd(apiClientFunc)
 	if err != nil {
 		return nil, err
 	}
 	operationGroupServiceCmd.AddCommand(operationServiceDeleteCmd)
 
-	operationServiceListCmd, err := makeServiceListCmd(apiClient)
+	operationServiceListCmd, err := makeServiceListCmd(apiClientFunc)
 	if err != nil {
 		return nil, err
 	}

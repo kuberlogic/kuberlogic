@@ -49,6 +49,9 @@ func (r *KuberLogicService) Default() {
 	if r.Spec.Version == "" {
 		r.Spec.Version = resp.Version
 	}
+	if r.Spec.Domain == "" {
+		r.Spec.Domain = resp.Host
+	}
 
 	if r.Spec.Limits == nil {
 		r.Spec.Limits = *resp.GetLimits()

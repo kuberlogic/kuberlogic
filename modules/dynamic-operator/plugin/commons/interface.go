@@ -107,6 +107,7 @@ type PluginResponseDefault struct {
 	Replicas   int32
 	VolumeSize string
 	Version    string
+	Host       string
 	// *v1.ResourceList
 	Limits     []byte
 	Parameters map[string]interface{}
@@ -116,7 +117,7 @@ type PluginResponseDefault struct {
 func (pl *PluginResponseDefault) SetLimits(limits *v1.ResourceList) error {
 	bytes, err := json.Marshal(limits)
 	if err != nil {
-		log.Fatal("error when marshaling limits", err)
+		log.Fatalf("error when marshaling limits: %v", err)
 	}
 	pl.Limits = bytes
 	return nil
@@ -130,7 +131,7 @@ func (pl *PluginResponseDefault) GetLimits() *v1.ResourceList {
 	limits := &v1.ResourceList{}
 	err := json.Unmarshal(pl.Limits, limits)
 	if err != nil {
-		log.Fatal("error when unmarshaling limits", err)
+		log.Fatalf("error when unmarshaling limits: %v", err)
 	}
 	return limits
 }

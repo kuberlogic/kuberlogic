@@ -156,6 +156,8 @@ definitions:
         type: string
       version:
         type: string
+      domain:
+        type: string
       volumeSize:
         type: string
       replicas:

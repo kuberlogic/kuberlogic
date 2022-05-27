@@ -183,6 +183,7 @@ func TestListFormatStr(t *testing.T) {
 			"replicas":   float64(0),
 			"status":     "Unknown",
 			"type":       "postgresql",
+			"domain":     "example.com",
 			"version":    "13",
 			"volumeSize": "1Gi",
 		},
@@ -197,6 +198,7 @@ func TestListFormatStr(t *testing.T) {
 			"status":     "Unknown",
 			"type":       "postgresql",
 			"version":    "13",
+			"domain":     "example.org",
 			"volumeSize": "1Gi",
 		},
 	}
@@ -219,7 +221,7 @@ func TestListFormatStr(t *testing.T) {
 	}
 	buff := bytes.NewBufferString("")
 	table := tablewriter.NewWriter(buff)
-	table.SetHeader([]string{"№", "ID", "Type", "Replica", "Version", "Status"})
+	table.SetHeader([]string{"№", "ID", "Type", "Replica", "Version", "Domain", "Status"})
 	table.SetBorder(false)
 	for i, item := range expected {
 		table.Append([]string{
@@ -228,6 +230,7 @@ func TestListFormatStr(t *testing.T) {
 			item["type"].(string),
 			strconv.Itoa(int(item["replicas"].(float64))),
 			item["version"].(string),
+			item["domain"].(string),
 			item["status"].(string),
 		})
 	}

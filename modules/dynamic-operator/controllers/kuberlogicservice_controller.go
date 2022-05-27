@@ -51,6 +51,11 @@ func HandlePanic(log logr.Logger) {
 //+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservices/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservices/finalizers,verbs=update
 
+// compose plugin roles:
+//+kubebuilder:rbac:groups="",resources=namespaces;serviceaccounts;services;persistentvolumeclaims;,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apps,resources=deployments;,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses;networkpolicies,verbs=get;list;watch;create;update;patch;delete
+
 func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logger.FromContext(ctx).WithValues("kuberlogicservicetype", req.String())
 	log.Info("Reconciliation started")

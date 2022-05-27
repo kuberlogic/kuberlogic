@@ -14,12 +14,12 @@ import (
 )
 
 // makeServiceDeleteCmd returns a cmd to handle operation serviceDelete
-func makeServiceDeleteCmd(apiClient *client.ServiceAPI) (*cobra.Command, error) {
+func makeServiceDeleteCmd(apiClientFunc func() (*client.ServiceAPI, error)) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:     "serviceDelete",
 		Short:   `Deletes a service object`,
 		Aliases: []string{"delete"},
-		RunE:    runServiceDelete(apiClient),
+		RunE:    runServiceDelete(apiClientFunc),
 	}
 
 	_ = cmd.PersistentFlags().String("id", "", "service id")
@@ -28,8 +28,13 @@ func makeServiceDeleteCmd(apiClient *client.ServiceAPI) (*cobra.Command, error) 
 }
 
 // runServiceDelete uses cmd flags to call endpoint api
-func runServiceDelete(apiClient *client.ServiceAPI) func(cmd *cobra.Command, args []string) error {
+func runServiceDelete(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
+
+		apiClient, err := apiClientFunc()
+		if err != nil {
+			return err
+		}
 
 		// retrieve flag values from cmd and fill params
 		params := service.NewServiceDeleteParams()
@@ -55,8 +60,7 @@ func runServiceDelete(apiClient *client.ServiceAPI) func(cmd *cobra.Command, arg
 
 		payload, e := apiClient.Service.ServiceDelete(params)
 		// make request and then print result
-		err := parseServiceDeleteResult(id, e)
-		if err != nil {
+		if err = parseServiceDeleteResult(id, e); err != nil {
 			return err
 		}
 		if isDefaultPrintFormat(formatResponse) {

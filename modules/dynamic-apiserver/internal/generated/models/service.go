@@ -27,6 +27,9 @@ type Service struct {
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
 
+	// domain
+	Domain string `json:"domain,omitempty"`
+
 	// id
 	// Required: true
 	// Max Length: 20

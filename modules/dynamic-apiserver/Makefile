@@ -1,3 +1,10 @@
+VERSION ?= 0.0.2
+
+IMG_REPO = quay.io/kuberlogic
+IMG_LATEST_TAG=latest
+
+APISERVER_NAME = dynamic-apiserver
+APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME)
 
 .PHONY: recreate-generated-server
 recreate-generated-server:
@@ -38,3 +45,20 @@ run:
 
 .PHONY: generate
 generate: generate-server generate-client
+
+.PHONY: docker-build
+docker-build:
+	CGO_ENABLED=0 \
+	GOOS=linux \
+	GOARCH=amd64 \
+	GO111MODULE=on \
+	go build -a -o bin/apiserver main.go
+	docker build . \
+		--build-arg BIN=bin/apiserver \
+		-t $(APISERVER_IMG):$(VERSION) \
+		-t $(APISERVER_IMG):$(IMG_LATEST_TAG)
+
+.PHONY: docker-push
+docker-push: ## Push docker image with the manager.
+	docker push $(APISERVER_IMG):$(VERSION)
+	docker push $(APISERVER_IMG):$(IMG_LATEST_TAG)
