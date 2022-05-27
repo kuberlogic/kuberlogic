@@ -30,8 +30,8 @@ func ServiceToKuberlogic(svc *models.Service) (*kuberlogiccomv1alpha1.KuberLogic
 	if svc.Version != "" {
 		c.Spec.Version = svc.Version
 	}
-	if svc.Host != "" {
-		c.Spec.Domain = svc.Host
+	if svc.Domain != "" {
+		c.Spec.Domain = svc.Domain
 	}
 	if svc.VolumeSize != "" {
 		c.Spec.VolumeSize = svc.VolumeSize
@@ -76,7 +76,7 @@ func KuberlogicToService(kls *kuberlogiccomv1alpha1.KuberLogicService) (*models.
 	ret.CreatedAt = strfmt.DateTime(kls.CreationTimestamp.Time.UTC())
 
 	if kls.Spec.Domain != "" {
-		ret.Host = kls.Spec.Domain
+		ret.Domain = kls.Spec.Domain
 	}
 
 	if kls.Spec.VolumeSize != "" {

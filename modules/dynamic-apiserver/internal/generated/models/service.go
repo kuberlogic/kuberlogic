@@ -27,8 +27,8 @@ type Service struct {
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
 
-	// host
-	Host string `json:"host,omitempty"`
+	// domain
+	Domain string `json:"domain,omitempty"`
 
 	// id
 	// Required: true

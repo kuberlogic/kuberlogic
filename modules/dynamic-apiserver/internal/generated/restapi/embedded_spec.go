@@ -221,7 +221,7 @@ func init() {
           "format": "date-time",
           "readOnly": true
         },
-        "host": {
+        "domain": {
           "type": "string"
         },
         "id": {
@@ -504,7 +504,7 @@ func init() {
           "format": "date-time",
           "readOnly": true
         },
-        "host": {
+        "domain": {
           "type": "string"
         },
         "id": {

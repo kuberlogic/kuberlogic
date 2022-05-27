@@ -156,7 +156,7 @@ definitions:
         type: string
       version:
         type: string
-      host:
+      domain:
         type: string
       volumeSize:
         type: string
