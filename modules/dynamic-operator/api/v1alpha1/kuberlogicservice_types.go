@@ -40,7 +40,10 @@ type KuberLogicServiceSpec struct {
 	// Resources (requests/limits)
 	Limits v1.ResourceList `json:"limits,omitempty"`
 
-	Domain string `json:"domain,omitempty"`
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Pattern=[a-z]([-a-z0-9]*[a-z0-9])?
+	Domain string `json:"domain"`
+
 	// any advanced configuration is supported
 	Advanced v11.JSON `json:"advanced,omitempty"`
 }
