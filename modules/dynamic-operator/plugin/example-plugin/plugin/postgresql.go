@@ -120,8 +120,9 @@ func (p *PostgresqlService) IsReady(service *postgresv1.Postgresql) bool {
 func (p *PostgresqlService) Status(req commons.PluginRequest) *commons.PluginResponseStatus {
 	p.logger.Debug("call Status", "ns", req.Namespace, "name", req.Name)
 
+	existingObjs := req.GetObjects()
 	object := &postgresv1.Postgresql{}
-	err := commons.FromUnstructured(req.Objects[0].UnstructuredContent(), object)
+	err := commons.FromUnstructured(existingObjs[0].UnstructuredContent(), object)
 	if err != nil {
 		p.logger.Error(err.Error())
 		return &commons.PluginResponseStatus{
@@ -140,10 +141,11 @@ func (p *PostgresqlService) Convert(req commons.PluginRequest) *commons.PluginRe
 	p.logger.Debug("call Convert", "ns", req.Namespace, "name", req.Name)
 
 	var object *postgresv1.Postgresql
-	if req.Objects != nil && req.Objects[0] != nil {
+	existingObjs := req.GetObjects()
+	if existingObjs != nil && existingObjs[0] != nil {
 		// using existing object
 		object = &postgresv1.Postgresql{}
-		err := commons.FromUnstructured(req.Objects[0].UnstructuredContent(), object)
+		err := commons.FromUnstructured(existingObjs[0].UnstructuredContent(), object)
 		if err != nil {
 			p.logger.Error(err.Error())
 			return &commons.PluginResponse{

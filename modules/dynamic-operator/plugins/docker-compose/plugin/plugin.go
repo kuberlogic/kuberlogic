@@ -46,7 +46,7 @@ func (d *DockerComposeService) Convert(req commons.PluginRequest) *commons.Plugi
 
 	for _, item := range objects {
 		for gvk, object := range item {
-			_ = res.AddObject(object, gvk)
+			_ = res.AddUnstructuredObject(object, gvk)
 		}
 	}
 	return res
@@ -77,7 +77,7 @@ func (d *DockerComposeService) Types() *commons.PluginResponse {
 	// we need to filter duplicates first
 	for _, item := range types {
 		for gvk, object := range item {
-			_ = res.AddObject(object, gvk)
+			_ = res.AddUnstructuredObject(object, gvk)
 		}
 	}
 

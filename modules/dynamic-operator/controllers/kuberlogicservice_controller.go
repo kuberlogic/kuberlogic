@@ -115,7 +115,6 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		VolumeSize: kls.Spec.VolumeSize,
 		Version:    kls.Spec.Version,
 		Parameters: spec,
-		Objects:    nil,
 	}
 
 	if kls.Spec.Domain != "" {
@@ -143,7 +142,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			return ctrl.Result{}, err
 		} else {
 			// object found
-			pluginRequest.Objects = append(pluginRequest.Objects, o)
+			pluginRequest.AddObject(o)
 		}
 	}
 
@@ -172,12 +171,13 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	// sync status
 	log.Info("syncing status")
-	status := plugin.Status(commons.PluginRequest{
+	statusRequest := &commons.PluginRequest{
 		Name:       kls.Name,
-		Namespace:  ns,
-		Objects:    resp.Objects,
+		Namespace:  kls.Namespace,
 		Parameters: spec,
-	})
+	}
+	statusRequest.SetObjects(resp.Objects)
+	status := plugin.Status(*statusRequest)
 	if resp.Error() != nil {
 		log.Error(resp.Error(), "error from rpc call 'ForUpdate'")
 		return ctrl.Result{}, resp.Error()

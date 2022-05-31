@@ -40,7 +40,19 @@ type PluginRequest struct {
 	Limits     []byte
 
 	Parameters map[string]interface{}
-	Objects    []*unstructured.Unstructured
+	objects    []*unstructured.Unstructured
+}
+
+func (pl *PluginRequest) SetObjects(objs []*unstructured.Unstructured) {
+	pl.objects = objs
+}
+
+func (pl *PluginRequest) AddObject(o *unstructured.Unstructured) {
+	pl.objects = append(pl.objects, o)
+}
+
+func (pl *PluginRequest) GetObjects() []*unstructured.Unstructured {
+	return pl.objects
 }
 
 func (pl *PluginRequest) SetLimits(limits *v1.ResourceList) error {
@@ -81,7 +93,7 @@ func (pl *PluginResponse) Error() error {
 	return nil
 }
 
-func (pl *PluginResponse) AddObject(object client.Object, gvk schema.GroupVersionKind) error {
+func (pl *PluginResponse) AddUnstructuredObject(object client.Object, gvk schema.GroupVersionKind) error {
 	o, err := ToUnstructured(object, gvk)
 	if err != nil {
 		pl.Err = err.Error()
