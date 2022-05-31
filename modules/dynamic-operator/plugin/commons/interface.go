@@ -40,19 +40,19 @@ type PluginRequest struct {
 	Limits     []byte
 
 	Parameters map[string]interface{}
-	objects    []*unstructured.Unstructured
+	Objects    []*unstructured.Unstructured
 }
 
 func (pl *PluginRequest) SetObjects(objs []*unstructured.Unstructured) {
-	pl.objects = objs
+	pl.Objects = objs
 }
 
 func (pl *PluginRequest) AddObject(o *unstructured.Unstructured) {
-	pl.objects = append(pl.objects, o)
+	pl.Objects = append(pl.Objects, o)
 }
 
 func (pl *PluginRequest) GetObjects() []*unstructured.Unstructured {
-	return pl.objects
+	return pl.Objects
 }
 
 func (pl *PluginRequest) SetLimits(limits *v1.ResourceList) error {
