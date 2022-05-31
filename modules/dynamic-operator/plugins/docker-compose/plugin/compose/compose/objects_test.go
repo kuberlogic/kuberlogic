@@ -9,60 +9,62 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+var envVal = "val"
+
 var _ = Describe("docker-compose model", func() {
-	envVal := "val"
-	c := NewComposeModel(&types.Project{
-		Name:       "test",
-		WorkingDir: "/tmp",
-		Services: types.Services{
-			types.ServiceConfig{
-				Name:    "demo-app",
-				Command: types.ShellCommand{"cmd", "arg"},
-				Environment: types.MappingWithEquals{
-					"DEMO_ENV": nil,
-					"ENV1":     &envVal,
-					"ENV2":     &envVal,
-					"ENV3":     &envVal,
-				},
-				Image: "demo:test",
-				Ports: []types.ServicePortConfig{
-					{
-						Target:    80,
-						Published: "8001",
-					},
-				},
-				Volumes: []types.ServiceVolumeConfig{
-					{
-						Source: "demo",
-						Target: "/tmp/demo",
-					},
-				},
-			},
-			types.ServiceConfig{
-				Name:    "demo-db",
-				Command: types.ShellCommand{"cmd", "arg"},
-				Image:   "demodb:test",
-			},
-		},
-		Networks: nil,
-		Volumes: types.Volumes{
-			"demo": types.VolumeConfig{
-				Name: "demo",
-			},
-		},
-	}, hclog.L())
-
-	requests := &commons.PluginRequest{
-		Name:       "demo-kls",
-		Namespace:  "demo-kls",
-		Host:       "demo.example.com",
-		Replicas:   1,
-		VolumeSize: "1G",
-		Version:    "",
-		Objects:    nil,
-	}
-
 	Context("When reconciling demo project", func() {
+		testValidProject := &types.Project{
+			Name:       "test",
+			WorkingDir: "/tmp",
+			Services: types.Services{
+				types.ServiceConfig{
+					Name:    "demo-app",
+					Command: types.ShellCommand{"cmd", "arg"},
+					Environment: types.MappingWithEquals{
+						"DEMO_ENV": nil,
+						"ENV1":     &envVal,
+						"ENV2":     &envVal,
+						"ENV3":     &envVal,
+					},
+					Image: "demo:test",
+					Ports: []types.ServicePortConfig{
+						{
+							Target:    80,
+							Published: "8001",
+						},
+					},
+					Volumes: []types.ServiceVolumeConfig{
+						{
+							Source: "demo",
+							Target: "/tmp/demo",
+						},
+					},
+				},
+				types.ServiceConfig{
+					Name:    "demo-db",
+					Command: types.ShellCommand{"cmd", "arg"},
+					Image:   "demodb:test",
+				},
+			},
+			Networks: nil,
+			Volumes: types.Volumes{
+				"demo": types.VolumeConfig{
+					Name: "demo",
+				},
+			},
+		}
+
+		requests := &commons.PluginRequest{
+			Name:       "demo-kls",
+			Namespace:  "demo-kls",
+			Host:       "demo.example.com",
+			Replicas:   1,
+			VolumeSize: "1G",
+			Version:    "",
+		}
+
+		c := NewComposeModel(testValidProject, hclog.L())
+
 		It("Should create valid Kubernetes objects", func() {
 			By("Checking Reconcile return parameters")
 			objs, err := c.Reconcile(requests)
@@ -90,7 +92,7 @@ var _ = Describe("docker-compose model", func() {
 			for _, elem := range objs {
 				for gvk, obj := range elem {
 					unstructuredObj, _ := commons.ToUnstructured(obj, gvk)
-					requests.Objects = append(requests.Objects, unstructuredObj)
+					requests.AddObject(unstructuredObj)
 				}
 			}
 			By("Checking Reconcile result for the 2nd time")
@@ -110,5 +112,122 @@ var _ = Describe("docker-compose model", func() {
 			deploymentsEqual := deep.Equal(firstDeployment.Spec, secondDeployment.Spec)
 			Expect(deploymentsEqual).Should(BeNil())
 		})
+	})
+
+	Context("When reconciling project with invalid template", func() {
+		testInvalidProject := &types.Project{
+			Name:       "test",
+			WorkingDir: "/tmp",
+			Services: types.Services{
+				types.ServiceConfig{
+					Name:    "demo-app",
+					Command: types.ShellCommand{"cmd", "arg"},
+					Environment: types.MappingWithEquals{
+						"DEMO_ENV": nil,
+						"ENV1":     &envVal,
+						"ENV2":     &envVal,
+						"ENV3":     &envVal,
+					},
+					Image: "demo:{{ .test",
+					Ports: []types.ServicePortConfig{
+						{
+							Target:    80,
+							Published: "8001",
+						},
+					},
+					Volumes: []types.ServiceVolumeConfig{
+						{
+							Source: "demo",
+							Target: "/tmp/demo",
+						},
+					},
+				},
+				types.ServiceConfig{
+					Name:    "demo-db",
+					Command: types.ShellCommand{"cmd", "arg"},
+					Image:   "demodb:test",
+				},
+			},
+			Networks: nil,
+			Volumes: types.Volumes{
+				"demo": types.VolumeConfig{
+					Name: "demo",
+				},
+			},
+		}
+
+		c := NewComposeModel(testInvalidProject, hclog.L())
+
+		requests := &commons.PluginRequest{
+			Name:       "demo-kls",
+			Namespace:  "demo-kls",
+			Host:       "demo.example.com",
+			Replicas:   1,
+			VolumeSize: "1G",
+			Version:    "",
+		}
+
+		By("Checking Reconcile return parameters")
+		_, err := c.Reconcile(requests)
+		Expect(err).ShouldNot(BeNil())
+	})
+
+	Context("When reconciling project with valid template", func() {
+		testInvalidProject := &types.Project{
+			Name:       "test",
+			WorkingDir: "/tmp",
+			Services: types.Services{
+				types.ServiceConfig{
+					Name:    "demo-app",
+					Command: types.ShellCommand{"cmd", "arg"},
+					Environment: types.MappingWithEquals{
+						"DEMO_ENV": nil,
+						"ENV1":     &envVal,
+						"ENV2":     &envVal,
+						"ENV3":     &envVal,
+					},
+					Image: "demo:{{ .Version }}",
+					Ports: []types.ServicePortConfig{
+						{
+							Target:    80,
+							Published: "8001",
+						},
+					},
+					Volumes: []types.ServiceVolumeConfig{
+						{
+							Source: "demo",
+							Target: "/tmp/demo",
+						},
+					},
+				},
+				types.ServiceConfig{
+					Name:    "demo-db",
+					Command: types.ShellCommand{"cmd", "arg"},
+					Image:   "demodb:test",
+				},
+			},
+			Networks: nil,
+			Volumes: types.Volumes{
+				"demo": types.VolumeConfig{
+					Name: "demo",
+				},
+			},
+		}
+
+		c := NewComposeModel(testInvalidProject, hclog.L())
+
+		requests := &commons.PluginRequest{
+			Name:       "demo-kls",
+			Namespace:  "demo-kls",
+			Host:       "demo.example.com",
+			Replicas:   1,
+			VolumeSize: "1G",
+			Version:    "whatever",
+		}
+
+		By("Checking Reconcile return parameters")
+		_, err := c.Reconcile(requests)
+		Expect(err).Should(BeNil())
+		Expect(c.deployment.Spec.Template.Spec.Containers[0].Image).Should(Equal("demo:whatever"))
 	})
 })

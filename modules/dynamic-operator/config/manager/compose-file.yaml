@@ -6,7 +6,7 @@ data:
 
     services:
       planka:
-        image: ghcr.io/plankanban/planka:latest
+        image: ghcr.io/plankanban/planka:{{ or .Version "latest" }}
         command: >
           bash -c
             "for i in `seq 1 30`; do
@@ -23,7 +23,7 @@ data:
         ports:
           - 3000:1337
         environment:
-          - BASE_URL=http://localhost:3000
+          - BASE_URL=http://{{ or .Host "localhost:3000" }}
           - TRUST_PROXY=0
           - DATABASE_URL=postgresql://postgres@localhost/planka
           - SECRET_KEY=notsecretkey

@@ -1,6 +1,7 @@
 package compose
 
 import (
+	"bytes"
 	"github.com/compose-spec/compose-go/types"
 	"github.com/hashicorp/go-hclog"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
@@ -15,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sort"
+	"text/template"
 )
 
 var (
@@ -61,7 +63,9 @@ type ComposeModel struct {
 // Reconcile method updates current request object to their required parameters
 func (c *ComposeModel) Reconcile(req *commons.PluginRequest) ([]map[schema.GroupVersionKind]client.Object, error) {
 	c.logger.Debug("Reconcile")
-	if err := c.fromCluster(req.Objects); err != nil {
+
+	existingObjects := req.GetObjects()
+	if err := c.fromCluster(existingObjects); err != nil {
 		return nil, errors.Wrap(err, "error marshaling cluster objects")
 	}
 
@@ -74,7 +78,9 @@ func (c *ComposeModel) Reconcile(req *commons.PluginRequest) ([]map[schema.Group
 // Ready checks if compose application is running
 func (c *ComposeModel) Ready(req *commons.PluginRequest) (bool, error) {
 	c.logger.Debug("Ready")
-	if err := c.fromCluster(req.Objects); err != nil {
+
+	existingObjects := req.GetObjects()
+	if err := c.fromCluster(existingObjects); err != nil {
 		return false, errors.Wrap(err, "error marshaling cluster objects")
 	}
 	return c.isReady(), nil
@@ -301,7 +307,11 @@ func (c *ComposeModel) updateServiceDeployment(req *commons.PluginRequest) error
 			Hostnames: []string{container.Name},
 		})
 
-		container.Image = composeService.Image
+		imageValue, err := requestTemplatedValue(req, composeService.Image)
+		if err != nil || imageValue == "" {
+			return errors.Wrapf(err, "invalid image value: %s", imageValue)
+		}
+		container.Image = imageValue
 		container.Command = composeService.Command
 
 		container.Env = make([]v13.EnvVar, 0)
@@ -311,7 +321,11 @@ func (c *ComposeModel) updateServiceDeployment(req *commons.PluginRequest) error
 				Value: "",
 			}
 			if val != nil {
-				e.Value = *val
+				value, err := requestTemplatedValue(req, *val)
+				if err != nil {
+					return errors.Wrapf(err, "invalid env `%s` value: %s", e.Name, value)
+				}
+				e.Value = value
 			}
 			container.Env = append(container.Env, e)
 		}
@@ -407,4 +421,16 @@ func labels(name string) map[string]string {
 	return map[string]string{
 		"docker-compose.service/name": name,
 	}
+}
+
+func requestTemplatedValue(req *commons.PluginRequest, value string) (string, error) {
+	tmpl, err := template.New("value").Parse(value)
+	if err != nil {
+		return "", errors.Wrap(err, "error parsing template")
+	}
+	data := &bytes.Buffer{}
+	if err := tmpl.Execute(data, req); err != nil {
+		return "", errors.Wrap(err, "error rendering value")
+	}
+	return data.String(), nil
 }
