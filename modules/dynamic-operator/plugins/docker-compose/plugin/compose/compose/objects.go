@@ -428,8 +428,20 @@ func requestTemplatedValue(req *commons.PluginRequest, value string) (string, er
 	if err != nil {
 		return "", errors.Wrap(err, "error parsing template")
 	}
+
+	renderValues := &commons.PluginRequest{
+		Name:       req.Name,
+		Namespace:  req.Namespace,
+		Host:       req.Host,
+		Replicas:   req.Replicas,
+		VolumeSize: req.VolumeSize,
+		Version:    req.Version,
+		Limits:     req.Limits,
+		Parameters: req.Parameters,
+		Objects:    nil,
+	}
 	data := &bytes.Buffer{}
-	if err := tmpl.Execute(data, req); err != nil {
+	if err := tmpl.Execute(data, renderValues); err != nil {
 		return "", errors.Wrap(err, "error rendering value")
 	}
 	return data.String(), nil
