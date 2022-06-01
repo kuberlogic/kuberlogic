@@ -72,3 +72,8 @@ vars:
     kind: Service
     version: v1
     name: webhook-service
+- name: TLS_SECRET_NAME
+  objref:
+    kind: Secret
+    name: tls-secret
+    apiVersion: v1

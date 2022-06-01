@@ -37,10 +37,16 @@ spec:
             - name: compose-file
               mountPath: /etc/compose-file
           env:
+            - name: SVC_OPTS_TLS_SECRET_NAME
+              value: $(TLS_SECRET_NAME)
             - name: PLUGINS
               value: "{docker-compose,/docker-compose-plugin}"
             - name: KL_PLUGIN_DOCKER_COMPOSE_FILE
               value: "/etc/compose-file/docker-compose.yaml"
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
           args:
             - --leader-elect
           image: controller:latest

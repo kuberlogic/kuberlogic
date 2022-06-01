@@ -16,10 +16,17 @@ type Config struct {
 	// Enable leader election for controller manager.
 	// Enabling this will ensure there is only one active controller manager.
 	EnableLeaderElection bool `envconfig:"default=false,optional"`
+	// Namespace where controller is running
+	Namespace string `envconfig:"optional"`
 
 	Plugins []struct {
 		Name string
 		Path string
+	} `envconfig:"optional"`
+
+	// additional options for service environment configuration
+	SvcOpts struct {
+		TLSSecretName string `envconfig:"optional"`
 	} `envconfig:"optional"`
 }
 

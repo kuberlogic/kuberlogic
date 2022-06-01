@@ -19,6 +19,7 @@ package kuberlogicservice_env
 import (
 	"context"
 	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	config "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	v13 "k8s.io/api/networking/v1"
@@ -34,11 +35,12 @@ type EnvironmentManager struct {
 	NamespaceName string
 
 	kls *kuberlogiccomv1alpha1.KuberLogicService
+	cfg *config.Config
 	ctx context.Context
 }
 
 // SetupEnv checks if KLS environment is present and creates it if it is not
-func SetupEnv(kls *kuberlogiccomv1alpha1.KuberLogicService, c client.Client, ctx context.Context) (*EnvironmentManager, error) {
+func SetupEnv(kls *kuberlogiccomv1alpha1.KuberLogicService, c client.Client, cfg *config.Config, ctx context.Context) (*EnvironmentManager, error) {
 	ns := getNamespace(kls)
 	if _, err := controllerruntime.CreateOrUpdate(ctx, c, ns, func() error {
 		return controllerruntime.SetControllerReference(kls, ns, c.Scheme())
@@ -53,6 +55,30 @@ func SetupEnv(kls *kuberlogiccomv1alpha1.KuberLogicService, c client.Client, ctx
 		return nil, errors.Wrap(err, "error setting up kls networkpolicy")
 	}
 
+	tlsSecret := &v1.Secret{
+		ObjectMeta: v12.ObjectMeta{
+			Name:      cfg.SvcOpts.TLSSecretName,
+			Namespace: ns.GetName(),
+		},
+	}
+	if cfg.SvcOpts.TLSSecretName != "" {
+		if _, err := controllerruntime.CreateOrUpdate(ctx, c, tlsSecret, func() error {
+			srcSecret := &v1.Secret{
+				ObjectMeta: v12.ObjectMeta{
+					Name:      cfg.SvcOpts.TLSSecretName,
+					Namespace: cfg.Namespace,
+				},
+			}
+			if err := c.Get(ctx, client.ObjectKeyFromObject(srcSecret), srcSecret); err != nil {
+				return errors.Wrap(err, "error getting source TLS secret")
+			}
+			tlsSecret.Data = srcSecret.Data
+			return controllerruntime.SetControllerReference(kls, tlsSecret, c.Scheme())
+		}); err != nil {
+			return nil, errors.Wrap(err, "error syncing TLS Secret")
+		}
+	}
+
 	// set namespace status field
 	kls.Status.Namespace = ns.GetName()
 	return &EnvironmentManager{
@@ -60,6 +86,7 @@ func SetupEnv(kls *kuberlogiccomv1alpha1.KuberLogicService, c client.Client, ctx
 
 		NamespaceName: ns.GetName(),
 
+		cfg: cfg,
 		kls: kls,
 		ctx: ctx,
 	}, nil
@@ -103,7 +130,6 @@ func (e *EnvironmentManager) syncLoadBalancer(svc *v1.Service) (string, error) {
 
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 func (e *EnvironmentManager) syncIngress(svc *v1.Service) (string, error) {
-
 	ingress := &v13.Ingress{
 		ObjectMeta: v12.ObjectMeta{
 			Name:      e.kls.GetName(),
@@ -115,7 +141,8 @@ func (e *EnvironmentManager) syncIngress(svc *v1.Service) (string, error) {
 		if e.kls.TLSEnabled() {
 			ingress.Spec.TLS = []v13.IngressTLS{
 				{
-					Hosts: []string{e.kls.GetHost()},
+					Hosts:      []string{e.kls.GetHost()},
+					SecretName: e.cfg.SvcOpts.TLSSecretName,
 				},
 			}
 		}

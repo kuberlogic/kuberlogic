@@ -125,6 +125,7 @@ var _ = BeforeSuite(func() {
 		Client:  k8sManager.GetClient(),
 		Scheme:  k8sManager.GetScheme(),
 		Plugins: pluginInstances,
+		Cfg:     config,
 	}).SetupWithManager(k8sManager, dependantObjects...)
 	Expect(err).ToNot(HaveOccurred())
 

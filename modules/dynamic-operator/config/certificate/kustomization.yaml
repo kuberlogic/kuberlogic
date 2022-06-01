@@ -3,3 +3,9 @@ resources:
 
 configurations:
 - kustomizeconfig.yaml
+
+secretGenerator:
+  - name: tls-secret
+    files:
+      - tls.key
+      - tls.crt

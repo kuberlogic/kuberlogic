@@ -15,6 +15,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/go-logr/logr"
 	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
 	kuberlogicserviceenv "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/controllers/kuberlogicservice-env"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
@@ -35,7 +36,8 @@ type KuberLogicServiceReconciler struct {
 	Scheme  *runtime.Scheme
 	Plugins map[string]commons.PluginService
 
-	mu sync.Mutex
+	Cfg *cfg.Config
+	mu  sync.Mutex
 }
 
 func HandlePanic(log logr.Logger) {
@@ -84,7 +86,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	log.Info("verifying KuberLogicService environment")
-	env, err := kuberlogicserviceenv.SetupEnv(kls, r.Client, ctx)
+	env, err := kuberlogicserviceenv.SetupEnv(kls, r.Client, r.Cfg, ctx)
 	if err != nil {
 		log.Error(err, "error setting up KuberlogicService environment")
 		return ctrl.Result{}, err
@@ -170,7 +172,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	// expose service
-	endpoint, err := env.ExposeService(resp.Service, resp.Protocol == commons.HTTPproto)
+	endpoint, err := env.ExposeService(resp.Service, resp.Protocol == commons.HTTPproto && kls.GetHost() != "")
 	if err != nil {
 		log.Error(err, "error exposing service")
 		return ctrl.Result{}, err
