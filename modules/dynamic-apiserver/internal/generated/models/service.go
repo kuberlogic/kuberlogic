@@ -30,6 +30,10 @@ type Service struct {
 	// domain
 	Domain string `json:"domain,omitempty"`
 
+	// endpoint
+	// Read Only: true
+	Endpoint string `json:"endpoint,omitempty"`
+
 	// id
 	// Required: true
 	// Max Length: 20
@@ -46,6 +50,9 @@ type Service struct {
 	// status
 	// Read Only: true
 	Status string `json:"status,omitempty"`
+
+	// tls enabled
+	TLSEnabled bool `json:"tlsEnabled,omitempty"`
 
 	// type
 	// Required: true
@@ -180,6 +187,10 @@ func (m *Service) ContextValidate(ctx context.Context, formats strfmt.Registry) 
 		res = append(res, err)
 	}
 
+	if err := m.contextValidateEndpoint(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateLimits(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -211,6 +222,15 @@ func (m *Service) contextValidateAdvanced(ctx context.Context, formats strfmt.Re
 func (m *Service) contextValidateCreatedAt(ctx context.Context, formats strfmt.Registry) error {
 
 	if err := validate.ReadOnly(ctx, "created_at", "body", strfmt.DateTime(m.CreatedAt)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Service) contextValidateEndpoint(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := validate.ReadOnly(ctx, "endpoint", "body", string(m.Endpoint)); err != nil {
 		return err
 	}
 

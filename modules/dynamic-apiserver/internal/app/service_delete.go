@@ -26,8 +26,10 @@ func (srv *Service) ServiceDeleteHandler(params apiService.ServiceDeleteParams, 
 			"name", params.ServiceID, "error", err)
 		return apiService.NewServiceDeleteNotFound()
 	} else if err != nil {
+		msg := "service not found"
+		srv.log.Errorw(msg, "error", err)
 		return apiService.NewServiceDeleteServiceUnavailable().WithPayload(&models.Error{
-			Message: "service not found",
+			Message: msg,
 		})
 	}
 
@@ -37,8 +39,10 @@ func (srv *Service) ServiceDeleteHandler(params apiService.ServiceDeleteParams, 
 		Do(ctx).
 		Error()
 	if err != nil {
+		msg := "error deleting service"
+		srv.log.Errorw(msg, "error", err)
 		return apiService.NewServiceDeleteServiceUnavailable().WithPayload(&models.Error{
-			Message: "error deleting service",
+			Message: msg,
 		})
 	}
 

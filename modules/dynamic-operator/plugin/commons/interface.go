@@ -15,6 +15,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+type protocol string
+
+const (
+	TCPproto  protocol = "tcp"
+	HTTPproto protocol = "http"
+)
+
 // PluginService is the interface that we're exposing as a plugin.
 type PluginService interface {
 	SetLogger(logger hclog.Logger)
@@ -30,17 +37,32 @@ type PluginService interface {
 
 type PluginRequestEmpty struct{}
 type PluginRequest struct {
-	Name      string
+	// Requested service Name
+	Name string
+	// Namespace where the service object must be located
 	Namespace string
-	Host      string
+	// Optional. Host is address by which service should be available.
+	Host string
 
-	Replicas   int32
+	// Service Replicas
+	Replicas int32
+
+	// Requested PV size. VolumeSize should be compatible with Kubernetes ResourceRequirements format
 	VolumeSize string
-	Version    string
-	Limits     []byte
 
+	// Requested service Version
+	Version string
+
+	TLSEnabled bool
+
+	// Service resource Limits. Manipulated via SetLimits / GetLimits methods.
+	Limits []byte
+
+	// Additional Parameters
 	Parameters map[string]interface{}
-	Objects    []*unstructured.Unstructured
+
+	// Objects contains a list of service related objects
+	Objects []*unstructured.Unstructured
 }
 
 func (pl *PluginRequest) SetObjects(objs []*unstructured.Unstructured) {
@@ -82,8 +104,10 @@ func (pl *PluginResponseValidation) Error() error {
 }
 
 type PluginResponse struct {
-	Objects []*unstructured.Unstructured
-	Err     string
+	Objects  []*unstructured.Unstructured
+	Protocol protocol
+	Service  string
+	Err      string
 }
 
 func (pl *PluginResponse) Error() error {

@@ -32,6 +32,7 @@ func TestListFormatJson(t *testing.T) {
 			"type":       "postgresql",
 			"version":    "13",
 			"volumeSize": "1Gi",
+			"endpoint":   "127.0.0.1",
 		},
 		{
 			"created_at": "2022-05-10T16:00:53.000Z",
@@ -186,6 +187,7 @@ func TestListFormatStr(t *testing.T) {
 			"domain":     "example.com",
 			"version":    "13",
 			"volumeSize": "1Gi",
+			"endpoint":   "",
 		},
 		{
 			"created_at": "2022-05-10T16:00:53.000Z",
@@ -200,6 +202,7 @@ func TestListFormatStr(t *testing.T) {
 			"version":    "13",
 			"domain":     "example.org",
 			"volumeSize": "1Gi",
+			"endpoint":   "",
 		},
 	}
 	client := makeTestClient(200, expected)
@@ -221,7 +224,7 @@ func TestListFormatStr(t *testing.T) {
 	}
 	buff := bytes.NewBufferString("")
 	table := tablewriter.NewWriter(buff)
-	table.SetHeader([]string{"№", "ID", "Type", "Replica", "Version", "Domain", "Status"})
+	table.SetHeader([]string{"№", "ID", "Type", "Replica", "Version", "Domain", "Status", "Endpoint"})
 	table.SetBorder(false)
 	for i, item := range expected {
 		table.Append([]string{
@@ -232,6 +235,7 @@ func TestListFormatStr(t *testing.T) {
 			item["version"].(string),
 			item["domain"].(string),
 			item["status"].(string),
+			item["endpoint"].(string),
 		})
 	}
 	table.Render()

@@ -16,6 +16,7 @@ func (srv *Service) ServiceAddHandler(params apiService.ServiceAddParams, _ *mod
 
 	c, err := util.ServiceToKuberlogic(params.ServiceItem)
 	if err != nil {
+		srv.log.Errorw("error converting service model to kuberlogic", "error", err)
 		return apiService.NewServiceAddBadRequest().WithPayload(
 			&models.Error{
 				Message: err.Error(),
@@ -30,6 +31,7 @@ func (srv *Service) ServiceAddHandler(params apiService.ServiceAddParams, _ *mod
 		Do(ctx).
 		Into(result)
 	if err != nil {
+		srv.log.Errorw("error creating kuberlogicservice", "error", err)
 		return apiService.NewServiceAddBadRequest().WithPayload(
 			&models.Error{
 				Message: err.Error(),
@@ -37,6 +39,7 @@ func (srv *Service) ServiceAddHandler(params apiService.ServiceAddParams, _ *mod
 	}
 	svc, err := util.KuberlogicToService(result)
 	if err != nil {
+		srv.log.Errorw("error converting kuberlogicservice to model", "error", err)
 		return apiService.NewServiceAddBadRequest().WithPayload(
 			&models.Error{
 				Message: err.Error(),

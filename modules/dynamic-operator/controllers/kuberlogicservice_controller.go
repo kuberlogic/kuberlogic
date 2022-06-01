@@ -18,6 +18,8 @@ import (
 	kuberlogicserviceenv "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/controllers/kuberlogicservice-env"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
+	v1 "k8s.io/api/core/v1"
+	v12 "k8s.io/api/networking/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -114,11 +116,9 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		Replicas:   kls.Spec.Replicas,
 		VolumeSize: kls.Spec.VolumeSize,
 		Version:    kls.Spec.Version,
+		TLSEnabled: kls.TLSEnabled(),
+		Host:       kls.GetHost(),
 		Parameters: spec,
-	}
-
-	if kls.Spec.Domain != "" {
-		pluginRequest.Host = kls.Name + "." + kls.Spec.Domain
 	}
 
 	if err := pluginRequest.SetLimits(&kls.Spec.Limits); err != nil {
@@ -169,6 +169,14 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		log.Info("synced object", "op", op, "object", o)
 	}
 
+	// expose service
+	endpoint, err := env.ExposeService(resp.Service, resp.Protocol == commons.HTTPproto)
+	if err != nil {
+		log.Error(err, "error exposing service")
+		return ctrl.Result{}, err
+	}
+	kls.SetAccessEndpoint(endpoint)
+
 	// sync status
 	log.Info("syncing status")
 	statusRequest := &commons.PluginRequest{
@@ -182,6 +190,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		log.Error(resp.Error(), "error from rpc call 'ForUpdate'")
 		return ctrl.Result{}, resp.Error()
 	}
+
 	if status.IsReady {
 		kls.MarkReady("ReadyConditionMet")
 	} else {
@@ -203,5 +212,9 @@ func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager, objects
 	for _, object := range objects {
 		builder = builder.Owns(object)
 	}
+
+	builder.Owns(&v1.Namespace{})
+	builder.Owns(&v12.NetworkPolicy{})
+	builder.Owns(&v12.Ingress{})
 	return builder.Complete(r)
 }

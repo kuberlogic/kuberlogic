@@ -69,7 +69,7 @@ var _ = Describe("docker-compose model", func() {
 			By("Checking Reconcile return parameters")
 			objs, err := c.Reconcile(requests)
 			Expect(err).Should(BeNil())
-			Expect(len(objs)).Should(Equal(5))
+			Expect(len(objs)).Should(Equal(4))
 
 			By("Validating returned Deployment")
 			firstDeployment := *c.deployment
@@ -98,7 +98,7 @@ var _ = Describe("docker-compose model", func() {
 			By("Checking Reconcile result for the 2nd time")
 			secondRunObjs, secondErr := c.Reconcile(requests)
 			Expect(secondErr).Should(BeNil())
-			Expect(len(secondRunObjs)).Should(Equal(5))
+			Expect(len(secondRunObjs)).Should(Equal(4))
 
 			By("Validating returned Deployment")
 			secondDeployment := *c.deployment

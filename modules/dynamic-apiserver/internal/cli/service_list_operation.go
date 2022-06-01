@@ -58,12 +58,12 @@ func runServiceList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 
 		if isDefaultPrintFormat(formatResponse) {
 			table := tablewriter.NewWriter(cmd.OutOrStdout())
-			table.SetHeader([]string{"№", "ID", "Type", "Replica", "Version", "Domain", "Status"})
+			table.SetHeader([]string{"№", "ID", "Type", "Replica", "Version", "Domain", "Status", "Endpoint"})
 			table.SetBorder(false)
 			for i, item := range payload {
 				table.Append([]string{
 					strconv.Itoa(i), *item.ID, *item.Type, strconv.Itoa(int(*item.Replicas)),
-					item.Version, item.Domain, item.Status,
+					item.Version, item.Domain, item.Status, item.Endpoint,
 				})
 			}
 			table.Render()

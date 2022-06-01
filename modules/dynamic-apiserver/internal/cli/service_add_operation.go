@@ -29,11 +29,12 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) (*cobra
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
 	_ = cmd.PersistentFlags().String("domain", "", "domain for external connection to service")
 	_ = cmd.PersistentFlags().String("volume_size", "", "")
+	_ = cmd.PersistentFlags().Bool("tls_enabled", false, "")
 
 	// limits
 	_ = cmd.PersistentFlags().String("limits.cpu", "", "cpu limits")
 	_ = cmd.PersistentFlags().String("limits.memory", "", "memory limits")
-	_ = cmd.PersistentFlags().String("limits.volumeSize", "", "volume size limits")
+	_ = cmd.PersistentFlags().String("limits.volume_size", "", "volume size limits")
 
 	// advanced conf
 
@@ -88,10 +89,16 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 			svc.Domain = *value
 		}
 
-		if value, err := getString(cmd, "volumeSize"); err != nil {
+		if value, err := getString(cmd, "volume_size"); err != nil {
 			return err
 		} else if value != nil {
 			svc.VolumeSize = *value
+		}
+
+		if value, err := getBool(cmd, "tls_enabled"); err != nil {
+			return err
+		} else {
+			svc.TLSEnabled = value
 		}
 
 		if value, err := getString(cmd, "limits.cpu"); err != nil {
@@ -106,7 +113,7 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 			svc.Limits.Memory = *value
 		}
 
-		if value, err := getString(cmd, "limits.volumeSize"); err != nil {
+		if value, err := getString(cmd, "limits.volume_size"); err != nil {
 			return err
 		} else if value != nil {
 			svc.Limits.VolumeSize = *value
