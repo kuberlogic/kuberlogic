@@ -6,85 +6,63 @@
 
 ----
 
-KuberLogic is a powerful way to deliver your application as-a-service.
+KuberLogic is an open-source solution that helps to deliver any single-tenant application (one stack per customer) to multiple users as-a-cloud service. KuberLogic allows software vendors to accelerate their journey to Software-as-a-Service (SaaS) with minimal modifications to the application.
 
-KuberLogic is an open-source platform that helps to deliver any single-tenant application (one stack per customer) to multiple users as-a-service. It allows software vendors to accelerate their journey to Software-as-a-Service (SaaS).
+### Installation
+
+Follow [Installing KuberLogic](https://cloudlinux.notion.site/cloudlinux/Getting-Started-b7ce32f19d1c433da351670872f2c70f) to set up your environment and install KuberLogic.
+
+### Features
+
+- Application instance (Tenant) orchestration (list/provision/delete)
+- Custom domain (subdomain) support
+- Application (Tenant) isolation
+- RESTful API and CLI for service management (bare minimum)
+
+### Coming soon
+
+- SSL support
+- Integration with billing provider (Stripe)
+- Scheduled and Instant backups (Velero)
+- Application instance updates
+
+[You can check our Roadmap here](https://kuberlogic.clearflask.com/roadmap)
 
 ----
 
-## Features
-* Tenant and application instance orchestration
-* Automatic minor updates
-* Automatic failover
-* Scheduled backups
-* REST API for service management
+### Why use KuberLogic?
 
-## Requirements
-KuberLogic leverages a lot of top notch open-source projects and it requires a specific environment to run on top of:
-* Kubernetes cluster with:
-  * 1.19, 1.20, 1.21, 1.22 versions are supported
-  * StorageClass configured as a default
-  * LoadBalancer Services
-  * At least 2 nodes in cluster with 4G of RAM, 2 CPUs and 5G of disk space each
-  * Minikube or Kind installations with docker driver installations are not supported due to performance penalties.
-* S3 compatible storage for backups (optional)
+The ultimate goal of KuberLogic is to provide an easily accessible service to turn any containerized application into a cloud-native SaaS solution.
 
-## Installation
+KuberLogic:
 
-1. Download `kuberlogic-installer` command-line installation tool for your platform from the [Releases page](https://github.com/kuberlogic/kuberlogic/releases) and add it to PATH.
-2. Prepare the KuberLogic [configuration file](modules/installer/README.md#Configuration).
-3. Run `kuberlogic-installer install all -c <configFile>`
-4. Run `kuberlogic-installer status -c <configFile>`
-5. Add DNS records for KuberLogic endpoints so they are pointing to KuberLogic Ingress IP. Alternatively, if you are evaluating KuberLogic, you may want to use /etc/hosts file to provide the access locally.
+- Provides a straightforward and reliable way to deploy and manage application instances (Tenants) while achieving maximum resource utilization and standardization;
+- Simplify migration to multi-tenancy using industry-standard containers & K8s and allows rapid migration to SaaS with minimal application modification;
+- Gives independence and frees from vendor lock, as KuberLogic is open source and based on Kubernetes to provide a consistent platform anywhere
 
-## Usage
-### REST API
-KuberLogic supports RESTful API for service management. To learn more visit:
-* [API Scheme](https://editor.swagger.io/?url=https://raw.githubusercontent.com/kuberlogic/kuberlogic/master/modules/apiserver/openapi.yaml)
+### Requirements
 
+Kubernetes cluster 1.20-1.23
 
-## Build KuberLogic
-KuberLogic artifacts are container images and the installer binary. Requirements are:
-* Golang 1.16
-* Helm CLI 3.x
-* Docker
-### Build container images
-`make docker-build docker-push`
-### Build the installer
-`make installer-build`
-### Tests
-KuberLogic includes a set of integration tests. They can be run in two modes:
-* Local mode when KuberLogic operator & apiserver are started as goroutines:
-* Remote mode when tests send API requests to a remote apiserver.
+- StorageClass configured as a default
+- IngressClass configured as a default
 
-To run tests in both modes, dependencies must be installed into a Kubernetes cluster:
-```shell
-kuberlogic-installer install all
-# setup Minio for backup & restore tests
-cd modules/apiserver
-make deploy-minio create-bucket
-```
-For more information see [docs](modules/apiserver/tests/README.md).
+### Documentation
 
-#### Local mode
-```shell
-cd modules/apiserver
-make undeploy-operator generate-local-webhook-certs patch-endpoint
-MY_VERSION=5.7.31 GODEBUG: x509ignoreCN=0 KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make coverage-report RUN=/mysql 
-```
+Please refer to the official docs at [kuberlogic.com](https://cloudlinux.notion.site/cloudlinux/Getting-Started-b7ce32f19d1c433da351670872f2c70f)
 
-#### Remote mode
-```shell
-cd modules/apiserver
-MY_VERSION=5.7.31 GODEBUG: x509ignoreCN=0 KUBERLOGIC_KUBECONFIGPATH=${HOME}/.kube/config make remote-test REMOTE_HOST=<apiserver endpoint> RUN=/mysql
-```
+### Getting involved
 
-## Support
-Feel free to open an [issue](https://github.com/kuberlogic/kuberlogic/issues) if you need any help. You can also reach us at info@kuberlogic.com with any questions. 
+Feel free to open an [issue](https://github.com/kuberlogic/kuberlogic/issues) if you need any help.
+
+You can see the roadmap/announcements and leave your feedback [here](https://kuberlogic.clearflask.com/).
+
+You can also reach out to us at [info@kuberlogic.com](mailto:info@kuberlogic.com)
+ or join our [Slack community](https://join.slack.com/t/kuberlogic/shared_invite/zt-x845lggh-lne0taYmwLFgQ6XZEiTJoA)
 
 ## License
 ```text
-CloudLinux Software Inc 2019-2021 All Rights Reserved
+CloudLinux Software Inc 2019-2022 All Rights Reserved
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
