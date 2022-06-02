@@ -17,10 +17,12 @@
 package mysql
 
 import (
+	mysqlv1 "github.com/bitpoke/mysql-operator/pkg/apis/mysql/v1alpha1"
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/interfaces"
+	"github.com/kuberlogic/kuberlogic/modules/operator/service-operator/mysql/platform"
 	"github.com/kuberlogic/kuberlogic/modules/operator/util"
-	mysqlv1 "github.com/presslabs/mysql-operator/pkg/apis/mysql/v1alpha1"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,7 +37,8 @@ const (
 )
 
 type Mysql struct {
-	Operator mysqlv1.MysqlCluster
+	Operator         mysqlv1.MysqlCluster
+	platformOperator interfaces.PlatformOperator
 }
 
 func (p *Mysql) GetBackupSchedule() interfaces.BackupSchedule {
@@ -56,7 +59,7 @@ func (p *Mysql) GetInternalDetails() interfaces.InternalDetails {
 	}
 }
 
-func (p *Mysql) GetSession(kls *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (interfaces.Session, error) {
+func (p *Mysql) GetSession(kls *kuberlogicv1.KuberLogicService, client kubernetes.Interface, db string) (interfaces.Session, error) {
 	return NewSession(p, kls, client, db)
 }
 
@@ -76,7 +79,7 @@ func (p *Mysql) AsClientObject() client.Object {
 	return &p.Operator
 }
 
-func (p *Mysql) Init(kls *kuberlogicv1.KuberLogicService) {
+func (p *Mysql) Init(kls *kuberlogicv1.KuberLogicService, plat string) {
 	p.Operator = mysqlv1.MysqlCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      p.Name(kls),
@@ -85,10 +88,16 @@ func (p *Mysql) Init(kls *kuberlogicv1.KuberLogicService) {
 		Spec: mysqlv1.MysqlClusterSpec{
 			SecretName:   genCredentialsSecretName(kls.Name),
 			MysqlVersion: kls.Spec.Version,
+			ReplicaServiceSpec: mysqlv1.ServiceSpec{
+				LoadBalancer: true,
+			},
+			MasterServiceSpec: mysqlv1.ServiceSpec{
+				LoadBalancer: true,
+			},
 			PodSpec: mysqlv1.PodSpec{
 				Annotations: map[string]string{
-					"monitoring.cloudlinux.com/scrape": "true",
-					"monitoring.cloudlinux.com/port":   "9999",
+					"monitoring.kuberlogic.com/scrape": "true",
+					"monitoring.kuberlogic.com/port":   "9999",
 				},
 				Containers: []corev1.Container{
 					{
@@ -140,18 +149,24 @@ fi
 		},
 	}
 	mysqlv1.SetDefaults_MysqlCluster(&p.Operator)
+	p.platformOperator = platform.NewPlatformOperator(&p.Operator, plat)
 }
 
 func (p *Mysql) InitFrom(o runtime.Object) {
 	p.Operator = *o.(*mysqlv1.MysqlCluster)
 }
 
-func (p *Mysql) Update(cm *kuberlogicv1.KuberLogicService) {
+func (p *Mysql) Update(cm *kuberlogicv1.KuberLogicService) error {
 	p.setReplica(cm)
 	p.setResources(cm)
 	p.setVolumeSize(cm)
 	p.setImage(cm)
 	p.setAdvancedConf(cm)
+
+	if err := p.platformOperator.SetAllowedIPs(kuberlogicv1.DefaultAllowedIPs); err != nil {
+		return errors.Wrap(err, "error applying platforms changes")
+	}
+	return nil
 }
 
 func (p *Mysql) setReplica(kls *kuberlogicv1.KuberLogicService) {
@@ -198,52 +213,6 @@ func (p *Mysql) setAdvancedConf(kls *kuberlogicv1.KuberLogicService) {
 	for k, v := range desiredMysqlConf {
 		p.Operator.Spec.MysqlConf[k] = v
 	}
-}
-
-func (p *Mysql) IsEqual(kls *kuberlogicv1.KuberLogicService) bool {
-	return p.isEqualReplica(kls) &&
-		p.isEqualResources(kls) &&
-		p.isEqualVolumeSize(kls) &&
-		p.isEqualImage(kls) &&
-		p.isEqualAdvancedConf(kls)
-}
-
-func (p *Mysql) isEqualReplica(kls *kuberlogicv1.KuberLogicService) bool {
-	return *p.Operator.Spec.Replicas == kls.Spec.Replicas
-}
-
-func (p *Mysql) isEqualResources(kls *kuberlogicv1.KuberLogicService) bool {
-	op := p.Operator.Spec.PodSpec.Resources
-	cmr := kls.Spec.Resources
-	return op.Limits.Cpu().Cmp(*cmr.Limits.Cpu()) == 0 &&
-		op.Limits.Memory().Cmp(*cmr.Limits.Memory()) == 0 &&
-		op.Requests.Cpu().Cmp(*cmr.Requests.Cpu()) == 0 &&
-		op.Requests.Memory().Cmp(*cmr.Requests.Memory()) == 0
-}
-
-func (p *Mysql) isEqualVolumeSize(kls *kuberlogicv1.KuberLogicService) bool {
-	if &p.Operator.Spec.VolumeSpec.PersistentVolumeClaim.Resources == nil {
-		return false
-	}
-	return p.Operator.Spec.VolumeSpec.PersistentVolumeClaim.Resources.Requests.Storage().Cmp(
-		resource.MustParse(kls.Spec.VolumeSize),
-	) == 0
-}
-
-func (p *Mysql) isEqualImage(kls *kuberlogicv1.KuberLogicService) bool {
-	return p.Operator.Spec.Image == util.GetKuberlogicImage(image, kls.Spec.Version)
-}
-
-func (p *Mysql) isEqualAdvancedConf(kls *kuberlogicv1.KuberLogicService) bool {
-	desiredMysqlConf := util.StrToIntOrStr(kls.Spec.AdvancedConf)
-	for k, v := range desiredMysqlConf {
-		if val, ok := p.Operator.Spec.MysqlConf[k]; !ok {
-			return false
-		} else if val != v {
-			return false
-		}
-	}
-	return true
 }
 
 func (p *Mysql) IsReady() (bool, string) {

@@ -7,11 +7,24 @@ coverage:
   range: "70...100"
 
   status:
+    patch:
+      default:
+        threshold: 50%
+        flags:
+          - apiserver
+          - operator
+          - unit-operator
+          - unit-installer
+          - unit-apiserver
     project:
+      threshold: 1%
       default:
         flags:
           - apiserver
           - operator
+          - unit-operator
+          - unit-installer
+          - unit-apiserver
 
 parsers:
   gcov:

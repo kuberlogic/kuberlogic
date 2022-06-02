@@ -53,23 +53,23 @@ data:
       - action: keep
         regex: true
         source_labels:
-        - __meta_kubernetes_pod_annotation_monitoring_cloudlinux_com_scrape
+        - __meta_kubernetes_pod_annotation_{{ .Values.monitoringScrapeAnnotation | replace "." "_" | replace "/" "_" }}
       - action: replace
         regex: (.+)
         source_labels:
-        - __meta_kubernetes_pod_annotation_monitoring_cloudlinux_com_path
+        - __meta_kubernetes_pod_annotation_{{ .Values.monitoringScrapePathAnnotation | replace "." "_" | replace "/" "_" }}
         target_label: __metrics_path__
       - action: replace
         regex: ([^:]+)(?::\d+)?;(\d+)
         replacement: $1:$2
         source_labels:
         - __address__
-        - __meta_kubernetes_pod_annotation_monitoring_cloudlinux_com_port
+        - __meta_kubernetes_pod_annotation_{{ .Values.monitoringScrapePortAnnotation | replace "." "_" | replace "/" "_" }}
         target_label: __address__
       - action: replace
         regex: (https?)
         source_labels:
-        - __meta_kubernetes_pod_annotation_monitoring_cloudlinux_com_scheme
+        - __meta_kubernetes_pod_annotation_{{ .Values.monitoringScrapeSchemeAnnotation | replace "." "_" | replace "/" "_" }}
         target_label: __scheme__
       - action: labelmap
         regex: __meta_kubernetes_pod_label_(.+)
@@ -85,6 +85,8 @@ data:
         regex: Pending|Succeeded|Failed
         source_labels:
         - __meta_kubernetes_pod_phase
+      - action: keep_if_equal
+        source_labels: [__meta_kubernetes_pod_annotation_{{ .Values.monitoringScrapePortAnnotation | replace "." "_" | replace "/" "_" }}, __meta_kubernetes_pod_container_port_number]
 ---
 apiVersion: v1
 kind: ConfigMap

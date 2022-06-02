@@ -41,7 +41,7 @@ type BaseSession struct {
 	ReplicaIPs []string
 }
 
-func (session *BaseSession) GetPods(client *kubernetes.Clientset, matchingLabels client2.MatchingLabels) (*v1.PodList, error) {
+func (session *BaseSession) GetPods(client kubernetes.Interface, matchingLabels client2.MatchingLabels) (*v1.PodList, error) {
 	labelMap, err := metav1.LabelSelectorAsMap(&metav1.LabelSelector{
 		MatchLabels: matchingLabels,
 	})

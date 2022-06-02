@@ -38,29 +38,6 @@ const (
 	DEFAULT_ORG = 0
 )
 
-func (gr *grafana) DeleteOrganizationAndUsers(orgName string) error {
-	org, err := gr.getOrganization(orgName)
-	if err != nil {
-		return err
-	}
-
-	users, err := gr.usersInOrg(org.Id)
-	if err != nil {
-		return err
-	}
-	for _, usr := range users {
-		if usr.Role == VIEWER_ROLE || usr.Role == EDITOR_ROLE {
-			if err := gr.deleteUser(usr.UserId); err != nil {
-				return err
-			}
-		}
-	}
-	if err = gr.deleteOrganization(org.Id); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (gr *grafana) getOrganization(orgName string) (*organization, error) {
 	endpoint := fmt.Sprintf("/api/orgs/name/%s", url.QueryEscape(orgName))
 	resp, err := gr.api.sendRequestTo(http.MethodGet, endpoint, DEFAULT_ORG, nil)
@@ -74,7 +51,8 @@ func (gr *grafana) getOrganization(orgName string) (*organization, error) {
 			return nil, err
 		}
 		return result, nil
-
+	case http.StatusNotFound:
+		return nil, nil
 	default:
 		// something was wrong
 		var result interface{}

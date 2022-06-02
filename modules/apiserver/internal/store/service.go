@@ -209,7 +209,7 @@ func (s *ServiceStore) GetServiceLogs(m *models.Service, instance string, lines 
 	return logs, nil
 }
 
-func NewServiceStore(clientset *kubernetes.Clientset, restClient *rest.RESTClient, logger logging.Logger) *ServiceStore {
+func NewServiceStore(clientset kubernetes.Interface, restClient rest.Interface, logger logging.Logger) *ServiceStore {
 	return &ServiceStore{
 		restClient: restClient,
 		clientset:  clientset,

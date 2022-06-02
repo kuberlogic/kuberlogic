@@ -30,7 +30,7 @@ import (
 
 var (
 	// compatible kubernetes version in semver form
-	kubeCompatVersions = []string{"1.20.x-0", "1.21.x-0"}
+	kubeCompatVersions = []string{"1.19.x-0", "1.20.x-0", "1.21.x-0", "1.22.x-0"}
 )
 
 // checkKubernetesVersion checks if Kubernetes cluster is compatible with what is found
@@ -116,7 +116,7 @@ func checkLoadBalancerServiceType(clientset kubernetes.Interface, log logger.Log
 	const (
 		testServiceName = "kubernetes-test-service"
 		testNamespace   = "default"
-		waitTimeoutSec  = 30
+		waitTimeoutSec  = 300
 	)
 	log.Infof("Creating test service %s/%s", testServiceName, testNamespace)
 	svc, err := createTestLoadBalancer(testServiceName, testNamespace, clientset)

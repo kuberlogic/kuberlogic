@@ -22,27 +22,37 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	"os"
+	"strings"
 )
 
 // default configuration variables
 var (
 	requiredParamNotSet = fmt.Errorf("some required parameter(s) not set")
 
-	defaultKubeconfigPath   = fmt.Sprintf("%s/%s", os.Getenv("HOME"), ".kube/config")
+	DefaultKubeconfigPath   = fmt.Sprintf("%s/%s", os.Getenv("HOME"), ".kube/config")
 	defaultDebugLogsEnabled = false
-	defaultHelmReleaseName  = "kuberlogic"
+	defaultPlatform         = "generic"
+	supportedPlatforms      = []string{defaultPlatform, "aws"}
 )
 
+type TLS struct {
+	CaFile  string `yaml:"ca.crt"`
+	CrtFile string `yaml:"tls.crt"`
+	KeyFile string `yaml:"tls.key"`
+}
+
 type Config struct {
-	DebugLogs      *bool   `yaml:"debugLogs,omitempty"`
-	KubeconfigPath *string `yaml:"kubeconfigPath,omitempty"`
+	DebugLogs      *bool   `yaml:"debug-logs,omitempty"`
+	KubeconfigPath *string `yaml:"kubeconfig-path,omitempty"`
 
 	Namespace *string `yaml:"namespace"`
 
 	Endpoints struct {
-		API               string `yaml:"api""`
-		UI                string `yaml:"ui"`
-		MonitoringConsole string `yaml:"monitoringConsole"`
+		Kuberlogic    string `yaml:"kuberlogic"`
+		KuberlogicTLS *TLS   `yaml:"kuberlogic-tls,omitempty"`
+
+		MonitoringConsole    string `yaml:"monitoring-console"`
+		MonitoringConsoleTLS *TLS   `yaml:"monitoring-console-tls,omitempty"`
 	} `yaml:"endpoints"`
 
 	Registry struct {
@@ -52,23 +62,23 @@ type Config struct {
 	} `yaml:"registry,omitempty"`
 
 	Auth struct {
-		AdminPassword    string  `yaml:"adminPassword"`
-		DemoUserPassword *string `yaml:"demoUserPassword,omitempty"`
+		AdminPassword    string  `yaml:"admin-password"`
+		DemoUserPassword *string `yaml:"demo-user-password,omitempty"`
 	} `yaml:"auth"`
+
+	Platform string `yaml:"platform,omitempty"`
 }
 
-func (c *Config) setDefaults(log logger.Logger) error {
+func (c *Config) SetDefaults(log logger.Logger) error {
 	var configError error
 	if c.DebugLogs == nil {
 		log.Debugf("Using default value for debugLogs: %s", defaultDebugLogsEnabled)
-		v := &defaultDebugLogsEnabled
-		c.DebugLogs = v
+		c.DebugLogs = &defaultDebugLogsEnabled
 	}
 
 	if c.KubeconfigPath == nil {
-		log.Debugf("Using default value for kubeconfigPath: %s", defaultKubeconfigPath)
-		v := &defaultKubeconfigPath
-		c.KubeconfigPath = v
+		log.Debugf("Using default value for kubeconfig-path: %s", DefaultKubeconfigPath)
+		c.KubeconfigPath = &DefaultKubeconfigPath
 	}
 
 	if c.Namespace == nil {
@@ -76,8 +86,8 @@ func (c *Config) setDefaults(log logger.Logger) error {
 		configError = requiredParamNotSet
 	}
 
-	if c.Endpoints.UI == "" || c.Endpoints.API == "" {
-		log.Errorf("`endpoints.api` and `endpoints.ui` must be set and can't be-empty")
+	if c.Endpoints.Kuberlogic == "" {
+		log.Errorf("`endpoints.main` must be set and can't be-empty")
 		return errors.New("endpoints configuration is not set")
 	}
 
@@ -86,7 +96,38 @@ func (c *Config) setDefaults(log logger.Logger) error {
 		return errors.New("endpoints.monitoringConsole is not set")
 	}
 
+	if c.Platform == "" {
+		log.Debugf("Using default value for platform: %s", defaultPlatform)
+		c.Platform = defaultPlatform
+	} else {
+		matched := false
+		for _, p := range supportedPlatforms {
+			if strings.ToUpper(p) == strings.ToUpper(c.Platform) {
+				matched = true
+			}
+		}
+		if !matched {
+			log.Errorf("Unsupported platform. List of supported platforms: %v", supportedPlatforms)
+			return errors.New("unsupported platform")
+		}
+	}
+
 	return configError
+}
+
+func (c *Config) checkKuberlogicTLS() error {
+	if err := checkCertificates(c.Endpoints.KuberlogicTLS); err != nil {
+		return err
+	}
+
+	if err := checkCertificates(c.Endpoints.MonitoringConsoleTLS); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Config) check() error {
+	return c.checkKuberlogicTLS()
 }
 
 func NewConfigFromFile(file string, log logger.Logger) (*Config, error) {
@@ -102,8 +143,25 @@ func NewConfigFromFile(file string, log logger.Logger) (*Config, error) {
 		return nil, err
 	}
 
-	if err := cfg.setDefaults(log); err != nil {
+	if err := cfg.SetDefaults(log); err != nil {
+		return nil, err
+	}
+	if err := cfg.check(); err != nil {
 		return nil, err
 	}
 	return cfg, nil
+}
+
+func newFileFromConfig(cfg *Config, file string) error {
+	f, err := os.Create(file)
+	if err != nil {
+		return errors.Wrap(err, "cannot create config file")
+	}
+	defer f.Close()
+
+	err = yaml.NewEncoder(f).Encode(cfg)
+	if err != nil {
+		return errors.Wrap(err, "cannot encode config to file")
+	}
+	return nil
 }

@@ -22,21 +22,21 @@ import (
 )
 
 const (
-	installAllArg         = "all"
-	installCertManagerArg = "cert-manager"
-	installDepsArg        = "dependencies"
-	installKuberlogicArg  = "kuberlogic"
+	allArg         = "all"
+	certManagerArg = "cert-manager"
+	depsArg        = "dependencies"
+	kuberlogicArg  = "kuberlogic"
 )
 
 // newInstallCmd returns the "install" command
 func newInstallCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:       fmt.Sprintf("install [%s | %s | %s | %s]", installAllArg, installCertManagerArg, installDepsArg, installKuberlogicArg),
-		ValidArgs: []string{installAllArg, installCertManagerArg, installDepsArg, installKuberlogicArg},
-		Args:      cobra.ExactValidArgs(1),
+		Use:       fmt.Sprintf("install [%s | %s | %s | %s]", allArg, certManagerArg, depsArg, kuberlogicArg),
+		ValidArgs: []string{allArg, certManagerArg, depsArg, kuberlogicArg},
+		Args:      cobra.OnlyValidArgs,
 		Short:     "installs a Kuberlogic release",
 		Run: func(cmd *cobra.Command, args []string) {
-			kuberlogicInstaller.Exit(kuberlogicInstaller.Install(args))
+			kuberlogicInstaller.Exit(kuberlogicInstaller.Install(cmd, args))
 		},
 	}
 }

@@ -64,7 +64,7 @@ func MapToStrSelector(labels map[string]string) string {
 	return strings.TrimSuffix(b.String(), ",")
 }
 
-func GetPodLogs(c *kubernetes.Clientset, log logging.Logger, name, container, ns string, lines int64) (logs string, err error) {
+func GetPodLogs(c kubernetes.Interface, log logging.Logger, name, container, ns string, lines int64) (logs string, err error) {
 	podLogOptions := v1.PodLogOptions{
 		Follow:    false,
 		TailLines: &lines,
@@ -86,35 +86,29 @@ func GetPodLogs(c *kubernetes.Clientset, log logging.Logger, name, container, ns
 	return buf.String(), nil
 }
 
-func GetServiceExternalIP(c *kubernetes.Clientset, log logging.Logger, name, ns string) (ip string, found bool, err error) {
-	s, err := c.CoreV1().Services(ns).Get(context.TODO(), name, metav1.GetOptions{})
-	log.Debugw("response for get service", "namespace", ns, "name", name, "response", s)
-	if err != nil {
-		return
-	}
-
+func GetServiceExternalAddr(s *v1.Service, log logging.Logger) string {
 	if extName := s.Spec.ExternalName; extName != "" {
-		found = true
-		ip = extName
-		return
+		return extName
 	}
 
 	if extIPs := s.Spec.ExternalIPs; len(extIPs) != 0 {
-		found = true
-		ip = extIPs[0]
-		return
+		return extIPs[0]
 	}
 	log.Debugw("service has no ExternalIPs. Checking LoadBalancers")
 
-	if lbIPs := s.Status.LoadBalancer.Ingress; len(lbIPs) != 0 {
-		found = true
-		ip = lbIPs[0].IP
-		return
+	for _, i := range s.Status.LoadBalancer.Ingress {
+		if i.IP != "" {
+			return i.IP
+		} else if i.Hostname != "" {
+			return i.Hostname
+		} else {
+			continue
+		}
 	}
-	return
+	return ""
 }
 
-func GetSecretFieldDecoded(c *kubernetes.Clientset, log logging.Logger, secret, ns, field string) (string, error) {
+func GetSecretFieldDecoded(c kubernetes.Interface, log logging.Logger, secret, ns, field string) (string, error) {
 	log.Debugw("getting secret", "namespace", ns, "secret", secret)
 	s, err := c.CoreV1().Secrets(ns).Get(context.TODO(), secret, metav1.GetOptions{})
 	if err != nil {

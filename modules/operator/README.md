@@ -22,3 +22,4 @@ Kuberlogic’s heart is `operator`. It is responsible for keeping services in a 
 | GRAFANA_LOGIN | string | “” | Grafana admin username. Optional. |
 | GRAFANA_PASSWORD | string | “” | Grafana admin password. Optional. |
 | GRAFANA_DEFAULT_DATASOURCE_ENDPOINT | “” | Prometheus URL to configure as a Grafana main datasource. Optional. |
+| PLATFORM | string | "GENERIC" | A platform where Kuberlogic runs. Optional. |

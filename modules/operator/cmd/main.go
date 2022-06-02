@@ -17,6 +17,7 @@
 package cmd
 
 import (
+	mysql "github.com/bitpoke/mysql-operator/pkg/apis"
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	operatorConfig "github.com/kuberlogic/kuberlogic/modules/operator/cfg"
 	"github.com/kuberlogic/kuberlogic/modules/operator/controllers"
@@ -25,7 +26,6 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/operator/monitoring"
 	"github.com/kuberlogic/kuberlogic/modules/operator/notifications"
 	"github.com/kuberlogic/kuberlogic/modules/operator/util"
-	mysql "github.com/presslabs/mysql-operator/pkg/apis"
 	postgres "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -53,21 +53,20 @@ func init() {
 
 func Main(args []string) {
 	setupLog := ctrl.Log.WithName("setup")
-
-	cfg, err := operatorConfig.NewConfig()
-	if err != nil {
-		setupLog.Error(err, "unable to get required config")
-		os.Exit(1)
-	}
-	// populate some values that are used later on
-	util.InitFromConfig(cfg)
-
 	zapl, err := logging.CreateZapLogger()
 	if err != nil {
 		setupLog.Error(err, "unable to create logger")
 		os.Exit(1)
 	}
 	logger := logging.GetLogger(zapl)
+
+	cfg, err := operatorConfig.NewConfig(ver)
+	if err != nil {
+		setupLog.Error(err, "unable to get required config")
+		os.Exit(1)
+	}
+	// populate some values that are used later on
+	util.InitFromConfig(cfg)
 
 	// init sentry
 	if dsn := cfg.SentryDsn; dsn != "" {
@@ -96,12 +95,11 @@ func Main(args []string) {
 	metrics.Registry.MustRegister(klCollector)
 
 	// create controller for KuberLogicServices resource
-	if err = (&controllers.KuberLogicServiceReconciler{
-		Client:              mgr.GetClient(),
-		Log:                 ctrl.Log.WithName("controller").WithName("KuberLogicServices"),
-		Scheme:              mgr.GetScheme(),
-		MonitoringCollector: klCollector,
-	}).SetupWithManager(mgr); err != nil {
+	if err = controllers.NewKuberlogicServiceReconciler(mgr.GetClient(),
+		ctrl.Log.WithName("controller").WithName("KuberLogicServices"),
+		mgr.GetScheme(),
+		cfg,
+		klCollector).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KuberLogicServices")
 		os.Exit(1)
 	}
@@ -113,24 +111,22 @@ func Main(args []string) {
 	}
 
 	// create controller for KuberLogicBackupSchedule resource
-	if err = (&controllers.KuberLogicBackupScheduleReconciler{
-		Client:              mgr.GetClient(),
-		Log:                 ctrl.Log.WithName("controller-backup").WithName("KuberLogicBackupSchedule"),
-		Scheme:              mgr.GetScheme(),
-		MonitoringCollector: klCollector,
-	}).SetupWithManager(mgr); err != nil {
+	if err = controllers.NewKuberlogicBackupScheduleReconciler(mgr.GetClient(),
+		ctrl.Log.WithName("controller-backup").WithName("KuberLogicBackupSchedule"),
+		mgr.GetScheme(),
+		cfg,
+		klCollector).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create backup controller",
 			"controller-backup", "KuberLogicBackupSchedule")
 		os.Exit(1)
 	}
 
 	// create controller for KuberLogicBackupRestore resource
-	if err = (&controllers.KuberLogicBackupRestoreReconciler{
-		Client:              mgr.GetClient(),
-		Log:                 ctrl.Log.WithName("controller-backup").WithName("KuberLogicBackupSchedule"),
-		Scheme:              mgr.GetScheme(),
-		MonitoringCollector: klCollector,
-	}).SetupWithManager(mgr); err != nil {
+	if err = controllers.NewKuberlogicBackupRestoreReconciler(mgr.GetClient(),
+		ctrl.Log.WithName("controller-backup").WithName("KuberLogicBackupSchedule"),
+		mgr.GetScheme(),
+		cfg,
+		klCollector).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create restore controller",
 			"controller-restore-backup", "KuberLogicBackupRestore")
 		os.Exit(1)

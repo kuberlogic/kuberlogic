@@ -24,6 +24,7 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/apiserver/util/k8s"
 	kuberlogicv1 "github.com/kuberlogic/kuberlogic/modules/operator/api/v1"
 	util "github.com/kuberlogic/kuberlogic/modules/operator/service-operator/util/kuberlogic"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,27 +32,28 @@ import (
 	"strconv"
 )
 
-func getServiceExternalConnection(c *kubernetes.Clientset, log logging.Logger, kls *kuberlogicv1.KuberLogicService) (*models.ServiceExternalConnection, error) {
+// getServiceExternalConnection discovers master/replica services and returns external connection info: host, port, user, etc
+func getServiceExternalConnection(c kubernetes.Interface, log logging.Logger, kls *kuberlogicv1.KuberLogicService) (*models.ServiceExternalConnection, error) {
 	svc := new(models.ServiceExternalConnection)
 
-	masterSvc, replicaSvc, err := util.GetClusterServices(kls)
+	masterSvcName, replicaSvcName, err := util.GetClusterServices(kls)
 	if err != nil {
 		return svc, err
 	}
-	log.Debugw("services", "master", masterSvc, "replica", replicaSvc)
+	log.Debugw("services", "master", masterSvcName, "replica", replicaSvcName)
 
 	port, err := util.GetClusterServicePort(kls)
 	if err != nil {
 		return svc, err
 	}
 
-	masterExt, _, err := k8s.GetServiceExternalIP(c, log, masterSvc, kls.Namespace)
+	masterSvc, err := c.CoreV1().Services(kls.Namespace).Get(context.TODO(), masterSvcName, metav1.GetOptions{})
 	if err != nil {
-		return svc, err
+		return nil, errors.Wrap(err, "error getting master service")
 	}
-	replicaExt, _, err := k8s.GetServiceExternalIP(c, log, replicaSvc, kls.Namespace)
+	replicaSvc, err := c.CoreV1().Services(kls.Namespace).Get(context.TODO(), replicaSvcName, metav1.GetOptions{})
 	if err != nil {
-		return svc, err
+		return nil, errors.Wrap(err, "error getting replica service")
 	}
 
 	user, password, err := getServiceCredentials(c, log, kls)
@@ -61,7 +63,7 @@ func getServiceExternalConnection(c *kubernetes.Clientset, log logging.Logger, k
 
 	svc.Master = &models.Connection{
 		Cert:     "",
-		Host:     masterExt,
+		Host:     k8s.GetServiceExternalAddr(masterSvc, log),
 		Password: password,
 		Port:     int64(port),
 		SslMode:  "",
@@ -69,7 +71,7 @@ func getServiceExternalConnection(c *kubernetes.Clientset, log logging.Logger, k
 	}
 	svc.Replica = &models.Connection{
 		Cert:     "",
-		Host:     replicaExt,
+		Host:     k8s.GetServiceExternalAddr(replicaSvc, log),
 		Password: password,
 		Port:     int64(port),
 		SslMode:  "",
@@ -78,7 +80,7 @@ func getServiceExternalConnection(c *kubernetes.Clientset, log logging.Logger, k
 	return svc, nil
 }
 
-func getServiceInternalConnection(c *kubernetes.Clientset, log logging.Logger, kls *kuberlogicv1.KuberLogicService) (*models.ServiceInternalConnection, error) {
+func getServiceInternalConnection(c kubernetes.Interface, log logging.Logger, kls *kuberlogicv1.KuberLogicService) (*models.ServiceInternalConnection, error) {
 	svc := new(models.ServiceInternalConnection)
 
 	masterSvc, replicaSvc, err := util.GetClusterServices(kls)
@@ -106,7 +108,7 @@ func getServiceInternalConnection(c *kubernetes.Clientset, log logging.Logger, k
 	}
 	svc.Replica = &models.Connection{
 		Cert:     "",
-		Host:     replicaSvc + kls.Namespace,
+		Host:     replicaSvc + "." + kls.Namespace,
 		Password: password,
 		Port:     int64(port),
 		SslMode:  "",
@@ -115,7 +117,7 @@ func getServiceInternalConnection(c *kubernetes.Clientset, log logging.Logger, k
 	return svc, nil
 }
 
-func getServiceCredentials(c *kubernetes.Clientset, log logging.Logger, kls *kuberlogicv1.KuberLogicService) (user, password string, err error) {
+func getServiceCredentials(c kubernetes.Interface, log logging.Logger, kls *kuberlogicv1.KuberLogicService) (user, password string, err error) {
 	user, passwordField, secretName, err := util.GetClusterCredentialsInfo(kls)
 	if err != nil {
 		err = fmt.Errorf("Error getting connecion credentials: %s", err.Error())
@@ -131,7 +133,7 @@ func getServiceCredentials(c *kubernetes.Clientset, log logging.Logger, kls *kub
 	return
 }
 
-func getServiceInstances(c *kubernetes.Clientset, log logging.Logger, kls *kuberlogicv1.KuberLogicService, ctx context.Context) ([]*models.ServiceInstance, error) {
+func getServiceInstances(c kubernetes.Interface, log logging.Logger, kls *kuberlogicv1.KuberLogicService, ctx context.Context) ([]*models.ServiceInstance, error) {
 	masterPods, replicaPods, err := getServicePods(c, log, kls, ctx)
 	if err != nil {
 		return nil, err
@@ -170,7 +172,7 @@ func podStatusToServiceInstanceStatus(p corev1.Pod) *models.ServiceInstanceStatu
 	return s
 }
 
-func getServicePods(c *kubernetes.Clientset, log logging.Logger, kls *kuberlogicv1.KuberLogicService, ctx context.Context) (masterPods *corev1.PodList, replicaPods *corev1.PodList, err error) {
+func getServicePods(c kubernetes.Interface, log logging.Logger, kls *kuberlogicv1.KuberLogicService, ctx context.Context) (masterPods *corev1.PodList, replicaPods *corev1.PodList, err error) {
 	masterPodSelector, replicaPodSelector, err := util.GetClusterPodLabels(kls)
 	if err != nil {
 		return
@@ -195,7 +197,7 @@ func getServicePods(c *kubernetes.Clientset, log logging.Logger, kls *kuberlogic
 	return
 }
 
-func getServiceInstanceLogs(c *kubernetes.Clientset, kls *kuberlogicv1.KuberLogicService, log logging.Logger, ctx context.Context, instance string, lines int64) (logs string, found bool, err error) {
+func getServiceInstanceLogs(c kubernetes.Interface, kls *kuberlogicv1.KuberLogicService, log logging.Logger, ctx context.Context, instance string, lines int64) (logs string, found bool, err error) {
 	found = true
 
 	instances, err := getServiceInstances(c, log, kls, ctx)

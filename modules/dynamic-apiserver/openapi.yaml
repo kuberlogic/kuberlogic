@@ -1,0 +1,219 @@
+swagger: "2.0"
+info:
+  description: This is a service API
+  version: 0.0.1
+  title: service API
+  contact:
+    email: info@kuberlogic.com
+
+tags:
+  - name: service
+    description: Everything about service resource
+
+host: localhost:8001
+basePath: /api/v1/
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+securityDefinitions:
+  key:
+    type: apiKey
+    in: header
+    name: x-token
+security:
+  - key: [ ]
+paths:
+  /services/:
+    get:
+      tags:
+        - service
+      summary: lists all services
+      operationId: serviceList
+      description: |
+        List of service objects
+      responses:
+        200:
+          description: search results matching criteria
+          schema:
+            $ref: "#/definitions/Services"
+        400:
+          description: bad input parameter
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        422:
+          description: bad validation
+          schema:
+            $ref: "#/definitions/Error"
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
+    post:
+      tags:
+        - service
+      summary: adds a service item
+      operationId: serviceAdd
+      description: |
+        Adds service object
+      parameters:
+        - $ref: "#/parameters/ServiceItem"
+      responses:
+        201:
+          description: item created
+          schema:
+            $ref: "#/definitions/Service"
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        409:
+          description: item already exists
+        422:
+          description: bad validation
+          schema:
+            $ref: "#/definitions/Error"
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
+  /services/{ServiceID}/:
+    delete:
+      tags:
+        - service
+      summary: deletes a service item
+      operationId: serviceDelete
+      description: |
+        Deletes a service object
+      parameters:
+        - $ref: "#/parameters/ServiceID"
+
+      responses:
+        200:
+          description: item deleted
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        404:
+          description: item not found
+        422:
+          description: bad validation
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
+
+definitions:
+  Advanced:
+    type: object
+    additionalProperties:
+      type: object
+
+  Limits:
+    type: object
+    #    required:
+    #      - cpu
+    #      - memory
+    #      - volumeSize
+    properties:
+      cpu:
+        type: string
+        pattern: "^([0-9]+$)|([0-9]+.[0-9]+$)"
+        # cpu is measured in # of cores: 1, 1.5, 2, etc
+
+      memory:
+        type: string
+        pattern: "^([0-9]+$)|([0-9]+.[0-9]+$)"
+        # memory is measured in Gi
+        # 1.5, 1, 2, 0.5
+
+      volumeSize:
+        type: string
+        pattern: "^([0-9]+$)|([0-9]+.[0-9]+$)"
+        # disk is measured in Gi
+        # 1, 1.5, 1, 2
+
+  Service:
+    type: object
+    required:
+      - id
+      - type
+    properties:
+      id:
+        type: string
+        pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+        minLength: 2
+        maxLength: 20
+      type:
+        type: string
+      version:
+        type: string
+      domain:
+        type: string
+      volumeSize:
+        type: string
+      replicas:
+        # https://goswagger.io/faq/faq_model.html#non-required-or-nullable-property
+        x-nullable: true
+        type: integer
+      limits:
+        $ref: "#/definitions/Limits"
+      advanced:
+        $ref: "#/definitions/Advanced"
+      status:
+        type: string
+        readOnly: true
+
+      created_at:
+        type: string
+        readOnly: true
+        format: date-time
+
+  Services:
+    type: array
+    items:
+      $ref: "#/definitions/Service"
+
+  Error:
+    type: object
+    properties:
+      message:
+        type: string
+
+  principal:
+    type: string
+
+parameters:
+  ServiceID:
+    name: ServiceID
+    in: path
+    description: service Resource ID
+    required: true
+    type: "string"
+    pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+    minLength: 3
+    maxLength: 120
+
+  ServiceItem:
+    in: body
+    name: serviceItem
+    required: true
+    description: service item
+    schema:
+      $ref: "#/definitions/Service"
+

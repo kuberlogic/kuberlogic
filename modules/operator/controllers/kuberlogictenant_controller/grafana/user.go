@@ -144,7 +144,7 @@ func (gr *grafana) createUser(email, username, password string, orgId int) error
 			"OrgId":    orgId,
 		})
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error sending a user create request")
 	}
 
 	switch resp.StatusCode {

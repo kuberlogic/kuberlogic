@@ -25,14 +25,15 @@ require (
 	github.com/kuberlogic/zapsentry v1.6.2
 	github.com/pkg/errors v0.9.1
 	github.com/posthog/posthog-go v0.0.0-20210111202400-c80159165cb6
-	github.com/prometheus/common v0.10.0
+	github.com/prometheus/common v0.26.0
 	github.com/vrischmann/envconfig v1.3.0
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	go.uber.org/multierr v1.6.0 // indirect
-	go.uber.org/zap v1.16.0
-	golang.org/x/net v0.0.0-20201202161906-c7110b5ffcbb
+	go.uber.org/zap v1.18.1
+	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	k8s.io/api v0.20.4
-	k8s.io/apimachinery v0.20.4
-	k8s.io/client-go v0.20.4
+	k8s.io/api v0.21.2
+	k8s.io/apimachinery v0.21.2
+	k8s.io/client-go v0.21.2
 )
+
+replace github.com/bitpoke/mysql-operator v0.5.1 => github.com/ynnt/mysql-operator v0.4.1-0.20211105080955-6cd163c75b57

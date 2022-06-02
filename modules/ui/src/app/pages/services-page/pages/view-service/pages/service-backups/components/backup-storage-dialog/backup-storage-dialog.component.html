@@ -21,7 +21,7 @@
         <form [formGroup]="formGroup">
 
             <div class="backup-storage-dialog__column">
-                <label class="backup-storage-dialog__label">s3 endpoint</label>
+                <label class="backup-storage-dialog__label">S3 Endpoint</label>
                 <mat-form-field floatLabel="never" appearance="outline">
                     <input class="form-field__input" type="text"
                            formControlName="endpoint"
@@ -29,9 +29,10 @@
                     >
                     <mat-error>
                         <span *ngIf="formGroup.controls.endpoint.errors?.required">This field is required</span>
+                        <span *ngIf="formGroup.controls.endpoint.errors?.pattern">Endpoint must start with http:// or https://</span>
                     </mat-error>
                 </mat-form-field>
-                <label class="backup-storage-dialog__label">bucket</label>
+                <label class="backup-storage-dialog__label">S3 Bucket</label>
                 <mat-form-field floatLabel="never" appearance="outline">
                     <input class="form-field__input" type="text"
                            formControlName="bucket"
@@ -41,10 +42,20 @@
                         <span *ngIf="formGroup.controls.bucket.errors?.required">This field is required</span>
                     </mat-error>
                 </mat-form-field>
+                <label class="backup-storage-dialog__label">Region</label>
+                <mat-form-field floatLabel="never" appearance="outline">
+                    <input class="form-field__input" type="text"
+                           formControlName="region"
+                           matInput
+                    >
+                    <mat-error>
+                        <span *ngIf="formGroup.controls.region.errors?.required">This field is required</span>
+                    </mat-error>
+                </mat-form-field>
             </div>
 
             <div class="backup-storage-dialog__column">
-                <label class="backup-storage-dialog__label">Secret key</label>
+                <label class="backup-storage-dialog__label">Secret Access Key</label>
                 <mat-form-field floatLabel="never" appearance="outline">
                     <input class="form-field__input" type="text"
                            formControlName="aws_secret_access_key"
@@ -54,7 +65,7 @@
                         <span *ngIf="formGroup.controls.aws_secret_access_key.errors?.required">This field is required</span>
                     </mat-error>
                 </mat-form-field>
-                <label class="backup-storage-dialog__label">access</label>
+                <label class="backup-storage-dialog__label">Access Key ID</label>
                 <mat-form-field floatLabel="never" appearance="outline">
                     <input class="form-field__input" type="text"
                            formControlName="aws_access_key_id"

@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 # Current Operator version
-VERSION ?= 1.0.1
+VERSION ?= 1.0.4
 COMMIT_SHA = $(shell git rev-parse HEAD)
 
 ifeq ($(USE_BUILD),true)
@@ -66,17 +66,23 @@ GOPRIVATE=github.com/kuberlogic
 
 SENTRY_DSN =
 NAMESPACE ?= kuberlogic
+INSTALLER_SCRIPT = /tmp/installer.sh
 
 all: manager
 
 # Run tests
+unit-tests: operator-test installer-test apiserver-test
 operator-test: generate fmt vet manifests
 	cd modules/operator; \
-	go test ./... -coverprofile cover.out
+	go test ./... -race -covermode=atomic -coverprofile=unit-coverage.out
 
 installer-test:
 	@cd modules/installer; \
 	$(MAKE) test
+
+apiserver-test:
+	cd modules/apiserver; \
+	go test $(go list ./... | grep -v tests) -coverprofile=unit-coverage.out
 
 # Build manager binary
 manager: generate fmt vet
@@ -94,8 +100,9 @@ show-resources:
 after-deploy:
 	kubectl config set-context --current --namespace=$(NAMESPACE)
 
-undeploy: kustomize undeploy-certmanager
-	# need to remove several resources before their operators were removed
+undeploy: kustomize
+	# need to remove several resource
+# s before their operators were removed
 	kubectl delete mysqldatabase grafana; \
 	kubectl delete mysql grafana; \
 	kubectl delete keycloakusers --all-namespaces --all; \
@@ -134,8 +141,7 @@ generate: controller-gen
 # Build images
 operator-build:
 	cd modules/operator && \
-	go mod vendor && \
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -ldflags " \
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -ldflags " \
         -X github.com/kuberlogic/kuberlogic/modules/operator/cmd.sha1ver=$(REVISION) \
         -X github.com/kuberlogic/kuberlogic/modules/operator/cmd.buildTime=$(BUILD_TIME) \
         -X github.com/kuberlogic/kuberlogic/modules/operator/cmd.ver=$(VERSION)"  \
@@ -153,10 +159,13 @@ installer-build:
 	REVISION=$(COMMIT_SHA) \
 	$(MAKE) release
 
+generate-installer-script:
+	@cd modules/installer; \
+	sed 's/tag="latest"/tag="$(VERSION)"/g' installer.sh > $(INSTALLER_SCRIPT);
+
 updater-build:
 	cd modules/updater && \
-	go mod vendor && \
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o bin/updater main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o bin/updater main.go
 	docker $(DOCKER_BUILD_CMD) . \
 		--build-arg BIN=modules/updater/bin/updater \
 		-t $(UPDATER_IMG):$(VERSION) \
@@ -165,8 +174,7 @@ updater-build:
 
 alert-receiver-build:
 	cd modules/alert-receiver && \
-	go mod vendor && \
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -mod=vendor -a -o bin/alert-receiver
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o bin/alert-receiver
 	docker $(DOCKER_BUILD_CMD) . \
 		--build-arg BIN=modules/alert-receiver/bin/alert-receiver \
 		-t $(ALERT_RECEIVER_IMG):$(VERSION) \
@@ -175,13 +183,11 @@ alert-receiver-build:
 
 apiserver-build:
 	cd modules/apiserver && \
-	go mod vendor && \
 	CGO_ENABLED=0 \
         GOOS=linux \
         GOARCH=amd64 \
         GO111MODULE=on \
         go build \
-        -mod=vendor \
         -ldflags " \
         -X github.com/kuberlogic/kuberlogic/modules/apiserver/cmd.sha1ver=$(REVISION) \
         -X github.com/kuberlogic/kuberlogic/modules/apiserver/cmd.buildTime=$(BUILD_TIME) \

@@ -51,9 +51,6 @@ const (
 	postgresImageTag       = "v1.6.2"
 	postgresSecretTemplate = "{username}.{cluster}.credentials"
 
-	// mysql operator values
-	mysqlImage = registryName + "/" + registryOrg + "/mysql-operator:v0.5.0-rc.2-3-gac1ec"
-
 	// monitoring grafana values
 	grafanaImageRepo      = registryName + "/" + registryOrg + "/grafana"
 	grafanaImageTag       = "8.1.4"
@@ -80,10 +77,10 @@ var (
 		"imagePullSecrets": []map[string]interface{}{
 			{"name": internal.ImagePullSecret},
 		},
-		"monitoringSelector": map[string]interface{}{
-			"key":   "core.kuberlogic.com/scrape",
-			"value": "yes",
-		},
-		"monitoringPortAnnotation": "core.kuberlogic.com/scrape-port",
+		"kubectlImage":                     "quay.io/bitnami/kubectl:1.21.1",
+		"monitoringScrapeAnnotation":       "monitoring.kuberlogic.com/scrape",
+		"monitoringScrapeSchemeAnnotation": "monitoring.kuberlogic.com/scheme",
+		"monitoringScrapePathAnnotation":   "monitoring.kuberlogic.com/path",
+		"monitoringScrapePortAnnotation":   "monitoring.kuberlogic.com/port",
 	}
 )

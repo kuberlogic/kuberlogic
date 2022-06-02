@@ -20,5 +20,6 @@ export interface ServiceBackupConfigModel {
     aws_secret_access_key: string;
     bucket: string;
     endpoint: string;
+    region: string;
     schedule: string;
 }

@@ -28,8 +28,8 @@ import (
 )
 
 type Service struct {
-	clientset        *kubernetes.Clientset
-	kuberlogicClient *rest.RESTClient
+	clientset        kubernetes.Interface
+	kuberlogicClient rest.Interface
 	authProvider     security.AuthProvider
 	log              logging.Logger
 	serviceStore     *store.ServiceStore
@@ -60,7 +60,7 @@ func (srv *Service) GetAuthProvider() security.AuthProvider {
 	return srv.authProvider
 }
 
-func New(clientset *kubernetes.Clientset, client *rest.RESTClient, authProvider security.AuthProvider, log logging.Logger) *Service {
+func New(clientset kubernetes.Interface, client rest.Interface, authProvider security.AuthProvider, log logging.Logger) *Service {
 	return &Service{
 		clientset:        clientset,
 		kuberlogicClient: client,

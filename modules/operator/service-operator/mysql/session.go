@@ -35,10 +35,10 @@ import (
 
 type Session struct {
 	base2.BaseSession
-	client *kubernetes.Clientset
+	client kubernetes.Interface
 }
 
-func NewSession(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService, client *kubernetes.Clientset, db string) (*Session, error) {
+func NewSession(op interfaces.OperatorInterface, cm *kuberlogicv1.KuberLogicService, client kubernetes.Interface, db string) (*Session, error) {
 	session := &Session{
 		client: client,
 	}

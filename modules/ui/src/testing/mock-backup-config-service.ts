@@ -24,6 +24,7 @@ const backupConfig: ServiceBackupConfigModel = {
     bucket: 'bucket',
     endpoint: 'endpoint',
     schedule: '0 8 * * *',
+    region: 'test'
 };
 
 export class MockBackupConfigService {

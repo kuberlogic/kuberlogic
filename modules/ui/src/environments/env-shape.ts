@@ -19,4 +19,5 @@ export interface EnvShape {
     apiUrl: string;
     monitoringConsoleUrl: string;
     name: string;
+    helpUrl?: string;
 }

@@ -1,0 +1,12 @@
+apiVersion: kuberlogic.com/v1alpha1
+kind: KuberLogicService
+metadata:
+  name: demo
+spec:
+  type: postgresql
+  replicas: 2
+  volumeSize: 1Gi
+  version: "13"
+  limits:
+    memory: 128Mi
+    cpu: 250m

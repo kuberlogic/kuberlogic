@@ -67,11 +67,16 @@ func initState() {
 	log.Infof("version %s, build time: %s, sha1ver: %s", version, buildTime, sha1ver)
 	log.Infof("Reading config from %s", cfgFile)
 
-	// get config
-	config, err = cfg.NewConfigFromFile(cfgFile, log)
-	if err != nil {
-		log.Fatalf("Error reading config file: %+v", err)
+	if _, err = os.Stat(cfgFile); err == nil {
+		// get config
+		config, err = cfg.NewConfigFromFile(cfgFile, log)
+		if err != nil {
+			log.Fatalf("Error reading config file: %+v", err)
+		}
+	} else {
+		config = cfg.AskConfig(os.Stdin, log, getDefaultCfgLocation())
 	}
+
 	log = logger.NewLogger(*config.DebugLogs)
 	log.Debugf("Config is %+v", config)
 
@@ -80,12 +85,14 @@ func initState() {
 		log.Fatalf("Error initializing installer: %+v", err)
 	}
 	log.Debugf("Initialized kuberlogic installer: %+v", kuberlogicInstaller)
-
 }
 
 func init() {
+	defaultCfgLocation := getDefaultCfgLocation()
 	cobra.OnInitialize(initState)
-
-	defaultCfgLocation := fmt.Sprintf("%s/%s", os.Getenv("HOME"), ".kuberlogic-installer.yaml")
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", defaultCfgLocation, fmt.Sprintf("config file (default is %s)", defaultCfgLocation))
+}
+
+func getDefaultCfgLocation() string {
+	return fmt.Sprintf("%s/%s", os.Getenv("HOME"), ".kuberlogic-installer.yaml")
 }

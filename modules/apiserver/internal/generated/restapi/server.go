@@ -288,7 +288,7 @@ func (s *Server) Serve() (err error) {
 			httpsServer.TLSConfig.ClientAuth = tls.RequireAndVerifyClientCert
 		}
 
-		// call custom TLS configurator
+		// call custom KuberlogicTLS configurator
 		configureTLS(httpsServer.TLSConfig)
 
 		if len(httpsServer.TLSConfig.Certificates) == 0 && httpsServer.TLSConfig.GetCertificate == nil {
@@ -302,8 +302,8 @@ func (s *Server) Serve() (err error) {
 			if s.TLSCertificateKey == "" {
 				s.Fatalf("the required flag `--tls-key` was not specified")
 			}
-			// this happens with a wrong custom TLS configurator
-			s.Fatalf("no certificate was configured for TLS")
+			// this happens with a wrong custom KuberlogicTLS configurator
+			s.Fatalf("no certificate was configured for KuberlogicTLS")
 		}
 
 		// must have at least one certificate or panics

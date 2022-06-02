@@ -1,0 +1,20 @@
+# permissions for end users to view kuberlogicservices.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kuberlogicservice-viewer-role
+rules:
+- apiGroups:
+  - kuberlogic.com
+  resources:
+  - kuberlogicservices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kuberlogic.com
+  resources:
+  - kuberlogicservices/status
+  verbs:
+  - get

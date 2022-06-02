@@ -1,5 +1,8 @@
 .EXPORT_ALL_VARIABLES:
 
+# needed for injecting version to operator config
+VERSION=latest
+
 # private repo for images
 IMG_REPO = quay.io/kuberlogic
 IMG = $(IMG_REPO)/minio:1.0.0
@@ -12,7 +15,8 @@ KUBERLOGIC_DEBUG_LOGS = True
 ARGS ?= -short
 
 INTERNAL_MINIO_IP=$(shell kubectl get pod -l app=minio -o go-template="{{range .items}}{{.status.podIP}}{{end}}")
-
+INTERNAL_VICTORIAMETRICS_IP=$(shell kubectl get svc kuberlogic-victoriametrics -o go-template="{{.spec.clusterIP}}")
+VICTORIAMETRICS_ENDPOINT=http://$(INTERNAL_VICTORIAMETRICS_IP)
 # access/secret also added in the deployment.yaml
 MINIO_ACCESS_KEY = BKIKJAA5BMMU2RHO6IBB
 MINIO_SECRET_KEY = V7f1CwQqAcwo80UEIJEjc5gVQUSSx5ohQ9GSrr12
