@@ -49,6 +49,9 @@ func (d *DockerComposeService) Convert(req commons.PluginRequest) *commons.Plugi
 			_ = res.AddUnstructuredObject(object, gvk)
 		}
 	}
+
+	res.Service = composeObjects.AccessServiceName()
+	res.Protocol = commons.HTTPproto
 	return res
 }
 
@@ -92,22 +95,14 @@ func (d *DockerComposeService) Default() *commons.PluginResponseDefault {
 }
 
 func (d *DockerComposeService) ValidateCreate(req commons.PluginRequest) *commons.PluginResponseValidation {
-	var validateErrors []string
-	if req.Replicas != 1 {
-		validateErrors = append(validateErrors, "only 1 replica can be set")
-	}
 	return &commons.PluginResponseValidation{
-		Err: strings.Join(validateErrors, ","),
+		Err: validateRequest(&req),
 	}
 }
 
 func (d *DockerComposeService) ValidateUpdate(req commons.PluginRequest) *commons.PluginResponseValidation {
-	var validateErrors []string
-	if req.Replicas != 1 {
-		validateErrors = append(validateErrors, "only 1 replica can be set")
-	}
 	return &commons.PluginResponseValidation{
-		Err: strings.Join(validateErrors, ","),
+		Err: validateRequest(&req),
 	}
 }
 
@@ -119,4 +114,13 @@ func NewDockerComposeServicePlugin(composeProject *compose.Project) *DockerCompo
 	return &DockerComposeService{
 		spec: composeProject,
 	}
+}
+
+func validateRequest(req *commons.PluginRequest) string {
+	var validateErrors []string
+	if req.Replicas != 1 {
+		validateErrors = append(validateErrors, "only 1 replica can be set")
+	}
+
+	return strings.Join(validateErrors, ", ")
 }

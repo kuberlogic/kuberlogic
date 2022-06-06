@@ -23,6 +23,8 @@ type KuberLogicServiceStatus struct {
 	Namespace string `json:"namespace,omitempty"`
 	// date when the namespace and all related resources will be purged
 	PurgeDate string `json:"purgeDate,omitempty"`
+
+	AccessEndpoint string `json:"access,omitempty"`
 }
 
 type KuberLogicServiceSpec struct {
@@ -41,7 +43,8 @@ type KuberLogicServiceSpec struct {
 	Limits v1.ResourceList `json:"limits,omitempty"`
 
 	// +kubebuilder:validation:Pattern=[a-z]([-a-z0-9]*[a-z0-9])?
-	Domain string `json:"domain,omitempty"`
+	Domain     string `json:"domain,omitempty"`
+	TLSEnabled bool   `json:"TLSEnabled,omitempty"`
 
 	// any advanced configuration is supported
 	Advanced v11.JSON `json:"advanced,omitempty"`
@@ -78,6 +81,22 @@ func (in *KuberLogicService) setConditionStatus(cond string, status bool, msg, r
 		c.Status = metav1.ConditionTrue
 	}
 	meta.SetStatusCondition(&in.Status.Conditions, c)
+}
+
+func (in *KuberLogicService) TLSEnabled() bool {
+	return in.Spec.TLSEnabled
+}
+
+func (in *KuberLogicService) GetHost() string {
+	var host string
+	if in.Spec.Domain != "" {
+		host = in.GetName() + "." + in.Spec.Domain
+	}
+	return host
+}
+
+func (in *KuberLogicService) SetAccessEndpoint(e string) {
+	in.Status.AccessEndpoint = e
 }
 
 func (in *KuberLogicService) MarkReady(msg string) {

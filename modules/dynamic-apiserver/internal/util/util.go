@@ -56,6 +56,7 @@ func ServiceToKuberlogic(svc *models.Service) (*kuberlogiccomv1alpha1.KuberLogic
 			c.Spec.VolumeSize = svc.Limits.VolumeSize
 		}
 	}
+	c.Spec.TLSEnabled = svc.TLSEnabled
 
 	if svc.Advanced != nil {
 		data, err := json.Marshal(svc.Advanced)
@@ -108,6 +109,7 @@ func KuberlogicToService(kls *kuberlogiccomv1alpha1.KuberLogicService) (*models.
 
 	_, status := kls.IsReady()
 	ret.Status = status
+	ret.Endpoint = kls.Status.AccessEndpoint
 
 	if kls.Spec.Advanced.Raw != nil {
 		if err := json.Unmarshal(kls.Spec.Advanced.Raw, &ret.Advanced); err != nil {

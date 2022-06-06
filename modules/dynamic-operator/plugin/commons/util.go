@@ -30,7 +30,7 @@ func ToUnstructured(obj interface{}, gvk schema.GroupVersionKind) (*unstructured
 	return u, nil
 }
 
-func ResponseFromObject(object client.Object, gvk schema.GroupVersionKind) *PluginResponse {
+func ResponseFromObject(object client.Object, gvk schema.GroupVersionKind, service string, protocol protocol) *PluginResponse {
 	o, err := ToUnstructured(object, gvk)
 	if err != nil {
 		return &PluginResponse{
@@ -41,6 +41,8 @@ func ResponseFromObject(object client.Object, gvk schema.GroupVersionKind) *Plug
 		Objects: []*unstructured.Unstructured{
 			o,
 		},
+		Service:  service,
+		Protocol: protocol,
 	}
 }
 

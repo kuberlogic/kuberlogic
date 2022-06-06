@@ -224,6 +224,10 @@ func init() {
         "domain": {
           "type": "string"
         },
+        "endpoint": {
+          "type": "string",
+          "readOnly": true
+        },
         "id": {
           "type": "string",
           "maxLength": 20,
@@ -240,6 +244,9 @@ func init() {
         "status": {
           "type": "string",
           "readOnly": true
+        },
+        "tlsEnabled": {
+          "type": "boolean"
         },
         "type": {
           "type": "string"
@@ -522,6 +529,10 @@ func init() {
         "domain": {
           "type": "string"
         },
+        "endpoint": {
+          "type": "string",
+          "readOnly": true
+        },
         "id": {
           "type": "string",
           "maxLength": 20,
@@ -538,6 +549,9 @@ func init() {
         "status": {
           "type": "string",
           "readOnly": true
+        },
+        "tlsEnabled": {
+          "type": "boolean"
         },
         "type": {
           "type": "string"

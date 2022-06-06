@@ -23,6 +23,14 @@ func getString(cmd *cobra.Command, flag string) (value *string, err error) {
 	return
 }
 
+func getBool(cmd *cobra.Command, flag string) (value bool, err error) {
+	value, err = cmd.Flags().GetBool(flag)
+	if err != nil {
+		return false, err
+	}
+	return
+}
+
 func setInt64(cmd *cobra.Command, flag string) (value *int64, err error) {
 	if cmd.Flags().Changed(flag) {
 		value, err := cmd.Flags().GetInt64(flag)

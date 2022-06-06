@@ -71,7 +71,7 @@ func (p *PostgresqlService) ValidateDelete(req commons.PluginRequest) *commons.P
 
 func (p *PostgresqlService) Types() *commons.PluginResponse {
 	p.logger.Debug("call Type")
-	return commons.ResponseFromObject(&postgresv1.Postgresql{}, gvk())
+	return commons.ResponseFromObject(&postgresv1.Postgresql{}, gvk(), "", commons.TCPproto)
 }
 
 func (p *PostgresqlService) merge(object *postgresv1.Postgresql, req commons.PluginRequest) error {
@@ -166,7 +166,8 @@ func (p *PostgresqlService) Convert(req commons.PluginRequest) *commons.PluginRe
 
 	}
 	p.logger.Info("Convert", "object", object)
-	return commons.ResponseFromObject(object, gvk())
+
+	return commons.ResponseFromObject(object, gvk(), p.service.GetName(), commons.TCPproto)
 }
 
 func (p *PostgresqlService) Init(req commons.PluginRequest) *postgresv1.Postgresql {

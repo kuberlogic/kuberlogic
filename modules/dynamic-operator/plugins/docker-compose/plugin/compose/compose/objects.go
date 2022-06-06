@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	v12 "k8s.io/api/apps/v1"
 	v13 "k8s.io/api/core/v1"
-	v14 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -37,16 +36,11 @@ var (
 		Group:   "apps",
 		Version: "v1",
 		Kind:    "Deployment"}
-	ingressGVK = schema.GroupVersionKind{
-		Group:   "networking.k8s.io",
-		Version: "v1",
-		Kind:    "Ingress"}
 )
 
 var (
-	errUnknownObject   = errors.New("unknown object kind")
-	errVolumeNotFound  = errors.New("requested volume definition not found")
-	errTooManySvcPorts = errors.New("too many ports defined in service")
+	errUnknownObject  = errors.New("unknown object kind")
+	errVolumeNotFound = errors.New("requested volume definition not found")
 )
 
 type ComposeModel struct {
@@ -57,7 +51,6 @@ type ComposeModel struct {
 	service                *v13.Service
 	persistentvolumeclaims map[string]*v13.PersistentVolumeClaim
 	deployment             *v12.Deployment
-	ingress                *v14.Ingress
 }
 
 // Reconcile method updates current request object to their required parameters
@@ -102,10 +95,11 @@ func (c *ComposeModel) Types() []map[schema.GroupVersionKind]client.Object {
 		{
 			deploymentGVK: &v12.Deployment{},
 		},
-		{
-			ingressGVK: &v14.Ingress{},
-		},
 	}
+}
+
+func (c *ComposeModel) AccessServiceName() string {
+	return c.service.GetName()
 }
 
 func NewComposeModel(p *types.Project, l hclog.Logger) *ComposeModel {
@@ -117,7 +111,6 @@ func NewComposeModel(p *types.Project, l hclog.Logger) *ComposeModel {
 		service:                &v13.Service{},
 		persistentvolumeclaims: make(map[string]*v13.PersistentVolumeClaim, 0),
 		deployment:             &v12.Deployment{},
-		ingress:                &v14.Ingress{},
 	}
 }
 
@@ -133,9 +126,6 @@ func (c *ComposeModel) objectsWithGVK() []map[schema.GroupVersionKind]client.Obj
 		{
 			deploymentGVK: c.deployment,
 		},
-	}
-	if c.ingress != nil {
-		objects = append(objects, map[schema.GroupVersionKind]client.Object{ingressGVK: c.ingress})
 	}
 
 	for _, pvc := range c.persistentvolumeclaims {
@@ -169,10 +159,6 @@ func (c *ComposeModel) fromCluster(objects []*unstructured.Unstructured) error {
 			if err := commons.FromUnstructured(obj.UnstructuredContent(), c.deployment); err != nil {
 				return errors.Wrap(err, "error marshaling deployment")
 			}
-		case "Ingress":
-			if err := commons.FromUnstructured(obj.UnstructuredContent(), c.ingress); err != nil {
-				return errors.Wrap(err, "error marshaling ingress")
-			}
 		default:
 			return errUnknownObject
 		}
@@ -202,10 +188,6 @@ func (c *ComposeModel) setObjects(req *commons.PluginRequest) error {
 	}
 	c.logger.Debug("deployment updated", "object", c.deployment)
 	c.logger.Debug("service updated", "object", c.service)
-	if err := c.updateIngress(req); err != nil {
-		return errors.Wrap(err, "error updating ingress")
-	}
-	c.logger.Debug("ingress updated", "object", c.ingress)
 	return nil
 }
 
@@ -375,48 +357,6 @@ func (c *ComposeModel) updateServiceDeployment(req *commons.PluginRequest) error
 	return nil
 }
 
-func (c *ComposeModel) updateIngress(req *commons.PluginRequest) error {
-	// Host is not set
-	if req.Host == "" {
-		c.ingress = nil
-		return nil
-	}
-
-	if len(c.service.Spec.Ports) != 1 {
-		return errTooManySvcPorts
-	}
-	if c.ingress.Name == "" {
-		c.ingress.Name = req.Name
-		c.ingress.Namespace = req.Namespace
-	}
-
-	pathType := v14.PathTypePrefix
-	c.ingress.Labels = labels(req.Name)
-	c.ingress.Spec.Rules = []v14.IngressRule{
-		{
-			Host: req.Host,
-			IngressRuleValue: v14.IngressRuleValue{HTTP: &v14.HTTPIngressRuleValue{
-				Paths: []v14.HTTPIngressPath{
-					{
-						Path:     "/",
-						PathType: &pathType,
-						Backend: v14.IngressBackend{
-							Service: &v14.IngressServiceBackend{
-								Name: c.service.Name,
-								Port: v14.ServiceBackendPort{
-									Name: c.service.Spec.Ports[0].Name,
-								},
-							},
-							Resource: nil,
-						},
-					},
-				},
-			}},
-		},
-	}
-	return nil
-}
-
 func labels(name string) map[string]string {
 	return map[string]string{
 		"docker-compose.service/name": name,
@@ -436,6 +376,7 @@ func requestTemplatedValue(req *commons.PluginRequest, value string) (string, er
 		Replicas:   req.Replicas,
 		VolumeSize: req.VolumeSize,
 		Version:    req.Version,
+		TLSEnabled: req.TLSEnabled,
 		Limits:     req.Limits,
 		Parameters: req.Parameters,
 		Objects:    nil,
