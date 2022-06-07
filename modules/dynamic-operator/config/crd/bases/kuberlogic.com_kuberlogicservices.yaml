@@ -22,7 +22,7 @@ spec:
   versions:
   - additionalPrinterColumns:
     - description: The cluster readiness
-      jsonPath: .status.conditions[?(@.type == 'Ready')].status
+      jsonPath: .status.conditions[?(@.type == 'Ready')].
       name: Ready
       type: string
     - description: The cluster status
@@ -48,6 +48,10 @@ spec:
     - description: Memory request
       jsonPath: .spec.resources.requests.memory
       name: Memory Request
+      type: string
+    - description: Access endpoint
+      jsonPath: .status.access
+      name: Endpoint
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -87,6 +91,10 @@ spec:
                   x-kubernetes-int-or-string: true
                 description: Resources (requests/limits)
                 type: object
+              paused:
+                default: false
+                description: Paused field allows to stop all service related containers
+                type: boolean
               replicas:
                 description: Amount of replicas
                 format: int32

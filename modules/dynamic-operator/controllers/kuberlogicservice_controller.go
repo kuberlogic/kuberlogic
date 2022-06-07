@@ -56,9 +56,8 @@ func HandlePanic(log logr.Logger) {
 //+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservices/finalizers,verbs=update
 
 // compose plugin roles:
-//+kubebuilder:rbac:groups="",resources=namespaces;serviceaccounts;services;persistentvolumeclaims;,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=serviceaccounts;services;persistentvolumeclaims;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=deployments;,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses;networkpolicies,verbs=get;list;watch;create;update;patch;delete
 
 func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logger.FromContext(ctx).WithValues("kuberlogicservicetype", req.String())
@@ -136,6 +135,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	// collect cluster objects
 	for _, o := range resp.Objects {
+		o.SetNamespace(env.NamespaceName)
 		if err := r.Get(ctx, client.ObjectKeyFromObject(o), o); k8serrors.IsNotFound(err) {
 			// object not found conitnue iterating
 			continue
@@ -159,6 +159,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	// now create or update objects in cluster
 	for _, o := range resp.Objects {
 		desiredState := o.UnstructuredContent()
+		o.SetNamespace(env.NamespaceName)
 		op, err := ctrl.CreateOrUpdate(ctx, r.Client, o, func() error {
 			log.Info("mutating object", "current", o.UnstructuredContent(), "desired", desiredState)
 			o.SetUnstructuredContent(desiredState)
@@ -169,6 +170,13 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			return ctrl.Result{}, err
 		}
 		log.Info("synced object", "op", op, "object", o)
+	}
+
+	// pause service when requested
+	if kls.Paused() {
+		if err := env.PauseService(); err != nil {
+			return ctrl.Result{}, errors.Wrap(err, "error pausing service")
+		}
 	}
 
 	// expose service
@@ -218,5 +226,7 @@ func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager, objects
 	builder.Owns(&v1.Namespace{})
 	builder.Owns(&v12.NetworkPolicy{})
 	builder.Owns(&v12.Ingress{})
+	builder.Owns(&v1.ResourceQuota{})
+	builder.Owns(&v1.Secret{})
 	return builder.Complete(r)
 }

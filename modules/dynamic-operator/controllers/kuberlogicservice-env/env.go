@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	v13 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,8 +40,15 @@ type EnvironmentManager struct {
 	ctx context.Context
 }
 
+//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses;networkpolicies,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=namespaces;services;,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=resourcequotas;,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=secrets;,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=pods;,verbs=deletecollection
+
 // SetupEnv checks if KLS environment is present and creates it if it is not
 func SetupEnv(kls *kuberlogiccomv1alpha1.KuberLogicService, c client.Client, cfg *config.Config, ctx context.Context) (*EnvironmentManager, error) {
+	// Namespace ns will contain all managed resources
 	ns := getNamespace(kls)
 	if _, err := controllerruntime.CreateOrUpdate(ctx, c, ns, func() error {
 		return controllerruntime.SetControllerReference(kls, ns, c.Scheme())
@@ -48,6 +56,7 @@ func SetupEnv(kls *kuberlogiccomv1alpha1.KuberLogicService, c client.Client, cfg
 		return nil, errors.Wrap(err, "error setting up kls namespace")
 	}
 
+	// NetworkPolicy netpol prevents all cross namespace network communication for service pods
 	netpol := getNetworkPolicy(kls, ns)
 	if _, err := controllerruntime.CreateOrUpdate(ctx, c, netpol, func() error {
 		return controllerruntime.SetControllerReference(kls, netpol, c.Scheme())
@@ -55,12 +64,26 @@ func SetupEnv(kls *kuberlogiccomv1alpha1.KuberLogicService, c client.Client, cfg
 		return nil, errors.Wrap(err, "error setting up kls networkpolicy")
 	}
 
+	// Prevent service pods from starting when requested
+	resourceQuota := getResourceQuota(kls, ns)
+	if _, err := controllerruntime.CreateOrUpdate(ctx, c, resourceQuota, func() error {
+		resourceQuota.Spec.Hard = make(map[v1.ResourceName]resource.Quantity, 0)
+		if kls.Paused() {
+			resourceQuota.Spec.Hard["pods"] = resource.MustParse("0")
+		}
+		return controllerruntime.SetControllerReference(kls, resourceQuota, c.Scheme())
+	}); err != nil {
+		return nil, errors.Wrap(err, "error syncing kls resource quota")
+	}
+
+	// Sync TLS secret when defined in config
 	tlsSecret := &v1.Secret{
 		ObjectMeta: v12.ObjectMeta{
 			Name:      cfg.SvcOpts.TLSSecretName,
 			Namespace: ns.GetName(),
 		},
 	}
+
 	if cfg.SvcOpts.TLSSecretName != "" {
 		if _, err := controllerruntime.CreateOrUpdate(ctx, c, tlsSecret, func() error {
 			srcSecret := &v1.Secret{
@@ -90,6 +113,20 @@ func SetupEnv(kls *kuberlogiccomv1alpha1.KuberLogicService, c client.Client, cfg
 		kls: kls,
 		ctx: ctx,
 	}, nil
+}
+
+// PauseService deletes all pods in a service namespace.
+// In addition to this resourceQuota in SetupEnv sets the hard limit of non-exited pods to 0.
+func (e *EnvironmentManager) PauseService() error {
+	if err := e.DeleteAllOf(e.ctx, &v1.Pod{}, &client.DeleteAllOfOptions{
+		ListOptions: client.ListOptions{
+			Namespace: e.NamespaceName,
+		},
+		DeleteOptions: client.DeleteOptions{},
+	}); err != nil {
+		return errors.Wrap(err, "error deleting all pods in namespace")
+	}
+	return nil
 }
 
 // ExposeService takes internal service name and creates an Ingress object exposing it to the outside
@@ -219,6 +256,17 @@ func getNetworkPolicy(kls *kuberlogiccomv1alpha1.KuberLogicService, ns *v1.Names
 			},
 		},
 	}
+}
+
+func getResourceQuota(kls *kuberlogiccomv1alpha1.KuberLogicService, ns *v1.Namespace) *v1.ResourceQuota {
+	q := &v1.ResourceQuota{
+		ObjectMeta: v12.ObjectMeta{
+			Name:      kls.GetName(),
+			Namespace: ns.GetName(),
+			Labels:    envLabels(kls),
+		},
+	}
+	return q
 }
 
 func envLabels(kls *kuberlogiccomv1alpha1.KuberLogicService) map[string]string {
