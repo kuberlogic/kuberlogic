@@ -48,16 +48,22 @@ type KuberLogicServiceSpec struct {
 
 	// any advanced configuration is supported
 	Advanced v11.JSON `json:"advanced,omitempty"`
+
+	// Paused field allows to stop all service related containers
+	// +kubebuilder:default=false
+	Paused bool `json:"paused,omitempty"`
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type == 'Ready')].status",description="The cluster readiness"
+// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type == 'Ready')].",description="The cluster readiness"
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[?(@.type == 'Ready')].reason",description="The cluster status"
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`,description="The cluster type"
 // +kubebuilder:printcolumn:name="Replicas",type=integer,JSONPath=`.spec.replicas`,description="The number of desired replicas"
 // +kubebuilder:printcolumn:name="Volume",type=string,JSONPath=`.spec.volumeSize`,description="Volume size for the cluster"
 // +kubebuilder:printcolumn:name="CPU Request",type=string,JSONPath=`.spec.resources.requests.cpu`,description="CPU request"
 // +kubebuilder:printcolumn:name="Memory Request",type=string,JSONPath=`.spec.resources.requests.memory`,description="Memory request"
+// +kubebuilder:printcolumn:name="Endpoint",type=string,JSONPath=`.status.access`,description="Access endpoint"
+// +kubebuilder:printcolume:name="Paused",type=bool,JSONPath=`.spec.paused`,description="Service is paused"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:resource:shortName=kls,categories=kuberlogic,scope=Cluster
 // +kubebuilder:subresource:status
@@ -81,6 +87,10 @@ func (in *KuberLogicService) setConditionStatus(cond string, status bool, msg, r
 		c.Status = metav1.ConditionTrue
 	}
 	meta.SetStatusCondition(&in.Status.Conditions, c)
+}
+
+func (in *KuberLogicService) Paused() bool {
+	return in.Spec.Paused
 }
 
 func (in *KuberLogicService) TLSEnabled() bool {
