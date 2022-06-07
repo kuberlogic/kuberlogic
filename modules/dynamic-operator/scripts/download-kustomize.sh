@@ -46,7 +46,7 @@ function main {
     archive="$tmpdir/kustomize.tar.gz"
     url="https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${version}/kustomize_${version}_$(get_system)_$(get_arch).tar.gz"
     echo "Downloading kustomize $1" >/dev/tty
-    curl -o $archive -L $url
+    curl --output $archive --location $url
 
     echo "Extracting archive to $2" >/dev/tty
     tar -xvf $archive -C $parentdir
