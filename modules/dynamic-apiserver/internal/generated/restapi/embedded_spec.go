@@ -130,6 +130,60 @@ func init() {
       }
     },
     "/services/{ServiceID}/": {
+      "get": {
+        "description": "Get service object\n",
+        "tags": [
+          "service"
+        ],
+        "summary": "get a service item",
+        "operationId": "serviceGet",
+        "parameters": [
+          {
+            "$ref": "#/parameters/ServiceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "item edited",
+            "schema": {
+              "$ref": "#/definitions/Service"
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "404": {
+            "description": "item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "item already exists"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
       "delete": {
         "description": "Deletes a service object\n",
         "tags": [
@@ -159,10 +213,70 @@ func init() {
             "description": "bad permissions"
           },
           "404": {
-            "description": "item not found"
+            "description": "item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "422": {
             "description": "bad validation"
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "description": "Edit service object\n",
+        "tags": [
+          "service"
+        ],
+        "summary": "edit a service item",
+        "operationId": "serviceEdit",
+        "parameters": [
+          {
+            "$ref": "#/parameters/ServiceID"
+          },
+          {
+            "$ref": "#/parameters/ServiceItem"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "item edited",
+            "schema": {
+              "$ref": "#/definitions/Service"
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "404": {
+            "description": "item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "item already exists"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "503": {
             "description": "internal server error",
@@ -428,6 +542,67 @@ func init() {
       }
     },
     "/services/{ServiceID}/": {
+      "get": {
+        "description": "Get service object\n",
+        "tags": [
+          "service"
+        ],
+        "summary": "get a service item",
+        "operationId": "serviceGet",
+        "parameters": [
+          {
+            "maxLength": 120,
+            "minLength": 3,
+            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+            "type": "string",
+            "description": "service Resource ID",
+            "name": "ServiceID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "item edited",
+            "schema": {
+              "$ref": "#/definitions/Service"
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "404": {
+            "description": "item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "item already exists"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
       "delete": {
         "description": "Deletes a service object\n",
         "tags": [
@@ -464,10 +639,83 @@ func init() {
             "description": "bad permissions"
           },
           "404": {
-            "description": "item not found"
+            "description": "item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "422": {
             "description": "bad validation"
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "description": "Edit service object\n",
+        "tags": [
+          "service"
+        ],
+        "summary": "edit a service item",
+        "operationId": "serviceEdit",
+        "parameters": [
+          {
+            "maxLength": 120,
+            "minLength": 3,
+            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+            "type": "string",
+            "description": "service Resource ID",
+            "name": "ServiceID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "service item",
+            "name": "serviceItem",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Service"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "item edited",
+            "schema": {
+              "$ref": "#/definitions/Service"
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "404": {
+            "description": "item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "item already exists"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "503": {
             "description": "internal server error",

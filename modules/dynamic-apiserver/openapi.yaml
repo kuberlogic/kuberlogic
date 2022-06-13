@@ -88,6 +88,81 @@ paths:
           schema:
             $ref: "#/definitions/Error"
   /services/{ServiceID}/:
+    get:
+      tags:
+        - service
+      summary: get a service item
+      operationId: serviceGet
+      description: |
+        Get service object
+      parameters:
+        - $ref: "#/parameters/ServiceID"
+      responses:
+        200:
+          description: item edited
+          schema:
+            $ref: "#/definitions/Service"
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        404:
+          description: item not found
+          schema:
+            $ref: "#/definitions/Error"
+        409:
+          description: item already exists
+        422:
+          description: bad validation
+          schema:
+            $ref: "#/definitions/Error"
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
+
+    patch:
+      tags:
+        - service
+      summary: edit a service item
+      operationId: serviceEdit
+      description: |
+        Edit service object
+      parameters:
+        - $ref: "#/parameters/ServiceID"
+        - $ref: "#/parameters/ServiceItem"
+      responses:
+        200:
+          description: item edited
+          schema:
+            $ref: "#/definitions/Service"
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        404:
+          description: item not found
+          schema:
+            $ref: "#/definitions/Error"
+
+        409:
+          description: item already exists
+        422:
+          description: bad validation
+          schema:
+            $ref: "#/definitions/Error"
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
     delete:
       tags:
         - service
@@ -111,6 +186,8 @@ paths:
           description: bad permissions
         404:
           description: item not found
+          schema:
+            $ref: "#/definitions/Error"
         422:
           description: bad validation
         503:

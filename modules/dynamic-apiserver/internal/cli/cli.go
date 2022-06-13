@@ -99,11 +99,9 @@ func MakeRootCmd(httpClient *http.Client) (*cobra.Command, error) {
 
 	// register security flags
 	// add all operation groups
-	operationGroupServiceCmd, err := makeServiceCmd(makeClientClosure(httpClient))
-	if err != nil {
-		return nil, err
-	}
-	rootCmd.AddCommand(operationGroupServiceCmd)
+	rootCmd.AddCommand(
+		makeServiceCmd(makeClientClosure(httpClient)),
+	)
 
 	// add cobra completion
 	rootCmd.AddCommand(makeGenCompletionCmd())
@@ -135,29 +133,17 @@ func initViperConfigs() {
 	logDebugf("Using config file: %v", viper.ConfigFileUsed())
 }
 
-func makeServiceCmd(apiClientFunc func() (*client.ServiceAPI, error)) (*cobra.Command, error) {
+func makeServiceCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
 	operationGroupServiceCmd := &cobra.Command{
 		Use:  "service",
 		Long: ``,
 	}
+	operationGroupServiceCmd.AddCommand(
+		makeServiceAddCmd(apiClientFunc),
+		makeServiceEditCmd(apiClientFunc),
+		makeServiceDeleteCmd(apiClientFunc),
+		makeServiceListCmd(apiClientFunc),
+	)
 
-	operationServiceAddCmd, err := makeServiceAddCmd(apiClientFunc)
-	if err != nil {
-		return nil, err
-	}
-	operationGroupServiceCmd.AddCommand(operationServiceAddCmd)
-
-	operationServiceDeleteCmd, err := makeServiceDeleteCmd(apiClientFunc)
-	if err != nil {
-		return nil, err
-	}
-	operationGroupServiceCmd.AddCommand(operationServiceDeleteCmd)
-
-	operationServiceListCmd, err := makeServiceListCmd(apiClientFunc)
-	if err != nil {
-		return nil, err
-	}
-	operationGroupServiceCmd.AddCommand(operationServiceListCmd)
-
-	return operationGroupServiceCmd, nil
+	return operationGroupServiceCmd
 }

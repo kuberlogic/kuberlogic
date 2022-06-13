@@ -52,6 +52,9 @@ func (r *KuberLogicService) Default() {
 	if r.Spec.Domain == "" {
 		r.Spec.Domain = resp.Host
 	}
+	if r.Spec.Replicas == 0 {
+		r.Spec.Replicas = resp.Replicas
+	}
 
 	limits := resp.GetLimits()
 	if r.Spec.Limits == nil && limits != nil {

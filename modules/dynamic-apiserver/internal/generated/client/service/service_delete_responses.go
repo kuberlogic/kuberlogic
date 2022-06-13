@@ -175,13 +175,24 @@ func NewServiceDeleteNotFound() *ServiceDeleteNotFound {
 item not found
 */
 type ServiceDeleteNotFound struct {
+	Payload *models.Error
 }
 
 func (o *ServiceDeleteNotFound) Error() string {
-	return fmt.Sprintf("[DELETE /services/{ServiceID}/][%d] serviceDeleteNotFound ", 404)
+	return fmt.Sprintf("[DELETE /services/{ServiceID}/][%d] serviceDeleteNotFound  %+v", 404, o.Payload)
+}
+func (o *ServiceDeleteNotFound) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *ServiceDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }

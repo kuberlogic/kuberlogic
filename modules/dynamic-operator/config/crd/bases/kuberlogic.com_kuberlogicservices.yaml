@@ -111,7 +111,6 @@ spec:
                 description: Volume size
                 type: string
             required:
-            - replicas
             - type
             type: object
           status:

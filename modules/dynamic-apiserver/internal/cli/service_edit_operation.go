@@ -4,6 +4,7 @@ import (
 	"fmt"
 	client2 "github.com/go-openapi/runtime/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client/service"
@@ -12,21 +13,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// makeServiceAddCmd returns a cmd to handle operation serviceAdd
-func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
+// makeServiceEditCmd returns a cmd to handle operation serviceEdit
+func makeServiceEditCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "serviceAdd",
-		Short:   `Adds service object`,
-		Aliases: []string{"add"},
-		RunE:    runServiceAdd(apiClientFunc),
+		Use:     "serviceEdit",
+		Short:   `Edit service object`,
+		Aliases: []string{"edit"},
+		RunE:    runServiceEdit(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String("id", "", "service id")
-	_ = cmd.PersistentFlags().String("type", "", "type of service")
+	_ = cmd.PersistentFlags().String("id", "", "service id [required]")
 	_ = cmd.PersistentFlags().Int64("replicas", 1, "how many replicas need for service")
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
 	_ = cmd.PersistentFlags().String("domain", "", "domain for external connection to service")
-	_ = cmd.PersistentFlags().String("volume_size", "", "")
+	//_ = cmd.PersistentFlags().String("volume_size", "", "")
 	_ = cmd.PersistentFlags().Bool("tls_enabled", false, "")
 
 	// limits
@@ -39,8 +39,8 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.
 	return cmd
 }
 
-// runServiceAdd uses cmd flags to call endpoint api
-func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *cobra.Command, args []string) error {
+// runServiceAEdit uses cmd flags to call endpoint api
+func runServiceEdit(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		var err error
 
@@ -50,7 +50,8 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 		}
 
 		// retrieve flag values from cmd and fill params
-		params := service.NewServiceAddParams()
+		editParams := service.NewServiceEditParams()
+		getParams := service.NewServiceGetParams()
 		svc := models.Service{}
 		svc.Limits = new(models.Limits)
 
@@ -58,12 +59,10 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 			return err
 		} else if value != nil {
 			svc.ID = value
-		}
-
-		if value, err := getString(cmd, "type"); err != nil {
-			return err
-		} else if value != nil {
-			svc.Type = value
+			getParams.ServiceID = *value
+			editParams.ServiceID = *value
+		} else {
+			return errors.New("ID is not specified")
 		}
 
 		if value, err := setInt64(cmd, "replicas"); err != nil {
@@ -84,11 +83,11 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 			svc.Domain = *value
 		}
 
-		if value, err := getString(cmd, "volume_size"); err != nil {
-			return err
-		} else if value != nil {
-			svc.VolumeSize = *value
-		}
+		//if value, err := getString(cmd, "volume_size"); err != nil {
+		//	return err
+		//} else if value != nil {
+		//	svc.VolumeSize = *value
+		//}
 
 		if value, err := getBool(cmd, "tls_enabled"); err != nil {
 			return err
@@ -121,26 +120,35 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 			formatResponse = format(*value)
 		}
 
-		params.ServiceItem = &svc
+		editParams.ServiceItem = &svc
+
 		if dryRun {
-			logDebugf("Params: %+v", params.ServiceItem)
+			logDebugf("edit params: %+v", editParams.ServiceItem)
 			logDebugf("dry-run flag specified. Skip sending request.")
 			return nil
 		}
 
 		// make request and then print result
-		response, err := apiClient.Service.ServiceAdd(params,
-			client2.APIKeyAuth("X-Token", "header", viper.GetString("token")))
+		getResponse, err := apiClient.Service.ServiceGet(getParams, client2.APIKeyAuth(
+			"X-Token", "header", viper.GetString("token")))
 		if err != nil {
 			return humanizeError(err)
 		}
-		payload := response.GetPayload()
+
+		// set required fields
+		svc.Type = getResponse.GetPayload().Type
+
+		// make request and then print result
+		response, err := apiClient.Service.ServiceEdit(editParams, client2.APIKeyAuth(
+			"X-Token", "header", viper.GetString("token")))
+		if err != nil {
+			return humanizeError(err)
+		}
 		if isDefaultPrintFormat(formatResponse) {
-			_, err := fmt.Fprintf(cmd.OutOrStdout(), "Service '%s' successfully created\n", *payload.ID)
+			_, err := fmt.Fprintf(cmd.OutOrStdout(), "Service '%s' successfully edited\n", *svc.ID)
 			return err
 		} else {
-			return printResult(cmd, formatResponse, payload)
+			return printResult(cmd, formatResponse, response.GetPayload())
 		}
-
 	}
 }

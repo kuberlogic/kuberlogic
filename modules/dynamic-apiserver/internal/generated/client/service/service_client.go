@@ -34,6 +34,10 @@ type ClientService interface {
 
 	ServiceDelete(params *ServiceDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceDeleteOK, error)
 
+	ServiceEdit(params *ServiceEditParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceEditOK, error)
+
+	ServiceGet(params *ServiceGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceGetOK, error)
+
 	ServiceList(params *ServiceListParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceListOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
@@ -120,6 +124,90 @@ func (a *Client) ServiceDelete(params *ServiceDeleteParams, authInfo runtime.Cli
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for serviceDelete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  ServiceEdit edits a service item
+
+  Edit service object
+
+*/
+func (a *Client) ServiceEdit(params *ServiceEditParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceEditOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewServiceEditParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "serviceEdit",
+		Method:             "PATCH",
+		PathPattern:        "/services/{ServiceID}/",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &ServiceEditReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*ServiceEditOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceEdit: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  ServiceGet gets a service item
+
+  Get service object
+
+*/
+func (a *Client) ServiceGet(params *ServiceGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceGetOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewServiceGetParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "serviceGet",
+		Method:             "GET",
+		PathPattern:        "/services/{ServiceID}/",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &ServiceGetReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*ServiceGetOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceGet: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

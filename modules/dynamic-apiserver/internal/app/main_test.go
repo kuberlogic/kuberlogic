@@ -57,6 +57,8 @@ func prettyPrint(i interface{}) string {
 }
 
 func (w *Producer) Produce(_ io.Writer, payload interface{}) error {
+	w.t.Log(payload, w.check)
+
 	switch w.check.(type) {
 	case func(interface{}):
 		w.check.(func(interface{}))(payload)
@@ -80,6 +82,13 @@ func checkResponse(responder middleware.Responder, t *testing.T, status int, pay
 		t:     t,
 		check: payload,
 	})
+}
+
+func checkStatus(responder middleware.Responder, t *testing.T, status int) {
+	responder.WriteResponse(&Writer{
+		t:              t,
+		expectedStatus: status,
+	}, &Producer{})
 }
 
 func (tl *TestLog) Debugw(msg string, keysAndValues ...interface{}) {
