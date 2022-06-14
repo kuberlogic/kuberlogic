@@ -1,6 +1,0 @@
-apiVersion: kuberlogic.com/v1
-kind: KuberLogicTenant
-metadata:
-  name: 0f722eacb400030e3e36518d2ef9c0fb
-spec:
-  ownerEmail: tenant@example.com

@@ -1,9 +1,0 @@
-apiVersion: v2
-name: jwt2headers-plugin
-description: A Helm chart for Kong jwt2headers plugin
-
-type: application
-
-version: 0.1.0
-
-appVersion: "1.16.0"
