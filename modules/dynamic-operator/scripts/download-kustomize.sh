@@ -48,6 +48,7 @@ function main {
     echo "Downloading kustomize $1" >/dev/tty
     curl --output $archive --location $url
 
+
     echo "Extracting archive to $2" >/dev/tty
     tar -xvf $archive -C $parentdir
 
