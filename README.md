@@ -19,11 +19,11 @@ Follow [Installing KuberLogic](https://cloudlinux.notion.site/cloudlinux/Gettin
 - Custom domain (subdomain) support
 - Application (Tenant) isolation
 - RESTful API and CLI for service management (bare minimum)
+- SSL support
 
 ### Coming soon
 
-- SSL support
-- Integration with billing provider (Stripe)
+- Integration with billing provider (Chargebee)
 - Scheduled and Instant backups (Velero)
 - Application instance updates
 
