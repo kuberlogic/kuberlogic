@@ -112,7 +112,7 @@ deploy-certmanager: kustomize
 	$(KUSTOMIZE) build config/cert-manager | kubectl apply -f -
 
 .PHONY: deploy
-deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && \
 		$(KUSTOMIZE) edit set image controller=$(OPERATOR_IMG):$(VERSION) && \
 		$(KUSTOMIZE) edit set image apiserver=$(APISERVER_IMG):$(VERSION)
@@ -134,7 +134,7 @@ controller-gen: ## Download controller-gen locally if necessary.
 KUSTOMIZE = $(shell pwd)/bin/kustomize
 .PHONY: kustomize
 kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.4)
+	@echo $(shell bash scripts/download-kustomize.sh v4.5.4 $(KUSTOMIZE))
 
 ENVTEST = $(shell pwd)/bin/setup-envtest
 .PHONY: envtest
