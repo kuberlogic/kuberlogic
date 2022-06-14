@@ -30,6 +30,7 @@ jobs:
             go-cache-
 
       - name: golangci-lint
+        timeout-minutes: 10
         uses: golangci/golangci-lint-action@v3
         with:
           working-directory: ./modules/dynamic-operator
