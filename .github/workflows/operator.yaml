@@ -31,6 +31,8 @@ jobs:
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
+        with:
+          working-directory: ./modules/dynamic-operator
 
       - name: Build
         working-directory: ./modules/dynamic-operator

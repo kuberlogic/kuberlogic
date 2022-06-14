@@ -33,6 +33,8 @@ jobs:
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
+        with:
+          working-directory: ./modules/dynamic-apiserver
 
       - name: Run the tests with coverage
         working-directory: ./modules/dynamic-apiserver
