@@ -31,6 +31,9 @@ jobs:
           restore-keys: |
             go-cache-
 
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+
       - name: Run the tests with coverage
         working-directory: ./modules/dynamic-apiserver
         run: |

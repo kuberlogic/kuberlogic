@@ -1,4 +1,4 @@
-name: Env tests
+name: Operator tests
 
 on:
   pull_request:
@@ -28,6 +28,9 @@ jobs:
           key: go-cache-${{ github.run_id }}
           restore-keys: |
             go-cache-
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
 
       - name: Build
         working-directory: ./modules/dynamic-operator

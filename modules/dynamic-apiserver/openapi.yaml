@@ -114,8 +114,6 @@ paths:
           description: item not found
           schema:
             $ref: "#/definitions/Error"
-        409:
-          description: item already exists
         422:
           description: bad validation
           schema:
@@ -152,9 +150,6 @@ paths:
           description: item not found
           schema:
             $ref: "#/definitions/Error"
-
-        409:
-          description: item already exists
         422:
           description: bad validation
           schema:

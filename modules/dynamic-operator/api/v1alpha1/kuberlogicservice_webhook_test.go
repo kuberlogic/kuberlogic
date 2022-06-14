@@ -65,11 +65,7 @@ var _ = Describe("KuberlogicService controller", func() {
 			createdKls := &KuberLogicService{}
 
 			Eventually(func() bool {
-				err := k8sClient.Get(ctx, lookupKlsKey, createdKls)
-				if err != nil {
-					return false
-				}
-				return true
+				return k8sClient.Get(ctx, lookupKlsKey, createdKls) == nil
 			}, timeout, interval).Should(BeTrue())
 
 			log.Info("resources", "res", createdKls.Spec.Limits)

@@ -128,9 +128,7 @@ func StrAsPointer(x string) *string {
 	return &x
 }
 
-func ErrNotFound(err error) (notFoundErr bool) {
-	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == v1.StatusReasonNotFound {
-		notFoundErr = true
-	}
-	return
+func ErrNotFound(err error) bool {
+	var statusError *errors.StatusError
+	return errors2.As(err, &statusError)
 }

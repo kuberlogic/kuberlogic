@@ -167,9 +167,6 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           },
-          "409": {
-            "description": "item already exists"
-          },
           "422": {
             "description": "bad validation",
             "schema": {
@@ -268,9 +265,6 @@ func init() {
             "schema": {
               "$ref": "#/definitions/Error"
             }
-          },
-          "409": {
-            "description": "item already exists"
           },
           "422": {
             "description": "bad validation",
@@ -586,9 +580,6 @@ func init() {
               "$ref": "#/definitions/Error"
             }
           },
-          "409": {
-            "description": "item already exists"
-          },
           "422": {
             "description": "bad validation",
             "schema": {
@@ -707,9 +698,6 @@ func init() {
             "schema": {
               "$ref": "#/definitions/Error"
             }
-          },
-          "409": {
-            "description": "item already exists"
           },
           "422": {
             "description": "bad validation",

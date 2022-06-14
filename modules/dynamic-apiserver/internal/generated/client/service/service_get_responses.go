@@ -53,12 +53,6 @@ func (o *ServiceGetReader) ReadResponse(response runtime.ClientResponse, consume
 			return nil, err
 		}
 		return nil, result
-	case 409:
-		result := NewServiceGetConflict()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
 	case 422:
 		result := NewServiceGetUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -210,27 +204,6 @@ func (o *ServiceGetNotFound) readResponse(response runtime.ClientResponse, consu
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
 		return err
 	}
-
-	return nil
-}
-
-// NewServiceGetConflict creates a ServiceGetConflict with default headers values
-func NewServiceGetConflict() *ServiceGetConflict {
-	return &ServiceGetConflict{}
-}
-
-/* ServiceGetConflict describes a response with status code 409, with default header values.
-
-item already exists
-*/
-type ServiceGetConflict struct {
-}
-
-func (o *ServiceGetConflict) Error() string {
-	return fmt.Sprintf("[GET /services/{ServiceID}/][%d] serviceGetConflict ", 409)
-}
-
-func (o *ServiceGetConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	return nil
 }

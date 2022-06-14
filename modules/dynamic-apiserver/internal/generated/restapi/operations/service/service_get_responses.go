@@ -193,30 +193,6 @@ func (o *ServiceGetNotFound) WriteResponse(rw http.ResponseWriter, producer runt
 	}
 }
 
-// ServiceGetConflictCode is the HTTP code returned for type ServiceGetConflict
-const ServiceGetConflictCode int = 409
-
-/*ServiceGetConflict item already exists
-
-swagger:response serviceGetConflict
-*/
-type ServiceGetConflict struct {
-}
-
-// NewServiceGetConflict creates ServiceGetConflict with default headers values
-func NewServiceGetConflict() *ServiceGetConflict {
-
-	return &ServiceGetConflict{}
-}
-
-// WriteResponse to the client
-func (o *ServiceGetConflict) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
-
-	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
-
-	rw.WriteHeader(409)
-}
-
 // ServiceGetUnprocessableEntityCode is the HTTP code returned for type ServiceGetUnprocessableEntity
 const ServiceGetUnprocessableEntityCode int = 422
 

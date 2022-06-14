@@ -53,12 +53,6 @@ func (o *ServiceEditReader) ReadResponse(response runtime.ClientResponse, consum
 			return nil, err
 		}
 		return nil, result
-	case 409:
-		result := NewServiceEditConflict()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
 	case 422:
 		result := NewServiceEditUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -210,27 +204,6 @@ func (o *ServiceEditNotFound) readResponse(response runtime.ClientResponse, cons
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
 		return err
 	}
-
-	return nil
-}
-
-// NewServiceEditConflict creates a ServiceEditConflict with default headers values
-func NewServiceEditConflict() *ServiceEditConflict {
-	return &ServiceEditConflict{}
-}
-
-/* ServiceEditConflict describes a response with status code 409, with default header values.
-
-item already exists
-*/
-type ServiceEditConflict struct {
-}
-
-func (o *ServiceEditConflict) Error() string {
-	return fmt.Sprintf("[PATCH /services/{ServiceID}/][%d] serviceEditConflict ", 409)
-}
-
-func (o *ServiceEditConflict) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	return nil
 }

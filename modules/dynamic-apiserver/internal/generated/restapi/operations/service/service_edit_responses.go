@@ -193,30 +193,6 @@ func (o *ServiceEditNotFound) WriteResponse(rw http.ResponseWriter, producer run
 	}
 }
 
-// ServiceEditConflictCode is the HTTP code returned for type ServiceEditConflict
-const ServiceEditConflictCode int = 409
-
-/*ServiceEditConflict item already exists
-
-swagger:response serviceEditConflict
-*/
-type ServiceEditConflict struct {
-}
-
-// NewServiceEditConflict creates ServiceEditConflict with default headers values
-func NewServiceEditConflict() *ServiceEditConflict {
-
-	return &ServiceEditConflict{}
-}
-
-// WriteResponse to the client
-func (o *ServiceEditConflict) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
-
-	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
-
-	rw.WriteHeader(409)
-}
-
 // ServiceEditUnprocessableEntityCode is the HTTP code returned for type ServiceEditUnprocessableEntity
 const ServiceEditUnprocessableEntityCode int = 422
 
