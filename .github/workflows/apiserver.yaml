@@ -49,6 +49,7 @@ jobs:
 
   build-cli:
     if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    needs: unittests
     runs-on: ubuntu-latest
     env:
       GOPATH: /tmp/go

@@ -11,9 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// set this string to a required security grant for this action
-const serviceEditSecGrant = "nonsense"
-
 func (srv *Service) ServiceEditHandler(params apiService.ServiceEditParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
 

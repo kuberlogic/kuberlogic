@@ -84,13 +84,6 @@ func checkResponse(responder middleware.Responder, t *testing.T, status int, pay
 	})
 }
 
-func checkStatus(responder middleware.Responder, t *testing.T, status int) {
-	responder.WriteResponse(&Writer{
-		t:              t,
-		expectedStatus: status,
-	}, &Producer{})
-}
-
 func (tl *TestLog) Debugw(msg string, keysAndValues ...interface{}) {
 	tl.t.Log("debug", msg, keysAndValues)
 }

@@ -38,9 +38,6 @@ func logDebugf(format string, v ...interface{}) {
 	log.Printf(format, v...)
 }
 
-// depth of recursion to construct model flags
-var maxDepth int = 5
-
 // makeClient constructs a client object
 func makeClientClosure(httpClient *http.Client) func() (*client.ServiceAPI, error) {
 	return func() (*client.ServiceAPI, error) {

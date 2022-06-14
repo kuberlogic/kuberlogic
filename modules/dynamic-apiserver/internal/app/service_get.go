@@ -9,9 +9,6 @@ import (
 	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
 
-// set this string to a required security grant for this action
-const serviceGetSecGrant = "nonsense"
-
 func (srv *Service) ServiceGetHandler(params apiService.ServiceGetParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
 
