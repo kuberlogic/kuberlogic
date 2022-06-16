@@ -11,7 +11,7 @@ KuberLogic is an open-source solution that helps to deliver any single-tenant ap
 
 ### Installation
 
-Follow [Installing KuberLogic](https://cloudlinux.notion.site/cloudlinux/Getting-Started-b7ce32f19d1c433da351670872f2c70f) to set up your environment and install KuberLogic.
+Follow [Installing KuberLogic](https://docs.kuberlogic.com/getting-started) to set up your environment and install KuberLogic.
 
 ### Features
 
@@ -50,7 +50,7 @@ Kubernetes cluster 1.20-1.23
 
 ### Documentation
 
-Please refer to the official docs at [kuberlogic.com](https://cloudlinux.notion.site/cloudlinux/Getting-Started-b7ce32f19d1c433da351670872f2c70f)
+Please refer to the official docs at [kuberlogic.com](https://docs.kuberlogic.com/)
 
 ### Getting involved
 
