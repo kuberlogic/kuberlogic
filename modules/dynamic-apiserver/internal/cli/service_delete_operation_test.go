@@ -39,7 +39,7 @@ func TestDeleteInvalidValidation(t *testing.T) {
 
 func TestDeleteNotFound(t *testing.T) {
 	// make own http client
-	expected := "Record not found with id 'test'"
+	expected := "kuberlogic service not found: test"
 	client := makeTestClient(404, map[string]string{
 		"message": expected,
 	})

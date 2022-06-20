@@ -30,7 +30,7 @@ func TestCreateInvalidValidation(t *testing.T) {
 	cmd.SetOut(b)
 	cmd.SetArgs([]string{"service", "add"})
 	err = cmd.Execute()
-	expected := "validation error: id in body is required"
+	expected := "id in body is required"
 	if err != nil && err.Error() != expected {
 		t.Fatalf("expected vs actual: %v vs %v", expected, err.Error())
 	}

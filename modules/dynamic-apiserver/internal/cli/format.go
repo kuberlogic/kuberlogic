@@ -5,8 +5,7 @@
 package cli
 
 import (
-	"errors"
-	"fmt"
+	"github.com/pkg/errors"
 )
 
 type format string
@@ -29,7 +28,7 @@ func (f *format) Set(v string) error {
 		*f = format(v)
 		return nil
 	default:
-		return errors.New(fmt.Sprintf(`must be one of [%s, %s, %s]"`, jsonFormat, yamlFormat, stringFormat))
+		return errors.Errorf(`must be one of [%s, %s, %s]"`, jsonFormat, yamlFormat, stringFormat)
 	}
 }
 

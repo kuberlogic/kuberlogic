@@ -27,7 +27,6 @@ var _ = Describe("KuberlogicService controller", func() {
 		defaultVolumeSize = "1G"
 
 		timeout  = time.Second * 10
-		duration = time.Second * 10
 		interval = time.Millisecond * 250
 	)
 
@@ -80,11 +79,7 @@ var _ = Describe("KuberlogicService controller", func() {
 			createdKls := &v1alpha1.KuberLogicService{}
 
 			Eventually(func() bool {
-				err := k8sClient.Get(ctx, lookupKlsKey, createdKls)
-				if err != nil {
-					return false
-				}
-				return true
+				return k8sClient.Get(ctx, lookupKlsKey, createdKls) == nil
 			}, timeout, interval).Should(BeTrue())
 			Expect(createdKls.Spec.Type).Should(Equal("postgresql"))
 
@@ -99,11 +94,7 @@ var _ = Describe("KuberlogicService controller", func() {
 			svc.SetNamespace(kls.Name)
 
 			Eventually(func() bool {
-				err := k8sClient.Get(ctx, lookupKey, svc)
-				if err != nil {
-					return false
-				}
-				return true
+				return k8sClient.Get(ctx, lookupKey, svc) == nil
 			}, timeout, interval).Should(BeTrue())
 
 			pgSpec := svc.UnstructuredContent()["spec"].(map[string]interface{})

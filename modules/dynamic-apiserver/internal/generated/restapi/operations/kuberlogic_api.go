@@ -51,6 +51,12 @@ func NewKuberlogicAPI(spec *loads.Document) *KuberlogicAPI {
 		ServiceServiceDeleteHandler: service.ServiceDeleteHandlerFunc(func(params service.ServiceDeleteParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceDelete has not yet been implemented")
 		}),
+		ServiceServiceEditHandler: service.ServiceEditHandlerFunc(func(params service.ServiceEditParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation service.ServiceEdit has not yet been implemented")
+		}),
+		ServiceServiceGetHandler: service.ServiceGetHandlerFunc(func(params service.ServiceGetParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation service.ServiceGet has not yet been implemented")
+		}),
 		ServiceServiceListHandler: service.ServiceListHandlerFunc(func(params service.ServiceListParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceList has not yet been implemented")
 		}),
@@ -108,6 +114,10 @@ type KuberlogicAPI struct {
 	ServiceServiceAddHandler service.ServiceAddHandler
 	// ServiceServiceDeleteHandler sets the operation handler for the service delete operation
 	ServiceServiceDeleteHandler service.ServiceDeleteHandler
+	// ServiceServiceEditHandler sets the operation handler for the service edit operation
+	ServiceServiceEditHandler service.ServiceEditHandler
+	// ServiceServiceGetHandler sets the operation handler for the service get operation
+	ServiceServiceGetHandler service.ServiceGetHandler
 	// ServiceServiceListHandler sets the operation handler for the service list operation
 	ServiceServiceListHandler service.ServiceListHandler
 
@@ -196,6 +206,12 @@ func (o *KuberlogicAPI) Validate() error {
 	}
 	if o.ServiceServiceDeleteHandler == nil {
 		unregistered = append(unregistered, "service.ServiceDeleteHandler")
+	}
+	if o.ServiceServiceEditHandler == nil {
+		unregistered = append(unregistered, "service.ServiceEditHandler")
+	}
+	if o.ServiceServiceGetHandler == nil {
+		unregistered = append(unregistered, "service.ServiceGetHandler")
 	}
 	if o.ServiceServiceListHandler == nil {
 		unregistered = append(unregistered, "service.ServiceListHandler")
@@ -307,6 +323,14 @@ func (o *KuberlogicAPI) initHandlerCache() {
 		o.handlers["DELETE"] = make(map[string]http.Handler)
 	}
 	o.handlers["DELETE"]["/services/{ServiceID}"] = service.NewServiceDelete(o.context, o.ServiceServiceDeleteHandler)
+	if o.handlers["PATCH"] == nil {
+		o.handlers["PATCH"] = make(map[string]http.Handler)
+	}
+	o.handlers["PATCH"]["/services/{ServiceID}"] = service.NewServiceEdit(o.context, o.ServiceServiceEditHandler)
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/services/{ServiceID}"] = service.NewServiceGet(o.context, o.ServiceServiceGetHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}

@@ -44,5 +44,7 @@ func New(clientset kubernetes.Interface, client rest.Interface, log logging.Logg
 }
 
 func (srv *Service) OnShutdown() {
-	defer srv.log.Sync()
+	defer func() {
+		_ = srv.log.Sync()
+	}()
 }

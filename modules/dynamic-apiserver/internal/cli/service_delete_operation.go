@@ -5,18 +5,16 @@ package cli
 
 import (
 	"fmt"
-	"github.com/go-openapi/runtime"
 	client2 "github.com/go-openapi/runtime/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client/service"
-	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 
 	"github.com/spf13/cobra"
 )
 
 // makeServiceDeleteCmd returns a cmd to handle operation serviceDelete
-func makeServiceDeleteCmd(apiClientFunc func() (*client.ServiceAPI, error)) (*cobra.Command, error) {
+func makeServiceDeleteCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "serviceDelete",
 		Short:   `Deletes a service object`,
@@ -26,7 +24,7 @@ func makeServiceDeleteCmd(apiClientFunc func() (*client.ServiceAPI, error)) (*co
 
 	_ = cmd.PersistentFlags().String("id", "", "service id")
 
-	return cmd, nil
+	return cmd
 }
 
 // runServiceDelete uses cmd flags to call endpoint api
@@ -61,43 +59,15 @@ func runServiceDelete(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd
 			return nil
 		}
 
-		payload, e := apiClient.Service.ServiceDelete(params, client2.APIKeyAuth("X-Token", "header", viper.GetString("token")))
-		// make request and then print result
-		if err = parseServiceDeleteResult(id, e); err != nil {
-			return err
+		response, err := apiClient.Service.ServiceDelete(params, client2.APIKeyAuth("X-Token", "header", viper.GetString("token")))
+		if err != nil {
+			return humanizeError(err)
 		}
 		if isDefaultPrintFormat(formatResponse) {
 			_, err := fmt.Fprintf(cmd.OutOrStdout(), "Service '%s' successfully removed\n", id)
 			return err
 		} else {
-			return printResult(cmd, formatResponse, payload)
+			return printResult(cmd, formatResponse, response)
 		}
 	}
-}
-
-// parseServiceListResult parses request result and return the string content
-func parseServiceDeleteResult(id string, respErr error) error {
-	if respErr != nil {
-		switch respErr.(type) {
-		case *service.ServiceDeleteBadRequest:
-			err := respErr.(*service.ServiceDeleteBadRequest)
-			return errors.Errorf(err.Payload.Message)
-		case *service.ServiceDeleteServiceUnavailable:
-			return errors.Errorf("Service unavailable [%v]", respErr)
-		case *service.ServiceDeleteUnauthorized:
-			return errors.Errorf("Unauthorized [%v]", respErr)
-		case *service.ServiceDeleteForbidden:
-			return errors.Errorf("Forbidden [%v]", respErr)
-		case *service.ServiceDeleteNotFound:
-			return errors.Errorf("Record not found with id '%s'", id)
-		case *service.ServiceDeleteUnprocessableEntity:
-			//err := respErr.(*service.ServiceDeleteUnprocessableEntity)
-			return errors.Errorf("validation error: %s", "")
-		case *runtime.APIError:
-			return errors.Errorf("APIError [%v]", respErr)
-		default:
-			return errors.Errorf("Unknown response type: %T [%v]", respErr, respErr)
-		}
-	}
-	return nil
 }

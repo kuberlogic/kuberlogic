@@ -32,7 +32,7 @@ type KuberLogicServiceSpec struct {
 	Type string `json:"type"`
 	// Amount of replicas
 	// +kubebuilder:validation:Maximum=5
-	Replicas int32 `json:"replicas"`
+	Replicas int32 `json:"replicas,omitempty"`
 	// Volume size
 	VolumeSize string `json:"volumeSize,omitempty"`
 	// 2 or 3 digits: 5 or 5.7 or 5.7.31
@@ -60,8 +60,8 @@ type KuberLogicServiceSpec struct {
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`,description="The cluster type"
 // +kubebuilder:printcolumn:name="Replicas",type=integer,JSONPath=`.spec.replicas`,description="The number of desired replicas"
 // +kubebuilder:printcolumn:name="Volume",type=string,JSONPath=`.spec.volumeSize`,description="Volume size for the cluster"
-// +kubebuilder:printcolumn:name="CPU Request",type=string,JSONPath=`.spec.resources.requests.cpu`,description="CPU request"
-// +kubebuilder:printcolumn:name="Memory Request",type=string,JSONPath=`.spec.resources.requests.memory`,description="Memory request"
+// +kubebuilder:printcolumn:name="CPU Limits",type=string,JSONPath=`.spec.limits.cpu`,description="CPU limits"
+// +kubebuilder:printcolumn:name="Memory Limits",type=string,JSONPath=`.spec.limits.memory`,description="Memory limits"
 // +kubebuilder:printcolumn:name="Endpoint",type=string,JSONPath=`.status.access`,description="Access endpoint"
 // +kubebuilder:printcolume:name="Paused",type=bool,JSONPath=`.spec.paused`,description="Service is paused"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"

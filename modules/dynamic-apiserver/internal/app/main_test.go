@@ -57,6 +57,8 @@ func prettyPrint(i interface{}) string {
 }
 
 func (w *Producer) Produce(_ io.Writer, payload interface{}) error {
+	w.t.Log(payload, w.check)
+
 	switch w.check.(type) {
 	case func(interface{}):
 		w.check.(func(interface{}))(payload)

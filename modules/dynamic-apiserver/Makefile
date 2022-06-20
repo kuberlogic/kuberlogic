@@ -12,12 +12,12 @@ KUBERLOGIC_APISERVER_TOKEN=8ZTjsD3t2Q3Yq-C4-hoahcFn
 
 .PHONY: recreate-generated-server
 recreate-generated-server:
-	rm -r internal/generated/models internal/generated/restapi
+	rm -rf internal/generated/models internal/generated/restapi
 	mkdir -p internal/generated
 
 .PHONY: recreate-generated-client
 recreate-generated-client:
-	rm -r internal/generated/client
+	rm -rf internal/generated/client
 	mkdir -p internal/generated
 
 .PHONY: generate-server

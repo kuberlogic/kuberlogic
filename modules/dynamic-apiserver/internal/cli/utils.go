@@ -8,9 +8,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ghodss/yaml"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/models"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
+
+type WithPayload interface {
+	GetPayload() *models.Error
+}
 
 func getString(cmd *cobra.Command, flag string) (value *string, err error) {
 	if cmd.Flags().Changed(flag) {
@@ -66,4 +71,15 @@ func printResult(cmd *cobra.Command, formatResponse format, payload interface{})
 
 func isDefaultPrintFormat(formatResponse format) bool {
 	return formatResponse == "" || formatResponse == stringFormat
+}
+
+func humanizeError(err error) error {
+	response, ok := err.(WithPayload)
+	if ok {
+		e := response.GetPayload()
+		if e != nil {
+			return errors.New(e.Message)
+		}
+	}
+	return err
 }

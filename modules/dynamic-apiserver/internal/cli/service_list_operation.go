@@ -1,13 +1,10 @@
 package cli
 
 import (
-	"github.com/go-openapi/runtime"
 	client2 "github.com/go-openapi/runtime/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/client/service"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/models"
 	"github.com/olekukonko/tablewriter"
-	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"strconv"
 
@@ -15,7 +12,7 @@ import (
 )
 
 // makeServiceListCmd returns a cmd to handle operation serviceList
-func makeServiceListCmd(apiClientFunc func() (*client.ServiceAPI, error)) (*cobra.Command, error) {
+func makeServiceListCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "serviceList",
 		Short:   `List of service objects`,
@@ -23,7 +20,7 @@ func makeServiceListCmd(apiClientFunc func() (*client.ServiceAPI, error)) (*cobr
 		RunE:    runServiceList(apiClientFunc),
 	}
 
-	return cmd, nil
+	return cmd
 }
 
 // runServiceList uses cmd flags to call endpoint api
@@ -50,12 +47,13 @@ func runServiceList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 			return nil
 		}
 
-		payload, err := parseServiceListResult(apiClient.Service.ServiceList(params,
-			client2.APIKeyAuth("X-Token", "header", viper.GetString("token"))))
+		response, err := apiClient.Service.ServiceList(params,
+			client2.APIKeyAuth("X-Token", "header", viper.GetString("token")))
 		if err != nil {
-			return err
+			return humanizeError(err)
 		}
 
+		payload := response.GetPayload()
 		if isDefaultPrintFormat(formatResponse) {
 			table := tablewriter.NewWriter(cmd.OutOrStdout())
 			table.SetHeader([]string{"№", "ID", "Type", "Replica", "Version", "Domain", "Status", "Endpoint"})
@@ -72,30 +70,4 @@ func runServiceList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 		}
 		return nil
 	}
-}
-
-// parseServiceListResult parses request result and return the string content
-func parseServiceListResult(resp *service.ServiceListOK, respErr error) (models.Services, error) {
-	if respErr != nil {
-		switch respErr.(type) {
-		case *service.ServiceListBadRequest:
-			err := respErr.(*service.ServiceListBadRequest)
-			return nil, errors.Errorf(err.Payload.Message)
-		case *service.ServiceListServiceUnavailable:
-			return nil, errors.Errorf("Service unavailable [%v]", respErr)
-		case *service.ServiceListUnauthorized:
-			return nil, errors.Errorf("Unauthorized [%v]", respErr)
-		case *service.ServiceListForbidden:
-			return nil, errors.Errorf("Forbidden [%v]", respErr)
-		case *service.ServiceListUnprocessableEntity:
-			err := respErr.(*service.ServiceListUnprocessableEntity)
-			return nil, errors.Errorf("validation error: %s", err.Payload.Message)
-		case *runtime.APIError:
-			return nil, errors.Errorf("APIError [%v]", respErr)
-		default:
-			return nil, errors.Errorf("Unknown response type: %T [%v]", respErr, respErr)
-		}
-
-	}
-	return resp.Payload, nil
 }
