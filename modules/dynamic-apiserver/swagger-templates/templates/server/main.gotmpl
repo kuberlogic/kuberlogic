@@ -14,11 +14,11 @@ import (
     "github.com/jessevdk/go-flags"
     errors "github.com/go-openapi/errors"
 
-    "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/app"
-    "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/cache"
-    "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/config"
-    "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/restapi"
-    "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/restapi/operations"
+    "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/app"
+    "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/cache"
+    "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
+    "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi"
+    "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations"
 	{{- range $index, $op := .Operations }}
         {{ $found := false }}
         {{- range $i, $sop := $operations }}
@@ -30,9 +30,9 @@ import (
         api{{ pascalize $op.Package }} "{{$op.GenCommon.TargetImportPath}}/{{ $op.RootPackage }}/operations/{{ $op.Package }}"
         {{end -}}
     {{ end -}}
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/logging"
-	apiserverMiddleware "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/net/middleware"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/security"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/logging"
+	apiserverMiddleware "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/net/middleware"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/security"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/util/k8s"
 	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/util/k8s"

@@ -2,7 +2,7 @@ layout:
   application:
     - name: app
       source: serverApp
-      target: "./internal/app"
+      target: "./pkg/app"
       file_name: "app.go"
       skip_exists: true
 
@@ -47,7 +47,7 @@ layout:
       file_name: "{{ (snakize (pascalize .Name)) }}.go"
     - name: handlerFns
       source: serverHandler
-      target: "./internal/app"
+      target: "./pkg/app"
       file_name: "{{ (snakize (pascalize .Name)) }}.go"
       skip_exists: true
   operation_groups:

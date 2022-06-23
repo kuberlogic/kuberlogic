@@ -1,8 +1,8 @@
 package app
 
 import (
-	api{{ pascalize .Package }} "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/{{ .RootPackage }}/operations/{{ .Package }}"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/generated/models"
+	api{{ pascalize .Package }} "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/{{ .RootPackage }}/operations/{{ .Package }}"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	"github.com/go-openapi/runtime/middleware"
 )
 
