@@ -262,6 +262,9 @@ definitions:
         type: string
         readOnly: true
 
+      subscription:
+        type: string
+
   Services:
     type: array
     items:

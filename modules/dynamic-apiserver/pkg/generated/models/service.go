@@ -51,6 +51,9 @@ type Service struct {
 	// Read Only: true
 	Status string `json:"status,omitempty"`
 
+	// subscription
+	Subscription string `json:"subscription,omitempty"`
+
 	// tls enabled
 	TLSEnabled bool `json:"tlsEnabled,omitempty"`
 

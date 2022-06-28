@@ -5,6 +5,7 @@
 package app
 
 import (
+	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
@@ -13,7 +14,6 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"strings"
 	"time"
 )
 
@@ -21,11 +21,14 @@ func createService(logger *zap.SugaredLogger, subscriptionId string) error {
 	domain := viper.GetString("KUBERLOGIC_DOMAIN")
 	serviceType := viper.GetString("KUBERLOGIC_TYPE")
 	params := service.NewServiceAddParams()
-	id := strings.ToLower(subscriptionId)
+
+	// 2 = Adjective + Name
+	name := petname.Generate(2, "-")
 	params.ServiceItem = &models.Service{
-		ID:     &id,
-		Domain: domain,
-		Type:   &serviceType,
+		ID:           &name,
+		Domain:       domain,
+		Type:         &serviceType,
+		Subscription: subscriptionId,
 	}
 
 	apiClient, err := makeClient()
@@ -39,15 +42,15 @@ func createService(logger *zap.SugaredLogger, subscriptionId string) error {
 		return err
 	}
 
-	logger.Infof("service is created: %s, waiting ready status", id)
+	logger.Infof("service is created: %s, waiting ready status", name)
 
 	// checking the status asynchronously
 	// maxRetries == 1 2 4 8  16 32 64 128 256 512 1024 2048 4096
-	go checkStatus(logger, subscriptionId, time.Second, 13)
+	go checkStatus(logger, name, subscriptionId, time.Second, 13)
 	return nil
 }
 
-func checkStatus(logger *zap.SugaredLogger, subscriptionId string, timeout time.Duration, maxRetries int) {
+func checkStatus(logger *zap.SugaredLogger, name, subscriptionId string, timeout time.Duration, maxRetries int) {
 	if maxRetries <= 0 {
 		return
 	}
@@ -58,9 +61,8 @@ func checkStatus(logger *zap.SugaredLogger, subscriptionId string, timeout time.
 		return
 	}
 
-	id := strings.ToLower(subscriptionId)
 	params := service.NewServiceGetParams()
-	params.ServiceID = id
+	params.ServiceID = name
 	response, err := apiClient.Service.ServiceGet(params,
 		httptransport.APIKeyAuth("X-Token", "header", viper.GetString("KUBERLOGIC_APISERVER_TOKEN")))
 	if err != nil {
@@ -69,7 +71,7 @@ func checkStatus(logger *zap.SugaredLogger, subscriptionId string, timeout time.
 	}
 
 	if response.Payload != nil && response.Payload.Status == "ReadyConditionMet" {
-		logger.Infof("status of service '%s' is ready", id)
+		logger.Infof("status of service '%s' is ready", name)
 		logger.Infof("endpoint is: %s", response.Payload.Endpoint)
 
 		err = setEndpoint(subscriptionId, response.Payload.Endpoint)
@@ -86,7 +88,7 @@ func checkStatus(logger *zap.SugaredLogger, subscriptionId string, timeout time.
 	newMaxRetries := maxRetries - 1
 	logger.Infof("status is not ready, trying after %s. Left %d retries", newTimeout, newMaxRetries)
 	time.Sleep(timeout)
-	checkStatus(logger, subscriptionId, newTimeout, newMaxRetries)
+	checkStatus(logger, name, subscriptionId, newTimeout, newMaxRetries)
 }
 
 func makeClient() (*client2.ServiceAPI, error) {

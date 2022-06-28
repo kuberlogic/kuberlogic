@@ -9,10 +9,15 @@ import (
 	"github.com/chargebee/chargebee-go"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"math/rand"
 	"net/http"
+	"time"
 )
 
 func main() {
+	// for petname project
+	rand.Seed(time.Now().UTC().UnixNano())
+
 	logger := initLogger()
 
 	for _, value := range []string{

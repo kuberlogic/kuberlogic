@@ -6,6 +6,7 @@ replace github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver => ../dynamic
 
 require (
 	github.com/chargebee/chargebee-go v2.10.0+incompatible
+	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
 	github.com/go-openapi/runtime v0.23.3
 	github.com/go-openapi/strfmt v0.21.2
 	github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver v0.0.0-20220329063704-75e3ccc06da7

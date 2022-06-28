@@ -66,6 +66,13 @@ func ServiceToKuberlogic(svc *models.Service) (*kuberlogiccomv1alpha1.KuberLogic
 		c.Spec.Advanced.Raw = data
 	}
 
+	if svc.Subscription != "" {
+		if c.ObjectMeta.Annotations == nil {
+			c.ObjectMeta.Annotations = make(map[string]string)
+		}
+		c.ObjectMeta.Annotations["subscription-id"] = svc.Subscription
+	}
+
 	return c, nil
 }
 
@@ -114,6 +121,11 @@ func KuberlogicToService(kls *kuberlogiccomv1alpha1.KuberLogicService) (*models.
 	if kls.Spec.Advanced.Raw != nil {
 		if err := json.Unmarshal(kls.Spec.Advanced.Raw, &ret.Advanced); err != nil {
 			return nil, err
+		}
+	}
+	if kls.ObjectMeta.Annotations != nil {
+		if value, ok := kls.ObjectMeta.Annotations["subscription-id"]; ok {
+			ret.Subscription = value
 		}
 	}
 

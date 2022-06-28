@@ -353,6 +353,9 @@ func init() {
           "type": "string",
           "readOnly": true
         },
+        "subscription": {
+          "type": "string"
+        },
         "tlsEnabled": {
           "type": "boolean"
         },
@@ -785,6 +788,9 @@ func init() {
         "status": {
           "type": "string",
           "readOnly": true
+        },
+        "subscription": {
+          "type": "string"
         },
         "tlsEnabled": {
           "type": "boolean"
