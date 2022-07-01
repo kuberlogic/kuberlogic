@@ -47,6 +47,11 @@ func init() {
         ],
         "summary": "lists all services",
         "operationId": "serviceList",
+        "parameters": [
+          {
+            "$ref": "#/parameters/SubscriptionID"
+          }
+        ],
         "responses": {
           "200": {
             "description": "search results matching criteria",
@@ -399,6 +404,12 @@ func init() {
       "schema": {
         "$ref": "#/definitions/Service"
       }
+    },
+    "SubscriptionID": {
+      "type": "string",
+      "description": "subscription ID",
+      "name": "SubscriptionID",
+      "in": "query"
     }
   },
   "securityDefinitions": {
@@ -450,6 +461,14 @@ func init() {
         ],
         "summary": "lists all services",
         "operationId": "serviceList",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "subscription ID",
+            "name": "SubscriptionID",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "search results matching criteria",
@@ -835,6 +854,12 @@ func init() {
       "schema": {
         "$ref": "#/definitions/Service"
       }
+    },
+    "SubscriptionID": {
+      "type": "string",
+      "description": "subscription ID",
+      "name": "SubscriptionID",
+      "in": "query"
     }
   },
   "securityDefinitions": {

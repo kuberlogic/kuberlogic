@@ -16,6 +16,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const SubscriptionField = "subscription-id"
+
 func ServiceToKuberlogic(svc *models.Service) (*kuberlogiccomv1alpha1.KuberLogicService, error) {
 	c := &kuberlogiccomv1alpha1.KuberLogicService{
 		ObjectMeta: v1.ObjectMeta{
@@ -67,10 +69,10 @@ func ServiceToKuberlogic(svc *models.Service) (*kuberlogiccomv1alpha1.KuberLogic
 	}
 
 	if svc.Subscription != "" {
-		if c.ObjectMeta.Annotations == nil {
-			c.ObjectMeta.Annotations = make(map[string]string)
+		if c.Labels == nil {
+			c.Labels = make(map[string]string)
 		}
-		c.ObjectMeta.Annotations["subscription-id"] = svc.Subscription
+		c.Labels[SubscriptionField] = svc.Subscription
 	}
 
 	return c, nil
@@ -123,8 +125,8 @@ func KuberlogicToService(kls *kuberlogiccomv1alpha1.KuberLogicService) (*models.
 			return nil, err
 		}
 	}
-	if kls.ObjectMeta.Annotations != nil {
-		if value, ok := kls.ObjectMeta.Annotations["subscription-id"]; ok {
+	if kls.ObjectMeta.Labels != nil {
+		if value, ok := kls.ObjectMeta.Labels["subscription-id"]; ok {
 			ret.Subscription = value
 		}
 	}

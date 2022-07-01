@@ -105,6 +105,9 @@ func TestServiceAddAdvanced(t *testing.T) {
 	expectedObj := &cloudlinuxv1alpha1.KuberLogicService{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "advanced",
+			Labels: map[string]string{
+				"subscription-id": "some-kind-of-subscription-id",
+			},
 		},
 		Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
 			Type: "postgresql",
@@ -132,11 +135,12 @@ func TestServiceAddAdvanced(t *testing.T) {
 	}
 
 	service := &models.Service{
-		ID:       util.StrAsPointer("advanced"),
-		Type:     util.StrAsPointer("postgresql"),
-		Replicas: util.Int64AsPointer(0),
-		Status:   "Unknown",
-		Advanced: advanced,
+		ID:           util.StrAsPointer("advanced"),
+		Type:         util.StrAsPointer("postgresql"),
+		Replicas:     util.Int64AsPointer(0),
+		Status:       "Unknown",
+		Advanced:     advanced,
+		Subscription: "some-kind-of-subscription-id",
 	}
 
 	params := apiService.ServiceAddParams{
@@ -145,5 +149,50 @@ func TestServiceAddAdvanced(t *testing.T) {
 	}
 
 	checkResponse(srv.ServiceAddHandler(params, nil), t, 201, service)
+	tc.handler.ValidateRequestCount(t, 2)
+}
+
+func TestServiceSubscriptionAlreadyExists(t *testing.T) {
+	expectedObjects := &cloudlinuxv1alpha1.KuberLogicServiceList{
+		Items: []cloudlinuxv1alpha1.KuberLogicService{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "advanced",
+					Labels: map[string]string{
+						"subscription-id": "existing-subscription-id",
+					},
+				},
+				Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
+					Type: "postgresql",
+				},
+			},
+		},
+	}
+
+	tc := createTestClient(expectedObjects, 200, t)
+	defer tc.server.Close()
+
+	srv := &Service{
+		log:              &TestLog{t: t},
+		clientset:        fake.NewSimpleClientset(),
+		kuberlogicClient: tc.client,
+	}
+
+	service := &models.Service{
+		ID:           util.StrAsPointer("advanced"),
+		Type:         util.StrAsPointer("postgresql"),
+		Replicas:     util.Int64AsPointer(0),
+		Status:       "Unknown",
+		Subscription: "existing-subscription-id",
+	}
+
+	params := apiService.ServiceAddParams{
+		HTTPRequest: &http.Request{},
+		ServiceItem: service,
+	}
+
+	checkResponse(srv.ServiceAddHandler(params, nil), t, 400, &models.Error{
+		Message: "Service with subscription 'existing-subscription-id' already exist",
+	})
 	tc.handler.ValidateRequestCount(t, 1)
 }

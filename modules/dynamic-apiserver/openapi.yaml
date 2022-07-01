@@ -34,6 +34,8 @@ paths:
       operationId: serviceList
       description: |
         List of service objects
+      parameters:
+        - $ref: "#/parameters/SubscriptionID"
       responses:
         200:
           description: search results matching criteria
@@ -298,3 +300,9 @@ parameters:
     schema:
       $ref: "#/definitions/Service"
 
+  SubscriptionID:
+    name: SubscriptionID
+    in: query
+    description: subscription ID
+    required: false
+    type: "string"

@@ -35,7 +35,7 @@ func main() {
 	chargebee.Configure(viper.GetString("CHARGEBEE_KEY"), viper.GetString("CHARGEBEE_SITE"))
 
 	http.HandleFunc("/chanrgebee-webhook", app.WebhookHandler(logger))
-	addr := "localhost:4242"
+	addr := "0.0.0.0:4242"
 	logger.Infof("Listening on %s\n", addr)
 	logger.Fatal(http.ListenAndServe(addr, nil))
 }

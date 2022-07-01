@@ -15,4 +15,10 @@ secretGenerator:
 - behavior: create
   literals:
   - token=8ZTjsD3t2Q3Yq-C4-hoahcFn
-  name: apiserver-token
+  name: apiserver
+- behavior: create
+  literals:
+    - chargebee_site=
+    - chargebee_key=
+    - kuberlogic_domain=example.com
+  name: chargebee-integration

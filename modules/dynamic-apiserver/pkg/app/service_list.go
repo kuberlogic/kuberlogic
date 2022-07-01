@@ -5,17 +5,12 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
-	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
 
 func (srv *Service) ServiceListHandler(params apiService.ServiceListParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
-	res := new(kuberlogiccomv1alpha1.KuberLogicServiceList)
 
-	err := srv.kuberlogicClient.Get().
-		Resource(serviceK8sResource).
-		Do(ctx).
-		Into(res)
+	res, err := srv.List(ctx, params.SubscriptionID)
 	if err != nil {
 		msg := "error listing service"
 		srv.log.Errorw(msg)

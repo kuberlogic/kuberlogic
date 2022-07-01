@@ -12,6 +12,10 @@ OPERATOR_IMG ?= $(IMG_REPO)/$(OPERATOR_NAME)
 APISERVER_NAME = dynamic-apiserver
 APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME)
 
+CHARGEBEE_INTEGRATION_NAME = chargebee-integration
+CHARGEBEE_INTEGRATION_IMG = $(IMG_REPO)/$(CHARGEBEE_INTEGRATION_NAME)
+
+
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
@@ -115,7 +119,8 @@ deploy-certmanager: kustomize
 deploy: kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && \
 		$(KUSTOMIZE) edit set image controller=$(OPERATOR_IMG):$(VERSION) && \
-		$(KUSTOMIZE) edit set image apiserver=$(APISERVER_IMG):$(VERSION)
+		$(KUSTOMIZE) edit set image apiserver=$(APISERVER_IMG):$(VERSION) && \
+		$(KUSTOMIZE) edit set image chargebee-integration=$(CHARGEBEE_INTEGRATION_IMG):$(VERSION)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy-certmanager

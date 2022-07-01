@@ -88,3 +88,48 @@ func TestServiceListMany(t *testing.T) {
 	checkResponse(srv.ServiceListHandler(params, nil), t, 200, services)
 	tc.handler.ValidateRequestCount(t, 1)
 }
+
+func TestServiceListWithSubscriptionFilter(t *testing.T) {
+	expectedObjects := &cloudlinuxv1alpha1.KuberLogicServiceList{
+		Items: []cloudlinuxv1alpha1.KuberLogicService{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "one",
+					Labels: map[string]string{
+						"subscription-id": "some-kind-of-subscription-id",
+					},
+				},
+				Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
+					Type:     "postgresql",
+					Replicas: 1,
+				},
+			},
+		},
+	}
+
+	tc := createTestClient(expectedObjects, 200, t)
+	defer tc.server.Close()
+
+	srv := &Service{
+		log:              &TestLog{t: t},
+		clientset:        fake.NewSimpleClientset(),
+		kuberlogicClient: tc.client,
+	}
+
+	services := models.Services{
+		{
+			ID:           util.StrAsPointer("one"),
+			Type:         util.StrAsPointer("postgresql"),
+			Replicas:     util.Int64AsPointer(1),
+			Status:       "Unknown",
+			Subscription: "some-kind-of-subscription-id",
+		},
+	}
+
+	params := apiService.ServiceListParams{
+		HTTPRequest: &http.Request{},
+	}
+
+	checkResponse(srv.ServiceListHandler(params, nil), t, 200, services)
+	tc.handler.ValidateRequestCount(t, 1)
+}

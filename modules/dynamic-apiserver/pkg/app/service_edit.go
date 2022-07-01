@@ -15,6 +15,13 @@ import (
 func (srv *Service) ServiceEditHandler(params apiService.ServiceEditParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
 
+	if params.ServiceItem.Subscription != "" {
+		return apiService.NewServiceEditBadRequest().WithPayload(
+			&models.Error{
+				Message: fmt.Sprintf("subscription cannot be changed"),
+			})
+	}
+
 	c, err := util.ServiceToKuberlogic(params.ServiceItem)
 	if err != nil {
 		srv.log.Errorw("error converting service model to kuberlogic", "error", err)

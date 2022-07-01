@@ -17,7 +17,13 @@
 package app
 
 import (
+	"context"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/logging"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
+	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -47,4 +53,28 @@ func (srv *Service) OnShutdown() {
 	defer func() {
 		_ = srv.log.Sync()
 	}()
+}
+
+func (srv *Service) List(ctx context.Context, subscriptionId *string) (*kuberlogiccomv1alpha1.KuberLogicServiceList, error) {
+	res := new(kuberlogiccomv1alpha1.KuberLogicServiceList)
+
+	req := srv.kuberlogicClient.Get().Resource(serviceK8sResource)
+	if subscriptionId != nil {
+		labelSelector := metav1.LabelSelector{
+			MatchLabels: map[string]string{util.SubscriptionField: *subscriptionId},
+		}
+		req = req.VersionedParams(&metav1.ListOptions{
+			LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
+		}, scheme.ParameterCodec)
+	}
+	err := req.Do(ctx).Into(res)
+	return res, err
+}
+
+func (srv *Service) SubscriptionAlreadyExist(ctx context.Context, subscriptionId *string) (bool, error) {
+	services, err := srv.List(ctx, subscriptionId)
+	if err != nil {
+		return false, err
+	}
+	return len(services.Items) > 0, nil
 }

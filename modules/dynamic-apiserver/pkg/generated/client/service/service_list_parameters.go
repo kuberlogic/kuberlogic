@@ -58,6 +58,13 @@ func NewServiceListParamsWithHTTPClient(client *http.Client) *ServiceListParams 
    Typically these are written to a http.Request.
 */
 type ServiceListParams struct {
+
+	/* SubscriptionID.
+
+	   subscription ID
+	*/
+	SubscriptionID *string
+
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
@@ -111,6 +118,17 @@ func (o *ServiceListParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
+// WithSubscriptionID adds the subscriptionID to the service list params
+func (o *ServiceListParams) WithSubscriptionID(subscriptionID *string) *ServiceListParams {
+	o.SetSubscriptionID(subscriptionID)
+	return o
+}
+
+// SetSubscriptionID adds the subscriptionId to the service list params
+func (o *ServiceListParams) SetSubscriptionID(subscriptionID *string) {
+	o.SubscriptionID = subscriptionID
+}
+
 // WriteToRequest writes these params to a swagger request
 func (o *ServiceListParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
@@ -118,6 +136,23 @@ func (o *ServiceListParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.R
 		return err
 	}
 	var res []error
+
+	if o.SubscriptionID != nil {
+
+		// query param SubscriptionID
+		var qrSubscriptionID string
+
+		if o.SubscriptionID != nil {
+			qrSubscriptionID = *o.SubscriptionID
+		}
+		qSubscriptionID := qrSubscriptionID
+		if qSubscriptionID != "" {
+
+			if err := r.SetQueryParam("SubscriptionID", qSubscriptionID); err != nil {
+				return err
+			}
+		}
+	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)

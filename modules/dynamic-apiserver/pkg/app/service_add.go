@@ -13,6 +13,20 @@ import (
 func (srv *Service) ServiceAddHandler(params apiService.ServiceAddParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
 
+	if params.ServiceItem.Subscription != "" {
+		if found, err := srv.SubscriptionAlreadyExist(ctx, &params.ServiceItem.Subscription); err != nil {
+			return apiService.NewServiceAddServiceUnavailable().WithPayload(
+				&models.Error{
+					Message: err.Error(),
+				})
+		} else if found {
+			return apiService.NewServiceAddBadRequest().WithPayload(
+				&models.Error{
+					Message: fmt.Sprintf("Service with subscription '%s' already exist", params.ServiceItem.Subscription),
+				})
+		}
+	}
+
 	c, err := util.ServiceToKuberlogic(params.ServiceItem)
 	if err != nil {
 		srv.log.Errorw("error converting service model to kuberlogic", "error", err)
@@ -35,7 +49,7 @@ func (srv *Service) ServiceAddHandler(params apiService.ServiceAddParams, _ *mod
 		return apiService.NewServiceAddConflict()
 	} else if err != nil {
 		srv.log.Errorw("error creating kuberlogicservice", "error", err)
-		return apiService.NewServiceAddBadRequest().WithPayload(
+		return apiService.NewServiceAddServiceUnavailable().WithPayload(
 			&models.Error{
 				Message: err.Error(),
 			})
