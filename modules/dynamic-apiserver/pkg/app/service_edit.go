@@ -18,7 +18,7 @@ func (srv *Service) ServiceEditHandler(params apiService.ServiceEditParams, _ *m
 	if params.ServiceItem.Subscription != "" {
 		return apiService.NewServiceEditBadRequest().WithPayload(
 			&models.Error{
-				Message: fmt.Sprintf("subscription cannot be changed"),
+				Message: "subscription cannot be changed",
 			})
 	}
 
