@@ -7,6 +7,7 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 )
 
 var envVal = "val"
@@ -167,9 +168,10 @@ var _ = Describe("docker-compose model", func() {
 			Version:    "",
 		}
 
-		By("Checking Reconcile return parameters")
-		_, err := c.Reconcile(requests)
-		Expect(err).ShouldNot(BeNil())
+		It("Should reconcile without errors", func() {
+			_, err := c.Reconcile(requests)
+			Expect(err).ShouldNot(BeNil())
+		})
 	})
 
 	Context("When reconciling project with valid template", func() {
@@ -225,9 +227,102 @@ var _ = Describe("docker-compose model", func() {
 			Version:    "whatever",
 		}
 
-		By("Checking Reconcile return parameters")
-		_, err := c.Reconcile(requests)
-		Expect(err).Should(BeNil())
-		Expect(c.deployment.Spec.Template.Spec.Containers[0].Image).Should(Equal("demo:whatever"))
+		It("Should reconcile without errors", func() {
+			_, err := c.Reconcile(requests)
+			Expect(err).Should(BeNil())
+
+			By("Checking container image")
+			Expect(c.deployment.Spec.Template.Spec.Containers[0].Image).Should(Equal("demo:whatever"))
+		})
+	})
+
+	Context("When Reconciling with two volumes", func() {
+		Context("When reconciling project with valid template", func() {
+			testProject := &types.Project{
+				Name:       "test",
+				WorkingDir: "/tmp",
+				Services: types.Services{
+					types.ServiceConfig{
+						Name:    "demo-app",
+						Command: types.ShellCommand{"cmd", "arg"},
+						Environment: types.MappingWithEquals{
+							"DEMO_ENV": nil,
+							"ENV1":     &envVal,
+							"ENV2":     &envVal,
+							"ENV3":     &envVal,
+						},
+						Image: "demo:{{ .Version }}",
+						Ports: []types.ServicePortConfig{
+							{
+								Target:    80,
+								Published: "8001",
+							},
+						},
+						Volumes: []types.ServiceVolumeConfig{
+							{
+								Source: "demo",
+								Target: "/tmp/demo",
+							},
+							{
+								Source: "second",
+								Target: "/tmp/second",
+							},
+						},
+					},
+					types.ServiceConfig{
+						Name:    "demo-db",
+						Command: types.ShellCommand{"cmd", "arg"},
+						Image:   "demodb:test",
+					},
+				},
+				Networks: nil,
+				Volumes: types.Volumes{
+					"demo": types.VolumeConfig{
+						Name: "demo",
+					},
+					"second": types.VolumeConfig{
+						Name: "second",
+					},
+				},
+			}
+
+			c := NewComposeModel(testProject, hclog.L())
+
+			requests := &commons.PluginRequest{
+				Name:       "demo-kls",
+				Namespace:  "demo-kls",
+				Host:       "demo.example.com",
+				Replicas:   1,
+				VolumeSize: "1G",
+				Version:    "whatever",
+			}
+
+			By("Checking Reconcile return parameters")
+			It("Should reconcile without errors", func() {
+				_, err := c.Reconcile(requests)
+				Expect(err).Should(BeNil())
+
+				By("Checking persistentvolumeclaim object")
+				Expect(c.persistentvolumeclaim).ShouldNot(BeNil())
+
+				By("Checking pod volume")
+				Expect(len(c.deployment.Spec.Template.Spec.Volumes)).Should(Equal(1))
+
+				By("Checking container volume mounts")
+				Expect(len(c.deployment.Spec.Template.Spec.Containers[0].VolumeMounts)).Should(Equal(2))
+				Expect(c.deployment.Spec.Template.Spec.Containers[0].VolumeMounts[0]).Should(Equal(corev1.VolumeMount{
+					Name:      c.persistentvolumeclaim.GetName(),
+					ReadOnly:  false,
+					MountPath: "/tmp/demo",
+					SubPath:   "demo-demo-app",
+				}))
+				Expect(c.deployment.Spec.Template.Spec.Containers[0].VolumeMounts[1]).Should(Equal(corev1.VolumeMount{
+					Name:      c.persistentvolumeclaim.GetName(),
+					ReadOnly:  false,
+					MountPath: "/tmp/second",
+					SubPath:   "second-demo-app",
+				}))
+			})
+		})
 	})
 })

@@ -20,7 +20,6 @@ import (
 	"github.com/compose-spec/compose-go/loader"
 	"github.com/compose-spec/compose-go/types"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugins/docker-compose/plugin"
 	"os"
 )
 
@@ -49,5 +48,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	commons.ServePlugin("docker-compose", plugin.NewDockerComposeServicePlugin(project))
+	commons.ServePlugin("docker-compose", newDockerComposeServicePlugin(project))
 }
