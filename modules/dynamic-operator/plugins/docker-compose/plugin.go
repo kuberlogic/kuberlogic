@@ -46,6 +46,11 @@ func (d *dockerComposeService) Convert(req commons.PluginRequest) *commons.Plugi
 
 	for _, item := range objects {
 		for gvk, object := range item {
+			// do not return objects with empty name
+			if object.GetName() == "" {
+				continue
+			}
+
 			_ = res.AddUnstructuredObject(object, gvk)
 		}
 	}

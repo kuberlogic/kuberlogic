@@ -58,7 +58,6 @@ var _ = Describe("docker-compose model", func() {
 		requests := &commons.PluginRequest{
 			Name:       "demo-kls",
 			Namespace:  "demo-kls",
-			Host:       "demo.example.com",
 			Replicas:   1,
 			VolumeSize: "1G",
 			Version:    "",
@@ -70,7 +69,7 @@ var _ = Describe("docker-compose model", func() {
 			By("Checking Reconcile return parameters")
 			objs, err := c.Reconcile(requests)
 			Expect(err).Should(BeNil())
-			Expect(len(objs)).Should(Equal(4))
+			Expect(len(objs)).Should(Equal(5))
 
 			By("Validating returned Deployment")
 			firstDeployment := *c.deployment
@@ -87,7 +86,7 @@ var _ = Describe("docker-compose model", func() {
 			serviceSpec := c.service.Spec
 			Expect(len(serviceSpec.Ports)).Should(Equal(1))
 			port := serviceSpec.Ports[0]
-			Expect(port.Port).Should(Equal(int32(80)))
+			Expect(port.Port).Should(Equal(int32(8001)))
 
 			// populate requests objects from the previous run
 			for _, elem := range objs {
@@ -99,7 +98,7 @@ var _ = Describe("docker-compose model", func() {
 			By("Checking Reconcile result for the 2nd time")
 			secondRunObjs, secondErr := c.Reconcile(requests)
 			Expect(secondErr).Should(BeNil())
-			Expect(len(secondRunObjs)).Should(Equal(4))
+			Expect(len(secondRunObjs)).Should(Equal(5))
 
 			By("Validating returned Deployment")
 			secondDeployment := *c.deployment
@@ -112,6 +111,9 @@ var _ = Describe("docker-compose model", func() {
 
 			deploymentsEqual := deep.Equal(firstDeployment.Spec, secondDeployment.Spec)
 			Expect(deploymentsEqual).Should(BeNil())
+
+			By("Ingress should not be set with empty Host")
+			Expect(c.ingress.GetName()).Should(Equal(""))
 		})
 	})
 
@@ -322,6 +324,174 @@ var _ = Describe("docker-compose model", func() {
 					MountPath: "/tmp/second",
 					SubPath:   "second-demo-app",
 				}))
+			})
+		})
+		Context("When Reconciling with two volumes", func() {
+			Context("When reconciling project with valid template", func() {
+				testProject := &types.Project{
+					Name:       "test",
+					WorkingDir: "/tmp",
+					Services: types.Services{
+						types.ServiceConfig{
+							Name:    "demo-app",
+							Command: types.ShellCommand{"cmd", "arg"},
+							Environment: types.MappingWithEquals{
+								"DEMO_ENV": nil,
+								"ENV1":     &envVal,
+								"ENV2":     &envVal,
+								"ENV3":     &envVal,
+							},
+							Image: "demo:{{ .Version }}",
+							Ports: []types.ServicePortConfig{
+								{
+									Target:    80,
+									Published: "8001",
+								},
+							},
+							Volumes: []types.ServiceVolumeConfig{
+								{
+									Source: "demo",
+									Target: "/tmp/demo",
+								},
+								{
+									Source: "second",
+									Target: "/tmp/second",
+								},
+							},
+						},
+						types.ServiceConfig{
+							Name:    "demo-db",
+							Command: types.ShellCommand{"cmd", "arg"},
+							Image:   "demodb:test",
+						},
+					},
+					Networks: nil,
+					Volumes: types.Volumes{
+						"demo": types.VolumeConfig{
+							Name: "demo",
+						},
+						"second": types.VolumeConfig{
+							Name: "second",
+						},
+					},
+				}
+
+				requests := &commons.PluginRequest{
+					Name:       "demo-kls",
+					Namespace:  "demo-kls",
+					Host:       "demo.example.com",
+					Replicas:   1,
+					VolumeSize: "1G",
+					Version:    "whatever",
+				}
+
+				It("Should exit with error when published ports are duplicates", func() {
+					m := *testProject
+					m.Services[0].Ports = []types.ServicePortConfig{
+						{
+							Target:    80,
+							Published: "8001",
+						},
+					}
+					m.Services[1].Ports = []types.ServicePortConfig{
+						{
+							Target:    90,
+							Published: "8001",
+						},
+					}
+
+					c := NewComposeModel(&m, hclog.L())
+					_, err := c.Reconcile(requests)
+					Expect(err).ShouldNot(BeNil())
+				})
+
+				It("Should exit with error when there are two published ports without access path extension", func() {
+					m := *testProject
+					m.Services[0].Ports = []types.ServicePortConfig{
+						{
+							Target:    80,
+							Published: "8001",
+						},
+					}
+					m.Services[1].Ports = []types.ServicePortConfig{
+						{
+							Target:    90,
+							Published: "8002",
+						},
+					}
+
+					c := NewComposeModel(&m, hclog.L())
+					_, err := c.Reconcile(requests)
+					Expect(err).ShouldNot(BeNil())
+				})
+
+				It("Should create an ingress with a valid HTTP project", func() {
+					mReq := *requests
+					mReq.TLSSecretName = ""
+					mReq.TLSEnabled = false
+
+					m := *testProject
+					m.Services[0].Ports = []types.ServicePortConfig{
+						{
+							Target:    80,
+							Published: "8001",
+						},
+					}
+					m.Services[0].Extensions = map[string]interface{}{
+						"x-kuberlogic-access-http-path": "/api",
+					}
+					m.Services[1].Ports = []types.ServicePortConfig{
+						{
+							Target:    90,
+							Published: "8002",
+						},
+					}
+
+					c := NewComposeModel(&m, hclog.L())
+					_, err := c.Reconcile(&mReq)
+					Expect(err).Should(BeNil())
+					By("Checking Ingress object")
+					Expect(c.ingress.GetName()).Should(Equal(mReq.Name))
+					Expect(len(c.ingress.Spec.TLS)).Should(Equal(0))
+					Expect(len(c.ingress.Spec.Rules)).Should(Equal(1))
+					Expect(c.ingress.Spec.Rules[0].Host).Should(Equal(mReq.Host))
+					Expect(c.ingress.Spec.Rules[0].IngressRuleValue.HTTP).ShouldNot(BeNil())
+					Expect(len(c.ingress.Spec.Rules[0].IngressRuleValue.HTTP.Paths)).Should(Equal(2))
+					Expect(c.ingress.Spec.Rules[0].IngressRuleValue.HTTP.Paths[0].Path).Should(Equal("/api"))
+					Expect(c.ingress.Spec.Rules[0].IngressRuleValue.HTTP.Paths[0].Backend.Service.Name).Should(Equal(c.service.GetName()))
+					Expect(c.ingress.Spec.Rules[0].IngressRuleValue.HTTP.Paths[0].Backend.Service.Port.Name).Should(Equal(c.service.Spec.Ports[0].Name))
+					Expect(c.ingress.Spec.Rules[0].IngressRuleValue.HTTP.Paths[1].Path).Should(Equal("/"))
+					Expect(c.ingress.Spec.Rules[0].IngressRuleValue.HTTP.Paths[1].Backend.Service.Name).Should(Equal(c.service.GetName()))
+					Expect(c.ingress.Spec.Rules[0].IngressRuleValue.HTTP.Paths[1].Backend.Service.Port.Name).Should(Equal(c.service.Spec.Ports[1].Name))
+				})
+				It("Should create an ingress with a valid HTTPS project", func() {
+					mReq := *requests
+					mReq.TLSSecretName = "demo"
+					mReq.TLSEnabled = true
+
+					m := *testProject
+					m.Services[0].Ports = []types.ServicePortConfig{
+						{
+							Target:    80,
+							Published: "8001",
+						},
+					}
+					m.Services[0].Extensions = map[string]interface{}{
+						"x-kuberlogic-access-http-path": "/api",
+					}
+					m.Services[1].Ports = []types.ServicePortConfig{
+						{
+							Target:    90,
+							Published: "8002",
+						},
+					}
+
+					c := NewComposeModel(&m, hclog.L())
+					_, err := c.Reconcile(&mReq)
+					Expect(err).Should(BeNil())
+					By("Checking Ingress object")
+					Expect(c.ingress.Spec.TLS[0].SecretName).Should(Equal(mReq.TLSSecretName))
+				})
 			})
 		})
 	})

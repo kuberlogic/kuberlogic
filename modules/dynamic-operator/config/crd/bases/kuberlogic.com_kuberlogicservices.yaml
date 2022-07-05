@@ -41,13 +41,13 @@ spec:
       jsonPath: .spec.volumeSize
       name: Volume
       type: string
-    - description: CPU request
-      jsonPath: .spec.resources.requests.cpu
-      name: CPU Request
+    - description: CPU limits
+      jsonPath: .spec.limits.cpu
+      name: CPU Limits
       type: string
-    - description: Memory request
-      jsonPath: .spec.resources.requests.memory
-      name: Memory Request
+    - description: Memory limits
+      jsonPath: .spec.limits.memory
+      name: Memory Limits
       type: string
     - description: Access endpoint
       jsonPath: .status.access

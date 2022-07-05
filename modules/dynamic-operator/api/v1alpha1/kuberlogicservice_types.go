@@ -105,8 +105,16 @@ func (in *KuberLogicService) GetHost() string {
 	return host
 }
 
-func (in *KuberLogicService) SetAccessEndpoint(e string) {
-	in.Status.AccessEndpoint = e
+func (in *KuberLogicService) SetAccessEndpoint() {
+	host := in.GetHost()
+	if host == "" {
+		return
+	}
+	proto := "http://"
+	if in.Spec.TLSEnabled {
+		proto = "https://"
+	}
+	in.Status.AccessEndpoint = proto + host
 }
 
 func (in *KuberLogicService) MarkReady(msg string) {
