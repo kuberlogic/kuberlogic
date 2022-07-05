@@ -1,5 +1,5 @@
 
-VERSION ?= 0.0.7
+VERSION ?= 0.0.8
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.22
@@ -11,6 +11,10 @@ OPERATOR_IMG ?= $(IMG_REPO)/$(OPERATOR_NAME)
 
 APISERVER_NAME = dynamic-apiserver
 APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME)
+
+CHARGEBEE_INTEGRATION_NAME = chargebee-integration
+CHARGEBEE_INTEGRATION_IMG = $(IMG_REPO)/$(CHARGEBEE_INTEGRATION_NAME)
+
 
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -115,7 +119,8 @@ deploy-certmanager: kustomize
 deploy: kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && \
 		$(KUSTOMIZE) edit set image controller=$(OPERATOR_IMG):$(VERSION) && \
-		$(KUSTOMIZE) edit set image apiserver=$(APISERVER_IMG):$(VERSION)
+		$(KUSTOMIZE) edit set image apiserver=$(APISERVER_IMG):$(VERSION) && \
+		$(KUSTOMIZE) edit set image chargebee-integration=$(CHARGEBEE_INTEGRATION_IMG):$(VERSION)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy-certmanager

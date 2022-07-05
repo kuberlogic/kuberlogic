@@ -84,7 +84,7 @@ spec:
             - name: KUBERLOGIC_APISERVER_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: apiserver-token
+                  name: apiserver
                   key: token
 
           ports:
@@ -95,6 +95,49 @@ spec:
               memory: 30Mi
             requests:
               cpu: 100m
+              memory: 20Mi
+        - command:
+            - /cmd
+          args:
+            - --scheme=http
+          image: chargebee-integration:latest
+          name: chargebee-integration
+          env:
+            - name: KUBERLOGIC_APISERVER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: apiserver
+                  key: token
+            - name: KUBERLOGIC_APISERVER_SCHEME
+              value: http
+            - name: KUBERLOGIC_APISERVER_HOST
+              value: localhost:8001
+            - name: CHARGEBEE_SITE
+              valueFrom:
+                secretKeyRef:
+                  name: chargebee-integration
+                  key: chargebee_site
+            - name: CHARGEBEE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: chargebee-integration
+                  key: chargebee_key
+            - name: KUBERLOGIC_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: chargebee-integration
+                  key: kuberlogic_domain
+            - name: KUBERLOGIC_TYPE
+              value: docker-compose
+
+          ports:
+            - containerPort: 4242
+          resources:
+            limits:
+              cpu: 50m
+              memory: 30Mi
+            requests:
+              cpu: 50m
               memory: 20Mi
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10

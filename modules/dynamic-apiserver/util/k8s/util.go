@@ -17,7 +17,7 @@
 package k8s
 
 import (
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/config"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
 	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"

@@ -1,6 +1,6 @@
 .EXPORT_ALL_VARIABLES:
 
-VERSION ?= 0.0.7
+VERSION ?= 0.0.8
 
 IMG_REPO = quay.io/kuberlogic
 IMG_LATEST_TAG=latest
@@ -12,19 +12,19 @@ KUBERLOGIC_APISERVER_TOKEN=8ZTjsD3t2Q3Yq-C4-hoahcFn
 
 .PHONY: recreate-generated-server
 recreate-generated-server:
-	rm -rf internal/generated/models internal/generated/restapi
-	mkdir -p internal/generated
+	rm -rf pkg/generated/models pkg/generated/restapi
+	mkdir -p pkg/generated
 
 .PHONY: recreate-generated-client
 recreate-generated-client:
-	rm -rf internal/generated/client
-	mkdir -p internal/generated
+	rm -rf pkg/generated/client
+	mkdir -p pkg/generated
 
 .PHONY: generate-server
 generate-server: recreate-generated-server
 	swagger generate server \
 		--spec openapi.yaml \
-		--target internal/generated \
+		--target pkg/generated \
 		-P models.Principal \
 		--config-file swagger-templates/default-server.yml \
 		--template-dir swagger-templates/templates/ \
@@ -34,7 +34,7 @@ generate-server: recreate-generated-server
 generate-client: recreate-generated-client
 	swagger generate client \
 		--spec openapi.yaml \
-		--target internal/generated/
+		--target pkg/generated/
 
 .PHONY: test
 test:

@@ -7,10 +7,26 @@ metadata:
 spec:
   ports:
     - name: http
-      nodePort: 30007
       port: 80
       protocol: TCP
       targetPort: 8001
+  selector:
+    control-plane: controller-manager
+  type: LoadBalancer
+  loadBalancerSourceRanges:
+    - "0.0.0.0/0"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chargebee-integration
+  namespace: namespace
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 4242
   selector:
     control-plane: controller-manager
   type: LoadBalancer

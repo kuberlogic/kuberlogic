@@ -6,7 +6,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/internal/cli"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/cli"
 	"os"
 )
 
