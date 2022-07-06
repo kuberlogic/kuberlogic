@@ -27,7 +27,6 @@ import (
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strconv"
 )
 
 type EnvironmentManager struct {
@@ -37,10 +36,9 @@ type EnvironmentManager struct {
 
 	kls *kuberlogiccomv1alpha1.KuberLogicService
 	cfg *config.Config
-	ctx context.Context
 }
 
-//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses;networkpolicies,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=namespaces;services;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=resourcequotas;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=secrets;,verbs=get;list;watch;create;update;patch;delete
@@ -111,14 +109,13 @@ func SetupEnv(kls *kuberlogiccomv1alpha1.KuberLogicService, c client.Client, cfg
 
 		cfg: cfg,
 		kls: kls,
-		ctx: ctx,
 	}, nil
 }
 
 // PauseService deletes all pods in a service namespace.
 // In addition to this resourceQuota in SetupEnv sets the hard limit of non-exited pods to 0.
-func (e *EnvironmentManager) PauseService() error {
-	if err := e.DeleteAllOf(e.ctx, &v1.Pod{}, &client.DeleteAllOfOptions{
+func (e *EnvironmentManager) PauseService(ctx context.Context) error {
+	if err := e.DeleteAllOf(ctx, &v1.Pod{}, &client.DeleteAllOfOptions{
 		ListOptions: client.ListOptions{
 			Namespace: e.NamespaceName,
 		},
@@ -127,100 +124,6 @@ func (e *EnvironmentManager) PauseService() error {
 		return errors.Wrap(err, "error deleting all pods in namespace")
 	}
 	return nil
-}
-
-// ExposeService takes internal service name and creates an Ingress object exposing it to the outside
-func (e *EnvironmentManager) ExposeService(svcName string, provisionIngress bool) (string, error) {
-	// get service
-	svc := &v1.Service{
-		ObjectMeta: v12.ObjectMeta{
-			Name:      svcName,
-			Namespace: e.NamespaceName,
-		},
-	}
-	if err := e.Get(e.ctx, client.ObjectKeyFromObject(svc), svc); err != nil {
-		return "", errors.Wrapf(err, "error getting service %s/%s", e.NamespaceName, svcName)
-	}
-
-	if provisionIngress {
-		return e.syncIngress(svc)
-	}
-	return e.syncLoadBalancer(svc)
-}
-
-func (e *EnvironmentManager) syncLoadBalancer(svc *v1.Service) (string, error) {
-	port := svc.Spec.Ports[0].Port
-
-	var addr string
-	if len(svc.Spec.ExternalIPs) > 0 {
-		addr = svc.Spec.ExternalIPs[0]
-	} else if svc.Spec.LoadBalancerIP != "" {
-		addr = svc.Spec.LoadBalancerIP
-	} else if lbIngress := svc.Status.LoadBalancer.Ingress; len(lbIngress) > 0 {
-		addr = lbIngress[0].IP
-		port = lbIngress[0].Ports[0].Port
-	} else {
-		return "", nil
-	}
-	return addr + ":" + strconv.Itoa(int(port)), nil
-}
-
-//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
-func (e *EnvironmentManager) syncIngress(svc *v1.Service) (string, error) {
-	ingress := &v13.Ingress{
-		ObjectMeta: v12.ObjectMeta{
-			Name:      e.kls.GetName(),
-			Namespace: e.NamespaceName,
-		},
-	}
-
-	if _, err := controllerruntime.CreateOrUpdate(e.ctx, e.Client, ingress, func() error {
-		if e.kls.TLSEnabled() {
-			ingress.Spec.TLS = []v13.IngressTLS{
-				{
-					Hosts:      []string{e.kls.GetHost()},
-					SecretName: e.cfg.SvcOpts.TLSSecretName,
-				},
-			}
-		}
-
-		pathType := v13.PathTypePrefix
-		ingress.Labels = envLabels(e.kls)
-
-		ingress.Spec.Rules = []v13.IngressRule{
-			{
-				Host: e.kls.GetHost(),
-				IngressRuleValue: v13.IngressRuleValue{HTTP: &v13.HTTPIngressRuleValue{
-					Paths: []v13.HTTPIngressPath{
-						{
-							Path:     "/",
-							PathType: &pathType,
-							Backend: v13.IngressBackend{
-								Service: &v13.IngressServiceBackend{
-									Name: svc.GetName(),
-									Port: v13.ServiceBackendPort{
-										Name: svc.Spec.Ports[0].Name,
-									},
-								},
-								Resource: nil,
-							},
-						},
-					},
-				}},
-			},
-		}
-
-		return controllerruntime.SetControllerReference(e.kls, ingress, e.Client.Scheme())
-	}); err != nil {
-		return "", errors.Wrap(err, "error syncing ingress")
-	}
-
-	proto := "http://"
-	if e.kls.TLSEnabled() {
-		proto = "https://"
-	}
-
-	return proto + e.kls.GetHost(), nil
 }
 
 func getNamespace(kls *kuberlogiccomv1alpha1.KuberLogicService) *v1.Namespace {

@@ -58,6 +58,7 @@ func HandlePanic(log logr.Logger) {
 // compose plugin roles:
 //+kubebuilder:rbac:groups="",resources=serviceaccounts;services;persistentvolumeclaims;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=deployments;,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 
 func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logger.FromContext(ctx).WithValues("kuberlogicservicetype", req.String())
@@ -112,14 +113,15 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	pluginRequest := commons.PluginRequest{
-		Name:       kls.Name,
-		Namespace:  ns,
-		Replicas:   kls.Spec.Replicas,
-		VolumeSize: kls.Spec.VolumeSize,
-		Version:    kls.Spec.Version,
-		TLSEnabled: kls.TLSEnabled(),
-		Host:       kls.GetHost(),
-		Parameters: spec,
+		Name:          kls.Name,
+		Namespace:     ns,
+		Replicas:      kls.Spec.Replicas,
+		VolumeSize:    kls.Spec.VolumeSize,
+		Version:       kls.Spec.Version,
+		TLSEnabled:    kls.TLSEnabled(),
+		TLSSecretName: r.Cfg.SvcOpts.TLSSecretName,
+		Host:          kls.GetHost(),
+		Parameters:    spec,
 	}
 
 	if err := pluginRequest.SetLimits(&kls.Spec.Limits); err != nil {
@@ -174,18 +176,13 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	// pause service when requested
 	if kls.Paused() {
-		if err := env.PauseService(); err != nil {
+		if err := env.PauseService(ctx); err != nil {
 			return ctrl.Result{}, errors.Wrap(err, "error pausing service")
 		}
 	}
 
 	// expose service
-	endpoint, err := env.ExposeService(resp.Service, resp.Protocol == commons.HTTPproto && kls.GetHost() != "")
-	if err != nil {
-		log.Error(err, "error exposing service")
-		return ctrl.Result{}, err
-	}
-	kls.SetAccessEndpoint(endpoint)
+	kls.SetAccessEndpoint()
 
 	// sync status
 	log.Info("syncing status")
@@ -225,7 +222,6 @@ func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager, objects
 
 	builder.Owns(&v1.Namespace{})
 	builder.Owns(&v12.NetworkPolicy{})
-	builder.Owns(&v12.Ingress{})
 	builder.Owns(&v1.ResourceQuota{})
 	builder.Owns(&v1.Secret{})
 	return builder.Complete(r)

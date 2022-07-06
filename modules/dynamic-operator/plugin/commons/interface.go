@@ -53,7 +53,10 @@ type PluginRequest struct {
 	// Requested service Version
 	Version string
 
+	// If a service should be exposed via TLS
 	TLSEnabled bool
+	// TLSSecretName is a Kubernetes secret that contains tls.key / tls.crt fields. Must reside in the same namespace
+	TLSSecretName string
 
 	// Service resource Limits. Manipulated via SetLimits / GetLimits methods.
 	Limits []byte
