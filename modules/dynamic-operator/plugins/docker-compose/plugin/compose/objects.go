@@ -6,10 +6,10 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
-	v12 "k8s.io/api/apps/v1"
-	v13 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -39,18 +39,17 @@ var (
 )
 
 var (
-	errUnknownObject  = errors.New("unknown object kind")
-	errVolumeNotFound = errors.New("requested volume definition not found")
+	errUnknownObject = errors.New("unknown object kind")
 )
 
 type ComposeModel struct {
 	composeProject *types.Project
 	logger         hclog.Logger
 
-	serviceaccount         *v13.ServiceAccount
-	service                *v13.Service
-	persistentvolumeclaims map[string]*v13.PersistentVolumeClaim
-	deployment             *v12.Deployment
+	serviceaccount        *corev1.ServiceAccount
+	service               *corev1.Service
+	persistentvolumeclaim *corev1.PersistentVolumeClaim
+	deployment            *appsv1.Deployment
 }
 
 // Reconcile method updates current request object to their required parameters
@@ -84,16 +83,16 @@ func (c *ComposeModel) Types() []map[schema.GroupVersionKind]client.Object {
 	c.logger.Debug("Type")
 	return []map[schema.GroupVersionKind]client.Object{
 		{
-			serviceGVK: &v13.Service{},
+			serviceGVK: &corev1.Service{},
 		},
 		{
-			serviceAccountGVK: &v13.ServiceAccount{},
+			serviceAccountGVK: &corev1.ServiceAccount{},
 		},
 		{
-			pvcGVK: &v13.PersistentVolumeClaim{},
+			pvcGVK: &corev1.PersistentVolumeClaim{},
 		},
 		{
-			deploymentGVK: &v12.Deployment{},
+			deploymentGVK: &appsv1.Deployment{},
 		},
 	}
 }
@@ -107,10 +106,10 @@ func NewComposeModel(p *types.Project, l hclog.Logger) *ComposeModel {
 		composeProject: p,
 		logger:         l,
 
-		serviceaccount:         &v13.ServiceAccount{},
-		service:                &v13.Service{},
-		persistentvolumeclaims: make(map[string]*v13.PersistentVolumeClaim, 0),
-		deployment:             &v12.Deployment{},
+		serviceaccount:        &corev1.ServiceAccount{},
+		service:               &corev1.Service{},
+		persistentvolumeclaim: &corev1.PersistentVolumeClaim{},
+		deployment:            &appsv1.Deployment{},
 	}
 }
 
@@ -126,12 +125,9 @@ func (c *ComposeModel) objectsWithGVK() []map[schema.GroupVersionKind]client.Obj
 		{
 			deploymentGVK: c.deployment,
 		},
-	}
-
-	for _, pvc := range c.persistentvolumeclaims {
-		objects = append(objects, map[schema.GroupVersionKind]client.Object{
-			pvcGVK: pvc,
-		})
+		{
+			pvcGVK: c.persistentvolumeclaim,
+		},
 	}
 
 	return objects
@@ -150,11 +146,9 @@ func (c *ComposeModel) fromCluster(objects []*unstructured.Unstructured) error {
 				return errors.Wrap(err, "error marshaling service")
 			}
 		case "PersistentVolumeClaim":
-			pvc := &v13.PersistentVolumeClaim{}
-			if err := commons.FromUnstructured(obj.UnstructuredContent(), pvc); err != nil {
+			if err := commons.FromUnstructured(obj.UnstructuredContent(), c.persistentvolumeclaim); err != nil {
 				return errors.Wrap(err, "error marshaling persistentvolumeclaim")
 			}
-			c.persistentvolumeclaims[pvc.GetName()] = pvc
 		case "Deployment":
 			if err := commons.FromUnstructured(obj.UnstructuredContent(), c.deployment); err != nil {
 				return errors.Wrap(err, "error marshaling deployment")
@@ -179,13 +173,10 @@ func (c *ComposeModel) setObjects(req *commons.PluginRequest) error {
 		return errors.Wrap(err, "error updating service account")
 	}
 	c.logger.Debug("serviceaccount updated", "object", c.serviceaccount)
-	if err := c.updatePVCs(req); err != nil {
-		return errors.Wrap(err, "error updating persistentvolumeclaims")
-	}
-	c.logger.Debug("pvcs updated", "objects", c.persistentvolumeclaims)
 	if err := c.updateServiceDeployment(req); err != nil {
 		return errors.Wrap(err, "error updating service / deployment")
 	}
+	c.logger.Debug("persistentvolumeclaim updated", "object", c.persistentvolumeclaim)
 	c.logger.Debug("deployment updated", "object", c.deployment)
 	c.logger.Debug("service updated", "object", c.service)
 	return nil
@@ -200,31 +191,6 @@ func (c *ComposeModel) updateServiceAccount(req *commons.PluginRequest) error {
 	return nil
 }
 
-func (c *ComposeModel) updatePVCs(req *commons.PluginRequest) error {
-	for name := range c.composeProject.Volumes {
-		vol, found := c.persistentvolumeclaims[name]
-		if !found {
-			vol = &v13.PersistentVolumeClaim{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      name,
-					Namespace: req.Namespace,
-				},
-			}
-		}
-		vol.Labels = labels(req.Name)
-		vol.Spec.AccessModes = []v13.PersistentVolumeAccessMode{
-			v13.ReadWriteOnce,
-		}
-		vol.Spec.Resources = v13.ResourceRequirements{
-			Requests: map[v13.ResourceName]resource.Quantity{
-				v13.ResourceStorage: resource.MustParse(req.VolumeSize),
-			},
-		}
-		c.persistentvolumeclaims[name] = vol
-	}
-	return nil
-}
-
 func (c *ComposeModel) updateServiceDeployment(req *commons.PluginRequest) error {
 	if c.service.Name == "" {
 		c.service.Name = req.Name
@@ -232,8 +198,8 @@ func (c *ComposeModel) updateServiceDeployment(req *commons.PluginRequest) error
 	}
 	c.service.Labels = labels(req.Name)
 	c.service.Spec.Selector = labels(req.Name)
-	c.service.Spec.Type = v13.ServiceTypeClusterIP
-	c.service.Spec.Ports = make([]v13.ServicePort, 0)
+	c.service.Spec.Type = corev1.ServiceTypeClusterIP
+	c.service.Spec.Ports = make([]corev1.ServicePort, 0)
 
 	if c.deployment.Name == "" {
 		c.deployment.Name = req.Name
@@ -241,35 +207,26 @@ func (c *ComposeModel) updateServiceDeployment(req *commons.PluginRequest) error
 	}
 	c.deployment.Labels = labels(req.Name)
 	c.deployment.Spec.Replicas = &req.Replicas
-	c.deployment.Spec.Selector = &v1.LabelSelector{
+	c.deployment.Spec.Selector = &metav1.LabelSelector{
 		MatchLabels: labels(req.Name),
 	}
 	c.deployment.Spec.Template.Labels = labels(req.Name)
-	c.deployment.Spec.Template.Spec.RestartPolicy = v13.RestartPolicyAlways
-	c.deployment.Spec.Template.Spec.Volumes = make([]v13.Volume, 0)
-	c.deployment.Spec.Template.Spec.HostAliases = make([]v13.HostAlias, 0)
-	c.deployment.Spec.Paused = false
-
-	// handle deployment volumes
-	for _, vol := range c.persistentvolumeclaims {
-		c.deployment.Spec.Template.Spec.Volumes = append(c.deployment.Spec.Template.Spec.Volumes, v13.Volume{
-			Name: vol.GetName(),
-			VolumeSource: v13.VolumeSource{
-				PersistentVolumeClaim: &v13.PersistentVolumeClaimVolumeSource{
-					ClaimName: vol.GetName(),
-					ReadOnly:  false,
-				},
-			},
-		})
+	c.deployment.Spec.Template.Spec.RestartPolicy = corev1.RestartPolicyAlways
+	c.deployment.Spec.Template.Spec.Volumes = make([]corev1.Volume, 0)
+	c.deployment.Spec.Template.Spec.HostAliases = []corev1.HostAlias{
+		{
+			IP:        "127.0.0.1",
+			Hostnames: []string{},
+		},
 	}
-	sort.Slice(c.deployment.Spec.Template.Spec.Volumes, func(i, j int) bool {
-		return c.deployment.Spec.Template.Spec.Volumes[i].Name < c.deployment.Spec.Template.Spec.Volumes[j].Name
-	})
+	c.deployment.Spec.Paused = false
+	terminationGracePeriod := int64(60)
+	c.deployment.Spec.Template.Spec.TerminationGracePeriodSeconds = &terminationGracePeriod
 
-	containers := make([]v13.Container, 0)
+	containers := make([]corev1.Container, 0)
 	// handle docker-compose services as deployment containers
 	for _, composeService := range c.composeProject.Services {
-		var container *v13.Container
+		var container *corev1.Container
 		for _, deploymentContainer := range c.deployment.Spec.Template.Spec.Containers {
 			if deploymentContainer.Name == composeService.Name {
 				container = &deploymentContainer
@@ -279,15 +236,12 @@ func (c *ComposeModel) updateServiceDeployment(req *commons.PluginRequest) error
 		}
 		// append if not empty
 		if container == nil {
-			container = &v13.Container{
+			container = &corev1.Container{
 				Name: composeService.Name,
 			}
 			c.logger.Debug("Deployment container not found. Creating one.", "object", container)
 		}
-		c.deployment.Spec.Template.Spec.HostAliases = append(c.deployment.Spec.Template.Spec.HostAliases, v13.HostAlias{
-			IP:        "127.0.0.1",
-			Hostnames: []string{container.Name},
-		})
+		c.deployment.Spec.Template.Spec.HostAliases[0].Hostnames = append(c.deployment.Spec.Template.Spec.HostAliases[0].Hostnames, container.Name)
 
 		imageValue, err := requestTemplatedValue(req, composeService.Image)
 		if err != nil || imageValue == "" {
@@ -296,9 +250,9 @@ func (c *ComposeModel) updateServiceDeployment(req *commons.PluginRequest) error
 		container.Image = imageValue
 		container.Command = composeService.Command
 
-		container.Env = make([]v13.EnvVar, 0)
+		container.Env = make([]corev1.EnvVar, 0)
 		for env, val := range composeService.Environment {
-			e := v13.EnvVar{
+			e := corev1.EnvVar{
 				Name:  env,
 				Value: "",
 			}
@@ -315,45 +269,81 @@ func (c *ComposeModel) updateServiceDeployment(req *commons.PluginRequest) error
 			return container.Env[i].Name < container.Env[j].Name
 		})
 
-		container.Ports = make([]v13.ContainerPort, 0)
+		container.Ports = make([]corev1.ContainerPort, 0)
 		for _, p := range composeService.Ports {
 			target := intstr.FromInt(int(p.Target))
-			proto := v13.ProtocolTCP
+			proto := corev1.ProtocolTCP
 
-			port := v13.ContainerPort{
+			port := corev1.ContainerPort{
 				Name:          target.String() + "-port",
 				ContainerPort: target.IntVal,
 				Protocol:      proto,
 			}
 			container.Ports = append(container.Ports, port)
 
-			c.service.Spec.Ports = append(c.service.Spec.Ports, v13.ServicePort{
+			c.service.Spec.Ports = append(c.service.Spec.Ports, corev1.ServicePort{
 				Name:       target.String() + "-port",
 				Protocol:   proto,
 				Port:       port.ContainerPort,
 				TargetPort: target,
 			})
 		}
+		sort.SliceStable(container.Ports, func(i, j int) bool {
+			return container.Ports[i].Name < container.Ports[j].Name
+		})
 
-		container.VolumeMounts = make([]v13.VolumeMount, 0)
-		for _, v := range composeService.Volumes {
-			pvc, found := c.persistentvolumeclaims[v.Source]
-			if !found {
-				// pvc not found, error
-				return errVolumeNotFound
+		container.VolumeMounts = make([]corev1.VolumeMount, 0)
+		if len(composeService.Volumes) > 0 {
+			if c.persistentvolumeclaim.GetName() == "" {
+				c.persistentvolumeclaim.Name = req.Name
+				c.persistentvolumeclaim.Namespace = req.Namespace
 			}
-			container.VolumeMounts = append(container.VolumeMounts, v13.VolumeMount{
-				Name:      pvc.Name,
+			c.persistentvolumeclaim.Labels = labels(req.Namespace)
+
+			c.persistentvolumeclaim.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{
+				corev1.ReadWriteOnce,
+			}
+			c.persistentvolumeclaim.Spec.Resources = corev1.ResourceRequirements{
+				Requests: map[corev1.ResourceName]resource.Quantity{
+					corev1.ResourceStorage: resource.MustParse(req.VolumeSize),
+				},
+			}
+
+			c.deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
+				{
+					Name: c.persistentvolumeclaim.GetName(),
+					VolumeSource: corev1.VolumeSource{
+						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+							ClaimName: c.persistentvolumeclaim.GetName(),
+							ReadOnly:  false,
+						},
+					},
+				},
+			}
+		}
+		for _, v := range composeService.Volumes {
+			container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
+				Name:      c.persistentvolumeclaim.GetName(),
 				ReadOnly:  false,
 				MountPath: v.Target,
-				SubPath:   "data",
+				SubPath:   v.Source + "-" + container.Name,
 			})
 		}
+		sort.SliceStable(container.VolumeMounts, func(i, j int) bool {
+			return container.VolumeMounts[i].Name < container.VolumeMounts[j].Name
+		})
 
 		containers = append(containers, *container)
 		c.logger.Debug("Deployment containers list", "containers", containers)
 	}
 	c.deployment.Spec.Template.Spec.Containers = containers
+
+	sort.SliceStable(c.deployment.Spec.Template.Spec.Containers, func(i, j int) bool {
+		return c.deployment.Spec.Template.Spec.Containers[i].Name < c.deployment.Spec.Template.Spec.Containers[j].Name
+	})
+	sort.SliceStable(c.deployment.Spec.Template.Spec.HostAliases[0].Hostnames, func(i, j int) bool {
+		return c.deployment.Spec.Template.Spec.HostAliases[0].Hostnames[i] < c.deployment.Spec.Template.Spec.HostAliases[0].Hostnames[j]
+	})
 	return nil
 }
 
