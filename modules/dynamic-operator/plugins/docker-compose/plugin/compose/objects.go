@@ -1,7 +1,6 @@
 package compose
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/compose-spec/compose-go/types"
 	"github.com/hashicorp/go-hclog"
@@ -18,7 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sort"
 	"strconv"
-	"text/template"
 )
 
 const (
@@ -48,6 +46,11 @@ var (
 		Version: "v1",
 		Kind:    "Ingress",
 	}
+	secretGVK = schema.GroupVersionKind{
+		Group:   "",
+		Version: "v1",
+		Kind:    "Secret",
+	}
 )
 
 var (
@@ -68,6 +71,7 @@ type ComposeModel struct {
 	persistentvolumeclaim *corev1.PersistentVolumeClaim
 	deployment            *appsv1.Deployment
 	ingress               *networkingv1.Ingress
+	secret                *corev1.Secret
 }
 
 // Reconcile method updates current request object to their required parameters
@@ -115,6 +119,9 @@ func (c *ComposeModel) Types() []map[schema.GroupVersionKind]client.Object {
 		{
 			ingressGVK: &networkingv1.Ingress{},
 		},
+		{
+			secretGVK: &corev1.Secret{},
+		},
 	}
 }
 
@@ -132,17 +139,21 @@ func NewComposeModel(p *types.Project, l hclog.Logger) *ComposeModel {
 		persistentvolumeclaim: &corev1.PersistentVolumeClaim{},
 		deployment:            &appsv1.Deployment{},
 		ingress:               &networkingv1.Ingress{},
+		secret:                &corev1.Secret{},
 	}
 }
 
 // objectsWithGVK packs all compose service dependant object into a single slice with all their GVKs
 func (c *ComposeModel) objectsWithGVK() []map[schema.GroupVersionKind]client.Object {
-	objects := []map[schema.GroupVersionKind]client.Object{
+	return []map[schema.GroupVersionKind]client.Object{
 		{
 			serviceAccountGVK: c.serviceaccount,
 		},
 		{
 			serviceGVK: c.service,
+		},
+		{
+			secretGVK: c.secret,
 		},
 		{
 			deploymentGVK: c.deployment,
@@ -154,36 +165,30 @@ func (c *ComposeModel) objectsWithGVK() []map[schema.GroupVersionKind]client.Obj
 			ingressGVK: c.ingress,
 		},
 	}
-
-	return objects
 }
 
 // fromCluster unpacks PluginRequest unstructured.Unstructured objects into client-go native structs
 func (c *ComposeModel) fromCluster(objects []*unstructured.Unstructured) error {
 	for _, obj := range objects {
+		var object client.Object
 		switch obj.GetKind() {
 		case "ServiceAccount":
-			if err := commons.FromUnstructured(obj.UnstructuredContent(), c.serviceaccount); err != nil {
-				return errors.Wrap(err, "error marshaling serviceaccount")
-			}
+			object = c.serviceaccount
 		case "Service":
-			if err := commons.FromUnstructured(obj.UnstructuredContent(), c.service); err != nil {
-				return errors.Wrap(err, "error marshaling service")
-			}
+			object = c.service
 		case "PersistentVolumeClaim":
-			if err := commons.FromUnstructured(obj.UnstructuredContent(), c.persistentvolumeclaim); err != nil {
-				return errors.Wrap(err, "error marshaling persistentvolumeclaim")
-			}
+			object = c.persistentvolumeclaim
 		case "Deployment":
-			if err := commons.FromUnstructured(obj.UnstructuredContent(), c.deployment); err != nil {
-				return errors.Wrap(err, "error marshaling deployment")
-			}
+			object = c.deployment
 		case "Ingress":
-			if err := commons.FromUnstructured(obj.UnstructuredContent(), c.ingress); err != nil {
-				return errors.Wrap(err, "error marshaling ingress")
-			}
+			object = c.ingress
+		case "Secret":
+			object = c.secret
 		default:
 			return errUnknownObject
+		}
+		if err := commons.FromUnstructured(obj.UnstructuredContent(), object); err != nil {
+			return errors.Wrapf(err, "error marshaling %s", obj.GetKind())
 		}
 	}
 	return nil
@@ -262,7 +267,8 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 		}
 		c.deployment.Spec.Template.Spec.HostAliases[0].Hostnames = append(c.deployment.Spec.Template.Spec.HostAliases[0].Hostnames, container.Name)
 
-		imageValue, err := requestTemplatedValue(req, composeService.Image)
+		vd := newViewData(req)
+		imageValue, err := vd.parse(composeService.Image)
 		if err != nil || imageValue == "" {
 			return errors.Wrapf(err, "invalid image value: %s", imageValue)
 		}
@@ -270,18 +276,39 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 		container.Command = composeService.Command
 
 		container.Env = make([]corev1.EnvVar, 0)
-		for env, val := range composeService.Environment {
+		for key, rawValue := range composeService.Environment {
 			e := corev1.EnvVar{
-				Name:  env,
-				Value: "",
+				Name: key,
 			}
-			if val != nil {
-				value, err := requestTemplatedValue(req, *val)
+			if rawValue != nil {
+				value, err := vd.parse(*rawValue)
 				if err != nil {
-					return errors.Wrapf(err, "invalid env `%s` value: %s", e.Name, value)
+					return errors.Wrapf(err, "invalid key `%s` value: %s", e.Name, value)
 				}
-				e.Value = value
+
+				if vd.isSecret(*rawValue) {
+					c.secret.Name = composeService.Name
+					// if key is not exists -> create a new
+					if _, ok := c.secret.Data[key]; !ok {
+						if c.secret.StringData == nil {
+							c.secret.StringData = make(map[string]string)
+						}
+						c.secret.StringData[key] = value
+					}
+
+					e.ValueFrom = &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: composeService.Name,
+							},
+							Key: key,
+						},
+					}
+				} else {
+					e.Value = value
+				}
 			}
+
 			container.Env = append(container.Env, e)
 		}
 		sort.Slice(container.Env, func(i, j int) bool {
@@ -473,34 +500,8 @@ func (c *ComposeModel) setApplicationAccessObjects(req *commons.PluginRequest) e
 	return nil
 }
 
-
 func labels(name string) map[string]string {
 	return map[string]string{
 		"docker-compose.service/name": name,
 	}
-}
-
-func requestTemplatedValue(req *commons.PluginRequest, value string) (string, error) {
-	tmpl, err := template.New("value").Parse(value)
-	if err != nil {
-		return "", errors.Wrap(err, "error parsing template")
-	}
-
-	renderValues := &commons.PluginRequest{
-		Name:       req.Name,
-		Namespace:  req.Namespace,
-		Host:       req.Host,
-		Replicas:   req.Replicas,
-		VolumeSize: req.VolumeSize,
-		Version:    req.Version,
-		TLSEnabled: req.TLSEnabled,
-		Limits:     req.Limits,
-		Parameters: req.Parameters,
-		Objects:    nil,
-	}
-	data := &bytes.Buffer{}
-	if err := tmpl.Execute(data, renderValues); err != nil {
-		return "", errors.Wrap(err, "error rendering value")
-	}
-	return data.String(), nil
 }
