@@ -10,6 +10,13 @@ rules:
   - ""
   resources:
   - namespaces
+  verbs:
+  - delete
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
   - services
   verbs:
   - create
@@ -38,7 +45,18 @@ rules:
   resources:
   - pods
   verbs:
+  - create
+  - delete
   - deletecollection
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pvc
+  verbs:
+  - list
 - apiGroups:
   - ""
   resources:
@@ -75,6 +93,58 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - kuberlogic.com
+  resources:
+  - kuberlogicservicebackups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kuberlogic.com
+  resources:
+  - kuberlogicservicebackups/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - kuberlogic.com
+  resources:
+  - kuberlogicservicebackups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - kuberlogic.com
+  resources:
+  - kuberlogicservicerestores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kuberlogic.com
+  resources:
+  - kuberlogicservicerestores/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - kuberlogic.com
+  resources:
+  - kuberlogicservicerestores/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - kuberlogic.com
   resources:
@@ -124,4 +194,39 @@ rules:
   - list
   - patch
   - update
+  - watch
+- apiGroups:
+  - velero.io
+  resources:
+  - backups
+  - backupstoragelocations
+  - deletebackuprequests
+  - deletebackuprequests/finalizers
+  - restores
+  verbs:
+  - create
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - velero.io
+  resources:
+  - backups
+  - deletebackuprequests
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - velero.io
+  resources:
+  - deletebackuprequests/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - velero.io
+  resources:
+  - restores
+  verbs:
+  - list
   - watch

@@ -43,7 +43,8 @@ var _ = Describe("KuberlogicserviceEnv Manager", func() {
 		}
 
 		It("Should prepare environment", func() {
-			envMgr, err := SetupEnv(kls, client, cfg, context.TODO())
+			envMgr := New(client, kls, cfg)
+			err := envMgr.SetupEnv(context.TODO())
 			Expect(err).Should(BeNil())
 			Expect(envMgr.NamespaceName).Should(Equal(kls.Name))
 

@@ -18,7 +18,17 @@ secretGenerator:
   name: apiserver
 - behavior: create
   literals:
-    - chargebee_site=
-    - chargebee_key=
-    - kuberlogic_domain=example.com
+  - chargebee_site=
+  - chargebee_key=
+  - kuberlogic_domain=example.com
   name: chargebee-integration
+images:
+- name: apiserver
+  newName: quay.io/kuberlogic/dynamic-apiserver
+  newTag: 0.0.8
+- name: chargebee-integration
+  newName: quay.io/kuberlogic/chargebee-integration
+  newTag: 0.0.8
+- name: controller
+  newName: quay.io/kuberlogic/dynamic-operator
+  newTag: 0.0.8

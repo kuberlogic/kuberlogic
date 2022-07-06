@@ -17,4 +17,22 @@ resources:
     defaulting: true
     validation: true
     webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kuberlogic.com
+  group: kuberlogic.com
+  kind: KuberlogicServiceBackup
+  path: github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kuberlogic.com
+  group: kuberlogic.com
+  kind: KuberlogicServiceRestore
+  path: github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"

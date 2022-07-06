@@ -61,7 +61,7 @@ func HandlePanic(log logr.Logger) {
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 
 func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := logger.FromContext(ctx).WithValues("kuberlogicservicetype", req.String())
+	log := logger.FromContext(ctx).WithValues("kuberlogicservicetype", req.String(), "run", time.Now().UnixNano())
 	log.Info("Reconciliation started")
 	defer HandlePanic(log)
 
@@ -73,11 +73,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	err := r.Get(ctx, req.NamespacedName, kls)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
 			log.Info("object not found", "key", req.NamespacedName)
-
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
@@ -85,9 +81,15 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
-	log.Info("verifying KuberLogicService environment")
-	env, err := kuberlogicserviceenv.SetupEnv(kls, r.Client, r.Cfg, ctx)
-	if err != nil {
+	backupRunning, _ := kls.BackupRunning()
+	restoreRunning, _ := kls.RestoreRunning()
+	if backupRunning || restoreRunning {
+		log.Info("backup or restore procedure is requested. Skipping reconciliation.")
+		return ctrl.Result{}, nil
+	}
+
+	env := kuberlogicserviceenv.New(r.Client, kls, r.Cfg)
+	if err := env.SetupEnv(ctx); err != nil {
 		log.Error(err, "error setting up KuberlogicService environment")
 		return ctrl.Result{}, err
 	}
@@ -175,10 +177,16 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	// pause service when requested
-	if kls.Paused() {
+	if kls.PauseRequested() {
 		if err := env.PauseService(ctx); err != nil {
 			return ctrl.Result{}, errors.Wrap(err, "error pausing service")
 		}
+		kls.MarkPaused()
+	} else if kls.Resumed() {
+		if err := env.ResumeService(ctx); err != nil {
+			return ctrl.Result{}, errors.Wrap(err, "error resuming service")
+		}
+		kls.MarkResumed()
 	}
 
 	// expose service
@@ -222,7 +230,6 @@ func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager, objects
 
 	builder.Owns(&v1.Namespace{})
 	builder.Owns(&v12.NetworkPolicy{})
-	builder.Owns(&v1.ResourceQuota{})
 	builder.Owns(&v1.Secret{})
 	return builder.Complete(r)
 }

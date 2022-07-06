@@ -12,8 +12,11 @@ import (
 )
 
 const (
-	readyCondType        = "Ready"
-	clusterUnknownStatus = "Unknown"
+	readyCondType          = "Ready"
+	clusterUnknownStatus   = "Unknown"
+	pausedCondType         = "Paused"
+	backupRunningCondType  = "BackupRunning"
+	restoreRunningCondType = "RestoreRunning"
 )
 
 // KuberLogicServiceStatus defines the observed state of KuberLogicService
@@ -25,6 +28,11 @@ type KuberLogicServiceStatus struct {
 	PurgeDate string `json:"purgeDate,omitempty"`
 
 	AccessEndpoint string `json:"access,omitempty"`
+
+	// a service is about to be restored or restore is in progress
+	RestoreRequested bool `json:"restoreRequested,omitempty"`
+	// a service is ready for restore process
+	ReadyForRestore bool `json:"readyForRestore,omitempty"`
 }
 
 type KuberLogicServiceSpec struct {
@@ -55,7 +63,7 @@ type KuberLogicServiceSpec struct {
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type == 'Ready')].",description="The cluster readiness"
+// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type == 'Ready')].status",description="The cluster readiness"
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[?(@.type == 'Ready')].reason",description="The cluster status"
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`,description="The cluster type"
 // +kubebuilder:printcolumn:name="Replicas",type=integer,JSONPath=`.spec.replicas`,description="The number of desired replicas"
@@ -131,6 +139,53 @@ func (in *KuberLogicService) IsReady() (bool, string) {
 		return false, clusterUnknownStatus
 	}
 	return c.Status == metav1.ConditionTrue, c.Reason
+}
+
+func (in *KuberLogicService) MarkPaused() {
+	in.setConditionStatus(pausedCondType, true, pausedCondType, pausedCondType)
+}
+
+func (in *KuberLogicService) MarkResumed() {
+	in.setConditionStatus(pausedCondType, false, pausedCondType, pausedCondType)
+}
+
+// PauseRequested indicates that a kls pause is requested
+func (in *KuberLogicService) PauseRequested() bool {
+	c := meta.FindStatusCondition(in.Status.Conditions, pausedCondType)
+	return in.Spec.Paused && (c == nil || c.Status == metav1.ConditionFalse)
+}
+
+// Resumed indicates that a kls was paused and now is resumed by setting in.Spec.Paused false
+func (in *KuberLogicService) Resumed() bool {
+	c := meta.FindStatusCondition(in.Status.Conditions, pausedCondType)
+	if c == nil {
+		return false
+	}
+	return c.Status == metav1.ConditionTrue && !in.Spec.Paused
+}
+
+func (in *KuberLogicService) RestoreRunning() (bool, string) {
+	c := meta.FindStatusCondition(in.Status.Conditions, restoreRunningCondType)
+	if c == nil {
+		return false, ""
+	}
+	return c.Status == metav1.ConditionTrue, c.Message
+}
+
+func (in *KuberLogicService) SetRestoreStatus(klr *KuberlogicServiceRestore) {
+	in.setConditionStatus(restoreRunningCondType, !(klr.IsFailed() || klr.IsSuccessful()), klr.Name, restoreRunningCondType)
+}
+
+func (in *KuberLogicService) BackupRunning() (bool, string) {
+	c := meta.FindStatusCondition(in.Status.Conditions, backupRunningCondType)
+	if c == nil {
+		return false, ""
+	}
+	return c.Status == metav1.ConditionTrue, c.Message
+}
+
+func (in *KuberLogicService) SetBackupStatus(klb *KuberlogicServiceBackup) {
+	in.setConditionStatus(backupRunningCondType, !(klb.IsFailed() || klb.IsSuccessful()), klb.Name, backupRunningCondType)
 }
 
 // KuberLogicServiceList contains a list of KuberLogicService

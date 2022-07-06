@@ -6,59 +6,30 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
-  name: kuberlogicservices.kuberlogic.com
+  name: kuberlogicservicerestores.kuberlogic.com
 spec:
   group: kuberlogic.com
   names:
     categories:
     - kuberlogic
-    kind: KuberLogicService
-    listKind: KuberLogicServiceList
-    plural: kuberlogicservices
+    kind: KuberlogicServiceRestore
+    listKind: KuberlogicServiceRestoreList
+    plural: kuberlogicservicerestores
     shortNames:
-    - kls
-    singular: kuberlogicservice
+    - klr
+    singular: kuberlogicservicerestore
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - description: The cluster readiness
-      jsonPath: .status.conditions[?(@.type == 'Ready')].status
-      name: Ready
-      type: string
-    - description: The cluster status
-      jsonPath: .status.conditions[?(@.type == 'Ready')].reason
+    - description: Restore status
+      jsonPath: .status.phase
       name: Status
       type: string
-    - description: The cluster type
-      jsonPath: .spec.type
-      name: Type
-      type: string
-    - description: The number of desired replicas
-      jsonPath: .spec.replicas
-      name: Replicas
-      type: integer
-    - description: Volume size for the cluster
-      jsonPath: .spec.volumeSize
-      name: Volume
-      type: string
-    - description: CPU limits
-      jsonPath: .spec.limits.cpu
-      name: CPU Limits
-      type: string
-    - description: Memory limits
-      jsonPath: .spec.limits.memory
-      name: Memory Limits
-      type: string
-    - description: Access endpoint
-      jsonPath: .status.access
-      name: Endpoint
-      type: string
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:
+        description: KuberlogicServiceRestore is the Schema for the kuberlogicservicerestores
+          API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -73,51 +44,18 @@ spec:
           metadata:
             type: object
           spec:
+            description: KuberlogicServiceRestoreSpec defines the desired state of
+              KuberlogicServiceRestore
             properties:
-              TLSEnabled:
-                type: boolean
-              advanced:
-                description: any advanced configuration is supported
-                x-kubernetes-preserve-unknown-fields: true
-              domain:
-                pattern: '[a-z]([-a-z0-9]*[a-z0-9])?'
-                type: string
-              limits:
-                additionalProperties:
-                  anyOf:
-                  - type: integer
-                  - type: string
-                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                  x-kubernetes-int-or-string: true
-                description: Resources (requests/limits)
-                type: object
-              paused:
-                default: false
-                description: Paused field allows to stop all service related containers
-                type: boolean
-              replicas:
-                description: Amount of replicas
-                format: int32
-                maximum: 5
-                type: integer
-              type:
-                description: Type of the cluster
-                type: string
-              version:
-                description: '2 or 3 digits: 5 or 5.7 or 5.7.31'
-                pattern: ^\d+[\.\d+]*$
-                type: string
-              volumeSize:
-                description: Volume size
+              kuberlogicServiceBackup:
                 type: string
             required:
-            - type
+            - kuberlogicServiceBackup
             type: object
           status:
-            description: KuberLogicServiceStatus defines the observed state of KuberLogicService
+            description: KuberlogicServiceRestoreStatus defines the observed state
+              of KuberlogicServiceRestore
             properties:
-              access:
-                type: string
               conditions:
                 items:
                   description: "Condition contains details for one aspect of the current
@@ -187,19 +125,8 @@ spec:
                   - type
                   type: object
                 type: array
-              namespace:
-                description: namespace that contains service resources
+              phase:
                 type: string
-              purgeDate:
-                description: date when the namespace and all related resources will
-                  be purged
-                type: string
-              readyForRestore:
-                description: a service is ready for restore process
-                type: boolean
-              restoreRequested:
-                description: a service is about to be restored or restore is in progress
-                type: boolean
             required:
             - conditions
             type: object
