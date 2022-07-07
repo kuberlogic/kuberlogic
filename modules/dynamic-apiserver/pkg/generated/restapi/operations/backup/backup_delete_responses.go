@@ -137,6 +137,11 @@ const BackupDeleteNotFoundCode int = 404
 swagger:response backupDeleteNotFound
 */
 type BackupDeleteNotFound struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *models.Error `json:"body,omitempty"`
 }
 
 // NewBackupDeleteNotFound creates BackupDeleteNotFound with default headers values
@@ -145,12 +150,27 @@ func NewBackupDeleteNotFound() *BackupDeleteNotFound {
 	return &BackupDeleteNotFound{}
 }
 
+// WithPayload adds the payload to the backup delete not found response
+func (o *BackupDeleteNotFound) WithPayload(payload *models.Error) *BackupDeleteNotFound {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the backup delete not found response
+func (o *BackupDeleteNotFound) SetPayload(payload *models.Error) {
+	o.Payload = payload
+}
+
 // WriteResponse to the client
 func (o *BackupDeleteNotFound) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
-	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
-
 	rw.WriteHeader(404)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
 }
 
 // BackupDeleteUnprocessableEntityCode is the HTTP code returned for type BackupDeleteUnprocessableEntity

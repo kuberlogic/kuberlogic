@@ -161,7 +161,10 @@ func init() {
             "description": "bad permissions"
           },
           "404": {
-            "description": "item not found"
+            "description": "item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "422": {
             "description": "bad validation"
@@ -297,7 +300,10 @@ func init() {
             "description": "bad permissions"
           },
           "404": {
-            "description": "item not found"
+            "description": "item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "422": {
             "description": "bad validation"
@@ -977,7 +983,10 @@ func init() {
             "description": "bad permissions"
           },
           "404": {
-            "description": "item not found"
+            "description": "item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "422": {
             "description": "bad validation"
@@ -1132,7 +1141,10 @@ func init() {
             "description": "bad permissions"
           },
           "404": {
-            "description": "item not found"
+            "description": "item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "422": {
             "description": "bad validation"

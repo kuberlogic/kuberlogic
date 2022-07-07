@@ -15,7 +15,9 @@ func (srv *Service) BackupDeleteHandler(params apiBackup.BackupDeleteParams, _ *
 		Name(params.BackupID).
 		Do(ctx).
 		Error(); errors.IsNotFound(err) {
-		return apiBackup.NewBackupDeleteNotFound()
+		return apiBackup.NewBackupDeleteNotFound().WithPayload(&models.Error{
+			Message: "backup not found: " + params.BackupID,
+		})
 	} else if err != nil {
 		srv.log.Errorw("error deleting klb", "error", err, "name", params.BackupID)
 		return apiBackup.NewBackupDeleteServiceUnavailable().WithPayload(&models.Error{

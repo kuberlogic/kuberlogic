@@ -109,6 +109,8 @@ paths:
           description: bad permissions
         404:
           description: item not found
+          schema:
+            $ref: "#/definitions/Error"
         422:
           description: bad validation
         503:
@@ -199,6 +201,8 @@ paths:
           description: bad permissions
         404:
           description: item not found
+          schema:
+            $ref: "#/definitions/Error"
         422:
           description: bad validation
         503:

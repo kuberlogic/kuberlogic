@@ -3,7 +3,7 @@ package cli
 import (
 	client2 "github.com/go-openapi/runtime/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/service"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/backup"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/viper"
 	"strconv"
@@ -11,22 +11,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// makeServiceListCmd returns a cmd to handle operation serviceList
-func makeServiceListCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
+// makeBackupListCmd returns a cmd to handle operation backupList
+func makeBackupListCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "serviceList",
-		Short:   `List of service objects`,
+		Use:     "backupList",
+		Short:   `List of backup objects`,
 		Aliases: []string{"list"},
-		RunE:    runServiceList(apiClientFunc),
+		RunE:    runBackupList(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(subscription_id_flag, "", "subscription id to filter by")
-
+	_ = cmd.PersistentFlags().String(service_id_flag, "", "service id to filter by")
 	return cmd
 }
 
-// runServiceList uses cmd flags to call endpoint api
-func runServiceList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *cobra.Command, args []string) error {
+// runBackupList uses cmd flags to call endpoint api
+func runBackupList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		var err error
 
@@ -35,10 +34,16 @@ func runServiceList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 			return err
 		}
 
-		params := service.NewServiceListParams()
+		params := backup.NewBackupListParams()
+
+		if value, err := getString(cmd, service_id_flag); err != nil {
+			return err
+		} else if value != nil {
+			params.ServiceID = value
+		}
 
 		var formatResponse format
-		if value, err := getString(cmd, "format"); err != nil {
+		if value, err := getString(cmd, format_flag); err != nil {
 			return err
 		} else if value != nil {
 			formatResponse = format(*value)
@@ -49,7 +54,7 @@ func runServiceList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 			return nil
 		}
 
-		response, err := apiClient.Service.ServiceList(params,
+		response, err := apiClient.Backup.BackupList(params,
 			client2.APIKeyAuth("X-Token", "header", viper.GetString("token")))
 		if err != nil {
 			return humanizeError(err)
@@ -58,13 +63,11 @@ func runServiceList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 		payload := response.GetPayload()
 		if isDefaultPrintFormat(formatResponse) {
 			table := tablewriter.NewWriter(cmd.OutOrStdout())
-			table.SetHeader([]string{"№", "ID", "Subscription ID", "Type", "Replica", "Version", "Domain", "Status", "Endpoint"})
+			table.SetHeader([]string{"№", "ID", "Service ID", "Created", "Status"})
 			table.SetBorder(false)
 			for i, item := range payload {
 				table.Append([]string{
-					strconv.Itoa(i), *item.ID, item.Subscription, *item.Type, strconv.Itoa(int(*item.Replicas)),
-					item.Version, item.Domain, item.Status, item.Endpoint,
-				})
+					strconv.Itoa(i), item.ID, item.ServiceID, item.CreatedAt.String(), item.Status})
 			}
 			table.Render()
 		} else {

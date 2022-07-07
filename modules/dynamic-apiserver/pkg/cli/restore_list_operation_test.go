@@ -17,35 +17,20 @@ import (
 	"testing"
 )
 
-func TestListFormatJson(t *testing.T) {
+func TestRestoreListFormatJson(t *testing.T) {
 	// make own http client
 	expected := []map[string]interface{}{
 		{
 			"created_at": "2022-05-10T16:00:53.000Z",
-			"limits": map[string]interface{}{
-				"cpu":    "250m",
-				"memory": "256Mi",
-			},
 			"id":         "test-1",
-			"replicas":   float64(0),
 			"status":     "Unknown",
-			"type":       "postgresql",
-			"version":    "13",
-			"volumeSize": "1Gi",
-			"endpoint":   "127.0.0.1",
+			"backup_id":  "test-1",
 		},
 		{
 			"created_at": "2022-05-10T16:00:53.000Z",
-			"limits": map[string]interface{}{
-				"cpu":    "250m",
-				"memory": "256Mi",
-			},
 			"id":         "test-2",
-			"replicas":   float64(0),
 			"status":     "Unknown",
-			"type":       "postgresql",
-			"version":    "13",
-			"volumeSize": "1Gi",
+			"backup_id":  "test-2",
 		},
 	}
 	client := makeTestClient(200, expected)
@@ -56,7 +41,7 @@ func TestListFormatJson(t *testing.T) {
 
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
-	cmd.SetArgs([]string{"service", "list",
+	cmd.SetArgs([]string{"restore", "list",
 		"--format", "json",
 	})
 	err = cmd.Execute()
@@ -78,7 +63,7 @@ func TestListFormatJson(t *testing.T) {
 	}
 }
 
-func TestListEmptyFormatJson(t *testing.T) {
+func TestRestoreListEmptyFormatJson(t *testing.T) {
 	// make own http client
 	var expected []map[string]interface{}
 	client := makeTestClient(200, expected)
@@ -89,7 +74,7 @@ func TestListEmptyFormatJson(t *testing.T) {
 
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
-	cmd.SetArgs([]string{"service", "list",
+	cmd.SetArgs([]string{"restore", "list",
 		"--format", "json",
 	})
 	err = cmd.Execute()
@@ -111,34 +96,20 @@ func TestListEmptyFormatJson(t *testing.T) {
 	}
 }
 
-func TestListFormatYaml(t *testing.T) {
+func TestRestoreListFormatYaml(t *testing.T) {
 	// make own http client
 	expected := []map[string]interface{}{
 		{
 			"created_at": "2022-05-10T16:00:53.000Z",
-			"limits": map[string]interface{}{
-				"cpu":    "250m",
-				"memory": "256Mi",
-			},
 			"id":         "test-1",
-			"replicas":   float64(0),
 			"status":     "Unknown",
-			"type":       "postgresql",
-			"version":    "13",
-			"volumeSize": "1Gi",
+			"backup_id":  "test-1",
 		},
 		{
 			"created_at": "2022-05-10T16:00:53.000Z",
-			"limits": map[string]interface{}{
-				"cpu":    "250m",
-				"memory": "256Mi",
-			},
 			"id":         "test-2",
-			"replicas":   float64(0),
 			"status":     "Unknown",
-			"type":       "postgresql",
-			"version":    "13",
-			"volumeSize": "1Gi",
+			"backup_id":  "test-2",
 		},
 	}
 	client := makeTestClient(200, expected)
@@ -149,7 +120,7 @@ func TestListFormatYaml(t *testing.T) {
 
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
-	cmd.SetArgs([]string{"service", "list",
+	cmd.SetArgs([]string{"restore", "list",
 		"--format", "yaml",
 	})
 	err = cmd.Execute()
@@ -171,40 +142,20 @@ func TestListFormatYaml(t *testing.T) {
 	}
 }
 
-func TestListFormatStr(t *testing.T) {
+func TestRestoreListFormatStr(t *testing.T) {
 	// make own http client
 	expected := []map[string]interface{}{
 		{
 			"created_at": "2022-05-10T16:00:53.000Z",
-			"limits": map[string]interface{}{
-				"cpu":    "250m",
-				"memory": "256Mi",
-			},
-			"id":           "test-1",
-			"subscription": "test1",
-			"replicas":     float64(0),
-			"status":       "Unknown",
-			"type":         "postgresql",
-			"domain":       "example.com",
-			"version":      "13",
-			"volumeSize":   "1Gi",
-			"endpoint":     "",
+			"id":         "test-1",
+			"status":     "Unknown",
+			"backup_id":  "test-1",
 		},
 		{
 			"created_at": "2022-05-10T16:00:53.000Z",
-			"limits": map[string]interface{}{
-				"cpu":    "250m",
-				"memory": "256Mi",
-			},
-			"id":           "test-2",
-			"subscription": "test2",
-			"replicas":     float64(0),
-			"status":       "Unknown",
-			"type":         "postgresql",
-			"version":      "13",
-			"domain":       "example.org",
-			"volumeSize":   "1Gi",
-			"endpoint":     "",
+			"id":         "test-2",
+			"status":     "Unknown",
+			"backup_id":  "test-2",
 		},
 	}
 	client := makeTestClient(200, expected)
@@ -215,7 +166,7 @@ func TestListFormatStr(t *testing.T) {
 
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
-	cmd.SetArgs([]string{"service", "list"})
+	cmd.SetArgs([]string{"restore", "list"})
 	err = cmd.Execute()
 	if err != nil {
 		t.Fatal(err)
@@ -226,19 +177,15 @@ func TestListFormatStr(t *testing.T) {
 	}
 	buff := bytes.NewBufferString("")
 	table := tablewriter.NewWriter(buff)
-	table.SetHeader([]string{"№", "ID", "Subscription ID", "Type", "Replica", "Version", "Domain", "Status", "Endpoint"})
+	table.SetHeader([]string{"№", "ID", "Backup ID", "Created", "Status"})
 	table.SetBorder(false)
 	for i, item := range expected {
 		table.Append([]string{
 			strconv.Itoa(i),
 			item["id"].(string),
-			item["subscription"].(string),
-			item["type"].(string),
-			strconv.Itoa(int(item["replicas"].(float64))),
-			item["version"].(string),
-			item["domain"].(string),
+			item["backup_id"].(string),
+			item["created_at"].(string),
 			item["status"].(string),
-			item["endpoint"].(string),
 		})
 	}
 	table.Render()

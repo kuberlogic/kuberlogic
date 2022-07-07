@@ -56,6 +56,8 @@ spec:
             description: KuberlogicServiceBackupStatus defines the observed state
               of KuberlogicServiceBackup
             properties:
+              FailedAttempts:
+                type: integer
               conditions:
                 items:
                   description: "Condition contains details for one aspect of the current

@@ -2,13 +2,12 @@ package cli
 
 import (
 	"fmt"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 	"log"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
-
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 
 	"github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
@@ -92,12 +91,14 @@ func MakeRootCmd(httpClient *http.Client) (*cobra.Command, error) {
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "do not send the request to server")
 
 	var formatResponse format
-	rootCmd.PersistentFlags().Var(&formatResponse, "format", "Format response value: json, yaml or string. (default: string)")
+	rootCmd.PersistentFlags().Var(&formatResponse, format_flag, "Format response value: json, yaml or string. (default: string)")
 
 	// register security flags
 	// add all operation groups
 	rootCmd.AddCommand(
 		makeServiceCmd(makeClientClosure(httpClient)),
+		makeBackupCmd(makeClientClosure(httpClient)),
+		makeRestoreCmd(makeClientClosure(httpClient)),
 	)
 
 	// add cobra completion
@@ -133,14 +134,43 @@ func initViperConfigs() {
 func makeServiceCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
 	operationGroupServiceCmd := &cobra.Command{
 		Use:  "service",
-		Long: ``,
+		Long: `Service related operations`,
 	}
 	operationGroupServiceCmd.AddCommand(
 		makeServiceAddCmd(apiClientFunc),
 		makeServiceEditCmd(apiClientFunc),
 		makeServiceDeleteCmd(apiClientFunc),
 		makeServiceListCmd(apiClientFunc),
+		makeServiceBackupCmd(apiClientFunc),
 	)
 
 	return operationGroupServiceCmd
+}
+
+func makeBackupCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
+	operationGroupBackupCmd := &cobra.Command{
+		Use:   "backup",
+		Short: "Backups related operations",
+	}
+
+	operationGroupBackupCmd.AddCommand(
+		makeBackupDeleteCmd(apiClientFunc),
+		makeBackupListCmd(apiClientFunc),
+		makeBackupRestoreCmd(apiClientFunc),
+	)
+
+	return operationGroupBackupCmd
+}
+
+func makeRestoreCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
+	operationGroupRestoreCmd := &cobra.Command{
+		Use:   "restore",
+		Short: "Restores related operations",
+	}
+
+	operationGroupRestoreCmd.AddCommand(
+		makeRestoreDeleteCmd(apiClientFunc),
+		makeRestoreListCmd(apiClientFunc),
+	)
+	return operationGroupRestoreCmd
 }
