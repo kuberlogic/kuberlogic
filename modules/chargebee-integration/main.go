@@ -20,21 +20,25 @@ func main() {
 
 	logger := initLogger()
 
-	for _, value := range []string{
-		"KUBERLOGIC_APISERVER_HOST",
-		"KUBERLOGIC_APISERVER_SCHEME",
-		"KUBERLOGIC_APISERVER_TOKEN",
-		"CHARGEBEE_SITE",
-		"CHARGEBEE_KEY",
-		"KUBERLOGIC_DOMAIN",
-		"KUBERLOGIC_TYPE",
-	} {
-		initEnv(logger, value)
+	if cSite := viper.GetString("CHARGEBEE_SITE"); cSite != "" {
+		for _, value := range []string{
+			"KUBERLOGIC_APISERVER_HOST",
+			"KUBERLOGIC_APISERVER_SCHEME",
+			"KUBERLOGIC_APISERVER_TOKEN",
+			"CHARGEBEE_SITE",
+			"CHARGEBEE_KEY",
+			"KUBERLOGIC_DOMAIN",
+			"KUBERLOGIC_TYPE",
+		} {
+			initEnv(logger, value)
+		}
+
+		chargebee.Configure(viper.GetString("CHARGEBEE_KEY"), cSite)
+		http.HandleFunc("/chanrgebee-webhook", app.WebhookHandler(logger))
+	} else {
+		logger.Warn("ChargeBee site is not set. Requests will not be handled.")
 	}
 
-	chargebee.Configure(viper.GetString("CHARGEBEE_KEY"), viper.GetString("CHARGEBEE_SITE"))
-
-	http.HandleFunc("/chanrgebee-webhook", app.WebhookHandler(logger))
 	addr := "0.0.0.0:4242"
 	logger.Infof("Listening on %s\n", addr)
 	logger.Fatal(http.ListenAndServe(addr, nil))
