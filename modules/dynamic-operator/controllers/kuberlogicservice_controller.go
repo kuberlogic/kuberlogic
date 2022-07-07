@@ -178,6 +178,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	// pause service when requested
 	if kls.PauseRequested() {
+
 		if err := env.PauseService(ctx); err != nil {
 			return ctrl.Result{}, errors.Wrap(err, "error pausing service")
 		}

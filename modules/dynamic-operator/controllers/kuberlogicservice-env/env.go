@@ -145,6 +145,7 @@ func New(c client.Client, kls *kuberlogiccomv1alpha1.KuberLogicService, cfg *con
 	return &EnvironmentManager{
 		Client: c,
 
+
 		NamespaceName: kls.GetName(),
 
 		cfg: cfg,

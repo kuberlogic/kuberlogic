@@ -326,6 +326,7 @@ var _ = Describe("docker-compose model", func() {
 				}))
 			})
 		})
+
 		Context("When Reconciling with two volumes", func() {
 			Context("When reconciling project with valid template", func() {
 				testProject := &types.Project{
