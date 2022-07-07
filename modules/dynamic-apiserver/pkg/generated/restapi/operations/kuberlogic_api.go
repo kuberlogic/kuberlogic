@@ -20,6 +20,8 @@ import (
 	"github.com/go-openapi/swag"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/backup"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/restore"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 )
 
@@ -45,6 +47,24 @@ func NewKuberlogicAPI(spec *loads.Document) *KuberlogicAPI {
 
 		JSONProducer: runtime.JSONProducer(),
 
+		BackupBackupAddHandler: backup.BackupAddHandlerFunc(func(params backup.BackupAddParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation backup.BackupAdd has not yet been implemented")
+		}),
+		BackupBackupDeleteHandler: backup.BackupDeleteHandlerFunc(func(params backup.BackupDeleteParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation backup.BackupDelete has not yet been implemented")
+		}),
+		BackupBackupListHandler: backup.BackupListHandlerFunc(func(params backup.BackupListParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation backup.BackupList has not yet been implemented")
+		}),
+		RestoreRestoreAddHandler: restore.RestoreAddHandlerFunc(func(params restore.RestoreAddParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation restore.RestoreAdd has not yet been implemented")
+		}),
+		RestoreRestoreDeleteHandler: restore.RestoreDeleteHandlerFunc(func(params restore.RestoreDeleteParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation restore.RestoreDelete has not yet been implemented")
+		}),
+		RestoreRestoreListHandler: restore.RestoreListHandlerFunc(func(params restore.RestoreListParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation restore.RestoreList has not yet been implemented")
+		}),
 		ServiceServiceAddHandler: service.ServiceAddHandlerFunc(func(params service.ServiceAddParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceAdd has not yet been implemented")
 		}),
@@ -110,6 +130,18 @@ type KuberlogicAPI struct {
 	// APIAuthorizer provides access control (ACL/RBAC/ABAC) by providing access to the request and authenticated principal
 	APIAuthorizer runtime.Authorizer
 
+	// BackupBackupAddHandler sets the operation handler for the backup add operation
+	BackupBackupAddHandler backup.BackupAddHandler
+	// BackupBackupDeleteHandler sets the operation handler for the backup delete operation
+	BackupBackupDeleteHandler backup.BackupDeleteHandler
+	// BackupBackupListHandler sets the operation handler for the backup list operation
+	BackupBackupListHandler backup.BackupListHandler
+	// RestoreRestoreAddHandler sets the operation handler for the restore add operation
+	RestoreRestoreAddHandler restore.RestoreAddHandler
+	// RestoreRestoreDeleteHandler sets the operation handler for the restore delete operation
+	RestoreRestoreDeleteHandler restore.RestoreDeleteHandler
+	// RestoreRestoreListHandler sets the operation handler for the restore list operation
+	RestoreRestoreListHandler restore.RestoreListHandler
 	// ServiceServiceAddHandler sets the operation handler for the service add operation
 	ServiceServiceAddHandler service.ServiceAddHandler
 	// ServiceServiceDeleteHandler sets the operation handler for the service delete operation
@@ -201,6 +233,24 @@ func (o *KuberlogicAPI) Validate() error {
 		unregistered = append(unregistered, "XTokenAuth")
 	}
 
+	if o.BackupBackupAddHandler == nil {
+		unregistered = append(unregistered, "backup.BackupAddHandler")
+	}
+	if o.BackupBackupDeleteHandler == nil {
+		unregistered = append(unregistered, "backup.BackupDeleteHandler")
+	}
+	if o.BackupBackupListHandler == nil {
+		unregistered = append(unregistered, "backup.BackupListHandler")
+	}
+	if o.RestoreRestoreAddHandler == nil {
+		unregistered = append(unregistered, "restore.RestoreAddHandler")
+	}
+	if o.RestoreRestoreDeleteHandler == nil {
+		unregistered = append(unregistered, "restore.RestoreDeleteHandler")
+	}
+	if o.RestoreRestoreListHandler == nil {
+		unregistered = append(unregistered, "restore.RestoreListHandler")
+	}
 	if o.ServiceServiceAddHandler == nil {
 		unregistered = append(unregistered, "service.ServiceAddHandler")
 	}
@@ -315,6 +365,30 @@ func (o *KuberlogicAPI) initHandlerCache() {
 		o.handlers = make(map[string]map[string]http.Handler)
 	}
 
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/backups"] = backup.NewBackupAdd(o.context, o.BackupBackupAddHandler)
+	if o.handlers["DELETE"] == nil {
+		o.handlers["DELETE"] = make(map[string]http.Handler)
+	}
+	o.handlers["DELETE"]["/backups/{BackupID}"] = backup.NewBackupDelete(o.context, o.BackupBackupDeleteHandler)
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/backups"] = backup.NewBackupList(o.context, o.BackupBackupListHandler)
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/restores"] = restore.NewRestoreAdd(o.context, o.RestoreRestoreAddHandler)
+	if o.handlers["DELETE"] == nil {
+		o.handlers["DELETE"] = make(map[string]http.Handler)
+	}
+	o.handlers["DELETE"]["/restores/{RestoreID}"] = restore.NewRestoreDelete(o.context, o.RestoreRestoreDeleteHandler)
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/restores"] = restore.NewRestoreList(o.context, o.RestoreRestoreListHandler)
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}

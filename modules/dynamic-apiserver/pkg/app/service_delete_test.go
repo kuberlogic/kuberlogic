@@ -14,7 +14,7 @@ import (
 func TestServiceDeleteOK(t *testing.T) {
 	expectedObj := &cloudlinuxv1alpha1.KuberLogicService{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "simple",
+			Name: "simple1",
 		},
 		Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
 			Type:     "postgresql",

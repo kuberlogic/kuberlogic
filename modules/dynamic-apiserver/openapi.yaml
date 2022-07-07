@@ -26,6 +26,186 @@ securityDefinitions:
 security:
   - key: [ ]
 paths:
+  /backups/:
+    get:
+      tags:
+        - backup
+      summary: list backups
+      description: List backup objects
+      operationId: backupList
+      parameters:
+        - $ref: "#/parameters/BackupRestoreServiceID"
+      responses:
+        200:
+          description: search results matching criteria
+          schema:
+            $ref: "#/definitions/Backups"
+        400:
+          description: bad input parameter
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        422:
+          description: bad validation
+          schema:
+            $ref: "#/definitions/Error"
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
+    post:
+      tags:
+        - backup
+      summary: create backup object
+      description: Create backup object
+      operationId: backupAdd
+      parameters:
+        - $ref: "#/parameters/BackupItem"
+      responses:
+        201:
+          description: item created
+          schema:
+            $ref: "#/definitions/Backup"
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        409:
+          description: item already exists
+        422:
+          description: bad validation
+          schema:
+            $ref: "#/definitions/Error"
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
+  /backups/{BackupID}/:
+    delete:
+      tags:
+        - backup
+      summary: deletes a backup item
+      operationId: backupDelete
+      description: |
+        Deletes a backup object
+      parameters:
+        - $ref: "#/parameters/BackupID"
+
+      responses:
+        200:
+          description: item deleted
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        404:
+          description: item not found
+        422:
+          description: bad validation
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
+
+  /restores/:
+    get:
+      tags:
+        - restore
+      summary: list restores
+      description: List restore objects
+      operationId: restoreList
+      parameters:
+        - $ref: "#/parameters/BackupRestoreServiceID"
+      responses:
+        200:
+          description: search results matching criteria
+          schema:
+            $ref: "#/definitions/Restores"
+        400:
+          description: bad input parameter
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        422:
+          description: bad validation
+          schema:
+            $ref: "#/definitions/Error"
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
+    post:
+      tags:
+        - restore
+      summary: create restore object
+      description: Create restore object
+      operationId: restoreAdd
+      parameters:
+        - $ref: "#/parameters/RestoreItem"
+      responses:
+        201:
+          description: item created
+          schema:
+            $ref: "#/definitions/Restore"
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        409:
+          description: item already exists
+        422:
+          description: bad validation
+          schema:
+            $ref: "#/definitions/Error"
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
+  /restores/{RestoreID}/:
+    delete:
+      tags:
+        - restore
+      summary: deletes a restore item
+      operationId: restoreDelete
+      description: |
+        Deletes a restore object
+      parameters:
+        - $ref: "#/parameters/RestoreID"
+
+      responses:
+        200:
+          description: item deleted
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        404:
+          description: item not found
+        422:
+          description: bad validation
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
+
   /services/:
     get:
       tags:
@@ -272,6 +452,58 @@ definitions:
     items:
       $ref: "#/definitions/Service"
 
+  Backups:
+    type: array
+    items:
+      $ref: "#/definitions/Backup"
+
+  Backup:
+    type: object
+    properties:
+      id:
+        type: string
+        pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+        minLength: 2
+        maxLength: 63
+        readOnly: true
+      service_id:
+        type: string
+        pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+        minLength: 2
+        maxLength: 20
+      created_at:
+        type: string
+        readOnly: true
+        format: date-time
+      status:
+        type: string
+
+  Restore:
+    type: object
+    properties:
+      id:
+        type: string
+        pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+        minLength: 2
+        maxLength: 63
+        readOnly: true
+      backup_id:
+        type: string
+        pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+        minLength: 2
+        maxLength: 63
+      created_at:
+        type: string
+        readOnly: true
+        format: date-time
+      status:
+        type: string
+
+  Restores:
+    type: array
+    items:
+      $ref: "#/definitions/Restore"
+
   Error:
     type: object
     properties:
@@ -290,7 +522,7 @@ parameters:
     type: "string"
     pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
     minLength: 3
-    maxLength: 120
+    maxLength: 20
 
   ServiceItem:
     in: body
@@ -299,6 +531,51 @@ parameters:
     description: service item
     schema:
       $ref: "#/definitions/Service"
+
+  BackupID:
+    name: BackupID
+    in: path
+    description: backup Resource ID
+    required: true
+    type: "string"
+    pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+    minLength: 3
+    maxLength: 63
+
+  RestoreItem:
+    in: body
+    name: restoreItem
+    required: true
+    description: restore item
+    schema:
+      $ref: "#/definitions/Restore"
+
+  RestoreID:
+    name: RestoreID
+    in: path
+    description: restore Resource ID
+    required: true
+    type: "string"
+    pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+    minLength: 3
+    maxLength: 63
+
+  BackupItem:
+    in: body
+    name: backupItem
+    required: true
+    description: backup item
+    schema:
+      $ref: "#/definitions/Backup"
+
+  BackupRestoreServiceID:
+    name: ServiceID
+    in: query
+    description: service Resource ID to query backups/restores by
+    type: "string"
+    pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+    minLength: 3
+    maxLength: 20
 
   SubscriptionID:
     name: SubscriptionID

@@ -33,7 +33,7 @@ type ServiceDeleteParams struct {
 
 	/*service Resource ID
 	  Required: true
-	  Max Length: 120
+	  Max Length: 20
 	  Min Length: 3
 	  Pattern: [a-z0-9]([-a-z0-9]*[a-z0-9])?
 	  In: path
@@ -85,7 +85,7 @@ func (o *ServiceDeleteParams) validateServiceID(formats strfmt.Registry) error {
 		return err
 	}
 
-	if err := validate.MaxLength("ServiceID", "path", o.ServiceID, 120); err != nil {
+	if err := validate.MaxLength("ServiceID", "path", o.ServiceID, 20); err != nil {
 		return err
 	}
 
