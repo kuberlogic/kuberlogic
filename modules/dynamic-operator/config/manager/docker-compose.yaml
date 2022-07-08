@@ -23,7 +23,7 @@ services:
       - BASE_URL={{ .Endpoint "localhost:3000" }}
       - TRUST_PROXY=0
       - DATABASE_URL=postgresql://postgres@localhost/planka
-      - SECRET_KEY={{ GenerateSecretKey 30 }}
+      - SECRET_KEY={{ .GenerateKey 30 | KeepSecret }}
     depends_on:
       - postgres
 
