@@ -451,7 +451,7 @@ func isVeleroBackupFailed(v *velero.Backup) (bool, string) {
 func isVeleroBackupStorageLocationAvailable(v *velero.BackupStorageLocation) bool {
 	return v.Status.Phase == velero.BackupStorageLocationPhaseAvailable &&
 		v.Status.LastValidationTime != nil &&
-		time.Now().Sub(v.Status.LastValidationTime.Time).Minutes() < backupStorageLocationMaxCheckTTL
+		time.Since(v.Status.LastValidationTime.Time).Minutes() < backupStorageLocationMaxCheckTTL
 }
 
 func isVeleroRestoreSuccessful(v *velero.Restore) bool {

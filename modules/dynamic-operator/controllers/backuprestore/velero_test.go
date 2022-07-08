@@ -174,7 +174,6 @@ var _ = Describe("Velero BackupRestore provider", func() {
 					time.Sleep(5 * time.Second)
 					backupPod.Status.Phase = corev1.PodRunning
 					_ = fakeClient.Update(ctx, backupPod)
-					return
 				}()
 				err = backupRestore.BackupRequest(ctx, klb)
 				Expect(err).Should(BeNil())
