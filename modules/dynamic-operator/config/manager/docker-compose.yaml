@@ -2,6 +2,11 @@
 version: '3'
 
 services:
+  echo:
+    x-kuberlogic-access-http-path: /api
+    image: inanimate/echo-server:latest
+    ports:
+      - "8080:8080"
   planka:
     image: ghcr.io/plankanban/planka:{{ or .Version "latest" }}
     command: >
@@ -18,12 +23,12 @@ services:
       - project-background-images:/app/public/project-background-images
       - attachments:/app/private/attachments
     ports:
-      - 3000:1337
+      - "3000:1337"
     environment:
-      - BASE_URL={{ if .TLSEnabled }}https://{{ else }}http://{{ end }}{{ or .Host "localhost:3000" }}
+      - BASE_URL={{ .Endpoint "localhost:3000" }}
       - TRUST_PROXY=0
       - DATABASE_URL=postgresql://postgres@localhost/planka
-      - SECRET_KEY=notsecretkey
+      - SECRET_KEY={{ .GenerateKey 30 | KeepSecret }}
     depends_on:
       - postgres
 

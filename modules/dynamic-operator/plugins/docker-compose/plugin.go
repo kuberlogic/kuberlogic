@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-package plugin
+package main
 
 import (
 	compose "github.com/compose-spec/compose-go/types"
 	"github.com/hashicorp/go-hclog"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
-	pluginCompose "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugins/docker-compose/plugin/compose/compose"
+	pluginCompose "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugins/docker-compose/plugin/compose"
 	"strings"
 )
 
-type DockerComposeService struct {
+type dockerComposeService struct {
 	logger hclog.Logger
 	spec   *compose.Project
 }
 
-func (d *DockerComposeService) SetLogger(logger hclog.Logger) {
+func (d *dockerComposeService) SetLogger(logger hclog.Logger) {
 	d.logger = logger
 }
 
-func (d *DockerComposeService) Convert(req commons.PluginRequest) *commons.PluginResponse {
+func (d *dockerComposeService) Convert(req commons.PluginRequest) *commons.PluginResponse {
 	res := &commons.PluginResponse{}
 
 	composeObjects := pluginCompose.NewComposeModel(d.spec, d.logger)
@@ -46,6 +46,11 @@ func (d *DockerComposeService) Convert(req commons.PluginRequest) *commons.Plugi
 
 	for _, item := range objects {
 		for gvk, object := range item {
+			// do not return objects with empty name
+			if object.GetName() == "" {
+				continue
+			}
+
 			_ = res.AddUnstructuredObject(object, gvk)
 		}
 	}
@@ -55,7 +60,7 @@ func (d *DockerComposeService) Convert(req commons.PluginRequest) *commons.Plugi
 	return res
 }
 
-func (d *DockerComposeService) Status(req commons.PluginRequest) *commons.PluginResponseStatus {
+func (d *dockerComposeService) Status(req commons.PluginRequest) *commons.PluginResponseStatus {
 	status := &commons.PluginResponseStatus{
 		IsReady: false,
 	}
@@ -71,7 +76,7 @@ func (d *DockerComposeService) Status(req commons.PluginRequest) *commons.Plugin
 	return status
 }
 
-func (d *DockerComposeService) Types() *commons.PluginResponse {
+func (d *dockerComposeService) Types() *commons.PluginResponse {
 	res := &commons.PluginResponse{}
 
 	composeObjects := pluginCompose.NewComposeModel(d.spec, d.logger)
@@ -87,31 +92,31 @@ func (d *DockerComposeService) Types() *commons.PluginResponse {
 	return res
 }
 
-func (d *DockerComposeService) Default() *commons.PluginResponseDefault {
+func (d *dockerComposeService) Default() *commons.PluginResponseDefault {
 	return &commons.PluginResponseDefault{
 		Replicas:   1,
 		VolumeSize: "1Gi",
 	}
 }
 
-func (d *DockerComposeService) ValidateCreate(req commons.PluginRequest) *commons.PluginResponseValidation {
+func (d *dockerComposeService) ValidateCreate(req commons.PluginRequest) *commons.PluginResponseValidation {
 	return &commons.PluginResponseValidation{
 		Err: validateRequest(&req),
 	}
 }
 
-func (d *DockerComposeService) ValidateUpdate(req commons.PluginRequest) *commons.PluginResponseValidation {
+func (d *dockerComposeService) ValidateUpdate(req commons.PluginRequest) *commons.PluginResponseValidation {
 	return &commons.PluginResponseValidation{
 		Err: validateRequest(&req),
 	}
 }
 
-func (d *DockerComposeService) ValidateDelete(req commons.PluginRequest) *commons.PluginResponseValidation {
+func (d *dockerComposeService) ValidateDelete(req commons.PluginRequest) *commons.PluginResponseValidation {
 	return &commons.PluginResponseValidation{}
 }
 
-func NewDockerComposeServicePlugin(composeProject *compose.Project) *DockerComposeService {
-	return &DockerComposeService{
+func newDockerComposeServicePlugin(composeProject *compose.Project) *dockerComposeService {
+	return &dockerComposeService{
 		spec: composeProject,
 	}
 }

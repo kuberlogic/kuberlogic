@@ -2,10 +2,6 @@
  * CloudLinux Software Inc 2019-2021 All Rights Reserved
  */
 
-/*
- * CloudLinux Software Inc 2019-2021 All Rights Reserved
- */
-
 package controllers
 
 import (
@@ -58,9 +54,10 @@ func HandlePanic(log logr.Logger) {
 // compose plugin roles:
 //+kubebuilder:rbac:groups="",resources=serviceaccounts;services;persistentvolumeclaims;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=deployments;,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 
 func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := logger.FromContext(ctx).WithValues("kuberlogicservicetype", req.String())
+	log := logger.FromContext(ctx).WithValues("kuberlogicservicetype", req.String(), "run", time.Now().UnixNano())
 	log.Info("Reconciliation started")
 	defer HandlePanic(log)
 
@@ -72,11 +69,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	err := r.Get(ctx, req.NamespacedName, kls)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
 			log.Info("object not found", "key", req.NamespacedName)
-
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
@@ -84,9 +77,15 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
-	log.Info("verifying KuberLogicService environment")
-	env, err := kuberlogicserviceenv.SetupEnv(kls, r.Client, r.Cfg, ctx)
-	if err != nil {
+	backupRunning, _ := kls.BackupRunning()
+	restoreRunning, _ := kls.RestoreRunning()
+	if backupRunning || restoreRunning {
+		log.Info("backup or restore procedure is requested. Skipping reconciliation.")
+		return ctrl.Result{}, nil
+	}
+
+	env := kuberlogicserviceenv.New(r.Client, kls, r.Cfg)
+	if err := env.SetupEnv(ctx); err != nil {
 		log.Error(err, "error setting up KuberlogicService environment")
 		return ctrl.Result{}, err
 	}
@@ -112,14 +111,15 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	pluginRequest := commons.PluginRequest{
-		Name:       kls.Name,
-		Namespace:  ns,
-		Replicas:   kls.Spec.Replicas,
-		VolumeSize: kls.Spec.VolumeSize,
-		Version:    kls.Spec.Version,
-		TLSEnabled: kls.TLSEnabled(),
-		Host:       kls.GetHost(),
-		Parameters: spec,
+		Name:          kls.Name,
+		Namespace:     ns,
+		Replicas:      kls.Spec.Replicas,
+		VolumeSize:    kls.Spec.VolumeSize,
+		Version:       kls.Spec.Version,
+		TLSEnabled:    kls.TLSEnabled(),
+		TLSSecretName: r.Cfg.SvcOpts.TLSSecretName,
+		Host:          kls.GetHost(),
+		Parameters:    spec,
 	}
 
 	if err := pluginRequest.SetLimits(&kls.Spec.Limits); err != nil {
@@ -173,19 +173,21 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	// pause service when requested
-	if kls.Paused() {
-		if err := env.PauseService(); err != nil {
+	if kls.PauseRequested() {
+
+		if err := env.PauseService(ctx); err != nil {
 			return ctrl.Result{}, errors.Wrap(err, "error pausing service")
 		}
+		kls.MarkPaused()
+	} else if kls.Resumed() {
+		if err := env.ResumeService(ctx); err != nil {
+			return ctrl.Result{}, errors.Wrap(err, "error resuming service")
+		}
+		kls.MarkResumed()
 	}
 
 	// expose service
-	endpoint, err := env.ExposeService(resp.Service, resp.Protocol == commons.HTTPproto && kls.GetHost() != "")
-	if err != nil {
-		log.Error(err, "error exposing service")
-		return ctrl.Result{}, err
-	}
-	kls.SetAccessEndpoint(endpoint)
+	kls.SetAccessEndpoint()
 
 	// sync status
 	log.Info("syncing status")
@@ -225,8 +227,6 @@ func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager, objects
 
 	builder.Owns(&v1.Namespace{})
 	builder.Owns(&v12.NetworkPolicy{})
-	builder.Owns(&v12.Ingress{})
-	builder.Owns(&v1.ResourceQuota{})
 	builder.Owns(&v1.Secret{})
 	return builder.Complete(r)
 }

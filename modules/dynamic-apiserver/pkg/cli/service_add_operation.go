@@ -21,13 +21,14 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.
 		RunE:    runServiceAdd(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String("id", "", "service id")
+	_ = cmd.PersistentFlags().String(id_flag, "", "service id")
 	_ = cmd.PersistentFlags().String("type", "", "type of service")
 	_ = cmd.PersistentFlags().Int64("replicas", 1, "how many replicas need for service")
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
 	_ = cmd.PersistentFlags().String("domain", "", "domain for external connection to service")
 	_ = cmd.PersistentFlags().String("volume_size", "", "")
 	_ = cmd.PersistentFlags().Bool("tls_enabled", false, "")
+	_ = cmd.PersistentFlags().Bool(subscription_id_flag, false, "")
 
 	// limits
 	_ = cmd.PersistentFlags().String("limits.cpu", "", "cpu limits")
@@ -54,7 +55,7 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 		svc := models.Service{}
 		svc.Limits = new(models.Limits)
 
-		if value, err := getString(cmd, "id"); err != nil {
+		if value, err := getString(cmd, id_flag); err != nil {
 			return err
 		} else if value != nil {
 			svc.ID = value
@@ -94,6 +95,12 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 			return err
 		} else {
 			svc.TLSEnabled = value
+		}
+
+		if value, err := getString(cmd, subscription_id_flag); err != nil {
+			return err
+		} else if value != nil {
+			svc.Subscription = *value
 		}
 
 		if value, err := getString(cmd, "limits.cpu"); err != nil {

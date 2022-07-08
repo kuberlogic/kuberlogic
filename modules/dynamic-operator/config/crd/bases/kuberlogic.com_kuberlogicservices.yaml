@@ -22,7 +22,7 @@ spec:
   versions:
   - additionalPrinterColumns:
     - description: The cluster readiness
-      jsonPath: .status.conditions[?(@.type == 'Ready')].
+      jsonPath: .status.conditions[?(@.type == 'Ready')].status
       name: Ready
       type: string
     - description: The cluster status
@@ -41,13 +41,13 @@ spec:
       jsonPath: .spec.volumeSize
       name: Volume
       type: string
-    - description: CPU request
-      jsonPath: .spec.resources.requests.cpu
-      name: CPU Request
+    - description: CPU limits
+      jsonPath: .spec.limits.cpu
+      name: CPU Limits
       type: string
-    - description: Memory request
-      jsonPath: .spec.resources.requests.memory
-      name: Memory Request
+    - description: Memory limits
+      jsonPath: .spec.limits.memory
+      name: Memory Limits
       type: string
     - description: Access endpoint
       jsonPath: .status.access
@@ -194,6 +194,12 @@ spec:
                 description: date when the namespace and all related resources will
                   be purged
                 type: string
+              readyForRestore:
+                description: a service is ready for restore process
+                type: boolean
+              restoreRequested:
+                description: a service is about to be restored or restore is in progress
+                type: boolean
             required:
             - conditions
             type: object

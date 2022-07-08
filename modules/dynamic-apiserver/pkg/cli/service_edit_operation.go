@@ -22,7 +22,7 @@ func makeServiceEditCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra
 		RunE:    runServiceEdit(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String("id", "", "service id [required]")
+	_ = cmd.PersistentFlags().String(id_flag, "", "service id [required]")
 	_ = cmd.PersistentFlags().Int64("replicas", 1, "how many replicas need for service")
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
 	_ = cmd.PersistentFlags().String("domain", "", "domain for external connection to service")
@@ -55,7 +55,7 @@ func runServiceEdit(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 		svc := models.Service{}
 		svc.Limits = new(models.Limits)
 
-		if value, err := getString(cmd, "id"); err != nil {
+		if value, err := getString(cmd, id_flag); err != nil {
 			return err
 		} else if value != nil {
 			svc.ID = value
@@ -114,7 +114,7 @@ func runServiceEdit(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 		}
 
 		var formatResponse format
-		if value, err := getString(cmd, "format"); err != nil {
+		if value, err := getString(cmd, format_flag); err != nil {
 			return err
 		} else if value != nil {
 			formatResponse = format(*value)

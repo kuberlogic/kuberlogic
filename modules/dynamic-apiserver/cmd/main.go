@@ -17,6 +17,10 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations"
 
+	apiBackup "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/backup"
+
+	apiRestore "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/restore"
+
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/logging"
 	apiserverMiddleware "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/net/middleware"
@@ -73,6 +77,12 @@ func Main(args []string) {
 		return nil, errors.New(401, "incorrect api key auth")
 	}
 
+	api.BackupBackupAddHandler = apiBackup.BackupAddHandlerFunc(srv.BackupAddHandler)
+	api.BackupBackupDeleteHandler = apiBackup.BackupDeleteHandlerFunc(srv.BackupDeleteHandler)
+	api.BackupBackupListHandler = apiBackup.BackupListHandlerFunc(srv.BackupListHandler)
+	api.RestoreRestoreAddHandler = apiRestore.RestoreAddHandlerFunc(srv.RestoreAddHandler)
+	api.RestoreRestoreDeleteHandler = apiRestore.RestoreDeleteHandlerFunc(srv.RestoreDeleteHandler)
+	api.RestoreRestoreListHandler = apiRestore.RestoreListHandlerFunc(srv.RestoreListHandler)
 	api.ServiceServiceAddHandler = apiService.ServiceAddHandlerFunc(srv.ServiceAddHandler)
 	api.ServiceServiceDeleteHandler = apiService.ServiceDeleteHandlerFunc(srv.ServiceDeleteHandler)
 	api.ServiceServiceEditHandler = apiService.ServiceEditHandlerFunc(srv.ServiceEditHandler)

@@ -10,7 +10,7 @@ import (
 func (srv *Service) ServiceListHandler(params apiService.ServiceListParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
 
-	res, err := srv.List(ctx, params.SubscriptionID)
+	res, err := srv.ListKuberlogicServicesBySubscription(ctx, params.SubscriptionID)
 	if err != nil {
 		msg := "error listing service"
 		srv.log.Errorw(msg)

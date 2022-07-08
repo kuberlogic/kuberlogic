@@ -38,6 +38,7 @@ func main() {
 	} else {
 		logger.Warn("ChargeBee site is not set. Requests will not be handled.")
 	}
+
 	addr := "0.0.0.0:4242"
 	logger.Infof("Listening on %s\n", addr)
 	logger.Fatal(http.ListenAndServe(addr, nil))

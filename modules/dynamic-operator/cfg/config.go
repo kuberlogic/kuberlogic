@@ -28,6 +28,10 @@ type Config struct {
 	SvcOpts struct {
 		TLSSecretName string `envconfig:"optional"`
 	} `envconfig:"optional"`
+
+	Backups struct {
+		SnapshotsEnabled bool `envconfig:"optional"`
+	} `envconfig:"optional"`
 }
 
 func NewConfig() (*Config, error) {

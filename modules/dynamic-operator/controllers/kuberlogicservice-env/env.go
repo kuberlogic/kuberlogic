@@ -23,11 +23,9 @@ import (
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	v13 "k8s.io/api/networking/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strconv"
 )
 
 type EnvironmentManager struct {
@@ -37,88 +35,102 @@ type EnvironmentManager struct {
 
 	kls *kuberlogiccomv1alpha1.KuberLogicService
 	cfg *config.Config
-	ctx context.Context
 }
 
-//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses;networkpolicies,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=namespaces;services;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=resourcequotas;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=secrets;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=pods;,verbs=deletecollection
 
 // SetupEnv checks if KLS environment is present and creates it if it is not
-func SetupEnv(kls *kuberlogiccomv1alpha1.KuberLogicService, c client.Client, cfg *config.Config, ctx context.Context) (*EnvironmentManager, error) {
+func (e *EnvironmentManager) SetupEnv(ctx context.Context) error {
 	// Namespace ns will contain all managed resources
-	ns := getNamespace(kls)
-	if _, err := controllerruntime.CreateOrUpdate(ctx, c, ns, func() error {
-		return controllerruntime.SetControllerReference(kls, ns, c.Scheme())
+	ns := &v1.Namespace{
+		ObjectMeta: v12.ObjectMeta{
+			Name:   e.NamespaceName,
+			Labels: envLabels(e.kls),
+		},
+	}
+	if _, err := controllerruntime.CreateOrUpdate(ctx, e.Client, ns, func() error {
+		return controllerruntime.SetControllerReference(e.kls, ns, e.Scheme())
 	}); err != nil {
-		return nil, errors.Wrap(err, "error setting up kls namespace")
+		return errors.Wrap(err, "error setting up kls namespace")
 	}
 
 	// NetworkPolicy netpol prevents all cross namespace network communication for service pods
-	netpol := getNetworkPolicy(kls, ns)
-	if _, err := controllerruntime.CreateOrUpdate(ctx, c, netpol, func() error {
-		return controllerruntime.SetControllerReference(kls, netpol, c.Scheme())
-	}); err != nil {
-		return nil, errors.Wrap(err, "error setting up kls networkpolicy")
+	netpol := &v13.NetworkPolicy{
+		ObjectMeta: v12.ObjectMeta{
+			Name:      "namespace-only-egress",
+			Namespace: ns.Name,
+			Labels:    envLabels(e.kls),
+		},
 	}
-
-	// Prevent service pods from starting when requested
-	resourceQuota := getResourceQuota(kls, ns)
-	if _, err := controllerruntime.CreateOrUpdate(ctx, c, resourceQuota, func() error {
-		resourceQuota.Spec.Hard = make(map[v1.ResourceName]resource.Quantity, 0)
-		if kls.Paused() {
-			resourceQuota.Spec.Hard["pods"] = resource.MustParse("0")
+	if _, err := controllerruntime.CreateOrUpdate(ctx, e.Client, netpol, func() error {
+		netpol.Spec = v13.NetworkPolicySpec{
+			PolicyTypes: []v13.PolicyType{
+				v13.PolicyTypeEgress,
+			},
+			Egress: []v13.NetworkPolicyEgressRule{
+				{
+					To: []v13.NetworkPolicyPeer{
+						{
+							NamespaceSelector: &v12.LabelSelector{
+								MatchLabels: envLabels(e.kls),
+							},
+						},
+					},
+				},
+			},
 		}
-		return controllerruntime.SetControllerReference(kls, resourceQuota, c.Scheme())
+		return controllerruntime.SetControllerReference(e.kls, netpol, e.Scheme())
 	}); err != nil {
-		return nil, errors.Wrap(err, "error syncing kls resource quota")
+		return errors.Wrap(err, "error setting up kls networkpolicy")
 	}
 
 	// Sync TLS secret when defined in config
 	tlsSecret := &v1.Secret{
 		ObjectMeta: v12.ObjectMeta{
-			Name:      cfg.SvcOpts.TLSSecretName,
+			Name:      e.cfg.SvcOpts.TLSSecretName,
 			Namespace: ns.GetName(),
 		},
 	}
 
-	if cfg.SvcOpts.TLSSecretName != "" {
-		if _, err := controllerruntime.CreateOrUpdate(ctx, c, tlsSecret, func() error {
+	if e.cfg.SvcOpts.TLSSecretName != "" {
+		if _, err := controllerruntime.CreateOrUpdate(ctx, e.Client, tlsSecret, func() error {
 			srcSecret := &v1.Secret{
 				ObjectMeta: v12.ObjectMeta{
-					Name:      cfg.SvcOpts.TLSSecretName,
-					Namespace: cfg.Namespace,
+					Name:      e.cfg.SvcOpts.TLSSecretName,
+					Namespace: e.cfg.Namespace,
 				},
 			}
-			if err := c.Get(ctx, client.ObjectKeyFromObject(srcSecret), srcSecret); err != nil {
+			if err := e.Get(ctx, client.ObjectKeyFromObject(srcSecret), srcSecret); err != nil {
 				return errors.Wrap(err, "error getting source TLS secret")
 			}
 			tlsSecret.Data = srcSecret.Data
-			return controllerruntime.SetControllerReference(kls, tlsSecret, c.Scheme())
+			return controllerruntime.SetControllerReference(e.kls, tlsSecret, e.Scheme())
 		}); err != nil {
-			return nil, errors.Wrap(err, "error syncing TLS Secret")
+			return errors.Wrap(err, "error syncing TLS Secret")
 		}
 	}
 
 	// set namespace status field
-	kls.Status.Namespace = ns.GetName()
-	return &EnvironmentManager{
-		Client: c,
-
-		NamespaceName: ns.GetName(),
-
-		cfg: cfg,
-		kls: kls,
-		ctx: ctx,
-	}, nil
+	e.kls.Status.Namespace = ns.GetName()
+	return nil
 }
 
 // PauseService deletes all pods in a service namespace.
 // In addition to this resourceQuota in SetupEnv sets the hard limit of non-exited pods to 0.
-func (e *EnvironmentManager) PauseService() error {
-	if err := e.DeleteAllOf(e.ctx, &v1.Pod{}, &client.DeleteAllOfOptions{
+func (e *EnvironmentManager) PauseService(ctx context.Context) error {
+	return e.deleteAllServicePods(ctx)
+}
+
+func (e *EnvironmentManager) ResumeService(ctx context.Context) error {
+	return e.deleteAllServicePods(ctx)
+}
+
+func (e *EnvironmentManager) deleteAllServicePods(ctx context.Context) error {
+	if err := e.DeleteAllOf(ctx, &v1.Pod{}, &client.DeleteAllOfOptions{
 		ListOptions: client.ListOptions{
 			Namespace: e.NamespaceName,
 		},
@@ -129,144 +141,16 @@ func (e *EnvironmentManager) PauseService() error {
 	return nil
 }
 
-// ExposeService takes internal service name and creates an Ingress object exposing it to the outside
-func (e *EnvironmentManager) ExposeService(svcName string, provisionIngress bool) (string, error) {
-	// get service
-	svc := &v1.Service{
-		ObjectMeta: v12.ObjectMeta{
-			Name:      svcName,
-			Namespace: e.NamespaceName,
-		},
+func New(c client.Client, kls *kuberlogiccomv1alpha1.KuberLogicService, cfg *config.Config) *EnvironmentManager {
+	return &EnvironmentManager{
+		Client: c,
+
+
+		NamespaceName: kls.GetName(),
+
+		cfg: cfg,
+		kls: kls,
 	}
-	if err := e.Get(e.ctx, client.ObjectKeyFromObject(svc), svc); err != nil {
-		return "", errors.Wrapf(err, "error getting service %s/%s", e.NamespaceName, svcName)
-	}
-
-	if provisionIngress {
-		return e.syncIngress(svc)
-	}
-	return e.syncLoadBalancer(svc)
-}
-
-func (e *EnvironmentManager) syncLoadBalancer(svc *v1.Service) (string, error) {
-	port := svc.Spec.Ports[0].Port
-
-	var addr string
-	if len(svc.Spec.ExternalIPs) > 0 {
-		addr = svc.Spec.ExternalIPs[0]
-	} else if svc.Spec.LoadBalancerIP != "" {
-		addr = svc.Spec.LoadBalancerIP
-	} else if lbIngress := svc.Status.LoadBalancer.Ingress; len(lbIngress) > 0 {
-		addr = lbIngress[0].IP
-		port = lbIngress[0].Ports[0].Port
-	} else {
-		return "", nil
-	}
-	return addr + ":" + strconv.Itoa(int(port)), nil
-}
-
-//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
-func (e *EnvironmentManager) syncIngress(svc *v1.Service) (string, error) {
-	ingress := &v13.Ingress{
-		ObjectMeta: v12.ObjectMeta{
-			Name:      e.kls.GetName(),
-			Namespace: e.NamespaceName,
-		},
-	}
-
-	if _, err := controllerruntime.CreateOrUpdate(e.ctx, e.Client, ingress, func() error {
-		if e.kls.TLSEnabled() {
-			ingress.Spec.TLS = []v13.IngressTLS{
-				{
-					Hosts:      []string{e.kls.GetHost()},
-					SecretName: e.cfg.SvcOpts.TLSSecretName,
-				},
-			}
-		}
-
-		pathType := v13.PathTypePrefix
-		ingress.Labels = envLabels(e.kls)
-
-		ingress.Spec.Rules = []v13.IngressRule{
-			{
-				Host: e.kls.GetHost(),
-				IngressRuleValue: v13.IngressRuleValue{HTTP: &v13.HTTPIngressRuleValue{
-					Paths: []v13.HTTPIngressPath{
-						{
-							Path:     "/",
-							PathType: &pathType,
-							Backend: v13.IngressBackend{
-								Service: &v13.IngressServiceBackend{
-									Name: svc.GetName(),
-									Port: v13.ServiceBackendPort{
-										Name: svc.Spec.Ports[0].Name,
-									},
-								},
-								Resource: nil,
-							},
-						},
-					},
-				}},
-			},
-		}
-
-		return controllerruntime.SetControllerReference(e.kls, ingress, e.Client.Scheme())
-	}); err != nil {
-		return "", errors.Wrap(err, "error syncing ingress")
-	}
-
-	proto := "http://"
-	if e.kls.TLSEnabled() {
-		proto = "https://"
-	}
-
-	return proto + e.kls.GetHost(), nil
-}
-
-func getNamespace(kls *kuberlogiccomv1alpha1.KuberLogicService) *v1.Namespace {
-	return &v1.Namespace{
-		ObjectMeta: v12.ObjectMeta{
-			Name:   kls.GetName(),
-			Labels: envLabels(kls),
-		},
-	}
-}
-
-func getNetworkPolicy(kls *kuberlogiccomv1alpha1.KuberLogicService, ns *v1.Namespace) *v13.NetworkPolicy {
-	return &v13.NetworkPolicy{
-		ObjectMeta: v12.ObjectMeta{
-			Name:      "namespace-only-egress",
-			Namespace: ns.Name,
-			Labels:    envLabels(kls),
-		},
-		Spec: v13.NetworkPolicySpec{
-			PolicyTypes: []v13.PolicyType{
-				v13.PolicyTypeEgress,
-			},
-			Egress: []v13.NetworkPolicyEgressRule{
-				{
-					To: []v13.NetworkPolicyPeer{
-						{
-							NamespaceSelector: &v12.LabelSelector{
-								MatchLabels: envLabels(kls),
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func getResourceQuota(kls *kuberlogiccomv1alpha1.KuberLogicService, ns *v1.Namespace) *v1.ResourceQuota {
-	q := &v1.ResourceQuota{
-		ObjectMeta: v12.ObjectMeta{
-			Name:      kls.GetName(),
-			Namespace: ns.GetName(),
-			Labels:    envLabels(kls),
-		},
-	}
-	return q
 }
 
 func envLabels(kls *kuberlogiccomv1alpha1.KuberLogicService) map[string]string {

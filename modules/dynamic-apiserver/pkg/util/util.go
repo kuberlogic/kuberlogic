@@ -16,7 +16,10 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const SubscriptionField = "subscription-id"
+const (
+	SubscriptionField         = "subscription-id"
+	BackupRestoreServiceField = "kls-id"
+)
 
 func ServiceToKuberlogic(svc *models.Service) (*kuberlogiccomv1alpha1.KuberLogicService, error) {
 	c := &kuberlogiccomv1alpha1.KuberLogicService{
@@ -132,6 +135,52 @@ func KuberlogicToService(kls *kuberlogiccomv1alpha1.KuberLogicService) (*models.
 	}
 
 	return ret, nil
+}
+
+func BackupToKuberlogic(backup *models.Backup) (*kuberlogiccomv1alpha1.KuberlogicServiceBackup, error) {
+	return &kuberlogiccomv1alpha1.KuberlogicServiceBackup{
+		ObjectMeta: v1.ObjectMeta{
+			Name: backup.ID,
+			Labels: map[string]string{
+				BackupRestoreServiceField: backup.ServiceID,
+			},
+		},
+		Spec: kuberlogiccomv1alpha1.KuberlogicServiceBackupSpec{
+			KuberlogicServiceName: backup.ServiceID,
+		},
+	}, nil
+}
+
+func KuberlogicToBackup(backup *kuberlogiccomv1alpha1.KuberlogicServiceBackup) (*models.Backup, error) {
+	return &models.Backup{
+		CreatedAt: strfmt.DateTime(backup.GetCreationTimestamp().Time),
+		ID:        backup.GetName(),
+		ServiceID: backup.Spec.KuberlogicServiceName,
+		Status:    backup.Status.Phase,
+	}, nil
+}
+
+func RestoreToKuberlogic(restore *models.Restore, klb *kuberlogiccomv1alpha1.KuberlogicServiceBackup) (*kuberlogiccomv1alpha1.KuberlogicServiceRestore, error) {
+	return &kuberlogiccomv1alpha1.KuberlogicServiceRestore{
+		ObjectMeta: v1.ObjectMeta{
+			Name: restore.ID,
+			Labels: map[string]string{
+				BackupRestoreServiceField: klb.Spec.KuberlogicServiceName,
+			},
+		},
+		Spec: kuberlogiccomv1alpha1.KuberlogicServiceRestoreSpec{
+			KuberlogicServiceBackup: restore.BackupID,
+		},
+	}, nil
+}
+
+func KuberlogicToRestore(restore *kuberlogiccomv1alpha1.KuberlogicServiceRestore) (*models.Restore, error) {
+	return &models.Restore{
+		BackupID:  restore.Spec.KuberlogicServiceBackup,
+		ID:        restore.GetName(),
+		Status:    restore.Status.Phase,
+		CreatedAt: strfmt.DateTime(restore.GetCreationTimestamp().Time),
+	}, nil
 }
 
 func Int64AsPointer(x int64) *int64 {

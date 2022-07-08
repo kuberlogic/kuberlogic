@@ -29,7 +29,11 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-const serviceK8sResource = "kuberlogicservices"
+const (
+	serviceK8sResource = "kuberlogicservices"
+	backupK8sResource  = "kuberlogicservicebackups"
+	restoreK8sResource = "kuberlogicservicerestores"
+)
 
 type Service struct {
 	clientset        kubernetes.Interface
@@ -55,7 +59,39 @@ func (srv *Service) OnShutdown() {
 	}()
 }
 
-func (srv *Service) List(ctx context.Context, subscriptionId *string) (*kuberlogiccomv1alpha1.KuberLogicServiceList, error) {
+func (srv *Service) ListKuberlogicServiceBackupsByService(ctx context.Context, service *string) (*kuberlogiccomv1alpha1.KuberlogicServiceBackupList, error) {
+	res := new(kuberlogiccomv1alpha1.KuberlogicServiceBackupList)
+
+	req := srv.kuberlogicClient.Get().Resource(backupK8sResource)
+	if service != nil {
+		labelSelector := metav1.LabelSelector{
+			MatchLabels: map[string]string{util.BackupRestoreServiceField: *service},
+		}
+		req = req.VersionedParams(&metav1.ListOptions{
+			LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
+		}, scheme.ParameterCodec)
+	}
+	err := req.Do(ctx).Into(res)
+	return res, err
+}
+
+func (srv *Service) ListKuberlogicServiceRestoresByService(ctx context.Context, service *string) (*kuberlogiccomv1alpha1.KuberlogicServiceRestoreList, error) {
+	res := new(kuberlogiccomv1alpha1.KuberlogicServiceRestoreList)
+
+	req := srv.kuberlogicClient.Get().Resource(restoreK8sResource)
+	if service != nil {
+		labelSelector := metav1.LabelSelector{
+			MatchLabels: map[string]string{util.BackupRestoreServiceField: *service},
+		}
+		req = req.VersionedParams(&metav1.ListOptions{
+			LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
+		}, scheme.ParameterCodec)
+	}
+	err := req.Do(ctx).Into(res)
+	return res, err
+}
+
+func (srv *Service) ListKuberlogicServicesBySubscription(ctx context.Context, subscriptionId *string) (*kuberlogiccomv1alpha1.KuberLogicServiceList, error) {
 	res := new(kuberlogiccomv1alpha1.KuberLogicServiceList)
 
 	req := srv.kuberlogicClient.Get().Resource(serviceK8sResource)
@@ -72,7 +108,7 @@ func (srv *Service) List(ctx context.Context, subscriptionId *string) (*kuberlog
 }
 
 func (srv *Service) SubscriptionAlreadyExist(ctx context.Context, subscriptionId *string) (bool, error) {
-	services, err := srv.List(ctx, subscriptionId)
+	services, err := srv.ListKuberlogicServicesBySubscription(ctx, subscriptionId)
 	if err != nil {
 		return false, err
 	}
