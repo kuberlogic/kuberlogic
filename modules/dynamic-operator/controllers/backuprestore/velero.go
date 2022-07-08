@@ -60,7 +60,7 @@ func (v *VeleroBackupRestore) BackupRequest(ctx context.Context, klb *kuberlogic
 	log := v.log.WithValues("operation", "BackupRequest")
 	log.Info("Started routine")
 
-	veleroBackup := newVeleroBackupObject(klb, v.kls)
+	veleroBackup := newVeleroBackupObject(klb.GetName(), v.kls)
 	veleroBackup.Spec.SnapshotVolumes = &v.volumeSnapshotsEnabled
 
 	veleroBackupStorageLocation := &velero.BackupStorageLocation{
@@ -208,7 +208,7 @@ func (v *VeleroBackupRestore) SetKuberlogicBackupStatus(ctx context.Context, klb
 	log := v.log.WithValues("operation", "SetKuberlogicBackupStatus")
 	log.Info("Started routine")
 
-	veleroBackup := newVeleroBackupObject(klb, v.kls)
+	veleroBackup := newVeleroBackupObject(klb.GetName(), v.kls)
 	if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(veleroBackup), veleroBackup); err != nil {
 		if k8serrors.IsNotFound(err) {
 			klb.MarkPending()
@@ -233,7 +233,7 @@ func (v *VeleroBackupRestore) BackupDeleteRequest(ctx context.Context, klb *kube
 	log := v.log.WithValues("operation", "DeleteRequest")
 	log.Info("Started routine")
 
-	veleroBackup := newVeleroBackupObject(klb, v.kls)
+	veleroBackup := newVeleroBackupObject(klb.GetName(), v.kls)
 
 	deleteRequest := &velero.DeleteBackupRequest{
 		ObjectMeta: metav1.ObjectMeta{
@@ -277,7 +277,7 @@ func (v *VeleroBackupRestore) BackupDeleteRequest(ctx context.Context, klb *kube
 func (v *VeleroBackupRestore) RestoreRequest(ctx context.Context, klb *kuberlogiccomv1alpha1.KuberlogicServiceBackup, klr *kuberlogiccomv1alpha1.KuberlogicServiceRestore) error {
 	log := v.log.WithValues("operation", "RestoreRequest")
 
-	veleroBackup := newVeleroBackupObject(klb, v.kls)
+	veleroBackup := newVeleroBackupObject(klb.GetName(), v.kls)
 	if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(veleroBackup), veleroBackup); err != nil {
 		log.Error(err, "failed to get velero backup object", "velero backup", veleroBackup)
 		return err
@@ -415,11 +415,11 @@ func newVeleroRestoreObject(klr *kuberlogiccomv1alpha1.KuberlogicServiceRestore)
 	}
 }
 
-func newVeleroBackupObject(klb *kuberlogiccomv1alpha1.KuberlogicServiceBackup, kls *kuberlogiccomv1alpha1.KuberLogicService) *velero.Backup {
+func newVeleroBackupObject(name string, kls *kuberlogiccomv1alpha1.KuberLogicService) *velero.Backup {
 
 	return &velero.Backup{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      klb.GetName(),
+			Name:      name,
 			Namespace: veleroNamespace,
 		},
 		Spec: velero.BackupSpec{

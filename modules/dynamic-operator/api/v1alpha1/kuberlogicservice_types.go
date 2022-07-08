@@ -60,6 +60,8 @@ type KuberLogicServiceSpec struct {
 	// Paused field allows to stop all service related containers
 	// +kubebuilder:default=false
 	Paused bool `json:"paused,omitempty"`
+
+	BackupSchedule string `json:"backupSchedule,omitempty"`
 }
 
 // +kubebuilder:object:root=true

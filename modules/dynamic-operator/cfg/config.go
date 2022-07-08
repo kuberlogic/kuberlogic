@@ -18,6 +18,8 @@ type Config struct {
 	EnableLeaderElection bool `envconfig:"default=false,optional"`
 	// Namespace where controller is running
 	Namespace string `envconfig:"optional"`
+	// ServiceAccount of controller
+	ServiceAccount string `envconfig:"optional"`
 
 	Plugins []struct {
 		Name string

@@ -184,7 +184,7 @@ var _ = Describe("Velero BackupRestore provider", func() {
 				Expect(backupPod.Spec.Volumes[0].PersistentVolumeClaim.ClaimName).Should(Equal(backupPVC.GetName()))
 
 				By("Checking velero backup existence")
-				veleroBackup = newVeleroBackupObject(klb, kls)
+				veleroBackup = newVeleroBackupObject(klb.GetName(), kls)
 				err = fakeClient.Get(ctx, client.ObjectKeyFromObject(veleroBackup), veleroBackup)
 				Expect(err).Should(BeNil())
 

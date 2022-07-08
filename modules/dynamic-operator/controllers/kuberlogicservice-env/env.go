@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	v13 "k8s.io/api/networking/v1"
+	errors2 "k8s.io/apimachinery/pkg/api/errors"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -42,6 +43,7 @@ type EnvironmentManager struct {
 //+kubebuilder:rbac:groups="",resources=resourcequotas;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=secrets;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=pods;,verbs=deletecollection
+//+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservicebackupschedules,verbs=get;list;watch;create;update;patch;delete
 
 // SetupEnv checks if KLS environment is present and creates it if it is not
 func (e *EnvironmentManager) SetupEnv(ctx context.Context) error {
@@ -114,6 +116,23 @@ func (e *EnvironmentManager) SetupEnv(ctx context.Context) error {
 		}
 	}
 
+	klbs := &kuberlogiccomv1alpha1.KuberlogicServiceBackupSchedule{}
+	klbs.SetName(e.kls.GetName())
+	klbs.SetNamespace(e.cfg.Namespace)
+	if e.kls.Spec.BackupSchedule != "" {
+		if _, err := controllerruntime.CreateOrUpdate(ctx, e.Client, klbs, func() error {
+			klbs.Spec.KuberlogicServiceName = e.kls.GetName()
+			klbs.Spec.Schedule = e.kls.Spec.BackupSchedule
+			return controllerruntime.SetControllerReference(e.kls, klbs, e.Scheme())
+		}); err != nil {
+			return errors.Wrap(err, "failed to enabled backup schedule")
+		}
+	} else {
+		if err := e.Delete(ctx, klbs); err != nil && !errors2.IsNotFound(err) {
+			return errors.Wrap(err, "failed to disable scheduled backups")
+		}
+	}
+
 	// set namespace status field
 	e.kls.Status.Namespace = ns.GetName()
 	return nil
@@ -144,7 +163,6 @@ func (e *EnvironmentManager) deleteAllServicePods(ctx context.Context) error {
 func New(c client.Client, kls *kuberlogiccomv1alpha1.KuberLogicService, cfg *config.Config) *EnvironmentManager {
 	return &EnvironmentManager{
 		Client: c,
-
 
 		NamespaceName: kls.GetName(),
 

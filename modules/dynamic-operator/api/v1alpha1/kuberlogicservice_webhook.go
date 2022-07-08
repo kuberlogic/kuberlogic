@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
+	"github.com/robfig/cron"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -16,6 +17,8 @@ import (
 var log = ctrl.Log.WithName("kuberlogicservice-webhook")
 
 var pluginInstances map[string]commons.PluginService
+
+var errInvalidBackupSchedule = errors.New("invalid backupSchedule format")
 
 func (r *KuberLogicService) SetupWebhookWithManager(mgr ctrl.Manager, plugins map[string]commons.PluginService) error {
 	pluginInstances = plugins
@@ -95,6 +98,12 @@ var _ webhook.Validator = &KuberLogicService{}
 func (r *KuberLogicService) ValidateCreate() error {
 	log.Info("validate create", "name", r.Name)
 
+	if r.Spec.BackupSchedule != "" {
+		if validateScheduleFormat(r.Spec.BackupSchedule) != nil {
+			return errInvalidBackupSchedule
+		}
+	}
+
 	plugin, ok := pluginInstances[r.Spec.Type]
 	if !ok {
 		err := errors.New("Plugin is not loaded")
@@ -115,6 +124,12 @@ func (r *KuberLogicService) ValidateCreate() error {
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *KuberLogicService) ValidateUpdate(old runtime.Object) error {
 	log.Info("validate update", "name", r.Name)
+
+	if r.Spec.BackupSchedule != "" {
+		if validateScheduleFormat(r.Spec.BackupSchedule) != nil {
+			return errInvalidBackupSchedule
+		}
+	}
 
 	plugin, ok := pluginInstances[r.Spec.Type]
 	if !ok {
@@ -178,4 +193,9 @@ func makeRequest(kls *KuberLogicService) (*commons.PluginRequest, error) {
 	}
 
 	return req, nil
+}
+
+func validateScheduleFormat(schedule string) error {
+	_, err := cron.ParseStandard(schedule)
+	return err
 }

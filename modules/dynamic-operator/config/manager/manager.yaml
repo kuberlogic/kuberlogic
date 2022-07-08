@@ -47,6 +47,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: SERVICE_ACCOUNT
+              value: $(SERVICE_ACCOUNT)
           args:
             - --leader-elect
           image: controller:latest

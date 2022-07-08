@@ -232,5 +232,6 @@ func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager, objects
 	builder.Owns(&v1.Namespace{})
 	builder.Owns(&v12.NetworkPolicy{})
 	builder.Owns(&v1.Secret{})
+	builder.Owns(&kuberlogiccomv1alpha1.KuberlogicServiceBackupSchedule{})
 	return builder.Complete(r)
 }

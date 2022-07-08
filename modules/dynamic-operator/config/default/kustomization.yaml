@@ -72,6 +72,11 @@ vars:
     kind: Service
     version: v1
     name: webhook-service
+- name: SERVICE_ACCOUNT
+  objref:
+    kind: ServiceAccount
+    version: v1
+    name: controller-manager
 - name: TLS_SECRET_NAME
   objref:
     kind: Secret
