@@ -6,11 +6,16 @@ package compose
 
 import (
 	"bytes"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
 	"fmt"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
 	"html/template"
-	"math/rand"
+	mathRand "math/rand"
 	"strings"
 )
 
@@ -24,6 +29,9 @@ type viewData struct {
 	TLSEnabled bool
 	Limits     []byte
 	Parameters map[string]interface{}
+
+	// uses inside template function
+	sharedData map[string]string
 }
 
 func newViewData(req *commons.PluginRequest) viewData {
@@ -37,39 +45,65 @@ func newViewData(req *commons.PluginRequest) viewData {
 		TLSEnabled: req.TLSEnabled,
 		Limits:     req.Limits,
 		Parameters: req.Parameters,
+
+		sharedData: make(map[string]string),
 	}
 }
 
 func (v *viewData) isSecret(value string) bool {
-	return strings.Contains(value, "GenerateSecretKey")
+	return strings.Contains(value, "| KeepSecret")
 }
 
 func (v *viewData) Endpoint(defaultValue string) string {
-	var schema, host string
+	schema := "http"
 	if v.TLSEnabled {
 		schema = "https"
-	} else {
-		schema = "http"
 	}
-	if v.Host == "" {
-		host = defaultValue
-	} else {
+	host := defaultValue
+	if v.Host != "" {
 		host = v.Host
 	}
 	return fmt.Sprintf("%s://%s", schema, host)
 }
 
+func (v *viewData) GenerateKey(n int) string {
+	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[mathRand.Intn(len(letterBytes))]
+	}
+	return string(b)
+}
+
+func (v *viewData) FromCache(key, value string) string {
+	if foundValue, ok := v.sharedData[key]; ok {
+		return foundValue
+	}
+	v.sharedData[key] = value
+	return value
+}
+
+func (v *viewData) GenerateRSA(bits int) string {
+	// TODO: how to return err?
+	pk, _ := rsa.GenerateKey(rand.Reader, bits)
+
+	privateKeyBlock := &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(pk),
+	}
+	buff := new(bytes.Buffer)
+	_ = pem.Encode(buff, privateKeyBlock)
+	return buff.String()
+}
+
+func (v *viewData) Base64(value string) string {
+	return base64.StdEncoding.EncodeToString([]byte(value))
+}
+
 func (v *viewData) parse(value string) (string, error) {
 	tmpl, err := template.New("value").Funcs(template.FuncMap{
-		"GenerateSecretKey": func(n int) string {
-			const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-			b := make([]byte, n)
-			for i := range b {
-				b[i] = letterBytes[rand.Intn(len(letterBytes))]
-			}
-			return string(b)
-		},
+		"KeepSecret": func(s string) string { return s }, // just do nothing, flag to store key/value in k8s secrets
 	}).Parse(value)
 	if err != nil {
 		return "", errors.Wrap(err, "error parsing template")
