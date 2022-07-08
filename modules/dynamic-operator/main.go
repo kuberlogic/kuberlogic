@@ -8,9 +8,13 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	cfg2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
+	kuberlogicservice_env "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/controllers/kuberlogicservice-env"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
+	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	"os"
 	"os/exec"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -36,6 +40,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(kuberlogiccomv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(velero.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -128,6 +133,26 @@ func main() {
 
 	if err = (&kuberlogiccomv1alpha1.KuberLogicService{}).SetupWebhookWithManager(mgr, pluginInstances); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "KuberLogicService")
+		os.Exit(1)
+	}
+
+	mgr.GetWebhookServer().Register("/mutate-service-pod", &webhook.Admission{
+		Handler: &kuberlogicservice_env.ServicePodWebhook{Client: mgr.GetClient()}})
+
+	if err = (&controllers.KuberlogicServiceBackupReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Cfg:    cfg,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "KuberlogicServiceBackup")
+		os.Exit(1)
+	}
+	if err = (&controllers.KuberlogicServiceRestoreReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Cfg:    cfg,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "KuberlogicServiceRestore")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

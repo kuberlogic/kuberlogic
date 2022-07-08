@@ -180,14 +180,15 @@ func TestListFormatStr(t *testing.T) {
 				"cpu":    "250m",
 				"memory": "256Mi",
 			},
-			"id":         "test-1",
-			"replicas":   float64(0),
-			"status":     "Unknown",
-			"type":       "postgresql",
-			"domain":     "example.com",
-			"version":    "13",
-			"volumeSize": "1Gi",
-			"endpoint":   "",
+			"id":           "test-1",
+			"subscription": "test1",
+			"replicas":     float64(0),
+			"status":       "Unknown",
+			"type":         "postgresql",
+			"domain":       "example.com",
+			"version":      "13",
+			"volumeSize":   "1Gi",
+			"endpoint":     "",
 		},
 		{
 			"created_at": "2022-05-10T16:00:53.000Z",
@@ -195,14 +196,15 @@ func TestListFormatStr(t *testing.T) {
 				"cpu":    "250m",
 				"memory": "256Mi",
 			},
-			"id":         "test-2",
-			"replicas":   float64(0),
-			"status":     "Unknown",
-			"type":       "postgresql",
-			"version":    "13",
-			"domain":     "example.org",
-			"volumeSize": "1Gi",
-			"endpoint":   "",
+			"id":           "test-2",
+			"subscription": "test2",
+			"replicas":     float64(0),
+			"status":       "Unknown",
+			"type":         "postgresql",
+			"version":      "13",
+			"domain":       "example.org",
+			"volumeSize":   "1Gi",
+			"endpoint":     "",
 		},
 	}
 	client := makeTestClient(200, expected)
@@ -224,12 +226,13 @@ func TestListFormatStr(t *testing.T) {
 	}
 	buff := bytes.NewBufferString("")
 	table := tablewriter.NewWriter(buff)
-	table.SetHeader([]string{"№", "ID", "Type", "Replica", "Version", "Domain", "Status", "Endpoint"})
+	table.SetHeader([]string{"№", "ID", "Subscription ID", "Type", "Replica", "Version", "Domain", "Status", "Endpoint"})
 	table.SetBorder(false)
 	for i, item := range expected {
 		table.Append([]string{
 			strconv.Itoa(i),
 			item["id"].(string),
+			item["subscription"].(string),
 			item["type"].(string),
 			strconv.Itoa(int(item["replicas"].(float64))),
 			item["version"].(string),

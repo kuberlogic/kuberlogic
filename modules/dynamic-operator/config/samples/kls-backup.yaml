@@ -1,0 +1,6 @@
+apiVersion: kuberlogic.com/v1alpha1
+kind: KuberlogicServiceBackup
+metadata:
+  name: demo-compose
+spec:
+  kuberlogicServiceName: demo-compose

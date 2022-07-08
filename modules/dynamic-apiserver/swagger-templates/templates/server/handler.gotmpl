@@ -6,9 +6,6 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 )
 
-// set this string to a required security grant for this action
-const {{ camelize .Name }}SecGrant = "nonsense"
-
 func (srv *Service){{ pascalize .Name }}Handler(params api{{ pascalize .Package }}.{{ pascalize .Name }}Params, _ *models.Principal) middleware.Responder {
 
 	return middleware.NotImplemented("operation {{ .Package }} {{ pascalize .Name }} has not yet been implemented")

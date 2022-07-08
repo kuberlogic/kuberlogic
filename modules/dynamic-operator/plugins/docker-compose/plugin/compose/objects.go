@@ -326,7 +326,6 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 				Protocol:      proto,
 			}
 			container.Ports = append(container.Ports, port)
-
 		}
 		sort.SliceStable(container.Ports, func(i, j int) bool {
 			return container.Ports[i].Name < container.Ports[j].Name

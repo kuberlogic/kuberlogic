@@ -22,7 +22,7 @@ func makeServiceDeleteCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cob
 		RunE:    runServiceDelete(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String("id", "", "service id")
+	_ = cmd.PersistentFlags().String(id_flag, "", "service id")
 
 	return cmd
 }
@@ -40,7 +40,7 @@ func runServiceDelete(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd
 		params := service.NewServiceDeleteParams()
 
 		var id string
-		if value, err := getString(cmd, "id"); err != nil {
+		if value, err := getString(cmd, id_flag); err != nil {
 			return err
 		} else if value != nil {
 			id = *value
@@ -48,7 +48,7 @@ func runServiceDelete(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd
 		params.ServiceID = id
 
 		var formatResponse format
-		if value, err := getString(cmd, "format"); err != nil {
+		if value, err := getString(cmd, format_flag); err != nil {
 			return err
 		} else if value != nil {
 			formatResponse = format(*value)

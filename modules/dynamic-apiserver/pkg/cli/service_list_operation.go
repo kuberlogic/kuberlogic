@@ -20,6 +20,8 @@ func makeServiceListCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra
 		RunE:    runServiceList(apiClientFunc),
 	}
 
+	_ = cmd.PersistentFlags().String(subscription_id_flag, "", "subscription id to filter by")
+
 	return cmd
 }
 
@@ -56,11 +58,11 @@ func runServiceList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 		payload := response.GetPayload()
 		if isDefaultPrintFormat(formatResponse) {
 			table := tablewriter.NewWriter(cmd.OutOrStdout())
-			table.SetHeader([]string{"№", "ID", "Type", "Replica", "Version", "Domain", "Status", "Endpoint"})
+			table.SetHeader([]string{"№", "ID", "Subscription ID", "Type", "Replica", "Version", "Domain", "Status", "Endpoint"})
 			table.SetBorder(false)
 			for i, item := range payload {
 				table.Append([]string{
-					strconv.Itoa(i), *item.ID, *item.Type, strconv.Itoa(int(*item.Replicas)),
+					strconv.Itoa(i), *item.ID, item.Subscription, *item.Type, strconv.Itoa(int(*item.Replicas)),
 					item.Version, item.Domain, item.Status, item.Endpoint,
 				})
 			}

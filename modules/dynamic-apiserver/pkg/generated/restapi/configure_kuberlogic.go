@@ -12,6 +12,8 @@ import (
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/backup"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/restore"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 )
 
@@ -52,6 +54,36 @@ func configureAPI(api *operations.KuberlogicAPI) http.Handler {
 	// Example:
 	// api.APIAuthorizer = security.Authorized()
 
+	if api.BackupBackupAddHandler == nil {
+		api.BackupBackupAddHandler = backup.BackupAddHandlerFunc(func(params backup.BackupAddParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation backup.BackupAdd has not yet been implemented")
+		})
+	}
+	if api.BackupBackupDeleteHandler == nil {
+		api.BackupBackupDeleteHandler = backup.BackupDeleteHandlerFunc(func(params backup.BackupDeleteParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation backup.BackupDelete has not yet been implemented")
+		})
+	}
+	if api.BackupBackupListHandler == nil {
+		api.BackupBackupListHandler = backup.BackupListHandlerFunc(func(params backup.BackupListParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation backup.BackupList has not yet been implemented")
+		})
+	}
+	if api.RestoreRestoreAddHandler == nil {
+		api.RestoreRestoreAddHandler = restore.RestoreAddHandlerFunc(func(params restore.RestoreAddParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation restore.RestoreAdd has not yet been implemented")
+		})
+	}
+	if api.RestoreRestoreDeleteHandler == nil {
+		api.RestoreRestoreDeleteHandler = restore.RestoreDeleteHandlerFunc(func(params restore.RestoreDeleteParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation restore.RestoreDelete has not yet been implemented")
+		})
+	}
+	if api.RestoreRestoreListHandler == nil {
+		api.RestoreRestoreListHandler = restore.RestoreListHandlerFunc(func(params restore.RestoreListParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation restore.RestoreList has not yet been implemented")
+		})
+	}
 	if api.ServiceServiceAddHandler == nil {
 		api.ServiceServiceAddHandler = service.ServiceAddHandlerFunc(func(params service.ServiceAddParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceAdd has not yet been implemented")

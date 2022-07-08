@@ -23,7 +23,6 @@ import (
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	v13 "k8s.io/api/networking/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -45,76 +44,92 @@ type EnvironmentManager struct {
 //+kubebuilder:rbac:groups="",resources=pods;,verbs=deletecollection
 
 // SetupEnv checks if KLS environment is present and creates it if it is not
-func SetupEnv(kls *kuberlogiccomv1alpha1.KuberLogicService, c client.Client, cfg *config.Config, ctx context.Context) (*EnvironmentManager, error) {
+func (e *EnvironmentManager) SetupEnv(ctx context.Context) error {
 	// Namespace ns will contain all managed resources
-	ns := getNamespace(kls)
-	if _, err := controllerruntime.CreateOrUpdate(ctx, c, ns, func() error {
-		return controllerruntime.SetControllerReference(kls, ns, c.Scheme())
+	ns := &v1.Namespace{
+		ObjectMeta: v12.ObjectMeta{
+			Name:   e.NamespaceName,
+			Labels: envLabels(e.kls),
+		},
+	}
+	if _, err := controllerruntime.CreateOrUpdate(ctx, e.Client, ns, func() error {
+		return controllerruntime.SetControllerReference(e.kls, ns, e.Scheme())
 	}); err != nil {
-		return nil, errors.Wrap(err, "error setting up kls namespace")
+		return errors.Wrap(err, "error setting up kls namespace")
 	}
 
 	// NetworkPolicy netpol prevents all cross namespace network communication for service pods
-	netpol := getNetworkPolicy(kls, ns)
-	if _, err := controllerruntime.CreateOrUpdate(ctx, c, netpol, func() error {
-		return controllerruntime.SetControllerReference(kls, netpol, c.Scheme())
-	}); err != nil {
-		return nil, errors.Wrap(err, "error setting up kls networkpolicy")
+	netpol := &v13.NetworkPolicy{
+		ObjectMeta: v12.ObjectMeta{
+			Name:      "namespace-only-egress",
+			Namespace: ns.Name,
+			Labels:    envLabels(e.kls),
+		},
 	}
-
-	// Prevent service pods from starting when requested
-	resourceQuota := getResourceQuota(kls, ns)
-	if _, err := controllerruntime.CreateOrUpdate(ctx, c, resourceQuota, func() error {
-		resourceQuota.Spec.Hard = make(map[v1.ResourceName]resource.Quantity, 0)
-		if kls.Paused() {
-			resourceQuota.Spec.Hard["pods"] = resource.MustParse("0")
+	if _, err := controllerruntime.CreateOrUpdate(ctx, e.Client, netpol, func() error {
+		netpol.Spec = v13.NetworkPolicySpec{
+			PolicyTypes: []v13.PolicyType{
+				v13.PolicyTypeEgress,
+			},
+			Egress: []v13.NetworkPolicyEgressRule{
+				{
+					To: []v13.NetworkPolicyPeer{
+						{
+							NamespaceSelector: &v12.LabelSelector{
+								MatchLabels: envLabels(e.kls),
+							},
+						},
+					},
+				},
+			},
 		}
-		return controllerruntime.SetControllerReference(kls, resourceQuota, c.Scheme())
+		return controllerruntime.SetControllerReference(e.kls, netpol, e.Scheme())
 	}); err != nil {
-		return nil, errors.Wrap(err, "error syncing kls resource quota")
+		return errors.Wrap(err, "error setting up kls networkpolicy")
 	}
 
 	// Sync TLS secret when defined in config
 	tlsSecret := &v1.Secret{
 		ObjectMeta: v12.ObjectMeta{
-			Name:      cfg.SvcOpts.TLSSecretName,
+			Name:      e.cfg.SvcOpts.TLSSecretName,
 			Namespace: ns.GetName(),
 		},
 	}
 
-	if cfg.SvcOpts.TLSSecretName != "" {
-		if _, err := controllerruntime.CreateOrUpdate(ctx, c, tlsSecret, func() error {
+	if e.cfg.SvcOpts.TLSSecretName != "" {
+		if _, err := controllerruntime.CreateOrUpdate(ctx, e.Client, tlsSecret, func() error {
 			srcSecret := &v1.Secret{
 				ObjectMeta: v12.ObjectMeta{
-					Name:      cfg.SvcOpts.TLSSecretName,
-					Namespace: cfg.Namespace,
+					Name:      e.cfg.SvcOpts.TLSSecretName,
+					Namespace: e.cfg.Namespace,
 				},
 			}
-			if err := c.Get(ctx, client.ObjectKeyFromObject(srcSecret), srcSecret); err != nil {
+			if err := e.Get(ctx, client.ObjectKeyFromObject(srcSecret), srcSecret); err != nil {
 				return errors.Wrap(err, "error getting source TLS secret")
 			}
 			tlsSecret.Data = srcSecret.Data
-			return controllerruntime.SetControllerReference(kls, tlsSecret, c.Scheme())
+			return controllerruntime.SetControllerReference(e.kls, tlsSecret, e.Scheme())
 		}); err != nil {
-			return nil, errors.Wrap(err, "error syncing TLS Secret")
+			return errors.Wrap(err, "error syncing TLS Secret")
 		}
 	}
 
 	// set namespace status field
-	kls.Status.Namespace = ns.GetName()
-	return &EnvironmentManager{
-		Client: c,
-
-		NamespaceName: ns.GetName(),
-
-		cfg: cfg,
-		kls: kls,
-	}, nil
+	e.kls.Status.Namespace = ns.GetName()
+	return nil
 }
 
 // PauseService deletes all pods in a service namespace.
 // In addition to this resourceQuota in SetupEnv sets the hard limit of non-exited pods to 0.
 func (e *EnvironmentManager) PauseService(ctx context.Context) error {
+	return e.deleteAllServicePods(ctx)
+}
+
+func (e *EnvironmentManager) ResumeService(ctx context.Context) error {
+	return e.deleteAllServicePods(ctx)
+}
+
+func (e *EnvironmentManager) deleteAllServicePods(ctx context.Context) error {
 	if err := e.DeleteAllOf(ctx, &v1.Pod{}, &client.DeleteAllOfOptions{
 		ListOptions: client.ListOptions{
 			Namespace: e.NamespaceName,
@@ -126,50 +141,16 @@ func (e *EnvironmentManager) PauseService(ctx context.Context) error {
 	return nil
 }
 
-func getNamespace(kls *kuberlogiccomv1alpha1.KuberLogicService) *v1.Namespace {
-	return &v1.Namespace{
-		ObjectMeta: v12.ObjectMeta{
-			Name:   kls.GetName(),
-			Labels: envLabels(kls),
-		},
-	}
-}
+func New(c client.Client, kls *kuberlogiccomv1alpha1.KuberLogicService, cfg *config.Config) *EnvironmentManager {
+	return &EnvironmentManager{
+		Client: c,
 
-func getNetworkPolicy(kls *kuberlogiccomv1alpha1.KuberLogicService, ns *v1.Namespace) *v13.NetworkPolicy {
-	return &v13.NetworkPolicy{
-		ObjectMeta: v12.ObjectMeta{
-			Name:      "namespace-only-egress",
-			Namespace: ns.Name,
-			Labels:    envLabels(kls),
-		},
-		Spec: v13.NetworkPolicySpec{
-			PolicyTypes: []v13.PolicyType{
-				v13.PolicyTypeEgress,
-			},
-			Egress: []v13.NetworkPolicyEgressRule{
-				{
-					To: []v13.NetworkPolicyPeer{
-						{
-							NamespaceSelector: &v12.LabelSelector{
-								MatchLabels: envLabels(kls),
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-}
 
-func getResourceQuota(kls *kuberlogiccomv1alpha1.KuberLogicService, ns *v1.Namespace) *v1.ResourceQuota {
-	q := &v1.ResourceQuota{
-		ObjectMeta: v12.ObjectMeta{
-			Name:      kls.GetName(),
-			Namespace: ns.GetName(),
-			Labels:    envLabels(kls),
-		},
+		NamespaceName: kls.GetName(),
+
+		cfg: cfg,
+		kls: kls,
 	}
-	return q
 }
 
 func envLabels(kls *kuberlogiccomv1alpha1.KuberLogicService) map[string]string {

@@ -39,6 +39,284 @@ func init() {
   "host": "localhost:8001",
   "basePath": "/api/v1/",
   "paths": {
+    "/backups/": {
+      "get": {
+        "description": "List backup objects",
+        "tags": [
+          "backup"
+        ],
+        "summary": "list backups",
+        "operationId": "backupList",
+        "parameters": [
+          {
+            "$ref": "#/parameters/BackupRestoreServiceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "search results matching criteria",
+            "schema": {
+              "$ref": "#/definitions/Backups"
+            }
+          },
+          "400": {
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Create backup object",
+        "tags": [
+          "backup"
+        ],
+        "summary": "create backup object",
+        "operationId": "backupAdd",
+        "parameters": [
+          {
+            "$ref": "#/parameters/BackupItem"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "item created",
+            "schema": {
+              "$ref": "#/definitions/Backup"
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "409": {
+            "description": "item already exists"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/backups/{BackupID}/": {
+      "delete": {
+        "description": "Deletes a backup object\n",
+        "tags": [
+          "backup"
+        ],
+        "summary": "deletes a backup item",
+        "operationId": "backupDelete",
+        "parameters": [
+          {
+            "$ref": "#/parameters/BackupID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "item deleted"
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "404": {
+            "description": "item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "bad validation"
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/restores/": {
+      "get": {
+        "description": "List restore objects",
+        "tags": [
+          "restore"
+        ],
+        "summary": "list restores",
+        "operationId": "restoreList",
+        "parameters": [
+          {
+            "$ref": "#/parameters/BackupRestoreServiceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "search results matching criteria",
+            "schema": {
+              "$ref": "#/definitions/Restores"
+            }
+          },
+          "400": {
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Create restore object",
+        "tags": [
+          "restore"
+        ],
+        "summary": "create restore object",
+        "operationId": "restoreAdd",
+        "parameters": [
+          {
+            "$ref": "#/parameters/RestoreItem"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "item created",
+            "schema": {
+              "$ref": "#/definitions/Restore"
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "409": {
+            "description": "item already exists"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/restores/{RestoreID}/": {
+      "delete": {
+        "description": "Deletes a restore object\n",
+        "tags": [
+          "restore"
+        ],
+        "summary": "deletes a restore item",
+        "operationId": "restoreDelete",
+        "parameters": [
+          {
+            "$ref": "#/parameters/RestoreID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "item deleted"
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "404": {
+            "description": "item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "bad validation"
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/services/": {
       "get": {
         "description": "List of service objects\n",
@@ -294,6 +572,38 @@ func init() {
         "type": "object"
       }
     },
+    "Backup": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "id": {
+          "type": "string",
+          "maxLength": 63,
+          "minLength": 2,
+          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+          "readOnly": true
+        },
+        "service_id": {
+          "type": "string",
+          "maxLength": 20,
+          "minLength": 2,
+          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "Backups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Backup"
+      }
+    },
     "Error": {
       "type": "object",
       "properties": {
@@ -317,6 +627,38 @@ func init() {
           "type": "string",
           "pattern": "^([0-9]+$)|([0-9]+.[0-9]+$)"
         }
+      }
+    },
+    "Restore": {
+      "type": "object",
+      "properties": {
+        "backup_id": {
+          "type": "string",
+          "maxLength": 63,
+          "minLength": 2,
+          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "id": {
+          "type": "string",
+          "maxLength": 63,
+          "minLength": 2,
+          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+          "readOnly": true
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "Restores": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Restore"
       }
     },
     "Service": {
@@ -386,8 +728,55 @@ func init() {
     }
   },
   "parameters": {
+    "BackupID": {
+      "maxLength": 63,
+      "minLength": 3,
+      "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+      "type": "string",
+      "description": "backup Resource ID",
+      "name": "BackupID",
+      "in": "path",
+      "required": true
+    },
+    "BackupItem": {
+      "description": "backup item",
+      "name": "backupItem",
+      "in": "body",
+      "required": true,
+      "schema": {
+        "$ref": "#/definitions/Backup"
+      }
+    },
+    "BackupRestoreServiceID": {
+      "maxLength": 20,
+      "minLength": 3,
+      "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+      "type": "string",
+      "description": "service Resource ID to query backups/restores by",
+      "name": "ServiceID",
+      "in": "query"
+    },
+    "RestoreID": {
+      "maxLength": 63,
+      "minLength": 3,
+      "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+      "type": "string",
+      "description": "restore Resource ID",
+      "name": "RestoreID",
+      "in": "path",
+      "required": true
+    },
+    "RestoreItem": {
+      "description": "restore item",
+      "name": "restoreItem",
+      "in": "body",
+      "required": true,
+      "schema": {
+        "$ref": "#/definitions/Restore"
+      }
+    },
     "ServiceID": {
-      "maxLength": 120,
+      "maxLength": 20,
       "minLength": 3,
       "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
       "type": "string",
@@ -453,6 +842,322 @@ func init() {
   "host": "localhost:8001",
   "basePath": "/api/v1/",
   "paths": {
+    "/backups/": {
+      "get": {
+        "description": "List backup objects",
+        "tags": [
+          "backup"
+        ],
+        "summary": "list backups",
+        "operationId": "backupList",
+        "parameters": [
+          {
+            "maxLength": 20,
+            "minLength": 3,
+            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+            "type": "string",
+            "description": "service Resource ID to query backups/restores by",
+            "name": "ServiceID",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "search results matching criteria",
+            "schema": {
+              "$ref": "#/definitions/Backups"
+            }
+          },
+          "400": {
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Create backup object",
+        "tags": [
+          "backup"
+        ],
+        "summary": "create backup object",
+        "operationId": "backupAdd",
+        "parameters": [
+          {
+            "description": "backup item",
+            "name": "backupItem",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Backup"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "item created",
+            "schema": {
+              "$ref": "#/definitions/Backup"
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "409": {
+            "description": "item already exists"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/backups/{BackupID}/": {
+      "delete": {
+        "description": "Deletes a backup object\n",
+        "tags": [
+          "backup"
+        ],
+        "summary": "deletes a backup item",
+        "operationId": "backupDelete",
+        "parameters": [
+          {
+            "maxLength": 63,
+            "minLength": 3,
+            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+            "type": "string",
+            "description": "backup Resource ID",
+            "name": "BackupID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "item deleted"
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "404": {
+            "description": "item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "bad validation"
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/restores/": {
+      "get": {
+        "description": "List restore objects",
+        "tags": [
+          "restore"
+        ],
+        "summary": "list restores",
+        "operationId": "restoreList",
+        "parameters": [
+          {
+            "maxLength": 20,
+            "minLength": 3,
+            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+            "type": "string",
+            "description": "service Resource ID to query backups/restores by",
+            "name": "ServiceID",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "search results matching criteria",
+            "schema": {
+              "$ref": "#/definitions/Restores"
+            }
+          },
+          "400": {
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Create restore object",
+        "tags": [
+          "restore"
+        ],
+        "summary": "create restore object",
+        "operationId": "restoreAdd",
+        "parameters": [
+          {
+            "description": "restore item",
+            "name": "restoreItem",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Restore"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "item created",
+            "schema": {
+              "$ref": "#/definitions/Restore"
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "409": {
+            "description": "item already exists"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/restores/{RestoreID}/": {
+      "delete": {
+        "description": "Deletes a restore object\n",
+        "tags": [
+          "restore"
+        ],
+        "summary": "deletes a restore item",
+        "operationId": "restoreDelete",
+        "parameters": [
+          {
+            "maxLength": 63,
+            "minLength": 3,
+            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+            "type": "string",
+            "description": "restore Resource ID",
+            "name": "RestoreID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "item deleted"
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "404": {
+            "description": "item not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "bad validation"
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/services/": {
       "get": {
         "description": "List of service objects\n",
@@ -567,7 +1272,7 @@ func init() {
         "operationId": "serviceGet",
         "parameters": [
           {
-            "maxLength": 120,
+            "maxLength": 20,
             "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
@@ -625,7 +1330,7 @@ func init() {
         "operationId": "serviceDelete",
         "parameters": [
           {
-            "maxLength": 120,
+            "maxLength": 20,
             "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
@@ -677,7 +1382,7 @@ func init() {
         "operationId": "serviceEdit",
         "parameters": [
           {
-            "maxLength": 120,
+            "maxLength": 20,
             "minLength": 3,
             "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
             "type": "string",
@@ -744,6 +1449,38 @@ func init() {
         "type": "object"
       }
     },
+    "Backup": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "id": {
+          "type": "string",
+          "maxLength": 63,
+          "minLength": 2,
+          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+          "readOnly": true
+        },
+        "service_id": {
+          "type": "string",
+          "maxLength": 20,
+          "minLength": 2,
+          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "Backups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Backup"
+      }
+    },
     "Error": {
       "type": "object",
       "properties": {
@@ -767,6 +1504,38 @@ func init() {
           "type": "string",
           "pattern": "^([0-9]+$)|([0-9]+.[0-9]+$)"
         }
+      }
+    },
+    "Restore": {
+      "type": "object",
+      "properties": {
+        "backup_id": {
+          "type": "string",
+          "maxLength": 63,
+          "minLength": 2,
+          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "id": {
+          "type": "string",
+          "maxLength": 63,
+          "minLength": 2,
+          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+          "readOnly": true
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "Restores": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Restore"
       }
     },
     "Service": {
@@ -836,8 +1605,55 @@ func init() {
     }
   },
   "parameters": {
+    "BackupID": {
+      "maxLength": 63,
+      "minLength": 3,
+      "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+      "type": "string",
+      "description": "backup Resource ID",
+      "name": "BackupID",
+      "in": "path",
+      "required": true
+    },
+    "BackupItem": {
+      "description": "backup item",
+      "name": "backupItem",
+      "in": "body",
+      "required": true,
+      "schema": {
+        "$ref": "#/definitions/Backup"
+      }
+    },
+    "BackupRestoreServiceID": {
+      "maxLength": 20,
+      "minLength": 3,
+      "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+      "type": "string",
+      "description": "service Resource ID to query backups/restores by",
+      "name": "ServiceID",
+      "in": "query"
+    },
+    "RestoreID": {
+      "maxLength": 63,
+      "minLength": 3,
+      "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+      "type": "string",
+      "description": "restore Resource ID",
+      "name": "RestoreID",
+      "in": "path",
+      "required": true
+    },
+    "RestoreItem": {
+      "description": "restore item",
+      "name": "restoreItem",
+      "in": "body",
+      "required": true,
+      "schema": {
+        "$ref": "#/definitions/Restore"
+      }
+    },
     "ServiceID": {
-      "maxLength": 120,
+      "maxLength": 20,
       "minLength": 3,
       "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
       "type": "string",

@@ -50,6 +50,7 @@ func (d *dockerComposeService) Convert(req commons.PluginRequest) *commons.Plugi
 			if object.GetName() == "" {
 				continue
 			}
+
 			_ = res.AddUnstructuredObject(object, gvk)
 		}
 	}
