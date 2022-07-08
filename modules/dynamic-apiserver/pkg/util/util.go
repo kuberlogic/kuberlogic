@@ -42,6 +42,10 @@ func ServiceToKuberlogic(svc *models.Service) (*kuberlogiccomv1alpha1.KuberLogic
 		c.Spec.VolumeSize = svc.VolumeSize
 	}
 
+	if svc.BackupSchedule != "" {
+		c.Spec.BackupSchedule = svc.BackupSchedule
+	}
+
 	if svc.Limits != nil {
 		c.Spec.Limits = make(v12.ResourceList)
 
@@ -117,6 +121,10 @@ func KuberlogicToService(kls *kuberlogiccomv1alpha1.KuberLogicService) (*models.
 	}
 	if kls.Spec.Version != "" {
 		ret.Version = kls.Spec.Version
+	}
+
+	if kls.Spec.BackupSchedule != "" {
+		ret.BackupSchedule = kls.Spec.BackupSchedule
 	}
 
 	_, status := kls.IsReady()

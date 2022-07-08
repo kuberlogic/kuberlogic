@@ -22,6 +22,9 @@ type Service struct {
 	// advanced
 	Advanced Advanced `json:"advanced,omitempty"`
 
+	// backup schedule
+	BackupSchedule string `json:"backupSchedule,omitempty"`
+
 	// created at
 	// Read Only: true
 	// Format: date-time
