@@ -32,9 +32,12 @@ func main() {
 		initEnv(logger, value)
 	}
 
-	chargebee.Configure(viper.GetString("CHARGEBEE_KEY"), viper.GetString("CHARGEBEE_SITE"))
-
-	http.HandleFunc("/chanrgebee-webhook", app.WebhookHandler(logger))
+	if viper.GetString("CHARGEBEE_SITE") != "" {
+		chargebee.Configure(viper.GetString("CHARGEBEE_KEY"), viper.GetString("CHARGEBEE_SITE"))
+		http.HandleFunc("/chanrgebee-webhook", app.WebhookHandler(logger))
+	} else {
+		logger.Warn("ChargeBee site is not set. Requests will not be handled.")
+	}
 	addr := "0.0.0.0:4242"
 	logger.Infof("Listening on %s\n", addr)
 	logger.Fatal(http.ListenAndServe(addr, nil))
@@ -44,7 +47,7 @@ func initEnv(logger *zap.SugaredLogger, param string) {
 	_ = viper.BindEnv(param)
 	value := viper.GetString(param)
 	if value == "" {
-		logger.Fatalf("parameter '%s' must be defined", param)
+		logger.Warnf("parameter '%s' must be defined", param)
 	}
 	logger.Debugf("%s: %s", param, value)
 }
