@@ -12,6 +12,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.16.0
 	github.com/pkg/errors v0.9.1
+	github.com/robfig/cron v1.1.0
 	github.com/vmware-tanzu/velero v1.8.1
 	github.com/vrischmann/envconfig v1.3.0
 	github.com/zalando/postgres-operator v1.7.1

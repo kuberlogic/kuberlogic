@@ -44,12 +44,13 @@ func TestCreateSuccessFormatJson(t *testing.T) {
 			"cpu":    "250m",
 			"memory": "256Mi",
 		},
-		"id":         "test",
-		"replicas":   float64(0),
-		"status":     "Unknown",
-		"type":       "postgresql",
-		"version":    "13",
-		"volumeSize": "1Gi",
+		"id":             "test",
+		"replicas":       float64(0),
+		"backupSchedule": "*/10 * * * *",
+		"status":         "Unknown",
+		"type":           "postgresql",
+		"version":        "13",
+		"volumeSize":     "1Gi",
 	}
 	client := makeTestClient(201, expected)
 	cmd, err := MakeRootCmd(client)
@@ -63,6 +64,7 @@ func TestCreateSuccessFormatJson(t *testing.T) {
 	cmd.SetArgs([]string{"service", "add",
 		"--id", "test",
 		"--type", "postgresql",
+		"--backup_schedule", "*/10 * * * *",
 		"--format", "json",
 	})
 	err = cmd.Execute()

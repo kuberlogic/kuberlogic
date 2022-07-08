@@ -1,0 +1,5 @@
+apiVersion: kuberlogic.com.kuberlogic.com/v1alpha1
+kind: KuberlogicServiceBackupSchedule
+metadata:
+  name: kuberlogicservicebackupschedule-sample
+spec:

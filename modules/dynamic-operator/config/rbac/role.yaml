@@ -82,9 +82,33 @@ rules:
   - update
   - watch
 - apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - apps
   resources:
   - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - cronjobs
   verbs:
   - create
   - delete
@@ -119,6 +143,18 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - kuberlogic.com
+  resources:
+  - kuberlogicservicebackupschedules
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - kuberlogic.com
   resources:
@@ -172,6 +208,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - kuberlogic.com.kuberlogic.com
+  resources:
+  - kuberlogicservicebackupschedules
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kuberlogic.com.kuberlogic.com
+  resources:
+  - kuberlogicservicebackupschedules/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - kuberlogic.com.kuberlogic.com
+  resources:
+  - kuberlogicservicebackupschedules/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - networking.k8s.io
   resources:
   - ingresses
@@ -187,6 +249,18 @@ rules:
   - networking.k8s.io
   resources:
   - networkpolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - rolebindings
   verbs:
   - create
   - delete

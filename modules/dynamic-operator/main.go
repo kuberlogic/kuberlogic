@@ -5,15 +5,17 @@
 package main
 
 import (
+	"os"
+	"os/exec"
+
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
+	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
 	cfg2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
 	kuberlogicservice_env "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/controllers/kuberlogicservice-env"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
-	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
-	"os"
-	"os/exec"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -153,6 +155,14 @@ func main() {
 		Cfg:    cfg,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KuberlogicServiceRestore")
+		os.Exit(1)
+	}
+	if err = (&controllers.KuberlogicServiceBackupScheduleReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Cfg:    cfg,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "KuberlogicServiceBackupSchedule")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

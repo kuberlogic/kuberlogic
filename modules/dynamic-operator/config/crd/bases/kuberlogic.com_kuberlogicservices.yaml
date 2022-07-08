@@ -79,6 +79,8 @@ spec:
               advanced:
                 description: any advanced configuration is supported
                 x-kubernetes-preserve-unknown-fields: true
+              backupSchedule:
+                type: string
               domain:
                 pattern: '[a-z]([-a-z0-9]*[a-z0-9])?'
                 type: string

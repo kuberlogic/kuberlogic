@@ -1,5 +1,5 @@
 
-VERSION ?= 0.0.8
+VERSION ?= 0.0.9
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.22
@@ -74,7 +74,7 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: manifests generate fmt vet build-example-plugin envtest ## Run tests.
-	PLUGINS="{postgresql,$(PROJECT_DIR)/plugin/example-plugin/example-plugin}" KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -v ./... -coverprofile cover.out
+	PLUGINS="{postgresql,$(PROJECT_DIR)/plugin/example-plugin/example-plugin}" KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" NAMESPACE="default" SERVICE_ACCOUNT="default" go test -v ./... -coverprofile cover.out
 
 ##@ Build
 

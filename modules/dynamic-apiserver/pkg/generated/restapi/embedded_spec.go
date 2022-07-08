@@ -671,6 +671,9 @@ func init() {
         "advanced": {
           "$ref": "#/definitions/Advanced"
         },
+        "backupSchedule": {
+          "type": "string"
+        },
         "created_at": {
           "type": "string",
           "format": "date-time",
@@ -1547,6 +1550,9 @@ func init() {
       "properties": {
         "advanced": {
           "$ref": "#/definitions/Advanced"
+        },
+        "backupSchedule": {
+          "type": "string"
         },
         "created_at": {
           "type": "string",

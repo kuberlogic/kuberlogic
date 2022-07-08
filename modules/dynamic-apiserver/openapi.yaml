@@ -431,6 +431,8 @@ definitions:
         # https://goswagger.io/faq/faq_model.html#non-required-or-nullable-property
         x-nullable: true
         type: integer
+      backupSchedule:
+        type: string
       limits:
         $ref: "#/definitions/Limits"
       advanced:

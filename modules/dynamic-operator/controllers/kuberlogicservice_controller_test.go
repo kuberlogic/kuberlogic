@@ -9,11 +9,13 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
+	v12 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 )
 
@@ -62,12 +64,13 @@ var _ = Describe("KuberlogicService controller", func() {
 					Name: klsName,
 				},
 				Spec: v1alpha1.KuberLogicServiceSpec{
-					Type:       "postgresql",
-					Replicas:   defaultReplicas,
-					Domain:     defaultDomain,
-					VolumeSize: defaultVolumeSize,
-					Version:    defaultVersion,
-					Limits:     limits,
+					Type:           "postgresql",
+					Replicas:       defaultReplicas,
+					Domain:         defaultDomain,
+					VolumeSize:     defaultVolumeSize,
+					Version:        defaultVersion,
+					Limits:         limits,
+					BackupSchedule: "*/10 * * * *",
 					//Advanced:   advanced,
 				},
 			}
@@ -117,6 +120,15 @@ var _ = Describe("KuberlogicService controller", func() {
 					"cpu":    "100m",
 				},
 			}))
+
+			By("Checking scheduled backup cronjob")
+			cj := &v12.CronJob{}
+			cj.SetName(kls.GetName())
+			cj.SetNamespace("default")
+			Eventually(func() bool {
+				return k8sClient.Get(ctx, client.ObjectKeyFromObject(cj), cj) == nil
+			}, timeout, interval).Should(BeTrue())
+			Expect(cj.Spec.Schedule).Should(Equal(kls.Spec.BackupSchedule))
 		})
 	})
 })
