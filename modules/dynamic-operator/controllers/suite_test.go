@@ -129,6 +129,13 @@ var _ = BeforeSuite(func() {
 	}).SetupWithManager(k8sManager, dependantObjects...)
 	Expect(err).ToNot(HaveOccurred())
 
+	err = (&KuberlogicServiceBackupScheduleReconciler{
+		Client: k8sManager.GetClient(),
+		Scheme: k8sManager.GetScheme(),
+		Cfg:    config,
+	}).SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
 	go func() {
 		defer GinkgoRecover()
 		err = k8sManager.Start(ctx)
