@@ -496,4 +496,126 @@ var _ = Describe("docker-compose model", func() {
 			})
 		})
 	})
+	Context("When reconciling with templates env, keep secrets, cache", func() {
+		env1 := `{{ "abc" | KeepSecret }}`
+		env2 := `{{ .GenerateKey 30 | .FromCache "A" }}`
+		env3 := `{{ .GenerateKey 30 | .FromCache "A" }}`
+		env4 := `{{ .GenerateRSA 2048 | .Base64 | .FromCache "B" | KeepSecret }}`
+		env5 := `{{ .GenerateRSA 2048 | .Base64 | .FromCache "B" | KeepSecret }}`
+		testValidProject := &types.Project{
+			Name:       "test",
+			WorkingDir: "/tmp",
+			Services: types.Services{
+				types.ServiceConfig{
+					Name:    "demo-app",
+					Command: types.ShellCommand{"cmd", "arg"},
+					Environment: types.MappingWithEquals{
+						"ENV1": &env1,
+						"ENV2": &env2,
+						"ENV3": &env3,
+						"ENV4": &env4,
+						"ENV5": &env5,
+					},
+					Image: "demo:test",
+					Ports: []types.ServicePortConfig{
+						{
+							Target:    80,
+							Published: "8001",
+						},
+					},
+					Volumes: []types.ServiceVolumeConfig{
+						{
+							Source: "demo",
+							Target: "/tmp/demo",
+						},
+					},
+				},
+				types.ServiceConfig{
+					Name:    "demo-db",
+					Command: types.ShellCommand{"cmd", "arg"},
+					Image:   "demodb:test",
+				},
+			},
+			Networks: nil,
+			Volumes: types.Volumes{
+				"demo": types.VolumeConfig{
+					Name: "demo",
+				},
+			},
+		}
+
+		requests := &commons.PluginRequest{
+			Name:       "demo-kls",
+			Namespace:  "demo-kls",
+			Replicas:   1,
+			VolumeSize: "1G",
+			Version:    "",
+		}
+
+		c := NewComposeModel(testValidProject, hclog.Default())
+
+		It("Should create valid Kubernetes objects", func() {
+			By("Checking Reconcile return parameters")
+			objs, err := c.Reconcile(requests)
+			Expect(err).Should(BeNil())
+			Expect(len(objs)).Should(Equal(6))
+
+			By("Validating returned Deployment")
+
+			podSpec := c.deployment.Spec.Template.Spec
+			Expect(len(podSpec.Containers)).Should(Equal(2))
+			container := podSpec.Containers[0]
+			Expect(len(container.Env)).Should(Equal(5))
+
+			Expect(container.Env[0].ValueFrom.SecretKeyRef.Key).Should(Equal("ENV1"))
+			genKey := container.Env[1].Value
+			Expect(len(genKey)).Should(Equal(30))
+			Expect(len(container.Env[2].Value)).Should(Equal(30))
+			Expect(genKey).Should(Equal(container.Env[2].Value))
+			Expect(container.Env[3].ValueFrom.SecretKeyRef.Key).Should(Equal("ENV4"))
+
+			By("Validating returned secret")
+			Expect(c.secret.Name).Should(Equal("demo-app"))
+			Expect(c.secret.StringData["ENV1"]).Should(Equal("abc"))
+			rsa1 := c.secret.StringData["ENV4"]
+			rsa2 := c.secret.StringData["ENV5"]
+			Expect(rsa1).Should(Equal(rsa2))
+
+			// populate .Data object from .StringData looks like emulating saving secrets to k8s
+			c.secret.Data = make(map[string][]byte)
+			for k, v := range c.secret.StringData {
+				c.secret.Data[k] = []byte(v)
+			}
+
+			By("Repopulating with existing objects")
+			// populate requests objects from the previous run
+			for _, elem := range objs {
+				for gvk, obj := range elem {
+					unstructuredObj, _ := commons.ToUnstructured(obj, gvk)
+					requests.AddObject(unstructuredObj)
+				}
+			}
+
+			By("Checking Reconcile result for the 2nd time")
+			_, secondErr := c.Reconcile(requests)
+			Expect(secondErr).Should(BeNil())
+
+			By("Validating returned Deployment")
+			cont := c.deployment.Spec.Template.Spec.Containers[0]
+			Expect(len(cont.Env)).Should(Equal(5))
+			Expect(cont.Env[0].ValueFrom.SecretKeyRef.Key).Should(Equal("ENV1"))
+			Expect(len(container.Env[1].Value)).Should(Equal(30))
+			Expect(len(container.Env[2].Value)).Should(Equal(30))
+			Expect(container.Env[1].Value).Should(Equal(genKey))
+			Expect(container.Env[2].Value).Should(Equal(genKey))
+			Expect(container.Env[3].ValueFrom.SecretKeyRef.Key).Should(Equal("ENV4"))
+
+			By("Validating returned secret")
+			Expect(c.secret.Name).Should(Equal("demo-app"))
+			Expect(c.secret.StringData["ENV1"]).Should(Equal("abc"))
+			// equals value to the first time reconcilation
+			Expect(c.secret.StringData["ENV4"]).Should(Equal(rsa1))
+			Expect(c.secret.StringData["ENV5"]).Should(Equal(rsa1))
+		})
+	})
 })
