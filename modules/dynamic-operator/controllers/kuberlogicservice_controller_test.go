@@ -124,7 +124,7 @@ var _ = Describe("KuberlogicService controller", func() {
 			By("Checking scheduled backup cronjob")
 			cj := &v12.CronJob{}
 			cj.SetName(kls.GetName())
-			cj.SetNamespace("kuberlogic")
+			cj.SetNamespace("default")
 			Eventually(func() bool {
 				return k8sClient.Get(ctx, client.ObjectKeyFromObject(cj), cj) == nil
 			}, timeout, interval).Should(BeTrue())
