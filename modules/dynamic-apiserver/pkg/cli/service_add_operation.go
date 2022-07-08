@@ -27,6 +27,7 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
 	_ = cmd.PersistentFlags().String("domain", "", "domain for external connection to service")
 	_ = cmd.PersistentFlags().String("volume_size", "", "")
+	_ = cmd.PersistentFlags().String("backup_schedule", "", "backup schedule in cron format")
 	_ = cmd.PersistentFlags().Bool("tls_enabled", false, "")
 	_ = cmd.PersistentFlags().Bool(subscription_id_flag, false, "")
 
@@ -89,6 +90,12 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 			return err
 		} else if value != nil {
 			svc.VolumeSize = *value
+		}
+
+		if value, err := getString(cmd, "backup_schedule"); err != nil {
+			return err
+		} else if value != nil {
+			svc.BackupSchedule = *value
 		}
 
 		if value, err := getBool(cmd, "tls_enabled"); err != nil {

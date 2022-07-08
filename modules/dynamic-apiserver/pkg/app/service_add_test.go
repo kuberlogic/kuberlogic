@@ -63,8 +63,9 @@ func TestServiceAddExtended(t *testing.T) {
 				"memory":  resource.MustParse("500"),
 				"storage": resource.MustParse("100Gi"),
 			},
-			VolumeSize: "100Gi",
-			Version:    "13",
+			VolumeSize:     "100Gi",
+			Version:        "13",
+			BackupSchedule: "*/10 * * * *",
 		},
 	}
 	expectedObj.MarkReady("Ready")
@@ -87,9 +88,10 @@ func TestServiceAddExtended(t *testing.T) {
 			Memory:     "500",
 			VolumeSize: "100Gi",
 		},
-		VolumeSize: "100Gi",
-		Version:    "13",
-		Status:     "Ready",
+		VolumeSize:     "100Gi",
+		Version:        "13",
+		Status:         "Ready",
+		BackupSchedule: "*/10 * * * *",
 	}
 
 	params := apiService.ServiceAddParams{
