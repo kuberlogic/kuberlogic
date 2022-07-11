@@ -5,6 +5,10 @@ resources:
 - services.yaml
 
 configMapGenerator:
+- behavior: create
+  literals:
+  - backups_enabled=false
+  name: controller-manager-config
 - files:
   - controller_manager_config.yaml
   name: manager-config
@@ -25,10 +29,10 @@ secretGenerator:
 images:
 - name: apiserver
   newName: quay.io/kuberlogic/dynamic-apiserver
-  newTag: 0.0.8
+  newTag: 0.0.9
 - name: chargebee-integration
   newName: quay.io/kuberlogic/chargebee-integration
-  newTag: 0.0.8
+  newTag: 0.0.9
 - name: controller
   newName: quay.io/kuberlogic/dynamic-operator
-  newTag: 0.0.8
+  newTag: 0.0.9
