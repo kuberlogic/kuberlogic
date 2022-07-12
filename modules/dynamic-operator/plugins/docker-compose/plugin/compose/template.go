@@ -19,6 +19,10 @@ import (
 	"strings"
 )
 
+var (
+	errPersistentSecretWrongArgs = errors.New("PersistentSecret function needs `secretId <optional,string>, secretData <string> arguments`")
+)
+
 type viewData struct {
 	Name       string
 	Namespace  string
@@ -51,7 +55,7 @@ func newViewData(req *commons.PluginRequest) viewData {
 }
 
 func (v *viewData) isSecret(value string) bool {
-	return strings.Contains(value, "| KeepSecret")
+	return strings.Contains(value, "PersistentSecret")
 }
 
 func (v *viewData) Endpoint(defaultValue string) string {
@@ -84,34 +88,54 @@ func (v *viewData) FromCache(key, value string) string {
 	return value
 }
 
-func (v *viewData) GenerateRSA(bits int) string {
-	// TODO: how to return err?
-	pk, _ := rsa.GenerateKey(rand.Reader, bits)
+func (v *viewData) GenerateRSA(bits int) (string, error) {
+	pk, err := rsa.GenerateKey(rand.Reader, bits)
+	if err != nil {
+		return "", err
+	}
 
 	privateKeyBlock := &pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(pk),
 	}
 	buff := new(bytes.Buffer)
-	_ = pem.Encode(buff, privateKeyBlock)
-	return buff.String()
+	err = pem.Encode(buff, privateKeyBlock)
+	return buff.String(), err
 }
 
 func (v *viewData) Base64(value string) string {
 	return base64.StdEncoding.EncodeToString([]byte(value))
 }
 
-func (v *viewData) parse(value string) (string, error) {
+// parse executes a template and returns three values:
+// * rendered template value
+// * value identified (set only when PersistentSecret function is set)
+// *
+func (v *viewData) parse(value string) (string, string, error) {
+	var keyId string
 	tmpl, err := template.New("value").Funcs(template.FuncMap{
-		"KeepSecret": func(s string) string { return s }, // just do nothing, flag to store key/value in k8s secrets
+		// PersistentSecret func accepts two args (one is optional):
+		// * keyId (this will be used to identify a secret key), empty if not passed
+		// * data (data that needs to be stored in secret)
+		"PersistentSecret": func(args ...string) (string, error) {
+			switch len(args) {
+			case 1:
+				return args[0], nil
+			case 2:
+				keyId = args[0]
+				return args[1], nil
+			default:
+				return "", errPersistentSecretWrongArgs
+			}
+		},
 	}).Parse(value)
 	if err != nil {
-		return "", errors.Wrap(err, "error parsing template")
+		return "", "", errors.Wrap(err, "error parsing template")
 	}
 
 	data := &bytes.Buffer{}
 	if err := tmpl.Execute(data, v); err != nil {
-		return "", errors.Wrap(err, "error rendering value")
+		return "", "", errors.Wrap(err, "error rendering value")
 	}
-	return data.String(), nil
+	return data.String(), keyId, nil
 }

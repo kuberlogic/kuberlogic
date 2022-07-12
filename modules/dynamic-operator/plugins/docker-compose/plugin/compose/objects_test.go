@@ -497,11 +497,10 @@ var _ = Describe("docker-compose model", func() {
 		})
 	})
 	Context("When reconciling with templates env, keep secrets, cache", func() {
-		env1 := `{{ "abc" | KeepSecret }}`
-		env2 := `{{ .GenerateKey 30 | .FromCache "A" }}`
-		env3 := `{{ .GenerateKey 30 | .FromCache "A" }}`
-		env4 := `{{ .GenerateRSA 2048 | .Base64 | .FromCache "B" | KeepSecret }}`
-		env5 := `{{ .GenerateRSA 2048 | .Base64 | .FromCache "B" | KeepSecret }}`
+		env1 := `{{ "abc" | PersistentSecret }}`
+		env2 := `{{ .GenerateKey 30 }}`
+		env3 := `{{ .GenerateRSA 2048 | .Base64 | PersistentSecret "RSA_PRIVATE_KEY" }}`
+		env4 := `{{ .GenerateRSA 2048 | .Base64 | PersistentSecret "RSA_PRIVATE_KEY" }}`
 		testValidProject := &types.Project{
 			Name:       "test",
 			WorkingDir: "/tmp",
@@ -514,7 +513,6 @@ var _ = Describe("docker-compose model", func() {
 						"ENV2": &env2,
 						"ENV3": &env3,
 						"ENV4": &env4,
-						"ENV5": &env5,
 					},
 					Image: "demo:test",
 					Ports: []types.ServicePortConfig{
@@ -534,6 +532,10 @@ var _ = Describe("docker-compose model", func() {
 					Name:    "demo-db",
 					Command: types.ShellCommand{"cmd", "arg"},
 					Image:   "demodb:test",
+					Environment: map[string]*string{
+						"ENV1": &env1,
+						"ENV4": &env4,
+					},
 				},
 			},
 			Networks: nil,
@@ -565,21 +567,20 @@ var _ = Describe("docker-compose model", func() {
 			podSpec := c.deployment.Spec.Template.Spec
 			Expect(len(podSpec.Containers)).Should(Equal(2))
 			container := podSpec.Containers[0]
-			Expect(len(container.Env)).Should(Equal(5))
+			Expect(len(container.Env)).Should(Equal(4))
 
-			Expect(container.Env[0].ValueFrom.SecretKeyRef.Key).Should(Equal("ENV1"))
+			Expect(container.Env[0].ValueFrom.SecretKeyRef.Key).Should(Equal("demo-app_ENV1"))
 			genKey := container.Env[1].Value
 			Expect(len(genKey)).Should(Equal(30))
-			Expect(len(container.Env[2].Value)).Should(Equal(30))
-			Expect(genKey).Should(Equal(container.Env[2].Value))
-			Expect(container.Env[3].ValueFrom.SecretKeyRef.Key).Should(Equal("ENV4"))
+			Expect(container.Env[2].ValueFrom.SecretKeyRef.Key).Should(Equal("RSA_PRIVATE_KEY"))
+			Expect(*container.Env[2].ValueFrom).Should(Equal(*container.Env[3].ValueFrom))
 
 			By("Validating returned secret")
-			Expect(c.secret.Name).Should(Equal("demo-app"))
-			Expect(c.secret.StringData["ENV1"]).Should(Equal("abc"))
-			rsa1 := c.secret.StringData["ENV4"]
-			rsa2 := c.secret.StringData["ENV5"]
-			Expect(rsa1).Should(Equal(rsa2))
+			Expect(c.secret.Name).Should(Equal("demo-kls"))
+			Expect(len(c.secret.StringData)).Should(Equal(3))
+			Expect(c.secret.StringData["demo-app_ENV1"]).Should(Equal("abc"))
+			genRSA := c.secret.StringData["RSA_PRIVATE_KEY"]
+			Expect(len(genRSA)).Should(BeNumerically(">", 2048))
 
 			// populate .Data object from .StringData looks like emulating saving secrets to k8s
 			c.secret.Data = make(map[string][]byte)
@@ -602,20 +603,17 @@ var _ = Describe("docker-compose model", func() {
 
 			By("Validating returned Deployment")
 			cont := c.deployment.Spec.Template.Spec.Containers[0]
-			Expect(len(cont.Env)).Should(Equal(5))
-			Expect(cont.Env[0].ValueFrom.SecretKeyRef.Key).Should(Equal("ENV1"))
+			Expect(len(cont.Env)).Should(Equal(4))
+			Expect(cont.Env[0].ValueFrom.SecretKeyRef.Key).Should(Equal("demo-app_ENV1"))
 			Expect(len(container.Env[1].Value)).Should(Equal(30))
-			Expect(len(container.Env[2].Value)).Should(Equal(30))
-			Expect(container.Env[1].Value).Should(Equal(genKey))
-			Expect(container.Env[2].Value).Should(Equal(genKey))
-			Expect(container.Env[3].ValueFrom.SecretKeyRef.Key).Should(Equal("ENV4"))
+			Expect(container.Env[2].ValueFrom.SecretKeyRef.Key).Should(Equal("RSA_PRIVATE_KEY"))
+			Expect(*container.Env[2].ValueFrom).Should(Equal(*container.Env[3].ValueFrom))
 
 			By("Validating returned secret")
-			Expect(c.secret.Name).Should(Equal("demo-app"))
-			Expect(c.secret.StringData["ENV1"]).Should(Equal("abc"))
+			Expect(c.secret.Name).Should(Equal("demo-kls"))
+			Expect(c.secret.StringData["demo-app_ENV1"]).Should(Equal("abc"))
 			// equals value to the first time reconcilation
-			Expect(c.secret.StringData["ENV4"]).Should(Equal(rsa1))
-			Expect(c.secret.StringData["ENV5"]).Should(Equal(rsa1))
+			Expect(c.secret.StringData["RSA_PRIVATE_KEY"]).Should(Equal(genRSA))
 		})
 	})
 })

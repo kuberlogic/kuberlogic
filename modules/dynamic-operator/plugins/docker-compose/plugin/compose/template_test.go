@@ -23,8 +23,8 @@ func TestIsSecret(t *testing.T) {
 		{"Not Secret", false},
 		{"Secret", false},
 		{"| Secret", false},
-		{"| KeepSecret", true},
-		{"Chain | chain | KeepSecret | Chain", true},
+		{"| PersistentSecret", true},
+		{"Chain | chain | PersistentSecret \"secretId\" | Chain", true},
 	} {
 		result := vd.isSecret(v.value)
 		if result != v.result {
@@ -113,7 +113,10 @@ func TestFromCache(t *testing.T) {
 func TestGenerateRSA(t *testing.T) {
 	vd := newViewData(&commons.PluginRequest{})
 	for _, bits := range []int{500, 1024, 2048, 4096} {
-		result := vd.GenerateRSA(bits)
+		result, err := vd.GenerateRSA(bits)
+		if err != nil {
+			t.Errorf("error generating RSA key: %v", err)
+		}
 
 		block, _ := pem.Decode([]byte(result))
 		if block == nil {
