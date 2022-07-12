@@ -1,5 +1,5 @@
 
-VERSION ?= 0.0.10
+VERSION ?= 0.0.9
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.22
@@ -87,7 +87,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
 .PHONY: docker-build
-docker-build: #test ## Build docker image with the manager.
+docker-build: test ## Build docker image with the manager.
 	docker build . \
 		-t $(OPERATOR_IMG):$(VERSION) \
 		-t $(OPERATOR_IMG):$(IMG_LATEST_TAG)
