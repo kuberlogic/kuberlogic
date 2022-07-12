@@ -47,6 +47,10 @@ func HandlePanic(log logr.Logger) {
 	}
 }
 
+var (
+	backupRestoreRequeueAfter = time.Minute * 1
+)
+
 //+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservices,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservices/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservices/finalizers,verbs=update
@@ -77,11 +81,34 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
-	backupRunning, _ := kls.BackupRunning()
-	restoreRunning, _ := kls.RestoreRunning()
-	if backupRunning || restoreRunning {
-		log.Info("backup or restore procedure is requested. Skipping reconciliation.")
-		return ctrl.Result{}, nil
+	if backupRunning, backupName := kls.BackupRunning(); backupRunning {
+		klb := &kuberlogiccomv1alpha1.KuberlogicServiceBackup{}
+		klb.SetName(backupName)
+		if err := r.Get(ctx, client.ObjectKeyFromObject(klb), klb); err != nil {
+			if k8serrors.IsNotFound(err) {
+				log.Info("backup request is not found")
+				kls.SetBackupStatus(nil)
+				return ctrl.Result{}, r.Status().Update(ctx, kls)
+			}
+			log.Error(err, "error getting backup object")
+			return ctrl.Result{}, err
+		}
+		// requeue
+		return ctrl.Result{RequeueAfter: backupRestoreRequeueAfter}, nil
+	}
+	if restoreRunning, restoreName := kls.RestoreRunning(); restoreRunning {
+		klr := &kuberlogiccomv1alpha1.KuberlogicServiceRestore{}
+		klr.SetName(restoreName)
+		if err := r.Get(ctx, client.ObjectKeyFromObject(klr), klr); err != nil {
+			if k8serrors.IsNotFound(err) {
+				log.Info("restore request is not found")
+				kls.SetRestoreStatus(nil)
+				return ctrl.Result{}, r.Status().Update(ctx, kls)
+			}
+			log.Error(err, "error getting restore object")
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{RequeueAfter: backupRestoreRequeueAfter}, nil
 	}
 
 	env := kuberlogicserviceenv.New(r.Client, kls, r.Cfg)

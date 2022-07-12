@@ -54,6 +54,11 @@ spec:
                 configMapKeyRef:
                   name: controller-manager-config
                   key: backups_enabled
+            - name: BACKUPS_SNAPSHOTS_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: controller-manager-config
+                  key: backups_snapshots_enabled
           args:
             - --leader-elect
           image: controller:latest

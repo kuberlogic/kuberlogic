@@ -209,21 +209,25 @@ func (v *VeleroBackupRestore) SetKuberlogicBackupStatus(ctx context.Context, klb
 	log.Info("Started routine")
 
 	veleroBackup := newVeleroBackupObject(klb.GetName(), v.kls)
-	if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(veleroBackup), veleroBackup); err != nil {
-		if k8serrors.IsNotFound(err) {
-			klb.MarkPending()
-			return v.kubeClient.Status().Update(ctx, klb)
+	if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(veleroBackup), veleroBackup); k8serrors.IsNotFound(err) {
+		if !klb.IsPending() {
+			log.Error(err, "velero backup not found and klb is not pending")
+			return err
 		}
+	} else if err != nil {
 		return err
 	}
 
-	log.Info("velero backup", "object", veleroBackup)
-	if isVeleroBackupSuccessful(veleroBackup) {
+	switch veleroBackup.Status.Phase {
+	case velero.BackupPhaseCompleted:
 		klb.MarkSuccessful()
-	} else if failed, reason := isVeleroBackupFailed(veleroBackup); failed {
-		klb.MarkFailed(reason)
-	} else {
+	case velero.BackupPhaseFailedValidation, velero.BackupPhaseUploadingPartialFailure, velero.BackupPhasePartiallyFailed, velero.BackupPhaseFailed:
+		klb.MarkFailed(string(veleroBackup.Status.Phase))
+	case velero.BackupPhaseNew, velero.BackupPhaseInProgress, velero.BackupPhaseUploading:
 		klb.MarkRequested()
+	default:
+		// unknown status
+		return nil
 	}
 
 	return v.kubeClient.Status().Update(ctx, klb)
@@ -282,9 +286,9 @@ func (v *VeleroBackupRestore) RestoreRequest(ctx context.Context, klb *kuberlogi
 		log.Error(err, "failed to get velero backup object", "velero backup", veleroBackup)
 		return err
 	}
-	if !isVeleroBackupSuccessful(veleroBackup) {
+	if !(veleroBackup.Status.Phase == velero.BackupPhaseCompleted) {
 		log.Error(errVeleroBackupIsNotSuccessful,
-			"velero backup must be successful", "velero backup", veleroBackup)
+			"velero backup must be successful", "velero backup status", veleroBackup.Status.Phase)
 		return errVeleroBackupIsNotSuccessful
 	}
 
@@ -374,21 +378,26 @@ func (v *VeleroBackupRestore) SetKuberlogicRestoreStatus(ctx context.Context, kl
 	log.Info("Started routine")
 
 	veleroRestore := newVeleroRestoreObject(klr)
-	if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(veleroRestore), veleroRestore); err != nil {
-		if k8serrors.IsNotFound(err) {
-			klr.MarkPending()
-			return v.kubeClient.Status().Update(ctx, klr)
+	if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(veleroRestore), veleroRestore); k8serrors.IsNotFound(err) {
+		if !klr.IsPending() {
+			log.Error(err, "velero restore request is not found and klr is not pending")
+			return err
 		}
+	} else if err != nil {
 		log.Error(err, "failed to get velero restore", "velero restore", veleroRestore)
 		return err
 	}
 
-	if failed, reason := isVeleroRestoreFailed(veleroRestore); failed {
-		klr.MarkFailed(reason)
-	} else if isVeleroRestoreSuccessful(veleroRestore) {
+	switch veleroRestore.Status.Phase {
+	case velero.RestorePhaseCompleted:
 		klr.MarkSuccessful()
-	} else {
+	case velero.RestorePhaseFailedValidation, velero.RestorePhasePartiallyFailed, velero.RestorePhaseFailed:
+		klr.MarkFailed(string(veleroRestore.Status.Phase))
+	case velero.RestorePhaseNew, velero.RestorePhaseInProgress:
 		klr.MarkRequested()
+	default:
+		// unknown status
+		return nil
 	}
 
 	return v.kubeClient.Status().Update(ctx, klr)
@@ -432,38 +441,10 @@ func newVeleroBackupObject(name string, kls *kuberlogiccomv1alpha1.KuberLogicSer
 	}
 }
 
-func isVeleroBackupSuccessful(v *velero.Backup) bool {
-	return v.Status.CompletionTimestamp != nil && v.Status.Progress != nil &&
-		v.Status.Progress.ItemsBackedUp == v.Status.Progress.TotalItems &&
-		v.Status.Phase == velero.BackupPhaseCompleted
-}
-
-func isVeleroBackupFailed(v *velero.Backup) (bool, string) {
-	if v.Status.CompletionTimestamp != nil {
-		if v.Status.Progress != nil && v.Status.Progress.TotalItems != v.Status.Progress.ItemsBackedUp {
-			return true, "some items were not backed up"
-		}
-		return true, "backup failed"
-	}
-	return false, ""
-}
-
 func isVeleroBackupStorageLocationAvailable(v *velero.BackupStorageLocation) bool {
 	return v.Status.Phase == velero.BackupStorageLocationPhaseAvailable &&
 		v.Status.LastValidationTime != nil &&
 		time.Since(v.Status.LastValidationTime.Time).Minutes() < backupStorageLocationMaxCheckTTL
-}
-
-func isVeleroRestoreSuccessful(v *velero.Restore) bool {
-	return v.Status.CompletionTimestamp != nil &&
-		v.Status.Errors == 0 &&
-		v.Status.Progress != nil && v.Status.Progress.ItemsRestored == v.Status.Progress.TotalItems &&
-		v.Status.Phase == velero.RestorePhaseCompleted
-}
-
-func isVeleroRestoreFailed(v *velero.Restore) (bool, string) {
-	return v.Status.CompletionTimestamp != nil &&
-		(v.Status.Errors != 0 || v.Status.Phase == velero.RestorePhaseFailed), v.Status.FailureReason
 }
 
 func resticBackupPod(kls *kuberlogiccomv1alpha1.KuberLogicService) *v1.Pod {

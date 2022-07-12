@@ -12,7 +12,6 @@ import (
 const (
 	klrFailedCondType     = "Failed"
 	klrSuccessfulCondType = "Successful"
-	klrPendingCondType    = "Pending"
 	klrRequestedCondType  = "Requested"
 )
 
@@ -68,25 +67,17 @@ func (in *KuberlogicServiceRestore) MarkFailed(reason string) {
 	in.Status.Phase = klrFailedCondType
 	in.setConditionStatus(klrFailedCondType, true, reason, klrFailedCondType)
 	in.setConditionStatus(klrSuccessfulCondType, false, "", klrSuccessfulCondType)
-	in.setConditionStatus(klrPendingCondType, false, "", klrFailedCondType)
 }
 
 func (in *KuberlogicServiceRestore) MarkSuccessful() {
 	in.Status.Phase = klrSuccessfulCondType
 	in.setConditionStatus(klrFailedCondType, false, "", klrFailedCondType)
 	in.setConditionStatus(klrSuccessfulCondType, true, "", klrSuccessfulCondType)
-	in.setConditionStatus(klrPendingCondType, false, "", klrSuccessfulCondType)
-}
-
-func (in *KuberlogicServiceRestore) MarkPending() {
-	in.Status.Phase = klrPendingCondType
-	in.setConditionStatus(klrPendingCondType, false, "", klrPendingCondType)
 }
 
 func (in *KuberlogicServiceRestore) MarkRequested() {
 	in.Status.Phase = klrRequestedCondType
 	in.setConditionStatus(klrRequestedCondType, true, "", klrRequestedCondType)
-	in.setConditionStatus(klrPendingCondType, false, "", klrRequestedCondType)
 }
 
 func (in *KuberlogicServiceRestore) IsFailed() bool {
@@ -99,6 +90,10 @@ func (in *KuberlogicServiceRestore) IsSuccessful() bool {
 
 func (in *KuberlogicServiceRestore) IsRequested() bool {
 	return in.Status.Phase == klrRequestedCondType
+}
+
+func (in *KuberlogicServiceRestore) IsPending() bool {
+	return !(in.IsSuccessful() || in.IsFailed() || in.IsRequested())
 }
 
 func (in *KuberlogicServiceRestore) IncreaseFailedAttemptCount() {
