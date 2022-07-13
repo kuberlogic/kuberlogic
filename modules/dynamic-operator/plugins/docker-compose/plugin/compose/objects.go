@@ -218,16 +218,13 @@ func (c *ComposeModel) setObjects(req *commons.PluginRequest) error {
 }
 
 func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
-	if c.serviceaccount.Name == "" {
-		c.serviceaccount.Name = req.Name
-		c.serviceaccount.Namespace = req.Namespace
-	}
+	c.serviceaccount.Name = req.Name
+	c.serviceaccount.Namespace = req.Namespace
 	c.serviceaccount.ObjectMeta.Labels = labels(req.Name)
 
-	if c.deployment.Name == "" {
-		c.deployment.Name = req.Name
-		c.deployment.Namespace = req.Namespace
-	}
+	c.deployment.Name = req.Name
+	c.deployment.Namespace = req.Namespace
+
 	c.deployment.Labels = labels(req.Name)
 	c.deployment.Spec.Replicas = &req.Replicas
 	c.deployment.Spec.Selector = &metav1.LabelSelector{
@@ -268,7 +265,8 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 		c.deployment.Spec.Template.Spec.HostAliases[0].Hostnames = append(c.deployment.Spec.Template.Spec.HostAliases[0].Hostnames, container.Name)
 
 		vd := newViewData(req)
-		imageValue, err := vd.parse(composeService.Image)
+		// this will not be kept in secret even when a flag is set
+		imageValue, _, err := vd.parse(composeService.Image)
 		if err != nil || imageValue == "" {
 			return errors.Wrapf(err, "invalid image value: %s", imageValue)
 		}
@@ -281,19 +279,27 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 				Name: key,
 			}
 			if rawValue != nil {
-				value, err := vd.parse(*rawValue)
+				value, keyId, err := vd.parse(*rawValue)
 				if err != nil {
 					return errors.Wrapf(err, "invalid key `%s` value: %s", e.Name, value)
 				}
 
 				if vd.isSecret(*rawValue) {
-					c.secret.Name = composeService.Name
-					// if key is not exists -> create a new
-					if _, ok := c.secret.Data[key]; !ok {
+					c.secret.Name = req.Name
+
+					// default secretId is composed of service name and env key
+					secretKey := composeService.Name + "_" + key
+					// custom keyId is set, use this instead of existing one
+					if keyId != "" {
+						secretKey = keyId
+					}
+
+					// create a new key when it is not set
+					if _, ok := c.secret.Data[secretKey]; !ok {
 						if c.secret.StringData == nil {
 							c.secret.StringData = make(map[string]string)
 						}
-						c.secret.StringData[key] = value
+						c.secret.StringData[secretKey] = value
 					}
 
 					e.ValueFrom = &corev1.EnvVarSource{
@@ -301,7 +307,7 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 							LocalObjectReference: corev1.LocalObjectReference{
 								Name: composeService.Name,
 							},
-							Key: key,
+							Key: secretKey,
 						},
 					}
 				} else {
@@ -333,10 +339,8 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 
 		container.VolumeMounts = make([]corev1.VolumeMount, 0)
 		if len(composeService.Volumes) > 0 {
-			if c.persistentvolumeclaim.GetName() == "" {
-				c.persistentvolumeclaim.Name = req.Name
-				c.persistentvolumeclaim.Namespace = req.Namespace
-			}
+			c.persistentvolumeclaim.Name = req.Name
+			c.persistentvolumeclaim.Namespace = req.Namespace
 			c.persistentvolumeclaim.Labels = labels(req.Namespace)
 
 			c.persistentvolumeclaim.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{
@@ -387,10 +391,9 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 }
 
 func (c *ComposeModel) setApplicationAccessObjects(req *commons.PluginRequest) error {
-	if c.service.Name == "" {
-		c.service.Name = req.Name
-		c.service.Namespace = req.Namespace
-	}
+	c.service.Name = req.Name
+	c.service.Namespace = req.Namespace
+
 	c.service.Labels = labels(req.Name)
 	c.service.Spec.Selector = labels(req.Name)
 	c.service.Spec.Type = corev1.ServiceTypeClusterIP
@@ -441,10 +444,8 @@ func (c *ComposeModel) setApplicationAccessObjects(req *commons.PluginRequest) e
 		return nil
 	}
 
-	if c.ingress.GetName() == "" {
-		c.ingress.Name = req.Name
-		c.ingress.Namespace = req.Namespace
-	}
+	c.ingress.Name = req.Name
+	c.ingress.Namespace = req.Namespace
 	c.ingress.Labels = labels(req.Name)
 
 	// add TLS if specified
