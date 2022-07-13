@@ -139,7 +139,8 @@ func (r *KuberlogicServiceBackupReconciler) Reconcile(ctx context.Context, req c
 	}
 	if err != nil {
 		klb.IncreaseFailedAttemptCount()
-		return ctrl.Result{}, r.Status().Update(ctx, klb)
+		_ = r.Status().Update(ctx, klb)
+		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil

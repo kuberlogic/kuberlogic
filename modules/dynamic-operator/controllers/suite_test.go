@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 	cfg2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
+	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -62,7 +63,7 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd", "bases")},
+		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd", "bases"), filepath.Join("..", "config", "crd", "velero")},
 		ErrorIfCRDPathMissing: true,
 	}
 
@@ -71,6 +72,8 @@ var _ = BeforeSuite(func() {
 	Expect(cfg).NotTo(BeNil())
 
 	err = kuberlogiccomv1alpha1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+	err = velero.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme
@@ -129,12 +132,28 @@ var _ = BeforeSuite(func() {
 	}).SetupWithManager(k8sManager, dependantObjects...)
 	Expect(err).ToNot(HaveOccurred())
 
-	err = (&KuberlogicServiceBackupScheduleReconciler{
-		Client: k8sManager.GetClient(),
-		Scheme: k8sManager.GetScheme(),
-		Cfg:    config,
-	}).SetupWithManager(k8sManager)
-	Expect(err).ToNot(HaveOccurred())
+	if config.Backups.Enabled {
+		err = (&KuberlogicServiceBackupReconciler{
+			Client: k8sManager.GetClient(),
+			Scheme: k8sManager.GetScheme(),
+			Cfg:    config,
+		}).SetupWithManager(k8sManager)
+		Expect(err).ToNot(HaveOccurred())
+
+		err = (&KuberlogicServiceRestoreReconciler{
+			Client: k8sManager.GetClient(),
+			Scheme: k8sManager.GetScheme(),
+			Cfg:    config,
+		}).SetupWithManager(k8sManager)
+		Expect(err).ToNot(HaveOccurred())
+
+		err = (&KuberlogicServiceBackupScheduleReconciler{
+			Client: k8sManager.GetClient(),
+			Scheme: k8sManager.GetScheme(),
+			Cfg:    config,
+		}).SetupWithManager(k8sManager)
+		Expect(err).ToNot(HaveOccurred())
+	}
 
 	go func() {
 		defer GinkgoRecover()
