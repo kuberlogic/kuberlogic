@@ -2,11 +2,6 @@
 version: '3'
 
 services:
-  echo:
-    x-kuberlogic-access-http-path: /api
-    image: inanimate/echo-server:latest
-    ports:
-      - "8080:8080"
   planka:
     image: ghcr.io/plankanban/planka:{{ or .Version "latest" }}
     command: >
@@ -28,7 +23,7 @@ services:
       - BASE_URL={{ .Endpoint "localhost:3000" }}
       - TRUST_PROXY=0
       - DATABASE_URL=postgresql://postgres@localhost/planka
-      - SECRET_KEY={{ .GenerateKey 30 | KeepSecret }}
+      - SECRET_KEY={{ .GenerateKey 30 | PersistentSecret }}
     depends_on:
       - postgres
 
