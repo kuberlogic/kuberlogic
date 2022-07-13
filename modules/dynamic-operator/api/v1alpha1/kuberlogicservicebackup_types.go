@@ -12,7 +12,6 @@ import (
 const (
 	klbSuccessfulCondType = "Successful"
 	klbFailedCondType     = "Failed"
-	klbPendingCondType    = "Pending"
 	klbRequestedCondType  = "Requested"
 )
 
@@ -60,7 +59,7 @@ func (in *KuberlogicServiceBackup) IsSuccessful() bool {
 }
 
 func (in *KuberlogicServiceBackup) IsPending() bool {
-	return in.Status.Phase == klbPendingCondType
+	return !(in.IsFailed() || in.IsSuccessful() || in.IsRequested())
 }
 
 func (in *KuberlogicServiceBackup) IsRequested() bool {
@@ -71,26 +70,17 @@ func (in *KuberlogicServiceBackup) MarkFailed(reason string) {
 	in.Status.Phase = klbFailedCondType
 	in.setConditionStatus(klbFailedCondType, true, reason, klbFailedCondType)
 	in.setConditionStatus(klbSuccessfulCondType, false, reason, klbSuccessfulCondType)
-	in.setConditionStatus(klbPendingCondType, true, "", klbFailedCondType)
 }
 
 func (in *KuberlogicServiceBackup) MarkSuccessful() {
 	in.Status.Phase = klbSuccessfulCondType
 	in.setConditionStatus(klbSuccessfulCondType, true, "", klbSuccessfulCondType)
 	in.setConditionStatus(klbFailedCondType, false, "", klbFailedCondType)
-	in.setConditionStatus(klbPendingCondType, false, "", klbSuccessfulCondType)
-}
-
-func (in *KuberlogicServiceBackup) MarkPending() {
-	in.Status.Phase = klbPendingCondType
-	in.setConditionStatus(klbPendingCondType, true, "", klbPendingCondType)
 }
 
 func (in *KuberlogicServiceBackup) MarkRequested() {
 	in.Status.Phase = klbRequestedCondType
 	in.setConditionStatus(klbRequestedCondType, true, "", klbRequestedCondType)
-	in.setConditionStatus(klbPendingCondType, false, "", klbRequestedCondType)
-
 }
 
 func (in *KuberlogicServiceBackup) setConditionStatus(cond string, status bool, msg, reason string) {

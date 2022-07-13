@@ -34,7 +34,7 @@ func main() {
 
 	if viper.GetString("CHARGEBEE_SITE") != "" {
 		chargebee.Configure(viper.GetString("CHARGEBEE_KEY"), viper.GetString("CHARGEBEE_SITE"))
-		http.HandleFunc("/chanrgebee-webhook", app.WebhookHandler(logger))
+		http.HandleFunc("/chargebee-webhook", app.WebhookHandler(logger))
 	} else {
 		logger.Warn("ChargeBee site is not set. Requests will not be handled.")
 	}

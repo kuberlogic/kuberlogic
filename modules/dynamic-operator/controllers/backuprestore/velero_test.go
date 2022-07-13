@@ -187,6 +187,11 @@ var _ = Describe("Velero BackupRestore provider", func() {
 				err = fakeClient.Get(ctx, client.ObjectKeyFromObject(veleroBackup), veleroBackup)
 				Expect(err).Should(BeNil())
 
+				By("Updating velero backup status")
+				veleroBackup.Status.Phase = velero.BackupPhaseInProgress
+				err = fakeClient.Update(ctx, veleroBackup)
+				Expect(err).Should(BeNil())
+
 				By("klb status must be requested")
 				err = backupRestore.SetKuberlogicBackupStatus(ctx, klb)
 				Expect(err).Should(BeNil())
@@ -285,6 +290,11 @@ var _ = Describe("Velero BackupRestore provider", func() {
 				By("Checking if klr is controlled by klb")
 				_ = fakeClient.Get(ctx, client.ObjectKeyFromObject(klr), klr)
 				Expect(klr.OwnerReferences[0].Kind).Should(Equal("KuberlogicServiceBackup"))
+
+				By("Updating velero restore status")
+				veleroRestore.Status.Phase = velero.RestorePhaseInProgress
+				err = fakeClient.Update(ctx, veleroRestore)
+				Expect(err).Should(BeNil())
 
 				By("Checking if klr status is requested")
 				err = backupRestore.SetKuberlogicRestoreStatus(ctx, klr)

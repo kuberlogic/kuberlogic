@@ -32,6 +32,7 @@ type Config struct {
 	} `envconfig:"optional"`
 
 	Backups struct {
+		Enabled          bool `enconfig:"default=false,optional"`
 		SnapshotsEnabled bool `envconfig:"optional"`
 	} `envconfig:"optional"`
 }

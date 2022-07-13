@@ -175,6 +175,10 @@ func (in *KuberLogicService) RestoreRunning() (bool, string) {
 }
 
 func (in *KuberLogicService) SetRestoreStatus(klr *KuberlogicServiceRestore) {
+	if klr == nil {
+		in.setConditionStatus(restoreRunningCondType, false, "restore is nil", restoreRunningCondType)
+		return
+	}
 	in.setConditionStatus(restoreRunningCondType, !(klr.IsFailed() || klr.IsSuccessful()), klr.Name, restoreRunningCondType)
 }
 
@@ -187,6 +191,10 @@ func (in *KuberLogicService) BackupRunning() (bool, string) {
 }
 
 func (in *KuberLogicService) SetBackupStatus(klb *KuberlogicServiceBackup) {
+	if klb == nil {
+		in.setConditionStatus(backupRunningCondType, false, "backup is nil", backupRunningCondType)
+		return
+	}
 	in.setConditionStatus(backupRunningCondType, !(klb.IsFailed() || klb.IsSuccessful()), klb.Name, backupRunningCondType)
 }
 

@@ -62,12 +62,9 @@ func (r *KuberlogicServiceRestoreReconciler) Reconcile(ctx context.Context, req 
 			Name: klr.Spec.KuberlogicServiceBackup,
 		},
 	}
-	if err := r.Get(ctx, client.ObjectKeyFromObject(klb), klb); k8serrors.IsNotFound(err) {
+	if err := r.Get(ctx, client.ObjectKeyFromObject(klb), klb); err != nil {
 		// not found, probably deleted
 		l.Error(err, "failed to get backup for the restore", "backup", klb.GetName())
-		return ctrl.Result{}, nil
-	} else if err != nil {
-		l.Error(err, "error getting object")
 		return ctrl.Result{}, err
 	}
 	if !klb.IsSuccessful() {
@@ -109,7 +106,7 @@ func (r *KuberlogicServiceRestoreReconciler) Reconcile(ctx context.Context, req 
 	maxAttempts := 10
 	if klr.Status.FailedAttempts >= maxAttempts {
 		klr.MarkFailed("too many failures")
-		return ctrl.Result{}, r.Status().Update(ctx, klb)
+		return ctrl.Result{}, r.Status().Update(ctx, klr)
 	}
 
 	restore := backuprestore.NewVeleroBackupRestoreProvider(r.Client, l, kls, r.Cfg.Backups.SnapshotsEnabled)

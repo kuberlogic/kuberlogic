@@ -106,13 +106,6 @@ func (r *KuberlogicServiceBackupReconciler) Reconcile(ctx context.Context, req c
 
 	backup := backuprestore.NewVeleroBackupRestoreProvider(r.Client, l, kls, r.Cfg.Backups.SnapshotsEnabled)
 
-	l.Info("syncing backup status")
-	if err := backup.SetKuberlogicBackupStatus(ctx, klb); err != nil {
-		l.Error(err, "error syncing backup status")
-		return ctrl.Result{}, err
-	}
-	l.Info("backup status updated", "new status", klb.Status.Phase)
-
 	if !klb.ObjectMeta.DeletionTimestamp.IsZero() {
 		if controllerutil.ContainsFinalizer(klb, backuprestore.BackupDeleteFinalizer) {
 			if err := backup.BackupDeleteRequest(ctx, klb); err != nil {
@@ -126,6 +119,13 @@ func (r *KuberlogicServiceBackupReconciler) Reconcile(ctx context.Context, req c
 			RequeueAfter: time.Second * 2,
 		}, nil
 	}
+
+	l.Info("syncing backup status")
+	if err := backup.SetKuberlogicBackupStatus(ctx, klb); err != nil {
+		l.Error(err, "error syncing backup status")
+		return ctrl.Result{}, err
+	}
+	l.Info("backup status updated", "new status", klb.Status.Phase)
 
 	var err error
 	if klb.IsSuccessful() || klb.IsFailed() {

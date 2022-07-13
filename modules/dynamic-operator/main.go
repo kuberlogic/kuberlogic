@@ -5,12 +5,12 @@
 package main
 
 import (
+	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	"os"
 	"os/exec"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
-	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	cfg2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
@@ -42,7 +42,6 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(kuberlogiccomv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(velero.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -141,29 +140,36 @@ func main() {
 	mgr.GetWebhookServer().Register("/mutate-service-pod", &webhook.Admission{
 		Handler: &kuberlogicservice_env.ServicePodWebhook{Client: mgr.GetClient()}})
 
-	if err = (&controllers.KuberlogicServiceBackupReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Cfg:    cfg,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "KuberlogicServiceBackup")
-		os.Exit(1)
-	}
-	if err = (&controllers.KuberlogicServiceRestoreReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Cfg:    cfg,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "KuberlogicServiceRestore")
-		os.Exit(1)
-	}
-	if err = (&controllers.KuberlogicServiceBackupScheduleReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Cfg:    cfg,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "KuberlogicServiceBackupSchedule")
-		os.Exit(1)
+	if cfg.Backups.Enabled {
+		setupLog.Info("Backups/Restores are enabled")
+		utilruntime.Must(velero.AddToScheme(scheme))
+
+		if err = (&controllers.KuberlogicServiceBackupReconciler{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+			Cfg:    cfg,
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "KuberlogicServiceBackup")
+			os.Exit(1)
+		}
+		if err = (&controllers.KuberlogicServiceRestoreReconciler{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+			Cfg:    cfg,
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "KuberlogicServiceRestore")
+			os.Exit(1)
+		}
+		if err = (&controllers.KuberlogicServiceBackupScheduleReconciler{
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
+			Cfg:    cfg,
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "KuberlogicServiceBackupSchedule")
+			os.Exit(1)
+		}
+	} else {
+		setupLog.Info("Backups/Restores are disabled")
 	}
 	//+kubebuilder:scaffold:builder
 
