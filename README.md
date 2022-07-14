@@ -13,21 +13,23 @@ KuberLogic is an open-source solution that helps to deliver any single-tenant ap
 
 Follow [Installing KuberLogic](https://docs.kuberlogic.com/getting-started) to set up your environment and install KuberLogic.
 
-### Features
+#### Features
 
-- Application instance (Tenant) orchestration (list/provision/delete)
-- Custom domain (subdomain) support
-- Application (Tenant) isolation
-- RESTful API and CLI for service management (bare minimum)
-- SSL support
+* Application instance (Tenant) orchestration (list/provision/delete/edit)
+* Integration (base layer) with a billing provider (ChargeBee)
+* Scheduled and Instant backups (Velero integration)
+* Custom domain (subdomain) support
+* Application (Tenant) isolation
+* SSL support
+* RESTful API and CLI for service management
 
-### Coming soon
+#### Coming soon
 
-- Integration with billing provider (Chargebee)
-- Scheduled and Instant backups (Velero)
-- Application instance updates
+* Application instance updates (not documented yet)
+* Integration with Sentry
+* Provision secure credentials for instances
 
-[You can check our Roadmap here](https://kuberlogic.clearflask.com/roadmap)
+[You can find our Roadmap here](https://kuberlogic.clearflask.com/roadmap)
 
 ----
 
