@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
+	"k8s.io/client-go/util/homedir"
 	"log"
 	"net/http"
 	"os"
@@ -12,7 +13,6 @@ import (
 	"github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -40,8 +40,8 @@ func logDebugf(format string, v ...interface{}) {
 // makeClient constructs a client object
 func makeClientClosure(httpClient *http.Client) func() (*client.ServiceAPI, error) {
 	return func() (*client.ServiceAPI, error) {
-		hostname := viper.GetString("hostname")
-		scheme := viper.GetString("scheme")
+		hostname := viper.GetString(apiHostFlag)
+		scheme := viper.GetString(schemeFlag)
 		logDebugf("hostname %s, scheme %s", hostname, scheme)
 
 		r := httptransport.NewWithClient(hostname, client.DefaultBasePath, []string{scheme}, httpClient)
@@ -67,18 +67,18 @@ func MakeRootCmd(httpClient *http.Client) (*cobra.Command, error) {
 	}
 
 	// register basic flags
-	rootCmd.PersistentFlags().String("hostname", client.DefaultHost, "hostname of the service")
-	err := viper.BindPFlag("hostname", rootCmd.PersistentFlags().Lookup("hostname"))
+	rootCmd.PersistentFlags().String(apiHostFlag, client.DefaultHost, "KuberLogic API server address")
+	err := viper.BindPFlag(apiHostFlag, rootCmd.PersistentFlags().Lookup(apiHostFlag))
 	if err != nil {
 		return nil, err
 	}
-	rootCmd.PersistentFlags().String("scheme", client.DefaultSchemes[0], fmt.Sprintf("Choose from: %v", client.DefaultSchemes))
-	err = viper.BindPFlag("scheme", rootCmd.PersistentFlags().Lookup("scheme"))
+	rootCmd.PersistentFlags().String(schemeFlag, client.DefaultSchemes[0], fmt.Sprintf("KuberLogic API server scheme: %v", client.DefaultSchemes))
+	err = viper.BindPFlag(schemeFlag, rootCmd.PersistentFlags().Lookup(schemeFlag))
 	if err != nil {
 		return nil, err
 	}
-	rootCmd.PersistentFlags().String("token", "", "authentication apiserver token")
-	err = viper.BindPFlag("token", rootCmd.PersistentFlags().Lookup("token"))
+	rootCmd.PersistentFlags().String(tokenFlag, "8ZTjsD3t2Q3Yq-C4-hoahcFn", "KuberLogic API server authentication token")
+	err = viper.BindPFlag(tokenFlag, rootCmd.PersistentFlags().Lookup(tokenFlag))
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func MakeRootCmd(httpClient *http.Client) (*cobra.Command, error) {
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "do not send the request to server")
 
 	var formatResponse format
-	rootCmd.PersistentFlags().Var(&formatResponse, format_flag, "Format response value: json, yaml or string. (default: string)")
+	rootCmd.PersistentFlags().Var(&formatResponse, formatFlag, "Format response value: json, yaml or string. (default: string)")
 
 	// register security flags
 	// add all operation groups
@@ -99,6 +99,8 @@ func MakeRootCmd(httpClient *http.Client) (*cobra.Command, error) {
 		makeServiceCmd(makeClientClosure(httpClient)),
 		makeBackupCmd(makeClientClosure(httpClient)),
 		makeRestoreCmd(makeClientClosure(httpClient)),
+
+		makeInstallCmd(),
 	)
 
 	// add cobra completion
@@ -110,19 +112,11 @@ func MakeRootCmd(httpClient *http.Client) (*cobra.Command, error) {
 // initViperConfigs initialize viper config using config file in '$HOME/.config/<cli name>/config.<json|yaml...>'
 // currently hostname, scheme and auth tokens can be specified in this config file.
 func initViperConfigs() {
-	if configFile != "" {
-		// use user specified config file location
-		viper.SetConfigFile(configFile)
-	} else {
-		// look for default config
-		// Find home directory.
-		home, err := homedir.Dir()
-		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".cobra" (without extension).
-		viper.AddConfigPath(path.Join(home, ".config", exeName))
-		viper.SetConfigName("config")
+	if configFile == "" {
+		// use default config file
+		configFile = path.Join(homedir.HomeDir(), ".config", "kuberlogic", "config.yaml")
 	}
+	viper.SetConfigFile(configFile)
 
 	if err := viper.ReadInConfig(); err != nil {
 		logDebugf("Error: loading config file: %v", err)

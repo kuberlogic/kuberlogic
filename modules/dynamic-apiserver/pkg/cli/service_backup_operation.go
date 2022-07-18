@@ -21,7 +21,7 @@ func makeServiceBackupCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cob
 		RunE:    runServiceBackup(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(service_id_flag, "", "service id")
+	_ = cmd.PersistentFlags().String(serviceIdFlag, "", "service id")
 
 	return cmd
 }
@@ -40,14 +40,14 @@ func runServiceBackup(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd
 		params := backup.NewBackupAddParams()
 		bak := models.Backup{}
 
-		if value, err := getString(cmd, service_id_flag); err != nil {
+		if value, err := getString(cmd, serviceIdFlag); err != nil {
 			return err
 		} else if value != nil {
 			bak.ServiceID = *value
 		}
 
 		var formatResponse format
-		if value, err := getString(cmd, format_flag); err != nil {
+		if value, err := getString(cmd, formatFlag); err != nil {
 			return err
 		} else if value != nil {
 			formatResponse = format(*value)
@@ -62,7 +62,7 @@ func runServiceBackup(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd
 
 		// make request and then print result
 		response, err := apiClient.Backup.BackupAdd(params,
-			client2.APIKeyAuth("X-Token", "header", viper.GetString("token")))
+			client2.APIKeyAuth("X-Token", "header", viper.GetString(tokenFlag)))
 		if err != nil {
 			return humanizeError(err)
 		}

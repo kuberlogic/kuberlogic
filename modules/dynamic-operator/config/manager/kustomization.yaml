@@ -6,10 +6,8 @@ resources:
 
 configMapGenerator:
 - behavior: create
-  literals:
-  - backups_enabled=false
-  - backups_snapshots_enabled=false
-  name: controller-manager-config
+  env: backups.properties
+  name: kuberlogic-backup-properties
 - files:
   - controller_manager_config.yaml
   name: manager-config
@@ -18,8 +16,7 @@ configMapGenerator:
   name: compose-file
 secretGenerator:
 - behavior: create
-  literals:
-  - token=8ZTjsD3t2Q3Yq-C4-hoahcFn
+  env: apiserver.properties
   name: apiserver
 - behavior: create
   literals:

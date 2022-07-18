@@ -20,7 +20,7 @@ func makeRestoreListCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra
 		RunE:    runRestoreList(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(service_id_flag, "", "service id to filter by")
+	_ = cmd.PersistentFlags().String(serviceIdFlag, "", "service id to filter by")
 	return cmd
 }
 
@@ -35,14 +35,14 @@ func runRestoreList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 		}
 
 		params := restore.NewRestoreListParams()
-		if value, err := getString(cmd, service_id_flag); err != nil {
+		if value, err := getString(cmd, serviceIdFlag); err != nil {
 			return err
 		} else if value != nil {
 			params.ServiceID = value
 		}
 
 		var formatResponse format
-		if value, err := getString(cmd, format_flag); err != nil {
+		if value, err := getString(cmd, formatFlag); err != nil {
 			return err
 		} else if value != nil {
 			formatResponse = format(*value)
@@ -54,7 +54,7 @@ func runRestoreList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 		}
 
 		response, err := apiClient.Restore.RestoreList(params,
-			client2.APIKeyAuth("X-Token", "header", viper.GetString("token")))
+			client2.APIKeyAuth("X-Token", "header", viper.GetString(tokenFlag)))
 		if err != nil {
 			return humanizeError(err)
 		}

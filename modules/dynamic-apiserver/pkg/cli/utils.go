@@ -28,10 +28,13 @@ func getString(cmd *cobra.Command, flag string) (value *string, err error) {
 	return
 }
 
-func getBool(cmd *cobra.Command, flag string) (value bool, err error) {
-	value, err = cmd.Flags().GetBool(flag)
-	if err != nil {
-		return false, err
+func getBool(cmd *cobra.Command, flag string) (value *bool, err error) {
+	if cmd.Flags().Changed(flag) {
+		value, err := cmd.Flags().GetBool(flag)
+		if err != nil {
+			return nil, err
+		}
+		return &value, nil
 	}
 	return
 }

@@ -52,12 +52,12 @@ spec:
             - name: BACKUPS_ENABLED
               valueFrom:
                 configMapKeyRef:
-                  name: controller-manager-config
+                  name: kuberlogic-backup-properties
                   key: backups_enabled
             - name: BACKUPS_SNAPSHOTS_ENABLED
               valueFrom:
                 configMapKeyRef:
-                  name: controller-manager-config
+                  name: kuberlogic-backup-properties
                   key: backups_snapshots_enabled
           args:
             - --leader-elect

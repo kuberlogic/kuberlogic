@@ -20,7 +20,7 @@ func makeServiceListCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra
 		RunE:    runServiceList(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(subscription_id_flag, "", "subscription id to filter by")
+	_ = cmd.PersistentFlags().String(subscriptionIdFlag, "", "subscription id to filter by")
 
 	return cmd
 }
@@ -50,7 +50,7 @@ func runServiceList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 		}
 
 		response, err := apiClient.Service.ServiceList(params,
-			client2.APIKeyAuth("X-Token", "header", viper.GetString("token")))
+			client2.APIKeyAuth("X-Token", "header", viper.GetString(tokenFlag)))
 		if err != nil {
 			return humanizeError(err)
 		}

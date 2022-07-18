@@ -19,7 +19,7 @@ func makeRestoreDeleteCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cob
 		RunE:    runRestoreDelete(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(id_flag, "", "restore id")
+	_ = cmd.PersistentFlags().String(idFlag, "", "restore id")
 
 	return cmd
 }
@@ -37,14 +37,14 @@ func runRestoreDelete(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd
 		// retrieve flag values from cmd and fill params
 		params := restore.NewRestoreDeleteParams()
 
-		if value, err := getString(cmd, id_flag); err != nil {
+		if value, err := getString(cmd, idFlag); err != nil {
 			return err
 		} else if value != nil {
 			params.RestoreID = *value
 		}
 
 		var formatResponse format
-		if value, err := getString(cmd, format_flag); err != nil {
+		if value, err := getString(cmd, formatFlag); err != nil {
 			return err
 		} else if value != nil {
 			formatResponse = format(*value)
@@ -58,7 +58,7 @@ func runRestoreDelete(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd
 
 		// make request and then print result
 		response, err := apiClient.Restore.RestoreDelete(params,
-			client2.APIKeyAuth("X-Token", "header", viper.GetString("token")))
+			client2.APIKeyAuth("X-Token", "header", viper.GetString(tokenFlag)))
 		if err != nil {
 			return humanizeError(err)
 		}

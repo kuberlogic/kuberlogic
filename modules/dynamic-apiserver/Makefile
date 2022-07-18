@@ -42,6 +42,7 @@ test:
 
 .PHONY: build-cli
 build-cli:
+	cd ../dynamic-operator && zip -r kustomize-configs.zip config/ && cp kustomize-configs.zip ../dynamic-apiserver/pkg/cli/
 	go build -o kuberlogic cmd/cli/main.go
 
 .PHONY: run
