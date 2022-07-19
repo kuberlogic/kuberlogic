@@ -305,7 +305,7 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 					e.ValueFrom = &corev1.EnvVarSource{
 						SecretKeyRef: &corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: composeService.Name,
+								Name: c.secret.GetName(),
 							},
 							Key: secretKey,
 						},

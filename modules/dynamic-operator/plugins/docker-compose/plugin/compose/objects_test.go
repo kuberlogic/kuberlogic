@@ -569,6 +569,7 @@ var _ = Describe("docker-compose model", func() {
 			container := podSpec.Containers[0]
 			Expect(len(container.Env)).Should(Equal(4))
 
+			Expect(container.Env[0].ValueFrom.SecretKeyRef.Name).Should(Equal(requests.Name))
 			Expect(container.Env[0].ValueFrom.SecretKeyRef.Key).Should(Equal("demo-app_ENV1"))
 			genKey := container.Env[1].Value
 			Expect(len(genKey)).Should(Equal(30))

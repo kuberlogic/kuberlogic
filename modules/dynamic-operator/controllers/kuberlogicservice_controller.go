@@ -49,6 +49,7 @@ func HandlePanic(log logr.Logger) {
 
 var (
 	backupRestoreRequeueAfter = time.Minute * 1
+	notReadyBeforeFailed      = time.Minute * 5
 )
 
 //+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservices,verbs=get;list;watch;create;update;patch;delete
@@ -93,6 +94,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			log.Error(err, "error getting backup object")
 			return ctrl.Result{}, err
 		}
+
 		// requeue
 		return ctrl.Result{RequeueAfter: backupRestoreRequeueAfter}, nil
 	}
@@ -113,6 +115,9 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	env := kuberlogicserviceenv.New(r.Client, kls, r.Cfg)
 	if err := env.SetupEnv(ctx); err != nil {
+		kls.ConfigurationFailed("KuberlogicService environment")
+		_ = r.Status().Update(ctx, kls)
+
 		log.Error(err, "error setting up KuberlogicService environment")
 		return ctrl.Result{}, err
 	}
@@ -121,6 +126,9 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	spec := make(map[string]interface{}, 0)
 	if len(kls.Spec.Advanced.Raw) > 0 {
 		if err := json.Unmarshal(kls.Spec.Advanced.Raw, &spec); err != nil {
+			kls.ConfigurationFailed("KuberlogicService environment")
+			_ = r.Status().Update(ctx, kls)
+
 			log.Error(err, "error unmarshalling spec")
 			return ctrl.Result{}, err
 		}
@@ -134,7 +142,11 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if !found {
 		pluginLoadedErr := errors.New("plugin not found")
 		log.Error(pluginLoadedErr, "")
-		return ctrl.Result{}, errors.New("plugin not found")
+
+		kls.ConfigurationFailed(pluginLoadedErr.Error())
+		_ = r.Status().Update(ctx, kls)
+
+		return ctrl.Result{}, pluginLoadedErr
 	}
 
 	pluginRequest := commons.PluginRequest{
@@ -150,11 +162,17 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	if err := pluginRequest.SetLimits(&kls.Spec.Limits); err != nil {
+		kls.ConfigurationFailed("plugin error: " + err.Error())
+		_ = r.Status().Update(ctx, kls)
+
 		log.Error(err, "error converting resources")
 		return ctrl.Result{}, err
 	}
 	resp := plugin.Convert(pluginRequest)
 	if resp.Error() != nil {
+		kls.ConfigurationFailed("plugin error (Convert): " + resp.Error().Error())
+		_ = r.Status().Update(ctx, kls)
+
 		log.Error(resp.Error(), "error from rpc call 'Convert'", "plugin request", pluginRequest)
 		return ctrl.Result{}, resp.Error()
 	}
@@ -164,9 +182,12 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	for _, o := range resp.Objects {
 		o.SetNamespace(env.NamespaceName)
 		if err := r.Get(ctx, client.ObjectKeyFromObject(o), o); k8serrors.IsNotFound(err) {
-			// object not found conitnue iterating
+			// object not found continue iterating
 			continue
 		} else if err != nil {
+			kls.ClusterSyncFailed(fmt.Sprintf("failed to syc %s %s/%s", o.GetKind(), o.GetNamespace(), o.GetName()))
+			_ = r.Status().Update(ctx, kls)
+
 			log.Error(err, "error fetching object from cluster", "object", o)
 			return ctrl.Result{}, err
 		} else {
@@ -178,6 +199,9 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	// convert found objects
 	resp = plugin.Convert(pluginRequest)
 	if resp.Error() != nil {
+		kls.ConfigurationFailed("plugin error (Convert): " + resp.Error().Error())
+		_ = r.Status().Update(ctx, kls)
+
 		log.Error(resp.Error(), "error from rpc call 'Convert'", "plugin request", pluginRequest)
 		return ctrl.Result{}, resp.Error()
 	}
@@ -193,6 +217,9 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 			return ctrl.SetControllerReference(kls, o, r.Scheme)
 		})
 		if err != nil {
+			kls.ClusterSyncFailed(fmt.Sprintf("failed to syc %s %s/%s", o.GetKind(), o.GetNamespace(), o.GetName()))
+			_ = r.Status().Update(ctx, kls)
+
 			log.Error(err, "error syncing object", "object", o)
 			return ctrl.Result{}, err
 		}
@@ -201,7 +228,6 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	// pause service when requested
 	if kls.PauseRequested() {
-
 		if err := env.PauseService(ctx); err != nil {
 			return ctrl.Result{}, errors.Wrap(err, "error pausing service")
 		}
@@ -226,14 +252,24 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	statusRequest.SetObjects(resp.Objects)
 	status := plugin.Status(*statusRequest)
 	if resp.Error() != nil {
+		kls.ConfigurationFailed("plugin error (Status): " + resp.Error().Error())
+		_ = r.Status().Update(ctx, kls)
+
 		log.Error(resp.Error(), "error from rpc call 'ForUpdate'")
 		return ctrl.Result{}, resp.Error()
 	}
 
+	var requeueAfter time.Duration
 	if status.IsReady {
 		kls.MarkReady("ReadyConditionMet")
 	} else {
-		kls.MarkNotReady("ReadyConditionNotMet")
+		klsReady, _, transitionTime := kls.IsReady()
+		if !klsReady && transitionTime != nil && time.Since(*transitionTime) > notReadyBeforeFailed {
+			kls.ClusterSyncFailed("service is not ready for too long")
+			requeueAfter = time.Minute * 5
+		} else {
+			kls.MarkNotReady("ReadyConditionNotMet")
+		}
 	}
 
 	if err := r.Status().Update(ctx, kls); err != nil {
@@ -241,7 +277,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
-	return ctrl.Result{}, nil
+	return ctrl.Result{RequeueAfter: requeueAfter}, nil
 }
 
 func (r *KuberLogicServiceReconciler) SetupWithManager(mgr ctrl.Manager, objects ...client.Object) error {
