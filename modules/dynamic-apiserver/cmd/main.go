@@ -3,8 +3,11 @@
 package cmd
 
 import (
+	sentry2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
 	"os"
+	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	errors "github.com/go-openapi/errors"
@@ -36,6 +39,20 @@ func Main(args []string) {
 	if err != nil {
 		mainLog.Fatalw("", "error", err)
 		os.Exit(1)
+	}
+
+	// init sentry
+	if dsn := cfg.SentryDsn; dsn != "" {
+		err := sentry2.InitSentry(dsn, "apiserver")
+		if err != nil {
+			mainLog.Errorw("unable to init sentry", "error", err)
+			os.Exit(1)
+		}
+
+		logging.UseSentry(dsn)
+
+		// Flush buffered events before the program terminates.
+		defer sentry.Flush(2 * time.Second)
 	}
 
 	logging.DebugLevel(cfg.DebugLogs)
@@ -120,6 +137,8 @@ func Main(args []string) {
 	r.Use(apiserverMiddleware.NewLoggingMiddleware)
 	r.Use(middleware.Recoverer)
 	r.Use(apiserverMiddleware.NewCorsMiddleware(cfg))
+	r.Use(apiserverMiddleware.SentryLogPanic)
+	r.Use(apiserverMiddleware.SetSentryRequestScope)
 
 	r.Mount("/", h)
 

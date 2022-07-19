@@ -5,9 +5,13 @@
 package main
 
 import (
+	"github.com/getsentry/sentry-go"
+	"github.com/go-logr/zapr"
+	sentry2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
 	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
@@ -46,16 +50,31 @@ func init() {
 }
 
 func main() {
-	opts := zap.Options{
-		Development: true,
-	}
-
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	cfg, err := cfg2.NewConfig()
 	if err != nil {
 		setupLog.Error(err, "unable to get required config")
 		os.Exit(1)
+	}
+
+	rawLogger := zap.NewRaw(zap.UseFlagOptions(&zap.Options{
+		Development: true,
+	}))
+
+	// init sentry
+	if dsn := cfg.SentryDsn; dsn != "" {
+		err := sentry2.InitSentry(dsn, "operator")
+		if err != nil {
+			setupLog.Error(err, "unable to init sentry")
+			os.Exit(1)
+		}
+		ctrl.SetLogger(zapr.NewLogger(sentry2.UseSentryWithLogger(dsn, rawLogger, "operator")))
+
+		defer sentry.Flush(2 * time.Second)
+
+		setupLog.Info("sentry for operator is initialized")
+	} else {
+		ctrl.SetLogger(zapr.NewLogger(rawLogger))
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
@@ -71,7 +90,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// init postgresql plugin configuration
 	// Create an hclog.Logger
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:   "plugin",

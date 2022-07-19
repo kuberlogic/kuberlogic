@@ -36,6 +36,7 @@ import "github.com/vrischmann/envconfig"
 
 type config struct {
 	ComposeFile string `envconfig:"KL_PLUGIN_DOCKER_COMPOSE_FILE"`
+	SentryDsn   string `envconfig:"optional"`
 }
 
 func getConfig() (*config, error) {

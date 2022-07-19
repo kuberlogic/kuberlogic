@@ -3,9 +3,9 @@ package compose
 import (
 	"fmt"
 	"github.com/compose-spec/compose-go/types"
-	"github.com/hashicorp/go-hclog"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -64,7 +64,7 @@ var (
 
 type ComposeModel struct {
 	composeProject *types.Project
-	logger         hclog.Logger
+	logger         *zap.SugaredLogger
 
 	serviceaccount        *corev1.ServiceAccount
 	service               *corev1.Service
@@ -129,7 +129,7 @@ func (c *ComposeModel) AccessServiceName() string {
 	return c.service.GetName()
 }
 
-func NewComposeModel(p *types.Project, l hclog.Logger) *ComposeModel {
+func NewComposeModel(p *types.Project, l *zap.SugaredLogger) *ComposeModel {
 	return &ComposeModel{
 		composeProject: p,
 		logger:         l,
