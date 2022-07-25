@@ -23,8 +23,25 @@ func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	rawLogger := initLogger()
+	for _, value := range []string{
+		"KUBERLOGIC_APISERVER_HOST",
+		"KUBERLOGIC_APISERVER_SCHEME",
+		"KUBERLOGIC_APISERVER_TOKEN",
+		"CHARGEBEE_SITE",
+		"CHARGEBEE_KEY",
+		"KUBERLOGIC_DOMAIN",
+		"KUBERLOGIC_TYPE",
+		"SENTRY_DSN",
+	} {
+		if err := initEnv(value); err != nil {
+			rawLogger.Warn(err.Error())
+		} else {
+			rawLogger.Debug("env", zap.String(value, viper.GetString(value)))
+		}
+	}
+
 	// init sentry
-	if dsn := os.Getenv("SENTRY_DSN"); dsn != "" {
+	if dsn := viper.GetString("SENTRY_DSN"); dsn != "" {
 		rawLogger = sentry2.UseSentryWithLogger(dsn, rawLogger, "chargebee-integration")
 
 		err := sentry2.InitSentry(dsn, "chargebee-integration")
@@ -40,18 +57,6 @@ func main() {
 	}
 	logger := rawLogger.Sugar()
 
-	for _, value := range []string{
-		"KUBERLOGIC_APISERVER_HOST",
-		"KUBERLOGIC_APISERVER_SCHEME",
-		"KUBERLOGIC_APISERVER_TOKEN",
-		"CHARGEBEE_SITE",
-		"CHARGEBEE_KEY",
-		"KUBERLOGIC_DOMAIN",
-		"KUBERLOGIC_TYPE",
-	} {
-		initEnv(logger, value)
-	}
-
 	if viper.GetString("CHARGEBEE_SITE") != "" {
 		chargebee.Configure(viper.GetString("CHARGEBEE_KEY"), viper.GetString("CHARGEBEE_SITE"))
 		sentryHandler := sentryhttp.New(sentryhttp.Options{
@@ -65,18 +70,18 @@ func main() {
 		logger.Warn("ChargeBee site is not set. Requests will not be handled.")
 	}
 
-	addr := "localhost:4242"
+	addr := "0.0.0.0:4242"
 	logger.Infof("Listening on %s\n", addr)
 	logger.Fatal(http.ListenAndServe(addr, nil))
 }
 
-func initEnv(logger *zap.SugaredLogger, param string) {
+func initEnv(param string) error {
 	_ = viper.BindEnv(param)
 	value := viper.GetString(param)
 	if value == "" {
-		logger.Warnf("parameter '%s' must be defined", param)
+		return fmt.Errorf("%s is not set", param)
 	}
-	logger.Debugf("%s: %s", param, value)
+	return nil
 }
 
 func initLogger() *zap.Logger {
