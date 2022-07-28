@@ -6,7 +6,6 @@ package commons
 
 import (
 	"encoding/json"
-	"github.com/hashicorp/go-hclog"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -24,7 +23,6 @@ const (
 
 // PluginService is the interface that we're exposing as a plugin.
 type PluginService interface {
-	SetLogger(logger hclog.Logger)
 	Convert(req PluginRequest) *PluginResponse
 	Status(req PluginRequest) *PluginResponseStatus
 	Types() *PluginResponse
