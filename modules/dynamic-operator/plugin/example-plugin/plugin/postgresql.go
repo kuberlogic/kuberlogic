@@ -33,8 +33,10 @@ type PostgresqlService struct {
 	service postgresv1.Postgresql
 }
 
-func (p *PostgresqlService) SetLogger(logger hclog.Logger) {
-	p.logger = logger
+func NewPostgresqlService(logger hclog.Logger) *PostgresqlService {
+	return &PostgresqlService{
+		logger: logger,
+	}
 }
 
 func (p *PostgresqlService) Default() *commons.PluginResponseDefault {

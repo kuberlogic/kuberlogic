@@ -17,7 +17,7 @@ type Config struct {
 	// Enabling this will ensure there is only one active controller manager.
 	EnableLeaderElection bool `envconfig:"default=false,optional"`
 	// Namespace where controller is running
-	Namespace string `envconfig:"optional"`
+	Namespace string `envconfig:""`
 	// ServiceAccount of controller
 	ServiceAccount string `envconfig:"optional"`
 
@@ -35,6 +35,8 @@ type Config struct {
 		Enabled          bool `enconfig:"default=false,optional"`
 		SnapshotsEnabled bool `envconfig:"optional"`
 	} `envconfig:"optional"`
+
+	SentryDsn string `envconfig:"optional"`
 }
 
 func NewConfig() (*Config, error) {

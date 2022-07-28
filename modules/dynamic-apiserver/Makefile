@@ -9,6 +9,8 @@ APISERVER_NAME = dynamic-apiserver
 APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME)
 
 KUBERLOGIC_APISERVER_TOKEN=8ZTjsD3t2Q3Yq-C4-hoahcFn
+KUBERLOGIC_SENTRY_DSN =
+KUBERLOGIC_DEBUG_LOGS = true
 
 .PHONY: recreate-generated-server
 recreate-generated-server:

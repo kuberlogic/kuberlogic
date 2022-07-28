@@ -41,6 +41,7 @@ type KuberlogicServiceBackupReconciler struct {
 
 func (r *KuberlogicServiceBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithValues("key", req.String(), "run", time.Now().UnixNano())
+	defer HandlePanic()
 
 	l.Info("acquiring lock")
 	r.mu.Lock()

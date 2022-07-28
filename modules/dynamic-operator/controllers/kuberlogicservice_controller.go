@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/getsentry/sentry-go"
-	"github.com/go-logr/logr"
 	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
 	kuberlogicserviceenv "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/controllers/kuberlogicservice-env"
@@ -36,9 +35,9 @@ type KuberLogicServiceReconciler struct {
 	mu  sync.Mutex
 }
 
-func HandlePanic(log logr.Logger) {
+func HandlePanic() {
 	if err := recover(); err != nil {
-		log.Error(errors.New("handle panic"), fmt.Sprintf("%v", err))
+		sentry.CaptureException(errors.New(fmt.Sprintf("panic captured: %v", err)))
 		result := sentry.Flush(5 * time.Second)
 		if !result {
 			time.Sleep(5 * time.Second)
@@ -63,7 +62,7 @@ var (
 func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logger.FromContext(ctx).WithValues("kuberlogicservicetype", req.String(), "run", time.Now().UnixNano())
 	log.Info("Reconciliation started")
-	defer HandlePanic(log)
+	defer HandlePanic()
 
 	r.mu.Lock()
 	defer r.mu.Unlock()

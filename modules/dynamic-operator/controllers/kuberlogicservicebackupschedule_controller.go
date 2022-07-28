@@ -38,6 +38,7 @@ type KuberlogicServiceBackupScheduleReconciler struct {
 
 func (r *KuberlogicServiceBackupScheduleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithValues("name", req.String())
+	defer HandlePanic()
 
 	klbs := &kuberlogiccomv1alpha1.KuberlogicServiceBackupSchedule{}
 	if err := r.Get(ctx, req.NamespacedName, klbs); err != nil {

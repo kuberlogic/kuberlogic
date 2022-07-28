@@ -18,19 +18,16 @@ package main
 
 import (
 	compose "github.com/compose-spec/compose-go/types"
-	"github.com/hashicorp/go-hclog"
+	//"github.com/go-logr/logr"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	pluginCompose "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugins/docker-compose/plugin/compose"
+	"go.uber.org/zap"
 	"strings"
 )
 
 type dockerComposeService struct {
-	logger hclog.Logger
+	logger *zap.SugaredLogger
 	spec   *compose.Project
-}
-
-func (d *dockerComposeService) SetLogger(logger hclog.Logger) {
-	d.logger = logger
 }
 
 func (d *dockerComposeService) Convert(req commons.PluginRequest) *commons.PluginResponse {
@@ -39,7 +36,7 @@ func (d *dockerComposeService) Convert(req commons.PluginRequest) *commons.Plugi
 	composeObjects := pluginCompose.NewComposeModel(d.spec, d.logger)
 	objects, err := composeObjects.Reconcile(&req)
 	if err != nil {
-		d.logger.Error(err.Error(), "error reconciling cluster objects")
+		d.logger.Error(err, "error reconciling cluster objects")
 		res.Err = err.Error()
 		return res
 	}
@@ -115,9 +112,10 @@ func (d *dockerComposeService) ValidateDelete(req commons.PluginRequest) *common
 	return &commons.PluginResponseValidation{}
 }
 
-func newDockerComposeServicePlugin(composeProject *compose.Project) *dockerComposeService {
+func newDockerComposeServicePlugin(composeProject *compose.Project, logger *zap.SugaredLogger) *dockerComposeService {
 	return &dockerComposeService{
-		spec: composeProject,
+		spec:   composeProject,
+		logger: logger,
 	}
 }
 
