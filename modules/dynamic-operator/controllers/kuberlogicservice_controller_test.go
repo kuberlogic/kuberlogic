@@ -125,6 +125,26 @@ var _ = Describe("KuberlogicService controller", func() {
 			}))
 		})
 
+		It("Status should reflect current application state", func() {
+			By("Checking configuration error status")
+			// invalid volume size format
+			failedKls := kls.DeepCopy()
+			failedKls.ObjectMeta = metav1.ObjectMeta{
+				Name: "failed",
+			}
+			failedKls.Spec.VolumeSize = "fail"
+			Expect(k8sClient.Create(ctx, failedKls)).Should(Succeed())
+			Eventually(func() bool {
+				if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(failedKls), failedKls); err != nil {
+					return false
+				}
+				if failedKls.Status.Phase == "ProvisioningError" {
+					return true
+				}
+				return false
+			}, timeout, interval).Should(BeTrue())
+		})
+
 		It("Scheduled backup job should be created", func() {
 			By("Checking scheduled backup cronjob")
 			cj := &v12.CronJob{}
@@ -161,7 +181,7 @@ var _ = Describe("KuberlogicService controller", func() {
 							return false
 						}
 						backingUp, backup := kls.BackupRunning()
-						return backingUp && backup == klb.GetName()
+						return backingUp && backup == klb.GetName() && kls.Status.Phase == "Backing Up"
 					}, timeout, interval).Should(BeTrue())
 
 					By("Simulating successful backup")
@@ -187,7 +207,7 @@ var _ = Describe("KuberlogicService controller", func() {
 							return false
 						}
 						backingUp, backup := kls.BackupRunning()
-						return backingUp && backup == klb.GetName()
+						return backingUp && backup == klb.GetName() && kls.Status.Phase != "Backing Up"
 					}, timeout, interval).Should(BeFalse())
 				})
 			})
@@ -202,7 +222,7 @@ var _ = Describe("KuberlogicService controller", func() {
 							return false
 						}
 						restoring, restoreName := kls.RestoreRunning()
-						return restoring && restoreName == klr.GetName()
+						return restoring && restoreName == klr.GetName() && kls.Status.Phase == "Restoring"
 					}, timeout, interval).Should(BeTrue())
 
 					By("simulating successful restore")
@@ -227,7 +247,7 @@ var _ = Describe("KuberlogicService controller", func() {
 							return false
 						}
 						restoring, restoreName := kls.RestoreRunning()
-						return restoring && restoreName == klr.GetName()
+						return restoring && restoreName == klr.GetName() && kls.Status.Phase != "Restoring"
 					}, timeout, interval).Should(BeFalse())
 				})
 			})
