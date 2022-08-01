@@ -44,6 +44,9 @@ func TestServiceListMany(t *testing.T) {
 					Type:     "postgresql",
 					Replicas: 1,
 				},
+				Status: cloudlinuxv1alpha1.KuberLogicServiceStatus{
+					Phase: "Running",
+				},
 			},
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -52,6 +55,9 @@ func TestServiceListMany(t *testing.T) {
 				Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
 					Type:     "mysql",
 					Replicas: 2,
+				},
+				Status: cloudlinuxv1alpha1.KuberLogicServiceStatus{
+					Phase: "Failed",
 				},
 			},
 		},
@@ -71,13 +77,13 @@ func TestServiceListMany(t *testing.T) {
 			ID:       util.StrAsPointer("one"),
 			Type:     util.StrAsPointer("postgresql"),
 			Replicas: util.Int64AsPointer(1),
-			Status:   "Unknown",
+			Status:   "Running",
 		},
 		{
 			ID:       util.StrAsPointer("two"),
 			Type:     util.StrAsPointer("mysql"),
 			Replicas: util.Int64AsPointer(2),
-			Status:   "Unknown",
+			Status:   "Failed",
 		},
 	}
 
@@ -103,6 +109,9 @@ func TestServiceListWithSubscriptionFilter(t *testing.T) {
 					Type:     "postgresql",
 					Replicas: 1,
 				},
+				Status: cloudlinuxv1alpha1.KuberLogicServiceStatus{
+					Phase: "Running",
+				},
 			},
 		},
 	}
@@ -121,7 +130,7 @@ func TestServiceListWithSubscriptionFilter(t *testing.T) {
 			ID:           util.StrAsPointer("one"),
 			Type:         util.StrAsPointer("postgresql"),
 			Replicas:     util.Int64AsPointer(1),
-			Status:       "Unknown",
+			Status:       "Running",
 			Subscription: "some-kind-of-subscription-id",
 		},
 	}
