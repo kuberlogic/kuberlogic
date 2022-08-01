@@ -17,6 +17,9 @@ configMapGenerator:
 - files:
   - docker-compose.yaml
   name: compose-file
+- files:
+  - mapping-fields.yaml
+  name: mapping-fields
 secretGenerator:
 - behavior: create
   literals:

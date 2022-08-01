@@ -8,8 +8,8 @@ IMG_LATEST_TAG=latest
 IMAGE_NAME = chargebee-integration
 IMAGE_PATH = $(IMG_REPO)/$(IMAGE_NAME)
 
-CHARGEBEE_SITE =
-CHARGEBEE_KEY =
+CHARGEBEE_SITE = imunify360-test
+CHARGEBEE_KEY = test_aTwMcu4LDMU3eCamXCJYcubL60tGDYbGeU
 KUBERLOGIC_APISERVER_SCHEME = http
 KUBERLOGIC_APISERVER_HOST = localhost:8001
 KUBERLOGIC_APISERVER_TOKEN = 8ZTjsD3t2Q3Yq-C4-hoahcFn
@@ -20,7 +20,7 @@ SENTRY_DSN =
 
 .PHONY: run
 run:
-	go run main.go
+	go run main.go ${ARGS}
 
 .PHONY: test
 test:

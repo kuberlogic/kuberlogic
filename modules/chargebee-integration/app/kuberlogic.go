@@ -17,19 +17,9 @@ import (
 	"time"
 )
 
-func createService(logger *zap.SugaredLogger, subscriptionId string) error {
-	domain := viper.GetString("KUBERLOGIC_DOMAIN")
-	serviceType := viper.GetString("KUBERLOGIC_TYPE")
+func createService(logger *zap.SugaredLogger, svc *models.Service) error {
 	params := service.NewServiceAddParams()
-
-	// 2 = Adjective + Name
-	name := petname.Generate(2, "-")
-	params.ServiceItem = &models.Service{
-		ID:           &name,
-		Domain:       domain,
-		Type:         &serviceType,
-		Subscription: subscriptionId,
-	}
+	params.ServiceItem = svc
 
 	apiClient, err := makeClient()
 	if err != nil {
@@ -42,11 +32,11 @@ func createService(logger *zap.SugaredLogger, subscriptionId string) error {
 		return err
 	}
 
-	logger.Infof("service is created: %s, waiting ready status", name)
+	logger.Infof("service is created: %s, waiting ready status", svc.ID)
 
 	// checking the status asynchronously
 	// maxRetries == 1 2 4 8  16 32 64 128 256 512 1024 2048 4096
-	go checkStatus(logger, name, subscriptionId, time.Second, 13)
+	go checkStatus(logger, *svc.ID, svc.Subscription, time.Second, 13)
 	return nil
 }
 
@@ -107,4 +97,15 @@ func makeClient() (*client2.ServiceAPI, error) {
 func checkAlreadyExists(err error) bool {
 	_, ok := err.(*service.ServiceAddConflict)
 	return ok
+}
+
+func createServiceItem() *models.Service {
+	name := petname.Generate(2, "-")
+	domain := viper.GetString("KUBERLOGIC_DOMAIN")
+	serviceType := viper.GetString("KUBERLOGIC_TYPE")
+	return &models.Service{
+		ID:     &name,
+		Domain: domain,
+		Type:   &serviceType,
+	}
 }
