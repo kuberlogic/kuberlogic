@@ -32,6 +32,10 @@ var (
 )
 
 const (
+	klSentryDSN = "https://b16abaff497941468fdf21aff686ff52@kl.sentry.cloudlinux.com/9"
+)
+
+const (
 	installDockerComposeParam           = "docker_compose"
 	installBackupsEnabledParam          = "backups_enabled"
 	installBackupsSnapshotsEnabledParam = "backups_snapshots_enabled"
@@ -40,6 +44,8 @@ const (
 	installChargebeeSiteParam           = "chargebee_site"
 	installChargebeeKeyParam            = "chargebee_key"
 	installKuberlogicDomainParam        = "kuberlogic_domain"
+	installReportErrors                 = "report_errors"
+	installSentryDSNParam               = "sentry_dsn"
 )
 
 func makeInstallCmd(k8sClientFunc func() (kubernetes.Interface, error)) *cobra.Command {
@@ -58,6 +64,8 @@ func makeInstallCmd(k8sClientFunc func() (kubernetes.Interface, error)) *cobra.C
 	_ = cmd.PersistentFlags().String(installChargebeeSiteParam, "", "ChargeBee site name")
 	_ = cmd.PersistentFlags().String(installChargebeeKeyParam, "", "ChargeBee secret key")
 	_ = cmd.PersistentFlags().String(installKuberlogicDomainParam, "example.com", "Kuberlogic default domain")
+	_ = cmd.PersistentFlags().Bool(installReportErrors, false, "Report errors to KuberLogic")
+	_ = cmd.PersistentFlags().String(installSentryDSNParam, "", "Sentry DSN (KuberLogic team will not be notified in case of errors)")
 	return cmd
 }
 
@@ -174,6 +182,21 @@ func runInstall(k8sClientFunc func() (kubernetes.Interface, error)) func(command
 				return errors.Wrap(err, "failed to cache tls.key")
 			}
 		}
+
+		var useKLSentry bool
+		var sentrDSN string
+		if useKLSentry, err = getBoolPrompt(command, klParams.GetBool(installReportErrors), installReportErrors); err != nil {
+			return err
+		} else if useKLSentry {
+			sentrDSN = klSentryDSN
+		} else {
+			sentrDSN, err = getStringPrompt(command, installSentryDSNParam, klParams.GetString(installSentryDSNParam), nil)
+			if err != nil {
+				return err
+			}
+		}
+		klParams.Set(installReportErrors, useKLSentry)
+		klParams.Set(installSentryDSNParam, sentrDSN)
 
 		// write config file
 		if err := klParams.WriteConfigAs(klConfigFile); err != nil {
