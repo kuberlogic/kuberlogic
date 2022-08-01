@@ -63,9 +63,9 @@ spec:
                   key: BACKUPS_SNAPSHOTS_ENABLED
             - name: SENTRY_DSN
               valueFrom:
-                configMapKeyRef:
-                  name: controller-manager-config
-                  key: sentry-dsn
+                secretKeyRef:
+                  name: kuberlogic-config
+                  key: SENTRY_DSN
           args:
             - --leader-elect
           image: controller:latest
@@ -107,9 +107,9 @@ spec:
                   key: TOKEN
             - name: KUBERLOGIC_SENTRY_DSN
               valueFrom:
-                configMapKeyRef:
-                  name: controller-manager-config
-                  key: sentry-dsn
+                secretKeyRef:
+                  name: kuberlogic-config
+                  key: SENTRY_DSN
           ports:
             - containerPort: 8001
           resources:
@@ -154,10 +154,9 @@ spec:
               value: docker-compose
             - name: SENTRY_DSN
               valueFrom:
-                configMapKeyRef:
-                  name: controller-manager-config
-                  key: sentry-dsn
-
+                secretKeyRef:
+                  name: kuberlogic-config
+                  key: SENTRY_DSN
           ports:
             - containerPort: 4242
           resources:
