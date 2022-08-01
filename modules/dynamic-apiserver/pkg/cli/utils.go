@@ -9,8 +9,10 @@ import (
 	"fmt"
 	"github.com/ghodss/yaml"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
+	"github.com/manifoldco/promptui"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 type WithPayload interface {
@@ -85,4 +87,63 @@ func humanizeError(err error) error {
 		}
 	}
 	return err
+}
+
+func getStringPrompt(cmd *cobra.Command, parameter, defaultValue string, validatef promptui.ValidateFunc) (string, error) {
+	flag := cmd.Flag(parameter)
+
+	nonInteractive, err := getBool(cmd, "non-interactive")
+	if err != nil {
+		return "", err
+	}
+	if nonInteractive == nil {
+		prompt := promptui.Prompt{
+			Label:    flag.Usage,
+			Validate: validatef,
+			Default:  defaultValue,
+		}
+		result, err := prompt.Run()
+		return result, err
+	}
+	val, err := getString(cmd, parameter)
+	if val != nil {
+		return *val, err
+	}
+	return "", err
+}
+
+func getBoolPrompt(cmd *cobra.Command, defaultValue bool, parameter string) (bool, error) {
+	flag := cmd.Flag(parameter)
+
+	nonInteractive, err := getBool(cmd, "non-interactive")
+	if err != nil {
+		return false, err
+	}
+	if nonInteractive == nil {
+		promptDefault := "N"
+		suffix := " [y/N]"
+		if defaultValue {
+			promptDefault = "y"
+			suffix = " [Y/n]"
+		}
+
+		prompt := promptui.Prompt{
+			Label:   flag.Usage + suffix,
+			Default: promptDefault,
+			Validate: func(s string) error {
+				if lower := strings.ToLower(s); lower != "y" && lower != "n" {
+					return errors.New("Please answer with [y]es or [n]o")
+				}
+				return nil
+			},
+		}
+		result, err := prompt.Run()
+		isTrue := strings.ToLower(result) == "y"
+		return isTrue, err
+	}
+	val, err := getBool(cmd, parameter)
+	if val != nil {
+		return *val, err
+	}
+	return false, err
 }

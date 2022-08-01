@@ -37,12 +37,16 @@ generate-client: recreate-generated-client
 		--target pkg/generated/
 
 .PHONY: test
-test:
+test: cli-configs
 	go test -v ./... -coverprofile cover.out
 
-.PHONY: build-cli
-build-cli:
+.PHONY: cli-configs
+cli-configs:
 	cd ../dynamic-operator && zip -r kustomize-configs.zip config/ && cp kustomize-configs.zip ../dynamic-apiserver/pkg/cli/
+
+
+.PHONY: build-cli
+build-cli: cli-configs
 	go build -o kuberlogic cmd/cli/main.go
 
 .PHONY: run

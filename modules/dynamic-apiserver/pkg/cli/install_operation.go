@@ -13,8 +13,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,26 +26,44 @@ var klConfigZipData []byte
 var (
 	kubectlBin   = "kubectl"
 	kustomizeBin = "kustomize"
+
+	errTokenEmpty         = errors.New("token can't be empty")
+	errChargebeeKeyNotSet = errors.New("chargebee key can't be empty")
 )
 
-func makeInstallCmd() *cobra.Command {
+const (
+	installDockerComposeParam           = "docker_compose"
+	installBackupsEnabledParam          = "backups_enabled"
+	installBackupsSnapshotsEnabledParam = "backups_snapshots_enabled"
+	installTLSKeyParam                  = "tls_key"
+	installTLSCrtParam                  = "tls_crt"
+	installChargebeeSiteParam           = "chargebee_site"
+	installChargebeeKeyParam            = "chargebee_key"
+	installKuberlogicDomainParam        = "kuberlogic_domain"
+)
+
+func makeInstallCmd(k8sClientFunc func() (kubernetes.Interface, error)) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install",
 		Short: "Installs KuberLogic to Kubernetes cluster",
-		RunE:  runInstall(),
+		RunE:  runInstall(k8sClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String("docker-compose", "", "Path to application docker-compose.yml")
-	_ = cmd.PersistentFlags().Bool("backups-enabled", false, "Enable backup/restore support")
-	_ = cmd.PersistentFlags().Bool("backups-snapshots-enabled", false, "Enable volume snapshot backups (Must be supported by Velero provider plugin)")
-	_ = cmd.PersistentFlags().String("tls-key", "", "Path to TLS key to use for provisioned applications")
-	_ = cmd.PersistentFlags().String("tls-crt", "", "Path to TLS certificate to use for provisioned applications")
+	_ = cmd.PersistentFlags().Bool("non-interactive", false, "Do not enter interactive mode")
+	_ = cmd.PersistentFlags().String(installDockerComposeParam, "", "Path to application docker-compose.yml")
+	_ = cmd.PersistentFlags().Bool(installBackupsEnabledParam, false, "Enable backup/restore support")
+	_ = cmd.PersistentFlags().Bool(installBackupsSnapshotsEnabledParam, false, "Enable volume snapshot backups (Must be supported by Velero provider plugin)")
+	_ = cmd.PersistentFlags().String(installTLSKeyParam, "", "Path to TLS key to use for provisioned applications")
+	_ = cmd.PersistentFlags().String(installTLSCrtParam, "", "Path to TLS certificate to use for provisioned applications")
+	_ = cmd.PersistentFlags().String(installChargebeeSiteParam, "", "ChargeBee site name")
+	_ = cmd.PersistentFlags().String(installChargebeeKeyParam, "", "ChargeBee secret key")
+	_ = cmd.PersistentFlags().String(installKuberlogicDomainParam, "example.com", "Kuberlogic default domain")
 	return cmd
 }
 
 // runInstall function prepares configs and installs KuberLogic by calling kubectl and kustomize binaries
 // it then uses client-go to get some config values and viper to write config file to disk
-func runInstall() func(command *cobra.Command, args []string) error {
+func runInstall(k8sClientFunc func() (kubernetes.Interface, error)) func(command *cobra.Command, args []string) error {
 	return func(command *cobra.Command, args []string) error {
 		command.Println("Preparing KuberLogic configs")
 		tmpdir, err := os.MkdirTemp("", "kuberlogic-install")
@@ -68,54 +84,100 @@ func runInstall() func(command *cobra.Command, args []string) error {
 			return errors.Wrap(err, "error creating config directory")
 		}
 
-		// handle cmd flags
-		if value, err := getString(command, "docker-compose"); err != nil {
+		// handle kuberlogic parameters
+		klParams := viper.New()
+
+		klConfigFile := filepath.Join(cacheDir, "manager", "kuberlogic-config.env")
+		if err := os.MkdirAll(filepath.Dir(klConfigFile), os.ModePerm); err != nil {
 			return err
-		} else if value != nil {
-			if err := cacheConfigFile(*value, filepath.Join(cacheDir, "manager/docker-compose.yaml")); err != nil {
+		}
+		klParams.SetConfigFile(klConfigFile)
+		err = klParams.ReadInConfig()
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+
+		if value, err := getStringPrompt(command, tokenFlag, viper.GetString(tokenFlag), nil); err != nil {
+			return err
+		} else if value != "" {
+
+			klParams.Set(tokenFlag, value)
+			// also set global viper key (for user config)
+			viper.Set(tokenFlag, value)
+		} else {
+			return errTokenEmpty
+		}
+
+		cachedDockerCompose := filepath.Join(cacheDir, "manager/docker-compose.yaml")
+		if value, err := getStringPrompt(command, installDockerComposeParam, cachedConfigOrEmpty(cachedDockerCompose), nil); err != nil {
+			return err
+		} else if value != "" {
+			if err := cacheConfigFile(value, cachedDockerCompose); err != nil {
 				return err
 			}
 		}
 
-		if backupsEnabled, err := getBool(command, "backups-enabled"); err != nil {
+		var backupsEnabled, snapshotsEnabled bool
+		if backupsEnabled, err = getBoolPrompt(command, klParams.GetBool(installBackupsEnabledParam), installBackupsEnabledParam); err != nil {
 			return err
-		} else if backupsEnabled != nil {
-			backupProperties := fmt.Sprintf("backups_enabled=%t\n", *backupsEnabled)
-			if snapshotsEnabled, err := getBool(command, "backups-snapshots-enabled"); err != nil {
-				return err
-			} else if snapshotsEnabled != nil {
-				backupProperties = backupProperties + fmt.Sprintf("backups_snapshots_enabled=%t", *snapshotsEnabled)
-			}
-
-			if err := cacheConfigFileWithContent(backupProperties, filepath.Join(cacheDir, "/manager/backups.properties")); err != nil {
-				return err
-			}
-		}
-
-		if tlsCertPath, err := getString(command, "tls-crt"); err != nil {
-			return err
-		} else if tlsCertPath != nil {
-			tlsKeyPath, err := getString(command, "tls-key")
+		} else if backupsEnabled {
+			snapshotsEnabled, err = getBoolPrompt(command, klParams.GetBool(installBackupsSnapshotsEnabledParam), installBackupsSnapshotsEnabledParam)
 			if err != nil {
 				return err
 			}
-			if tlsKeyPath == nil {
-				return errors.New("tls certificate is set but tls key is missing")
+		}
+		klParams.Set(installBackupsEnabledParam, backupsEnabled)
+		klParams.Set(installBackupsSnapshotsEnabledParam, snapshotsEnabled)
+
+		var cSite, cKey, kuberlogicDomain string
+		if cSite, err = getStringPrompt(command, installChargebeeSiteParam, klParams.GetString(installChargebeeSiteParam), nil); err != nil {
+			return err
+		} else if cSite != "" {
+			cKey, err = getStringPrompt(command, installChargebeeKeyParam, klParams.GetString(installChargebeeKeyParam), func(s string) error {
+				if s == "" {
+					return errChargebeeKeyNotSet
+				}
+				return nil
+			})
+			if err != nil {
+				return err
 			}
 
-			if err := cacheConfigFile(*tlsCertPath, filepath.Join(cacheDir, "/certificates/tls.crt")); err != nil {
+			kuberlogicDomain, err = getStringPrompt(command, installKuberlogicDomainParam, klParams.GetString(installKuberlogicDomainParam), nil)
+			if err != nil {
+				return err
+			}
+		}
+		klParams.Set(installChargebeeSiteParam, cSite)
+		klParams.Set(installChargebeeKeyParam, cKey)
+		klParams.Set(installKuberlogicDomainParam, kuberlogicDomain)
+
+		cachedTlsCrt := filepath.Join(cacheDir, "certificates/tls.crt")
+		if tlsCertPath, err := getStringPrompt(command, installTLSCrtParam, cachedConfigOrEmpty(cachedTlsCrt), nil); err != nil {
+			return err
+		} else if tlsCertPath != "" {
+			cachedTlsKey := filepath.Join(cacheDir, "/certificates/tls.key")
+			tlsKeyPath, err := getStringPrompt(command, installTLSKeyParam, cachedConfigOrEmpty(cachedTlsKey), func(s string) error {
+				if s == "" {
+					return errors.New("tls certificate is set but tls key is missing")
+				}
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			if err := cacheConfigFile(tlsCertPath, cachedTlsCrt); err != nil {
 				return errors.Wrap(err, "failed to cache tls.crt")
 			}
-			if err := cacheConfigFile(*tlsKeyPath, filepath.Join(cacheDir, "/certificates/tls.key")); err != nil {
+			if err := cacheConfigFile(tlsKeyPath, cachedTlsKey); err != nil {
 				return errors.Wrap(err, "failed to cache tls.key")
 			}
 		}
 
-		if token := viper.GetString(tokenFlag); token != "" {
-			apiserverProperties := fmt.Sprintf("token=%s", token)
-			if err := cacheConfigFileWithContent(apiserverProperties, filepath.Join(cacheDir, "manager/apiserver.properties")); err != nil {
-				return err
-			}
+		// write config file
+		if err := klParams.WriteConfigAs(klConfigFile); err != nil {
+			return errors.Wrap(err, "failed to write Kuberlogic installation config file")
 		}
 
 		// copy cached configuration files to kustomize configs
@@ -124,10 +186,16 @@ func runInstall() func(command *cobra.Command, args []string) error {
 		}
 
 		// check if kubernetes is available
-		if out, err := exec.Command("kubectl", "cluster-info").Output(); err != nil {
-			command.Println("Kubernetes is not available via kubectl")
+		k8sclient, err := k8sClientFunc()
+		if err != nil {
+			return err
+		}
+		if _, err := k8sclient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{}); err != nil {
+			return err
+		}
+		if out, err := exec.Command(kubectlBin, "cluster-info").Output(); err != nil {
 			command.Println(string(out))
-			os.Exit(1)
+			return errors.New("Kubernetes is not available via kubectl")
 		}
 
 		// run kustomize via exec and apply manifests via kubectl
@@ -158,22 +226,14 @@ func runInstall() func(command *cobra.Command, args []string) error {
 			return errors.New("Failed installing kuberlogic")
 		}
 
-		command.Println("Updating KuberLogic config file at " + configFile)
-
-		k8scfg, err := clientcmd.BuildConfigFromFlags("", homedir.HomeDir()+"/.kube/config")
-		if err != nil {
-			return errors.Wrap(err, "failed to build Kubernetes client config")
-		}
-		k8sclient, err := kubernetes.NewForConfig(k8scfg)
-		if err != nil {
-			return errors.Wrap(err, "failed to build Kubernetes client")
-		}
+		command.Println("Fetching KuberLogic endpoint")
 		endpoint, err := getKuberlogicEndpoint(k8sclient)
 		if err != nil {
 			return errors.Wrap(err, "failed to get KuberLogic api server host")
 		}
 		viper.Set(apiHostFlag, endpoint)
 
+		command.Println("Updating KuberLogic config file at " + configFile)
 		err = viper.WriteConfig()
 		if errors.Is(err, os.ErrNotExist) {
 			err = viper.WriteConfigAs(configFile)
@@ -251,7 +311,7 @@ func useCachedConfigFiles(configCacheDir, configDir string, printf func(f string
 			return errors.Wrap(err, fmt.Sprintf("failed to restore %s at %s", path, target))
 		}
 
-		printf("Restored %s from cache\n", relative)
+		printf("Using data `%s` as %s\n", string(data), relative)
 		return nil
 	})
 }
@@ -264,17 +324,16 @@ func cacheConfigFile(src, name string) error {
 	return os.WriteFile(name, data, os.ModePerm)
 }
 
-func cacheConfigFileWithContent(data string, name string) error {
-	if dir := filepath.Dir(name); dir != "." {
-		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-			return err
-		}
+func cachedConfigOrEmpty(path string) string {
+	if _, err := os.Stat(path); err != nil {
+		return ""
 	}
-	return os.WriteFile(name, []byte(data), os.ModePerm)
+	return path
 }
 
-func getKuberlogicEndpoint(c *kubernetes.Clientset) (string, error) {
+func getKuberlogicEndpoint(c kubernetes.Interface) (string, error) {
 	var endpoint string
+
 	svc, err := c.CoreV1().Services("kuberlogic").Get(context.TODO(), "kls-api-server", metav1.GetOptions{})
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get KuberLogic Service")
