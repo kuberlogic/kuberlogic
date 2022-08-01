@@ -6,7 +6,6 @@ package commons
 
 import (
 	"fmt"
-	"github.com/hashicorp/go-hclog"
 	"net/rpc"
 )
 
@@ -88,8 +87,4 @@ func (g *PluginClient) ValidateUpdate(req PluginRequest) *PluginResponseValidati
 
 func (g *PluginClient) ValidateDelete(req PluginRequest) *PluginResponseValidation {
 	return g.callValidate("ValidateDelete", req)
-}
-
-func (g *PluginClient) SetLogger(_ hclog.Logger) {
-	panic("cannot executed")
 }

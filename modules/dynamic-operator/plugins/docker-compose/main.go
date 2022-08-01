@@ -20,7 +20,13 @@ import (
 	"github.com/compose-spec/compose-go/loader"
 	"github.com/compose-spec/compose-go/types"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
+
+	//"github.com/kuberlogic/zapsentry"
+	//"go.uber.org/zap/zapcore"
 	"os"
+
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -48,5 +54,21 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	commons.ServePlugin("docker-compose", newDockerComposeServicePlugin(project))
+
+	rawLogger, err := zap.NewDevelopmentConfig().Build()
+	if err != nil {
+		panic(err)
+	}
+	pluginName := "docker-compose"
+
+	// init sentry
+	if dsn := cfg.SentryDsn; dsn != "" {
+		rawLogger = sentry.UseSentryWithLogger(dsn, rawLogger, pluginName)
+		rawLogger.Info("sentry for plugin docker-compose is initialized")
+	}
+	logger := rawLogger.Sugar()
+	plugin := newDockerComposeServicePlugin(project, logger)
+
+	logger.Debug("starting the plugin ", pluginName)
+	commons.ServePlugin(pluginName, plugin)
 }

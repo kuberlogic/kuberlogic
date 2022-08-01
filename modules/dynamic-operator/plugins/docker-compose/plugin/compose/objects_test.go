@@ -3,11 +3,11 @@ package compose
 import (
 	"github.com/compose-spec/compose-go/types"
 	"github.com/go-test/deep"
-	"github.com/hashicorp/go-hclog"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 var envVal = "val"
@@ -63,7 +63,7 @@ var _ = Describe("docker-compose model", func() {
 			Version:    "",
 		}
 
-		c := NewComposeModel(testValidProject, hclog.L())
+		c := NewComposeModel(testValidProject, zap.NewRaw().Sugar())
 
 		It("Should create valid Kubernetes objects", func() {
 			By("Checking Reconcile return parameters")
@@ -159,7 +159,7 @@ var _ = Describe("docker-compose model", func() {
 			},
 		}
 
-		c := NewComposeModel(testInvalidProject, hclog.L())
+		c := NewComposeModel(testInvalidProject, zap.NewRaw().Sugar())
 
 		requests := &commons.PluginRequest{
 			Name:       "demo-kls",
@@ -218,7 +218,7 @@ var _ = Describe("docker-compose model", func() {
 			},
 		}
 
-		c := NewComposeModel(testInvalidProject, hclog.L())
+		c := NewComposeModel(testInvalidProject, zap.NewRaw().Sugar())
 
 		requests := &commons.PluginRequest{
 			Name:       "demo-kls",
@@ -288,7 +288,7 @@ var _ = Describe("docker-compose model", func() {
 				},
 			}
 
-			c := NewComposeModel(testProject, hclog.L())
+			c := NewComposeModel(testProject, zap.NewRaw().Sugar())
 
 			requests := &commons.PluginRequest{
 				Name:       "demo-kls",
@@ -401,7 +401,7 @@ var _ = Describe("docker-compose model", func() {
 						},
 					}
 
-					c := NewComposeModel(&m, hclog.L())
+					c := NewComposeModel(&m, zap.NewRaw().Sugar())
 					_, err := c.Reconcile(requests)
 					Expect(err).ShouldNot(BeNil())
 				})
@@ -421,7 +421,7 @@ var _ = Describe("docker-compose model", func() {
 						},
 					}
 
-					c := NewComposeModel(&m, hclog.L())
+					c := NewComposeModel(&m, zap.NewRaw().Sugar())
 					_, err := c.Reconcile(requests)
 					Expect(err).ShouldNot(BeNil())
 				})
@@ -448,7 +448,7 @@ var _ = Describe("docker-compose model", func() {
 						},
 					}
 
-					c := NewComposeModel(&m, hclog.L())
+					c := NewComposeModel(&m, zap.NewRaw().Sugar())
 					_, err := c.Reconcile(&mReq)
 					Expect(err).Should(BeNil())
 					By("Checking Ingress object")
@@ -487,7 +487,7 @@ var _ = Describe("docker-compose model", func() {
 						},
 					}
 
-					c := NewComposeModel(&m, hclog.L())
+					c := NewComposeModel(&m, zap.NewRaw().Sugar())
 					_, err := c.Reconcile(&mReq)
 					Expect(err).Should(BeNil())
 					By("Checking Ingress object")
@@ -554,7 +554,7 @@ var _ = Describe("docker-compose model", func() {
 			Version:    "",
 		}
 
-		c := NewComposeModel(testValidProject, hclog.Default())
+		c := NewComposeModel(testValidProject, zap.NewRaw().Sugar())
 
 		It("Should create valid Kubernetes objects", func() {
 			By("Checking Reconcile return parameters")

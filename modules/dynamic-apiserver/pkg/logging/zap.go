@@ -19,21 +19,12 @@ package logging
 import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"os"
 )
 
 var atom zap.AtomicLevel
 
 func newZapLogger(opts ...zap.Option) *zap.Logger {
-	// NewDevelopmentConfig -- for production logger
 	cfg := zap.NewDevelopmentConfig()
-
-	if out := os.Getenv("KUBERLOGIC_APISERVER_LOG"); out != "" {
-		cfg.OutputPaths = []string{
-			out,
-		}
-	}
-
 	atom = zap.NewAtomicLevel()
 	cfg.Level = atom
 

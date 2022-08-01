@@ -15,8 +15,9 @@ APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME)
 CHARGEBEE_INTEGRATION_NAME = chargebee-integration
 CHARGEBEE_INTEGRATION_IMG = $(IMG_REPO)/$(CHARGEBEE_INTEGRATION_NAME)
 
-
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+
+SENTRY_DSN =
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -84,7 +85,7 @@ build: generate fmt vet ## Build manager binary.
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
-	go run ./main.go
+	NAMESPACE=kuberlogic SENTRY_DSN=${SENTRY_DSN} go run ./main.go
 
 .PHONY: docker-build
 docker-build: test ## Build docker image with the manager.

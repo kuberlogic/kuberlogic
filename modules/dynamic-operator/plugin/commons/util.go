@@ -6,12 +6,10 @@ package commons
 
 import (
 	"encoding/gob"
-	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -47,19 +45,11 @@ func ResponseFromObject(object client.Object, gvk schema.GroupVersionKind, servi
 }
 
 func ServePlugin(name string, pl PluginService) {
-	logger := hclog.New(&hclog.LoggerOptions{
-		Level:      hclog.Trace,
-		Output:     os.Stderr,
-		JSONFormat: true,
-	})
-
 	gob.Register(PluginRequest{})
-	pl.SetLogger(logger)
 	var pluginMap = map[string]plugin.Plugin{
 		name: &Plugin{Impl: pl},
 	}
 
-	logger.Debug("starting the plugin", "type", name)
 	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: HandshakeConfig,
 		Plugins:         pluginMap,
