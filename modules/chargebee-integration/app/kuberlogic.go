@@ -70,7 +70,6 @@ func checkStatus(logger *zap.SugaredLogger, name, subscriptionId string, timeout
 		}
 		logger.Infof("Endpoint for subscription '%s' is updated", response.Payload.Endpoint)
 
-		// TODO: send e-mail via chargebee
 		return
 	}
 
