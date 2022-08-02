@@ -84,12 +84,6 @@ func runServiceEdit(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 			svc.Domain = *value
 		}
 
-		//if value, err := getString(cmd, "volume_size"); err != nil {
-		//	return err
-		//} else if value != nil {
-		//	svc.VolumeSize = *value
-		//}
-
 		if value, err := getString(cmd, "backup_schedule"); err != nil {
 			return err
 		} else if value != nil {
@@ -114,10 +108,10 @@ func runServiceEdit(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 			svc.Limits.Memory = *value
 		}
 
-		if value, err := getString(cmd, "limits.volume_size"); err != nil {
+		if value, err := getString(cmd, "limits.storage"); err != nil {
 			return err
 		} else if value != nil {
-			svc.Limits.VolumeSize = *value
+			svc.Limits.Storage = *value
 		}
 
 		var formatResponse format

@@ -67,7 +67,7 @@ func TestServiceGetSuccess(t *testing.T) {
 		Type:     util.StrAsPointer("postgresql"),
 		Replicas: util.Int64AsPointer(1),
 		Limits: &models.Limits{
-			VolumeSize: "2Gi",
+			Storage: "2Gi",
 		},
 		Status: "Unknown",
 	}

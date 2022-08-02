@@ -82,9 +82,9 @@ func TestServiceAddExtended(t *testing.T) {
 		Replicas: util.Int64AsPointer(1),
 		Type:     util.StrAsPointer("postgresql"),
 		Limits: &models.Limits{
-			CPU:        "10",
-			Memory:     "500",
-			VolumeSize: "100Gi",
+			CPU:     "10",
+			Memory:  "500",
+			Storage: "100Gi",
 		},
 		Version:        "13",
 		Status:         "Ready",

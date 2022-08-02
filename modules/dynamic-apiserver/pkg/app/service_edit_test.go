@@ -78,7 +78,7 @@ func TestServiceEditSuccess(t *testing.T) {
 		Type:     util.StrAsPointer("postgresql"),
 		Replicas: util.Int64AsPointer(1),
 		Limits: &models.Limits{
-			VolumeSize: "2Gi",
+			Storage: "2Gi",
 		},
 		Status: "Unknown",
 	}
@@ -124,7 +124,7 @@ func TestServiceEditForbidSetSubscription(t *testing.T) {
 			Type:     util.StrAsPointer("postgresql"),
 			Replicas: util.Int64AsPointer(1),
 			Limits: &models.Limits{
-				VolumeSize: "2Gi",
+				Storage: "2Gi",
 			},
 			Status:       "Unknown",
 			Subscription: "some-kind-of-subscription-id",

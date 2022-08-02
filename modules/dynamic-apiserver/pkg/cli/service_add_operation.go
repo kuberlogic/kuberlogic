@@ -34,7 +34,7 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.
 	// limits
 	_ = cmd.PersistentFlags().String("limits.cpu", "", "cpu limits")
 	_ = cmd.PersistentFlags().String("limits.memory", "", "memory limits")
-	_ = cmd.PersistentFlags().String("limits.volume_size", "", "volume size limits")
+	_ = cmd.PersistentFlags().String("limits.storage", "", "storage limits")
 
 	// advanced conf
 
@@ -86,12 +86,6 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 			svc.Domain = *value
 		}
 
-		if value, err := getString(cmd, "volume_size"); err != nil {
-			return err
-		} else if value != nil {
-			svc.VolumeSize = *value
-		}
-
 		if value, err := getString(cmd, "backup_schedule"); err != nil {
 			return err
 		} else if value != nil {
@@ -125,7 +119,7 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 		if value, err := getString(cmd, "limits.volume_size"); err != nil {
 			return err
 		} else if value != nil {
-			svc.Limits.VolumeSize = *value
+			svc.Limits.Storage = *value
 		}
 
 		var formatResponse format

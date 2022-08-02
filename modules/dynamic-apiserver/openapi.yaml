@@ -389,7 +389,7 @@ definitions:
         type: string
       memory:
         type: string
-      volumeSize:
+      storage:
         type: string
 
   Service:

@@ -58,8 +58,8 @@ func ServiceToKuberlogic(svc *models.Service) (*kuberlogiccomv1alpha1.KuberLogic
 			c.Spec.Limits[v12.ResourceMemory] = resource.MustParse(svc.Limits.Memory)
 		}
 
-		if svc.Limits.VolumeSize != "" {
-			c.Spec.Limits[v12.ResourceStorage] = resource.MustParse(svc.Limits.VolumeSize)
+		if svc.Limits.Storage != "" {
+			c.Spec.Limits[v12.ResourceStorage] = resource.MustParse(svc.Limits.Storage)
 		}
 	}
 	c.Spec.TLSEnabled = svc.TLSEnabled
@@ -96,19 +96,13 @@ func KuberlogicToService(kls *kuberlogiccomv1alpha1.KuberLogicService) (*models.
 	if kls.Spec.Limits != nil {
 		limits := new(models.Limits)
 		if !kls.Spec.Limits.Cpu().IsZero() {
-			if value, ok := kls.Spec.Limits[v12.ResourceCPU]; ok {
-				limits.CPU = value.String()
-			}
+			limits.CPU = kls.Spec.Limits.Cpu().String()
 		}
 		if !kls.Spec.Limits.Memory().IsZero() {
-			if value, ok := kls.Spec.Limits[v12.ResourceMemory]; ok {
-				limits.Memory = value.String()
-			}
+			limits.Memory = kls.Spec.Limits.Memory().String()
 		}
 		if !kls.Spec.Limits.Storage().IsZero() {
-			if value, ok := kls.Spec.Limits[v12.ResourceStorage]; ok {
-				limits.VolumeSize = value.String()
-			}
+			limits.Storage = kls.Spec.Limits.Storage().String()
 		}
 
 		ret.Limits = limits
