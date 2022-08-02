@@ -43,13 +43,14 @@ func (p *PostgresqlService) Default() *commons.PluginResponseDefault {
 	p.logger.Debug("call Default")
 
 	v := &commons.PluginResponseDefault{
-		Replicas:   1,
-		VolumeSize: "1Gi",
-		Version:    "13",
+		Replicas: 1,
+
+		Version: "13",
 	}
 	_ = v.SetLimits(&apiv1.ResourceList{
-		"cpu":    resource.MustParse("250m"),
-		"memory": resource.MustParse("256Mi"),
+		apiv1.ResourceCPU:     resource.MustParse("250m"),
+		apiv1.ResourceMemory:  resource.MustParse("256Mi"),
+		apiv1.ResourceStorage: resource.MustParse("1Gi"),
 	})
 
 	p.logger.Debug("limits", "res", v.Limits)
@@ -78,7 +79,6 @@ func (p *PostgresqlService) Types() *commons.PluginResponse {
 
 func (p *PostgresqlService) merge(object *postgresv1.Postgresql, req commons.PluginRequest) error {
 	object.Spec.NumberOfInstances = req.Replicas
-	object.Spec.Volume.Size = req.VolumeSize
 	object.Spec.PgVersion = req.Version
 
 	from, err := req.GetLimits()
@@ -89,6 +89,7 @@ func (p *PostgresqlService) merge(object *postgresv1.Postgresql, req commons.Plu
 	to.ResourceLimits.CPU, to.ResourceLimits.Memory = from.Cpu().String(), from.Memory().String()
 	to.ResourceRequests.CPU, to.ResourceRequests.Memory = "100m", "128Mi" // default values
 
+	object.Spec.Volume.Size = from.Storage().String()
 	for k, v := range req.Parameters {
 		switch k {
 		//case "resources":

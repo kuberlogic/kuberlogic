@@ -46,9 +46,6 @@ func (r *KuberLogicService) Default() {
 		log.Error(resp.Error(), "error rpc call 'Default'")
 		return
 	}
-	if r.Spec.VolumeSize == "" {
-		r.Spec.VolumeSize = resp.VolumeSize
-	}
 	if r.Spec.Version == "" {
 		r.Spec.Version = resp.Version
 	}
@@ -183,7 +180,6 @@ func makeRequest(kls *KuberLogicService) (*commons.PluginRequest, error) {
 		Name:       kls.Name,
 		Namespace:  kls.Namespace,
 		Replicas:   kls.Spec.Replicas,
-		VolumeSize: kls.Spec.VolumeSize,
 		Version:    kls.Spec.Version,
 		Parameters: spec,
 	}

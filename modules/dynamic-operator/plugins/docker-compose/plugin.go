@@ -91,8 +91,7 @@ func (d *dockerComposeService) Types() *commons.PluginResponse {
 
 func (d *dockerComposeService) Default() *commons.PluginResponseDefault {
 	return &commons.PluginResponseDefault{
-		Replicas:   1,
-		VolumeSize: "1Gi",
+		Replicas: 1,
 	}
 }
 

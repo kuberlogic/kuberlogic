@@ -66,9 +66,6 @@ type Service struct {
 
 	// version
 	Version string `json:"version,omitempty"`
-
-	// volume size
-	VolumeSize string `json:"volumeSize,omitempty"`
 }
 
 // Validate validates this service

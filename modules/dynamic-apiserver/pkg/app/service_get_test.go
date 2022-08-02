@@ -5,6 +5,8 @@ import (
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
 	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 	"net/http"
@@ -40,9 +42,11 @@ func TestServiceGetSuccess(t *testing.T) {
 			Name: "one",
 		},
 		Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
-			Type:       "postgresql",
-			Replicas:   1,
-			VolumeSize: "2Gi",
+			Type:     "postgresql",
+			Replicas: 1,
+			Limits: v1.ResourceList{
+				v1.ResourceStorage: resource.MustParse("2Gi"),
+			},
 		},
 		Status: cloudlinuxv1alpha1.KuberLogicServiceStatus{
 			Phase: "Unknown",
@@ -59,11 +63,13 @@ func TestServiceGetSuccess(t *testing.T) {
 	}
 
 	service := &models.Service{
-		ID:         util.StrAsPointer("one"),
-		Type:       util.StrAsPointer("postgresql"),
-		Replicas:   util.Int64AsPointer(1),
-		VolumeSize: "2Gi",
-		Status:     "Unknown",
+		ID:       util.StrAsPointer("one"),
+		Type:     util.StrAsPointer("postgresql"),
+		Replicas: util.Int64AsPointer(1),
+		Limits: &models.Limits{
+			VolumeSize: "2Gi",
+		},
+		Status: "Unknown",
 	}
 
 	params := apiService.ServiceGetParams{

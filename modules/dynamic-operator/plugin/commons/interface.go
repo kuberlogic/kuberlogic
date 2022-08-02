@@ -45,9 +45,6 @@ type PluginRequest struct {
 	// Service Replicas
 	Replicas int32
 
-	// Requested PV size. VolumeSize should be compatible with Kubernetes ResourceRequirements format
-	VolumeSize string
-
 	// Requested service Version
 	Version string
 
@@ -86,9 +83,11 @@ func (pl *PluginRequest) SetLimits(limits *v1.ResourceList) error {
 
 func (pl *PluginRequest) GetLimits() (*v1.ResourceList, error) {
 	limits := &v1.ResourceList{}
-	err := json.Unmarshal(pl.Limits, limits)
-	if err != nil {
-		return nil, err
+	if pl.Limits != nil && len(pl.Limits) > 0 {
+		err := json.Unmarshal(pl.Limits, limits)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return limits, nil
 }
@@ -141,10 +140,9 @@ func (pl *PluginResponseStatus) Error() error {
 }
 
 type PluginResponseDefault struct {
-	Replicas   int32
-	VolumeSize string
-	Version    string
-	Host       string
+	Replicas int32
+	Version  string
+	Host     string
 	// *v1.ResourceList
 	Limits     []byte
 	Parameters map[string]interface{}

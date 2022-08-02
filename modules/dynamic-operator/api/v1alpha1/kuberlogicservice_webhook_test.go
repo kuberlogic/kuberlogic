@@ -51,10 +51,12 @@ var _ = Describe("KuberlogicService controller", func() {
 					Namespace: klsNamespace,
 				},
 				Spec: KuberLogicServiceSpec{
-					Type:       "postgresql",
-					Replicas:   defaultReplicas,
-					VolumeSize: defaultVolumeSize,
-					Version:    defaultVersion,
+					Type:     "postgresql",
+					Replicas: defaultReplicas,
+					Limits: v1.ResourceList{
+						v1.ResourceStorage: resource.MustParse(defaultVolumeSize),
+					},
+					Version: defaultVersion,
 				},
 			}
 

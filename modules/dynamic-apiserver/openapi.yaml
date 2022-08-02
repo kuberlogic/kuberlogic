@@ -387,10 +387,8 @@ definitions:
     properties:
       cpu:
         type: string
-
       memory:
         type: string
-
       volumeSize:
         type: string
 
@@ -412,8 +410,6 @@ definitions:
       tlsEnabled:
         type: boolean
       domain:
-        type: string
-      volumeSize:
         type: string
       replicas:
         # https://goswagger.io/faq/faq_model.html#non-required-or-nullable-property

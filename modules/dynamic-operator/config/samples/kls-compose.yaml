@@ -5,8 +5,8 @@ metadata:
 spec:
   type: docker-compose
   replicas: 1
-  volumeSize: 1Gi
   domain: example.com
   limits:
     memory: 128Mi
     cpu: 250m
+    storage: 2Gi

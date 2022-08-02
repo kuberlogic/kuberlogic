@@ -711,9 +711,6 @@ func init() {
         },
         "version": {
           "type": "string"
-        },
-        "volumeSize": {
-          "type": "string"
         }
       }
     },
@@ -1587,9 +1584,6 @@ func init() {
           "type": "string"
         },
         "version": {
-          "type": "string"
-        },
-        "volumeSize": {
           "type": "string"
         }
       }
