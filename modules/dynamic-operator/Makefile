@@ -85,7 +85,9 @@ build: generate fmt vet ## Build manager binary.
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
-	NAMESPACE=kuberlogic SENTRY_DSN=${SENTRY_DSN} go run ./main.go
+	NAMESPACE=kuberlogic \
+	SENTRY_DSN=${SENTRY_DSN} \
+	go run ./main.go ${ARGS}
 
 .PHONY: docker-build
 docker-build: test ## Build docker image with the manager.

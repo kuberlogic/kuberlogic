@@ -9,13 +9,6 @@ import (
 )
 
 type Config struct {
-	// The address the metric endpoint binds to.
-	MetricsAddr string `envconfig:"default=:8080,optional"`
-	// The address the probe endpoint binds to
-	ProbeAddr string `envconfig:"default=:8081,optional"`
-	// Enable leader election for controller manager.
-	// Enabling this will ensure there is only one active controller manager.
-	EnableLeaderElection bool `envconfig:"default=false,optional"`
 	// Namespace where controller is running
 	Namespace string `envconfig:""`
 	// ServiceAccount of controller
