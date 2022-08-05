@@ -9,18 +9,22 @@ import (
 	v11 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 )
 
 const (
-	readyCondType          = "Ready"
-	clusterUnknownStatus   = "Unknown"
-	pausedCondType         = "Paused"
-	backupRunningCondType  = "BackupRunning"
-	restoreRunningCondType = "RestoreRunning"
+	configFailedCondType       = "ConfigurationError"
+	provisioningFailedCondType = "ProvisioningError"
+	readyCondType              = "Ready"
+	clusterUnknownStatus       = "Unknown"
+	pausedCondType             = "Paused"
+	backupRunningCondType      = "BackupRunning"
+	restoreRunningCondType     = "RestoreRunning"
 )
 
 // KuberLogicServiceStatus defines the observed state of KuberLogicService
 type KuberLogicServiceStatus struct {
+	Phase      string             `json:"phase,omitempty"`
 	Conditions []metav1.Condition `json:"conditions"`
 	// namespace that contains service resources
 	Namespace string `json:"namespace,omitempty"`
@@ -65,15 +69,13 @@ type KuberLogicServiceSpec struct {
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type == 'Ready')].status",description="The cluster readiness"
-// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.conditions[?(@.type == 'Ready')].reason",description="The cluster status"
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase",description="Service status"
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`,description="The cluster type"
 // +kubebuilder:printcolumn:name="Replicas",type=integer,JSONPath=`.spec.replicas`,description="The number of desired replicas"
 // +kubebuilder:printcolumn:name="Volume",type=string,JSONPath=`.spec.volumeSize`,description="Volume size for the cluster"
 // +kubebuilder:printcolumn:name="CPU Limits",type=string,JSONPath=`.spec.limits.cpu`,description="CPU limits"
 // +kubebuilder:printcolumn:name="Memory Limits",type=string,JSONPath=`.spec.limits.memory`,description="Memory limits"
 // +kubebuilder:printcolumn:name="Endpoint",type=string,JSONPath=`.status.access`,description="Access endpoint"
-// +kubebuilder:printcolume:name="Paused",type=bool,JSONPath=`.spec.paused`,description="Service is paused"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:resource:shortName=kls,categories=kuberlogic,scope=Cluster
 // +kubebuilder:subresource:status
@@ -128,19 +130,30 @@ func (in *KuberLogicService) SetAccessEndpoint() {
 }
 
 func (in *KuberLogicService) MarkReady(msg string) {
+	in.Status.Phase = readyCondType
+
+	in.setConditionStatus(configFailedCondType, false, "", configFailedCondType)
+	in.setConditionStatus(provisioningFailedCondType, false, "", provisioningFailedCondType)
 	in.setConditionStatus(readyCondType, true, msg, msg)
 }
 
 func (in *KuberLogicService) MarkNotReady(msg string) {
+	in.Status.Phase = "NotReady"
+	in.setConditionStatus(configFailedCondType, false, "", configFailedCondType)
+	in.setConditionStatus(provisioningFailedCondType, false, "", provisioningFailedCondType)
 	in.setConditionStatus(readyCondType, false, msg, msg)
 }
 
-func (in *KuberLogicService) IsReady() (bool, string) {
+// IsReady returns
+// * true if ready
+// * string containing current status
+// * time of last readiness status transition
+func (in *KuberLogicService) IsReady() (bool, string, *time.Time) {
 	c := meta.FindStatusCondition(in.Status.Conditions, readyCondType)
 	if c == nil {
-		return false, clusterUnknownStatus
+		return false, clusterUnknownStatus, nil
 	}
-	return c.Status == metav1.ConditionTrue, c.Reason
+	return c.Status == metav1.ConditionTrue, c.Reason, &c.LastTransitionTime.Time
 }
 
 func (in *KuberLogicService) MarkPaused() {
@@ -179,6 +192,7 @@ func (in *KuberLogicService) SetRestoreStatus(klr *KuberlogicServiceRestore) {
 		in.setConditionStatus(restoreRunningCondType, false, "restore is nil", restoreRunningCondType)
 		return
 	}
+	in.Status.Phase = "Restoring"
 	in.setConditionStatus(restoreRunningCondType, !(klr.IsFailed() || klr.IsSuccessful()), klr.Name, restoreRunningCondType)
 }
 
@@ -195,7 +209,18 @@ func (in *KuberLogicService) SetBackupStatus(klb *KuberlogicServiceBackup) {
 		in.setConditionStatus(backupRunningCondType, false, "backup is nil", backupRunningCondType)
 		return
 	}
+	in.Status.Phase = "Backing Up"
 	in.setConditionStatus(backupRunningCondType, !(klb.IsFailed() || klb.IsSuccessful()), klb.Name, backupRunningCondType)
+}
+
+func (in *KuberLogicService) ConfigurationFailed(s string) {
+	in.Status.Phase = configFailedCondType
+	in.setConditionStatus(configFailedCondType, true, s, configFailedCondType)
+}
+
+func (in *KuberLogicService) ClusterSyncFailed(s string) {
+	in.Status.Phase = provisioningFailedCondType
+	in.setConditionStatus(provisioningFailedCondType, true, s, provisioningFailedCondType)
 }
 
 // KuberLogicServiceList contains a list of KuberLogicService

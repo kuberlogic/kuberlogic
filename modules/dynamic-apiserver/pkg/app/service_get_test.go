@@ -44,6 +44,9 @@ func TestServiceGetSuccess(t *testing.T) {
 			Replicas:   1,
 			VolumeSize: "2Gi",
 		},
+		Status: cloudlinuxv1alpha1.KuberLogicServiceStatus{
+			Phase: "Unknown",
+		},
 	}
 
 	tc := createTestClient(expectedObject, 200, t)

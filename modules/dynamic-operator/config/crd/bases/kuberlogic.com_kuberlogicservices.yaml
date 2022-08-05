@@ -21,12 +21,8 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - description: The cluster readiness
-      jsonPath: .status.conditions[?(@.type == 'Ready')].status
-      name: Ready
-      type: string
-    - description: The cluster status
-      jsonPath: .status.conditions[?(@.type == 'Ready')].reason
+    - description: Service status
+      jsonPath: .status.phase
       name: Status
       type: string
     - description: The cluster type
@@ -191,6 +187,8 @@ spec:
                 type: array
               namespace:
                 description: namespace that contains service resources
+                type: string
+              phase:
                 type: string
               purgeDate:
                 description: date when the namespace and all related resources will
