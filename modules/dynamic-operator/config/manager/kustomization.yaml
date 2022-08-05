@@ -7,9 +7,9 @@ resources:
 configMapGenerator:
 - behavior: create
   literals:
-  - backups_enabled=false
-  - backups_snapshots_enabled=false
-  - sentry_dsn=https://b16abaff497941468fdf21aff686ff52@kl.sentry.cloudlinux.com/9
+  - backups-enabled=false
+  - backups-snapshots-enabled=false
+  - sentry-dsn=https://b16abaff497941468fdf21aff686ff52@kl.sentry.cloudlinux.com/9
   name: controller-manager-config
 - files:
   - controller_manager_config.yaml
