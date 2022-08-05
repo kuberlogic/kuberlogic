@@ -38,7 +38,6 @@ func TestServiceAddSimple(t *testing.T) {
 		ID:       util.StrAsPointer("simple"),
 		Replicas: util.Int64AsPointer(1),
 		Type:     util.StrAsPointer("postgresql"),
-		Status:   "Unknown",
 	}
 
 	params := apiService.ServiceAddParams{
@@ -140,7 +139,6 @@ func TestServiceAddAdvanced(t *testing.T) {
 		ID:           util.StrAsPointer("advanced"),
 		Type:         util.StrAsPointer("postgresql"),
 		Replicas:     util.Int64AsPointer(0),
-		Status:       "Unknown",
 		Advanced:     advanced,
 		Subscription: "some-kind-of-subscription-id",
 	}

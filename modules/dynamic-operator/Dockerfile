@@ -15,6 +15,7 @@ COPY api/ api/
 COPY controllers/ controllers/
 COPY cfg/ cfg/
 COPY plugin/commons plugin/commons
+COPY sentry/ sentry/
 
 # Build
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64

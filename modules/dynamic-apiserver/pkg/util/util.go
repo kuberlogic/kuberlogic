@@ -127,8 +127,7 @@ func KuberlogicToService(kls *kuberlogiccomv1alpha1.KuberLogicService) (*models.
 		ret.BackupSchedule = kls.Spec.BackupSchedule
 	}
 
-	_, status := kls.IsReady()
-	ret.Status = status
+	ret.Status = kls.Status.Phase
 	ret.Endpoint = kls.Status.AccessEndpoint
 
 	if kls.Spec.Advanced.Raw != nil {
