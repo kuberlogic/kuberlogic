@@ -44,12 +44,16 @@ test: cli-configs
 
 .PHONY: cli-configs
 cli-configs:
-	cd ../dynamic-operator && zip -r kustomize-configs.zip config/ && cp kustomize-configs.zip ../dynamic-apiserver/pkg/cli/
+	cd ../dynamic-operator && zip -r kustomize-configs.zip config/ && mv kustomize-configs.zip ../dynamic-apiserver/pkg/cli/
 
 
 .PHONY: build-cli
 build-cli: cli-configs
-	go build -o kuberlogic cmd/cli/main.go
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 GO111MODULE=on go build -o kuberlogic_x86_64_darwin cmd/cli/main.go
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 GO111MODULE=on go build -o kuberlogic_arm64_darwin cmd/cli/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o kuberlogic_x86_64_linux cmd/cli/main.go
+	test -e kuberlogic && rm kuberlogic || echo "file does not exist"
+	cp kuberlogic_$(shell uname -m)_$(shell uname | tr '[:upper:]' '[:lower:]') kuberlogic
 
 .PHONY: run
 run:
