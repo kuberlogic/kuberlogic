@@ -238,8 +238,8 @@ func runInstall(k8sClientFunc func() (kubernetes.Interface, error)) func(command
 
 		command.Println("Installing KuberLogic")
 		cmd = fmt.Sprintf("%s build %s/default | %s apply -f -", kustomizeBin, kustomizeRootDir, kubectlBin)
-		fmt.Println(string(out))
 		out, err = exec.Command("sh", "-c", cmd).Output()
+		fmt.Println(string(out))
 		if err != nil {
 			return err
 		}
@@ -279,10 +279,8 @@ func unzipConfigs(zipData []byte, dir string) (string, error) {
 	}
 	defer reader.Close()
 
-	var filenames []string
 	for _, f := range reader.File {
 		fp := filepath.Join(dir, f.Name)
-		filenames = append(filenames, fp)
 		if f.FileInfo().IsDir() {
 			err := os.MkdirAll(fp, os.ModePerm)
 			if err != nil {
@@ -315,6 +313,10 @@ func unzipConfigs(zipData []byte, dir string) (string, error) {
 
 func useCachedConfigFiles(configCacheDir, configDir string, printf func(f string, i ...interface{})) error {
 	return filepath.Walk(configCacheDir, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return errors.Wrap(err, "error accessing "+path)
+		}
+
 		if info.IsDir() {
 			return nil
 		}
