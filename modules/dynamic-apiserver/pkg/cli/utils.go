@@ -109,7 +109,7 @@ func getStringPrompt(cmd *cobra.Command, parameter, defaultValue string, validat
 	if val != nil {
 		return *val, err
 	}
-	return "", err
+	return defaultValue, err
 }
 
 func getBoolPrompt(cmd *cobra.Command, defaultValue bool, parameter string) (bool, error) {
@@ -145,5 +145,5 @@ func getBoolPrompt(cmd *cobra.Command, defaultValue bool, parameter string) (boo
 	if val != nil {
 		return *val, err
 	}
-	return false, err
+	return defaultValue, err
 }

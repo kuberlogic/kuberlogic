@@ -50,7 +50,7 @@ func TestListFormatJson(t *testing.T) {
 		},
 	}
 	client := makeTestClient(200, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +83,7 @@ func TestListEmptyFormatJson(t *testing.T) {
 	// make own http client
 	var expected []map[string]interface{}
 	client := makeTestClient(200, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -144,7 +144,7 @@ func TestListFormatYaml(t *testing.T) {
 		},
 	}
 	client := makeTestClient(200, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -212,7 +212,7 @@ func TestListFormatStr(t *testing.T) {
 		},
 	}
 	client := makeTestClient(200, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

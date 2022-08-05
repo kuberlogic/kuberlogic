@@ -81,4 +81,4 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            ./modules/dynamic-apiserver/kuberlogic
+            ./modules/dynamic-apiserver/kuberlogic_*

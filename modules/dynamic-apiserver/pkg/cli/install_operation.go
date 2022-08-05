@@ -48,11 +48,11 @@ const (
 	installSentryDSNParam               = "sentry_dsn"
 )
 
-func makeInstallCmd(k8sClientFunc func() (kubernetes.Interface, error)) *cobra.Command {
+func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install",
 		Short: "Installs KuberLogic to Kubernetes cluster",
-		RunE:  runInstall(k8sClientFunc),
+		RunE:  runInstall(k8sclient),
 	}
 
 	_ = cmd.PersistentFlags().Bool("non-interactive", false, "Do not enter interactive mode")
@@ -71,7 +71,7 @@ func makeInstallCmd(k8sClientFunc func() (kubernetes.Interface, error)) *cobra.C
 
 // runInstall function prepares configs and installs KuberLogic by calling kubectl and kustomize binaries
 // it then uses client-go to get some config values and viper to write config file to disk
-func runInstall(k8sClientFunc func() (kubernetes.Interface, error)) func(command *cobra.Command, args []string) error {
+func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, args []string) error {
 	return func(command *cobra.Command, args []string) error {
 		command.Println("Preparing KuberLogic configs")
 		tmpdir, err := os.MkdirTemp("", "kuberlogic-install")
@@ -209,10 +209,6 @@ func runInstall(k8sClientFunc func() (kubernetes.Interface, error)) func(command
 		}
 
 		// check if kubernetes is available
-		k8sclient, err := k8sClientFunc()
-		if err != nil {
-			return err
-		}
 		if _, err := k8sclient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{}); err != nil {
 			return err
 		}

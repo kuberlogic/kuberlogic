@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 	"log"
 	"net/http"
@@ -59,17 +58,8 @@ func makeClientClosure(httpClient *http.Client) func() (*client.ServiceAPI, erro
 	}
 }
 
-func makeKubernetesClientset() (kubernetes.Interface, error) {
-	config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(homedir.HomeDir(), ".kube", "config"))
-	if err != nil {
-		return nil, err
-	}
-
-	return kubernetes.NewForConfig(config)
-}
-
 // MakeRootCmd returns the root cmd
-func MakeRootCmd(httpClient *http.Client) (*cobra.Command, error) {
+func MakeRootCmd(httpClient *http.Client, k8sclient kubernetes.Interface) (*cobra.Command, error) {
 	cobra.OnInitialize(initViperConfigs)
 
 	// Use executable name as the command name
@@ -111,7 +101,7 @@ func MakeRootCmd(httpClient *http.Client) (*cobra.Command, error) {
 		makeBackupCmd(makeClientClosure(httpClient)),
 		makeRestoreCmd(makeClientClosure(httpClient)),
 
-		makeInstallCmd(makeKubernetesClientset),
+		makeInstallCmd(k8sclient),
 	)
 
 	// add cobra completion
