@@ -53,12 +53,12 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   name: controller-manager-config
-                  key: backups_enabled
+                  key: backups-enabled
             - name: BACKUPS_SNAPSHOTS_ENABLED
               valueFrom:
                 configMapKeyRef:
                   name: controller-manager-config
-                  key: backups_snapshots_enabled
+                  key: backups-snapshots-enabled
             - name: SENTRY_DSN
               valueFrom:
                 configMapKeyRef:
