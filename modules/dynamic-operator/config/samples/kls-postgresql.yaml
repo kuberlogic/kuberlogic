@@ -5,8 +5,8 @@ metadata:
 spec:
   type: postgresql
   replicas: 2
-  volumeSize: 1Gi
   version: "13"
   limits:
     memory: 128Mi
     cpu: 250m
+    storage: 1Gi

@@ -26,14 +26,13 @@ func makeServiceEditCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra
 	_ = cmd.PersistentFlags().Int64("replicas", 1, "how many replicas need for service")
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
 	_ = cmd.PersistentFlags().String("domain", "", "domain for external connection to service")
-	//_ = cmd.PersistentFlags().String("volume_size", "", "")
 	_ = cmd.PersistentFlags().String("backup_schedule", "", "backup schedule in cron format")
 	_ = cmd.PersistentFlags().Bool("tls_enabled", false, "")
 
 	// limits
 	_ = cmd.PersistentFlags().String("limits.cpu", "", "cpu limits")
 	_ = cmd.PersistentFlags().String("limits.memory", "", "memory limits")
-	_ = cmd.PersistentFlags().String("limits.volume_size", "", "volume size limits")
+	_ = cmd.PersistentFlags().String("limits.storage", "", "storage limits")
 
 	// advanced conf
 
@@ -84,12 +83,6 @@ func runServiceEdit(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 			svc.Domain = *value
 		}
 
-		//if value, err := getString(cmd, "volume_size"); err != nil {
-		//	return err
-		//} else if value != nil {
-		//	svc.VolumeSize = *value
-		//}
-
 		if value, err := getString(cmd, "backup_schedule"); err != nil {
 			return err
 		} else if value != nil {
@@ -114,10 +107,10 @@ func runServiceEdit(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 			svc.Limits.Memory = *value
 		}
 
-		if value, err := getString(cmd, "limits.volume_size"); err != nil {
+		if value, err := getString(cmd, "limits.storage"); err != nil {
 			return err
 		} else if value != nil {
-			svc.Limits.VolumeSize = *value
+			svc.Limits.Storage = *value
 		}
 
 		var formatResponse format

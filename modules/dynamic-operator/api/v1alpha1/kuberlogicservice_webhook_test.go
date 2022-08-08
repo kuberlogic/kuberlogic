@@ -19,9 +19,8 @@ var _ = Describe("KuberlogicService controller", func() {
 		klsName      = "test-service"
 		klsNamespace = "default"
 
-		defaultReplicas   = 1
-		defaultVersion    = "13"
-		defaultVolumeSize = "1G"
+		defaultReplicas = 1
+		defaultVersion  = "13"
 
 		timeout = time.Second * 10
 		//duration = time.Second * 10
@@ -31,8 +30,9 @@ var _ = Describe("KuberlogicService controller", func() {
 	var defaultLimits = v1.ResourceList{
 		// CPU 250m required minimum for zalando/posgtresql
 		// Memory 250Mi required minimum for zalando/posgtresql
-		v1.ResourceCPU:    resource.MustParse("250m"),
-		v1.ResourceMemory: resource.MustParse("256Mi"),
+		v1.ResourceCPU:     resource.MustParse("255m"),
+		v1.ResourceMemory:  resource.MustParse("356Mi"),
+		v1.ResourceStorage: resource.MustParse("10Gi"),
 	}
 
 	Context("When updating KuberLogicService", func() {
@@ -51,10 +51,10 @@ var _ = Describe("KuberlogicService controller", func() {
 					Namespace: klsNamespace,
 				},
 				Spec: KuberLogicServiceSpec{
-					Type:       "postgresql",
-					Replicas:   defaultReplicas,
-					VolumeSize: defaultVolumeSize,
-					Version:    defaultVersion,
+					Type:     "postgresql",
+					Replicas: defaultReplicas,
+					Limits:   defaultLimits,
+					Version:  defaultVersion,
 				},
 			}
 
@@ -71,13 +71,8 @@ var _ = Describe("KuberlogicService controller", func() {
 			log.Info("resources", "res", createdKls.Spec.Limits)
 			Expect(createdKls.Spec.Limits["cpu"]).Should(Equal(defaultLimits["cpu"]))
 			Expect(createdKls.Spec.Limits["memory"]).Should(Equal(defaultLimits["memory"]))
+			Expect(createdKls.Spec.Limits["storage"]).Should(Equal(defaultLimits["storage"]))
 
-			//advanced, _ := json.Marshal(map[string]interface{}{
-			//	"resources": defaultResources,
-			//})
-
-			// check the defaults is added to configuration
-			//Expect(createdKls.Spec.Advanced.Raw).Should(Equal(advanced))
 		})
 	})
 })

@@ -28,7 +28,6 @@ type viewData struct {
 	Namespace  string
 	Host       string
 	Replicas   int32
-	VolumeSize string
 	Version    string
 	TLSEnabled bool
 	Limits     []byte
@@ -44,7 +43,6 @@ func newViewData(req *commons.PluginRequest) viewData {
 		Namespace:  req.Namespace,
 		Host:       req.Host,
 		Replicas:   req.Replicas,
-		VolumeSize: req.VolumeSize,
 		Version:    req.Version,
 		TLSEnabled: req.TLSEnabled,
 		Limits:     req.Limits,

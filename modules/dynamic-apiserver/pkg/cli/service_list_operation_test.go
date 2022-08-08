@@ -23,8 +23,9 @@ func TestListFormatJson(t *testing.T) {
 		{
 			"created_at": "2022-05-10T16:00:53.000Z",
 			"limits": map[string]interface{}{
-				"cpu":    "250m",
-				"memory": "256Mi",
+				"cpu":     "250m",
+				"memory":  "256Mi",
+				"storage": "1Gi",
 			},
 			"id":             "test-1",
 			"replicas":       float64(0),
@@ -32,21 +33,20 @@ func TestListFormatJson(t *testing.T) {
 			"type":           "postgresql",
 			"backupSchedule": "*/15 * * * *",
 			"version":        "13",
-			"volumeSize":     "1Gi",
 			"endpoint":       "127.0.0.1",
 		},
 		{
 			"created_at": "2022-05-10T16:00:53.000Z",
 			"limits": map[string]interface{}{
-				"cpu":    "250m",
-				"memory": "256Mi",
+				"cpu":     "250m",
+				"memory":  "256Mi",
+				"storage": "1Gi",
 			},
-			"id":         "test-2",
-			"replicas":   float64(0),
-			"status":     "Unknown",
-			"type":       "postgresql",
-			"version":    "13",
-			"volumeSize": "1Gi",
+			"id":       "test-2",
+			"replicas": float64(0),
+			"status":   "Unknown",
+			"type":     "postgresql",
+			"version":  "13",
 		},
 	}
 	client := makeTestClient(200, expected)
@@ -118,21 +118,22 @@ func TestListFormatYaml(t *testing.T) {
 		{
 			"created_at": "2022-05-10T16:00:53.000Z",
 			"limits": map[string]interface{}{
-				"cpu":    "250m",
-				"memory": "256Mi",
+				"cpu":     "250m",
+				"memory":  "256Mi",
+				"storage": "1Gi",
 			},
-			"id":         "test-1",
-			"replicas":   float64(0),
-			"status":     "Unknown",
-			"type":       "postgresql",
-			"version":    "13",
-			"volumeSize": "1Gi",
+			"id":       "test-1",
+			"replicas": float64(0),
+			"status":   "Unknown",
+			"type":     "postgresql",
+			"version":  "13",
 		},
 		{
 			"created_at": "2022-05-10T16:00:53.000Z",
 			"limits": map[string]interface{}{
-				"cpu":    "250m",
-				"memory": "256Mi",
+				"cpu":     "250m",
+				"memory":  "256Mi",
+				"storage": "1Gi",
 			},
 			"id":             "test-2",
 			"replicas":       float64(0),
@@ -140,7 +141,6 @@ func TestListFormatYaml(t *testing.T) {
 			"backupSchedule": "*/15 * * * *",
 			"type":           "postgresql",
 			"version":        "13",
-			"volumeSize":     "1Gi",
 		},
 	}
 	client := makeTestClient(200, expected)
@@ -179,8 +179,9 @@ func TestListFormatStr(t *testing.T) {
 		{
 			"created_at": "2022-05-10T16:00:53.000Z",
 			"limits": map[string]interface{}{
-				"cpu":    "250m",
-				"memory": "256Mi",
+				"cpu":     "250m",
+				"memory":  "256Mi",
+				"storage": "1Gi",
 			},
 			"id":             "test-1",
 			"subscription":   "test1",
@@ -190,14 +191,14 @@ func TestListFormatStr(t *testing.T) {
 			"domain":         "example.com",
 			"backupSchedule": "*/15 * * * *",
 			"version":        "13",
-			"volumeSize":     "1Gi",
 			"endpoint":       "",
 		},
 		{
 			"created_at": "2022-05-10T16:00:53.000Z",
 			"limits": map[string]interface{}{
-				"cpu":    "250m",
-				"memory": "256Mi",
+				"cpu":     "250m",
+				"memory":  "256Mi",
+				"storage": "1Gi",
 			},
 			"id":             "test-2",
 			"subscription":   "test2",
@@ -207,7 +208,6 @@ func TestListFormatStr(t *testing.T) {
 			"version":        "13",
 			"domain":         "example.org",
 			"backupSchedule": "*/15 * * * *",
-			"volumeSize":     "1Gi",
 			"endpoint":       "",
 		},
 	}

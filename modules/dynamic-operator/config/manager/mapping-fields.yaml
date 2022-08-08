@@ -1,2 +1,2 @@
 - src: volume_size
-  dst: limits.volumeSize
+  dst: limits.storage

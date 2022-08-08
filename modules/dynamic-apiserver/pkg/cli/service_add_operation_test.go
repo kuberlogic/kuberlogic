@@ -41,8 +41,9 @@ func TestCreateSuccessFormatJson(t *testing.T) {
 	expected := map[string]interface{}{
 		"created_at": "2022-05-10T16:00:53.000Z",
 		"limits": map[string]interface{}{
-			"cpu":    "250m",
-			"memory": "256Mi",
+			"cpu":     "250m",
+			"memory":  "256Mi",
+			"storage": "1Gi",
 		},
 		"id":             "test",
 		"replicas":       float64(0),
@@ -50,7 +51,6 @@ func TestCreateSuccessFormatJson(t *testing.T) {
 		"status":         "Unknown",
 		"type":           "postgresql",
 		"version":        "13",
-		"volumeSize":     "1Gi",
 	}
 	client := makeTestClient(201, expected)
 	cmd, err := MakeRootCmd(client, nil)
@@ -91,15 +91,15 @@ func TestCreateSuccessFormatYaml(t *testing.T) {
 	expected := map[string]interface{}{
 		"created_at": "2022-05-10T16:00:53.000Z",
 		"limits": map[string]interface{}{
-			"cpu":    "250m",
-			"memory": "256Mi",
+			"cpu":     "250m",
+			"memory":  "256Mi",
+			"storage": "1Gi",
 		},
-		"id":         "test",
-		"replicas":   0,
-		"status":     "Unknown",
-		"type":       "postgresql",
-		"version":    "13",
-		"volumeSize": "1Gi",
+		"id":       "test",
+		"replicas": 0,
+		"status":   "Unknown",
+		"type":     "postgresql",
+		"version":  "13",
 	}
 	client := makeTestClient(201, expected)
 	cmd, err := MakeRootCmd(client, nil)
@@ -140,16 +140,15 @@ func TestCreateSuccessFormatStr(t *testing.T) {
 		"advanced":   map[string]interface{}{},
 		"created_at": "2022-05-10T16:00:53.000Z",
 		"limits": map[string]interface{}{
-			"cpu":        "250m",
-			"memory":     "256Mi",
-			"volumeSize": "",
+			"cpu":     "250m",
+			"memory":  "256Mi",
+			"storage": "1Gi",
 		},
-		"id":         "test",
-		"replicas":   0,
-		"status":     "Unknown",
-		"type":       "postgresql",
-		"version":    "13",
-		"volumeSize": "1Gi",
+		"id":       "test",
+		"replicas": 0,
+		"status":   "Unknown",
+		"type":     "postgresql",
+		"version":  "13",
 	}
 	client := makeTestClient(201, expected)
 	cmd, err := MakeRootCmd(client, nil)
@@ -159,7 +158,6 @@ func TestCreateSuccessFormatStr(t *testing.T) {
 
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
-	//cmd.SetErr(b)
 	cmd.SetArgs([]string{"service", "add",
 		"--id", "test",
 		"--type", "postgresql",

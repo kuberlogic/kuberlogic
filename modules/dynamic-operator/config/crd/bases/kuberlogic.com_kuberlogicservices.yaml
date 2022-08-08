@@ -33,10 +33,6 @@ spec:
       jsonPath: .spec.replicas
       name: Replicas
       type: integer
-    - description: Volume size for the cluster
-      jsonPath: .spec.volumeSize
-      name: Volume
-      type: string
     - description: CPU limits
       jsonPath: .spec.limits.cpu
       name: CPU Limits
@@ -44,6 +40,10 @@ spec:
     - description: Memory limits
       jsonPath: .spec.limits.memory
       name: Memory Limits
+      type: string
+    - description: Storage limits
+      jsonPath: .spec.limits.storage
+      name: Storage Limits
       type: string
     - description: Access endpoint
       jsonPath: .status.access
@@ -104,9 +104,6 @@ spec:
               version:
                 description: '2 or 3 digits: 5 or 5.7 or 5.7.31'
                 pattern: ^\d+[\.\d+]*$
-                type: string
-              volumeSize:
-                description: Volume size
                 type: string
             required:
             - type

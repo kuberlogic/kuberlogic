@@ -355,10 +355,19 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 			c.persistentvolumeclaim.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{
 				corev1.ReadWriteOnce,
 			}
-			c.persistentvolumeclaim.Spec.Resources = corev1.ResourceRequirements{
-				Requests: map[corev1.ResourceName]resource.Quantity{
-					corev1.ResourceStorage: resource.MustParse(req.VolumeSize),
-				},
+
+			limits, err := req.GetLimits()
+			if err != nil {
+				return errors.Wrap(err, "failed to get limits")
+			}
+
+			storage := limits.Storage()
+			if storage != nil && !storage.IsZero() {
+				c.persistentvolumeclaim.Spec.Resources = corev1.ResourceRequirements{
+					Requests: map[corev1.ResourceName]resource.Quantity{
+						corev1.ResourceStorage: *storage,
+					},
+				}
 			}
 
 			c.deployment.Spec.Template.Spec.Volumes = []corev1.Volume{

@@ -152,7 +152,6 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		Name:          kls.Name,
 		Namespace:     ns,
 		Replicas:      kls.Spec.Replicas,
-		VolumeSize:    kls.Spec.VolumeSize,
 		Version:       kls.Spec.Version,
 		TLSEnabled:    kls.TLSEnabled(),
 		TLSSecretName: r.Cfg.SvcOpts.TLSSecretName,
@@ -175,7 +174,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		log.Error(resp.Error(), "error from rpc call 'Convert'", "plugin request", pluginRequest)
 		return ctrl.Result{}, resp.Error()
 	}
-	log.Info("=========", "plugin response", resp, "plugin request", pluginRequest)
+	log.Info("DEBUG", "plugin response", resp, "plugin request", pluginRequest)
 
 	// collect cluster objects
 	for _, o := range resp.Objects {

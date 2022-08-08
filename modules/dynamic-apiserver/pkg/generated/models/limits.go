@@ -23,8 +23,8 @@ type Limits struct {
 	// memory
 	Memory string `json:"memory,omitempty"`
 
-	// volume size
-	VolumeSize string `json:"volumeSize,omitempty"`
+	// storage
+	Storage string `json:"storage,omitempty"`
 }
 
 // Validate validates this limits

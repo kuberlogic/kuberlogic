@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
@@ -56,11 +57,10 @@ var _ = Describe("docker-compose model", func() {
 		}
 
 		requests := &commons.PluginRequest{
-			Name:       "demo-kls",
-			Namespace:  "demo-kls",
-			Replicas:   1,
-			VolumeSize: "1G",
-			Version:    "",
+			Name:      "demo-kls",
+			Namespace: "demo-kls",
+			Replicas:  1,
+			Version:   "",
 		}
 
 		c := NewComposeModel(testValidProject, zap.NewRaw().Sugar())
@@ -162,12 +162,11 @@ var _ = Describe("docker-compose model", func() {
 		c := NewComposeModel(testInvalidProject, zap.NewRaw().Sugar())
 
 		requests := &commons.PluginRequest{
-			Name:       "demo-kls",
-			Namespace:  "demo-kls",
-			Host:       "demo.example.com",
-			Replicas:   1,
-			VolumeSize: "1G",
-			Version:    "",
+			Name:      "demo-kls",
+			Namespace: "demo-kls",
+			Host:      "demo.example.com",
+			Replicas:  1,
+			Version:   "",
 		}
 
 		It("Should reconcile without errors", func() {
@@ -221,12 +220,11 @@ var _ = Describe("docker-compose model", func() {
 		c := NewComposeModel(testInvalidProject, zap.NewRaw().Sugar())
 
 		requests := &commons.PluginRequest{
-			Name:       "demo-kls",
-			Namespace:  "demo-kls",
-			Host:       "demo.example.com",
-			Replicas:   1,
-			VolumeSize: "1G",
-			Version:    "whatever",
+			Name:      "demo-kls",
+			Namespace: "demo-kls",
+			Host:      "demo.example.com",
+			Replicas:  1,
+			Version:   "whatever",
 		}
 
 		It("Should reconcile without errors", func() {
@@ -291,13 +289,16 @@ var _ = Describe("docker-compose model", func() {
 			c := NewComposeModel(testProject, zap.NewRaw().Sugar())
 
 			requests := &commons.PluginRequest{
-				Name:       "demo-kls",
-				Namespace:  "demo-kls",
-				Host:       "demo.example.com",
-				Replicas:   1,
-				VolumeSize: "1G",
-				Version:    "whatever",
+				Name:      "demo-kls",
+				Namespace: "demo-kls",
+				Host:      "demo.example.com",
+				Replicas:  1,
+				Version:   "whatever",
 			}
+			err := requests.SetLimits(&corev1.ResourceList{
+				corev1.ResourceStorage: resource.MustParse("10G"),
+			})
+			Expect(err).Should(BeNil())
 
 			By("Checking Reconcile return parameters")
 			It("Should reconcile without errors", func() {
@@ -306,6 +307,7 @@ var _ = Describe("docker-compose model", func() {
 
 				By("Checking persistentvolumeclaim object")
 				Expect(c.persistentvolumeclaim).ShouldNot(BeNil())
+				Expect(*c.persistentvolumeclaim.Spec.Resources.Requests.Storage()).Should(Equal(resource.MustParse("10G")))
 
 				By("Checking pod volume")
 				Expect(len(c.deployment.Spec.Template.Spec.Volumes)).Should(Equal(1))
@@ -378,12 +380,11 @@ var _ = Describe("docker-compose model", func() {
 				}
 
 				requests := &commons.PluginRequest{
-					Name:       "demo-kls",
-					Namespace:  "demo-kls",
-					Host:       "demo.example.com",
-					Replicas:   1,
-					VolumeSize: "1G",
-					Version:    "whatever",
+					Name:      "demo-kls",
+					Namespace: "demo-kls",
+					Host:      "demo.example.com",
+					Replicas:  1,
+					Version:   "whatever",
 				}
 
 				It("Should exit with error when published ports are duplicates", func() {
@@ -547,11 +548,10 @@ var _ = Describe("docker-compose model", func() {
 		}
 
 		requests := &commons.PluginRequest{
-			Name:       "demo-kls",
-			Namespace:  "demo-kls",
-			Replicas:   1,
-			VolumeSize: "1G",
-			Version:    "",
+			Name:      "demo-kls",
+			Namespace: "demo-kls",
+			Replicas:  1,
+			Version:   "",
 		}
 
 		c := NewComposeModel(testValidProject, zap.NewRaw().Sugar())

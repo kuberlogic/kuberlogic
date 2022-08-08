@@ -5,6 +5,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/getsentry/sentry-go"
 	"github.com/go-logr/zapr"
 	sentry2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
@@ -50,6 +51,12 @@ func init() {
 }
 
 func main() {
+	var configFile string
+	flag.StringVar(&configFile, "manager-config", "",
+		"The controller will load its initial configuration from this file. "+
+			"Omit this flag to use the default configuration values. "+
+			"Command-line flags override configuration from this file.")
+	flag.Parse()
 
 	cfg, err := cfg2.NewConfig()
 	if err != nil {
@@ -74,17 +81,26 @@ func main() {
 
 		setupLog.Info("sentry for operator is initialized")
 	} else {
+		setupLog.Info("sentry for operator is not specified")
 		ctrl.SetLogger(zapr.NewLogger(rawLogger))
 	}
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     cfg.MetricsAddr,
-		Port:                   9443,
-		HealthProbeBindAddress: cfg.ProbeAddr,
-		LeaderElection:         cfg.EnableLeaderElection,
-		LeaderElectionID:       "afb3d480.kuberlogic.com",
-	})
+	options := ctrl.Options{
+		Scheme:                  scheme,
+		LeaderElectionNamespace: cfg.Namespace,
+	}
+	if configFile != "" {
+		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile))
+		if err != nil {
+			setupLog.Error(err, "unable to load the manager config file")
+			os.Exit(1)
+		}
+		setupLog.Info("loaded manager config file", "file", configFile)
+	} else {
+		setupLog.Info("manager config file is not specified")
+	}
+
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)

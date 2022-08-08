@@ -29,6 +29,9 @@ spec:
       securityContext:
         runAsNonRoot: true
       volumes:
+        - name: manager-config
+          configMap:
+            name: manager-config
         - name: compose-file
           configMap:
             name: compose-file
@@ -38,6 +41,8 @@ spec:
           volumeMounts:
             - name: compose-file
               mountPath: /etc/compose-file
+            - name: manager-config
+              mountPath: /etc/manager-config
           env:
             - name: SVC_OPTS_TLS_SECRET_NAME
               value: $(TLS_SECRET_NAME)
@@ -67,7 +72,7 @@ spec:
                   name: kuberlogic-config
                   key: SENTRY_DSN
           args:
-            - --leader-elect
+            - --manager-config=/etc/manager-config/controller_manager_config.yaml
           image: controller:latest
           name: manager
           securityContext:
