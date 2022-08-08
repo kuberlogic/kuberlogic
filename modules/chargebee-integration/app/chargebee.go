@@ -6,8 +6,11 @@ package app
 
 import (
 	"fmt"
+	itemPriceActions "github.com/chargebee/chargebee-go/actions/itemprice"
 	subscriptionActions "github.com/chargebee/chargebee-go/actions/subscription"
+	itemPriceModel "github.com/chargebee/chargebee-go/models/itemprice"
 	subscriptionModel "github.com/chargebee/chargebee-go/models/subscription"
+	"github.com/pkg/errors"
 )
 
 const SubscriptionCreated = "subscription_created"
@@ -22,16 +25,26 @@ func setEndpoint(subscriptionId, endpoint string) error {
 
 }
 
-func retriveSubscription(content map[string]interface{}) (*map[string]interface{}, error) {
+func GetSubscription(content map[string]interface{}) (*subscriptionModel.Subscription, error) {
 	c, err := valueAsMap(content, "content")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "content section does not exist")
 	}
 	s, err := valueAsMap(*c, "subscription")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "subscription section does not exist")
 	}
-	return s, nil
+
+	id, ok := (*s)["id"].(string)
+	if !ok {
+		return nil, errors.Wrapf(err, "subscription is not type string: %v\n", id)
+	}
+
+	subscription, err := retrieveSubscription(id)
+	if err != nil {
+		return nil, errors.Wrapf(err, "subscription is not retrived")
+	}
+	return subscription, nil
 }
 
 func valueAsMap(content map[string]interface{}, value string) (*map[string]interface{}, error) {
@@ -42,4 +55,20 @@ func valueAsMap(content map[string]interface{}, value string) (*map[string]inter
 		return nil, fmt.Errorf("%s does not converted correctly: %v", value, content)
 	}
 	return nil, fmt.Errorf("%s section does not exist: %v", value, content)
+}
+
+func retrieveSubscription(id string) (*subscriptionModel.Subscription, error) {
+	result, err := subscriptionActions.Retrieve(id).Request()
+	if err != nil {
+		return nil, err
+	}
+	return result.Subscription, nil
+}
+
+func GetItemPrice(id string) (*itemPriceModel.ItemPrice, error) {
+	result, err := itemPriceActions.Retrieve(id).Request()
+	if err != nil {
+		return nil, err
+	}
+	return result.ItemPrice, nil
 }

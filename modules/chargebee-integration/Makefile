@@ -20,7 +20,7 @@ SENTRY_DSN =
 
 .PHONY: run
 run:
-	go run main.go
+	go run main.go ${ARGS}
 
 .PHONY: test
 test:

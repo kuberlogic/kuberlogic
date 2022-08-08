@@ -317,6 +317,15 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 
 			container.Env = append(container.Env, e)
 		}
+		// all additional parameters mapped to env vars for each container
+		c.logger.Infof("extra parameters: %+v", req.Parameters)
+		for key, value := range req.Parameters {
+			container.Env = append(container.Env, corev1.EnvVar{
+				Name:  key,
+				Value: fmt.Sprintf("%v", value),
+			})
+		}
+
 		sort.Slice(container.Env, func(i, j int) bool {
 			return container.Env[i].Name < container.Env[j].Name
 		})

@@ -3,7 +3,6 @@
 package cmd
 
 import (
-	sentry2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
 	"os"
 	"time"
 
@@ -43,13 +42,19 @@ func Main(args []string) {
 
 	// init sentry
 	if dsn := cfg.SentryDsn; dsn != "" {
-		err := sentry2.InitSentry(dsn, "apiserver")
-		if err != nil {
-			mainLog.Errorw("unable to init sentry", "error", err)
-			os.Exit(1)
-		}
-
 		logging.UseSentry(dsn)
+
+		// To initialize Sentry's handler, you need to initialize Sentry itself beforehand
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn:              dsn,
+			AttachStacktrace: true,
+			// Set TracesSampleRate to 1.0 to capture 100%
+			// of transactions for performance monitoring.
+			// We recommend adjusting this value in production,
+			TracesSampleRate: 1.0,
+		}); err != nil {
+			mainLog.Errorw("Sentry initialization failed", "error", err)
+		}
 
 		// Flush buffered events before the program terminates.
 		defer sentry.Flush(2 * time.Second)

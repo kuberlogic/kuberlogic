@@ -616,16 +616,13 @@ func init() {
       "type": "object",
       "properties": {
         "cpu": {
-          "type": "string",
-          "pattern": "^([0-9]+$)|([0-9]+.[0-9]+$)"
+          "type": "string"
         },
         "memory": {
-          "type": "string",
-          "pattern": "^([0-9]+$)|([0-9]+.[0-9]+$)"
+          "type": "string"
         },
         "volumeSize": {
-          "type": "string",
-          "pattern": "^([0-9]+$)|([0-9]+.[0-9]+$)"
+          "type": "string"
         }
       }
     },
@@ -1496,16 +1493,13 @@ func init() {
       "type": "object",
       "properties": {
         "cpu": {
-          "type": "string",
-          "pattern": "^([0-9]+$)|([0-9]+.[0-9]+$)"
+          "type": "string"
         },
         "memory": {
-          "type": "string",
-          "pattern": "^([0-9]+$)|([0-9]+.[0-9]+$)"
+          "type": "string"
         },
         "volumeSize": {
-          "type": "string",
-          "pattern": "^([0-9]+$)|([0-9]+.[0-9]+$)"
+          "type": "string"
         }
       }
     },

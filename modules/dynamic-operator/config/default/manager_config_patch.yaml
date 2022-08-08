@@ -18,3 +18,14 @@ spec:
       - name: manager-config
         configMap:
           name: manager-config
+    - name: chargebee-integration
+      args:
+        - "--mapping=mapping-fields.yaml"
+      volumeMounts:
+        - name: mapping-fields
+          mountPath: /mapping-fields.yaml
+          subPath: mapping-fields.yaml
+      volumes:
+      - name: mapping-fields
+        configMap:
+          name: mapping-fields

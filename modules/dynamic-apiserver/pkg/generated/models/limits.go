@@ -8,10 +8,8 @@ package models
 import (
 	"context"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
 )
 
 // Limits limits
@@ -20,73 +18,17 @@ import (
 type Limits struct {
 
 	// cpu
-	// Pattern: ^([0-9]+$)|([0-9]+.[0-9]+$)
 	CPU string `json:"cpu,omitempty"`
 
 	// memory
-	// Pattern: ^([0-9]+$)|([0-9]+.[0-9]+$)
 	Memory string `json:"memory,omitempty"`
 
 	// volume size
-	// Pattern: ^([0-9]+$)|([0-9]+.[0-9]+$)
 	VolumeSize string `json:"volumeSize,omitempty"`
 }
 
 // Validate validates this limits
 func (m *Limits) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateCPU(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateMemory(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateVolumeSize(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *Limits) validateCPU(formats strfmt.Registry) error {
-	if swag.IsZero(m.CPU) { // not required
-		return nil
-	}
-
-	if err := validate.Pattern("cpu", "body", m.CPU, `^([0-9]+$)|([0-9]+.[0-9]+$)`); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Limits) validateMemory(formats strfmt.Registry) error {
-	if swag.IsZero(m.Memory) { // not required
-		return nil
-	}
-
-	if err := validate.Pattern("memory", "body", m.Memory, `^([0-9]+$)|([0-9]+.[0-9]+$)`); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Limits) validateVolumeSize(formats strfmt.Registry) error {
-	if swag.IsZero(m.VolumeSize) { // not required
-		return nil
-	}
-
-	if err := validate.Pattern("volumeSize", "body", m.VolumeSize, `^([0-9]+$)|([0-9]+.[0-9]+$)`); err != nil {
-		return err
-	}
-
 	return nil
 }
 

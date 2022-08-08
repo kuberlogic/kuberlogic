@@ -6,13 +6,17 @@ package main
 
 import (
 	"chargebee_integration/app"
+	"flag"
 	"fmt"
 	"github.com/chargebee/chargebee-go"
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
+	"github.com/ghodss/yaml"
 	sentry2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
@@ -57,6 +61,13 @@ func main() {
 	}
 	logger := rawLogger.Sugar()
 
+	mapping, err := readMapping()
+	if err != nil {
+		logger.Error(err)
+		os.Exit(1)
+	}
+	logger.Debug("mapping is configured: ", mapping)
+
 	if viper.GetString("CHARGEBEE_SITE") != "" {
 		chargebee.Configure(viper.GetString("CHARGEBEE_KEY"), viper.GetString("CHARGEBEE_SITE"))
 		sentryHandler := sentryhttp.New(sentryhttp.Options{
@@ -64,7 +75,7 @@ func main() {
 			WaitForDelivery: true,
 			Timeout:         5 * time.Second,
 		})
-		http.HandleFunc("/chargebee-webhook", sentryHandler.HandleFunc(app.WebhookHandler(logger)))
+		http.HandleFunc("/chargebee-webhook", sentryHandler.HandleFunc(app.WebhookHandler(logger, mapping)))
 		logger.Info("webhook handler is initialized")
 	} else {
 		logger.Warn("ChargeBee site is not set. Requests will not be handled.")
@@ -92,4 +103,22 @@ func initLogger() *zap.Logger {
 		_ = logger.Sync()
 	}()
 	return logger
+}
+
+func readMapping() ([]map[string]string, error) {
+	mappingFile := flag.String("mapping", "", "mapping file path")
+	flag.Parse()
+
+	mapping := make([]map[string]string, 0)
+	if *mappingFile != "" {
+		yamlFile, err := ioutil.ReadFile(*mappingFile)
+		if err != nil {
+			return nil, errors.Errorf("cannot read the file %s: #%v", *mappingFile, err)
+		}
+		err = yaml.Unmarshal(yamlFile, &mapping)
+		if err != nil {
+			return nil, errors.Errorf("cannot parse the file %s: #%v", *mappingFile, err)
+		}
+	}
+	return mapping, nil
 }
