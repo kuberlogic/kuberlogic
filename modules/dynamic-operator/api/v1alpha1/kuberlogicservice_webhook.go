@@ -9,6 +9,7 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -57,6 +58,21 @@ func (r *KuberLogicService) Default() {
 	}
 
 	limits := resp.GetLimits()
+	if limits != nil {
+		if r.Spec.Limits == nil {
+			r.Spec.Limits = *limits
+		} else {
+			if _, set := r.Spec.Limits[v1.ResourceStorage]; !set && !limits.Storage().IsZero() {
+				r.Spec.Limits[v1.ResourceStorage] = *limits.Storage()
+			}
+			if _, set := r.Spec.Limits[v1.ResourceMemory]; !set && !limits.Memory().IsZero() {
+				r.Spec.Limits[v1.ResourceMemory] = *limits.Memory()
+			}
+			if _, set := r.Spec.Limits[v1.ResourceCPU]; !set && !limits.Cpu().IsZero() {
+				r.Spec.Limits[v1.ResourceCPU] = *limits.Cpu()
+			}
+		}
+	}
 	if r.Spec.Limits == nil && limits != nil {
 		r.Spec.Limits = *limits
 	}
