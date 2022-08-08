@@ -21,7 +21,7 @@ func makeBackupRestoreCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cob
 		RunE:    runBackupRestore(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(backup_id_flag, "", "backup id")
+	_ = cmd.PersistentFlags().String(backupIdFlag, "", "backup id")
 
 	return cmd
 }
@@ -40,14 +40,14 @@ func runBackupRestore(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd
 		params := restore.NewRestoreAddParams()
 		res := models.Restore{}
 
-		if value, err := getString(cmd, backup_id_flag); err != nil {
+		if value, err := getString(cmd, backupIdFlag); err != nil {
 			return err
 		} else if value != nil {
 			res.BackupID = *value
 		}
 
 		var formatResponse format
-		if value, err := getString(cmd, format_flag); err != nil {
+		if value, err := getString(cmd, formatFlag); err != nil {
 			return err
 		} else if value != nil {
 			formatResponse = format(*value)
@@ -62,7 +62,7 @@ func runBackupRestore(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd
 
 		// make request and then print result
 		response, err := apiClient.Restore.RestoreAdd(params,
-			client2.APIKeyAuth("X-Token", "header", viper.GetString("token")))
+			client2.APIKeyAuth("X-Token", "header", viper.GetString(tokenFlag)))
 		if err != nil {
 			return humanizeError(err)
 		}

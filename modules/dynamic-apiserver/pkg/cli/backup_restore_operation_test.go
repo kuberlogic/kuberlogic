@@ -21,7 +21,7 @@ func TestBackupRestoreInvalidValidation(t *testing.T) {
 		"message": "id in body is required",
 	})
 
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +45,7 @@ func TestBackupRestoreSuccessFormatJson(t *testing.T) {
 		"backup_id":  "test",
 	}
 	client := makeTestClient(201, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +85,7 @@ func TestBackupRestoreSuccessFormatYaml(t *testing.T) {
 		"backup_id":  "test",
 	}
 	client := makeTestClient(201, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,7 +125,7 @@ func TestBackupRestoreSuccessFormatStr(t *testing.T) {
 		"backup_id":  "test",
 	}
 	client := makeTestClient(201, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

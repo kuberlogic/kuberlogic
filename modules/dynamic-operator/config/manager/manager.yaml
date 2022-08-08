@@ -17,6 +17,8 @@ spec:
     matchLabels:
       control-plane: controller-manager
   replicas: 1
+  strategy:
+    type: Recreate
   template:
     metadata:
       annotations:
@@ -51,19 +53,19 @@ spec:
               value: $(SERVICE_ACCOUNT)
             - name: BACKUPS_ENABLED
               valueFrom:
-                configMapKeyRef:
-                  name: controller-manager-config
-                  key: backups-enabled
+                secretKeyRef:
+                  name: kuberlogic-config
+                  key: BACKUPS_ENABLED
             - name: BACKUPS_SNAPSHOTS_ENABLED
               valueFrom:
-                configMapKeyRef:
-                  name: controller-manager-config
-                  key: backups-snapshots-enabled
+                secretKeyRef:
+                  name: kuberlogic-config
+                  key: BACKUPS_SNAPSHOTS_ENABLED
             - name: SENTRY_DSN
               valueFrom:
-                configMapKeyRef:
-                  name: controller-manager-config
-                  key: sentry-dsn
+                secretKeyRef:
+                  name: kuberlogic-config
+                  key: SENTRY_DSN
           args:
             - --leader-elect
           image: controller:latest
@@ -101,14 +103,13 @@ spec:
             - name: KUBERLOGIC_APISERVER_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: apiserver
-                  key: token
+                  name: kuberlogic-config
+                  key: TOKEN
             - name: KUBERLOGIC_SENTRY_DSN
               valueFrom:
-                configMapKeyRef:
-                  name: controller-manager-config
-                  key: sentry-dsn
-
+                secretKeyRef:
+                  name: kuberlogic-config
+                  key: SENTRY_DSN
           ports:
             - containerPort: 8001
           resources:
@@ -128,8 +129,8 @@ spec:
             - name: KUBERLOGIC_APISERVER_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: apiserver
-                  key: token
+                  name: kuberlogic-config
+                  key: TOKEN
             - name: KUBERLOGIC_APISERVER_SCHEME
               value: http
             - name: KUBERLOGIC_APISERVER_HOST
@@ -137,26 +138,25 @@ spec:
             - name: CHARGEBEE_SITE
               valueFrom:
                 secretKeyRef:
-                  name: chargebee-integration
-                  key: chargebee_site
+                  name: kuberlogic-config
+                  key: CHARGEBEE_SITE
             - name: CHARGEBEE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: chargebee-integration
-                  key: chargebee_key
+                  name: kuberlogic-config
+                  key: CHARGEBEE_KEY
             - name: KUBERLOGIC_DOMAIN
               valueFrom:
                 secretKeyRef:
-                  name: chargebee-integration
-                  key: kuberlogic_domain
+                  name: kuberlogic-config
+                  key: KUBERLOGIC_DOMAIN
             - name: KUBERLOGIC_TYPE
               value: docker-compose
             - name: SENTRY_DSN
               valueFrom:
-                configMapKeyRef:
-                  name: controller-manager-config
-                  key: sentry-dsn
-
+                secretKeyRef:
+                  name: kuberlogic-config
+                  key: SENTRY_DSN
           ports:
             - containerPort: 4242
           resources:

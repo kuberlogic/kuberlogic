@@ -1,10 +1,13 @@
 package cli
 
 const (
-	id_flag              = "id"
-	service_id_flag      = "service_id"
-	backup_id_flag       = "backup_id"
-	subscription_id_flag = "subscription_id"
+	idFlag             = "id"
+	serviceIdFlag      = "service_id"
+	backupIdFlag       = "backup_id"
+	subscriptionIdFlag = "subscription_id"
 
-	format_flag = "format"
+	tokenFlag   = "token"
+	apiHostFlag = "hostname"
+	schemeFlag  = "scheme"
+	formatFlag  = "format"
 )

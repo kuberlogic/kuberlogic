@@ -22,7 +22,7 @@ func makeServiceEditCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra
 		RunE:    runServiceEdit(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(id_flag, "", "service id [required]")
+	_ = cmd.PersistentFlags().String(idFlag, "", "service id [required]")
 	_ = cmd.PersistentFlags().Int64("replicas", 1, "how many replicas need for service")
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
 	_ = cmd.PersistentFlags().String("domain", "", "domain for external connection to service")
@@ -56,7 +56,7 @@ func runServiceEdit(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 		svc := models.Service{}
 		svc.Limits = new(models.Limits)
 
-		if value, err := getString(cmd, id_flag); err != nil {
+		if value, err := getString(cmd, idFlag); err != nil {
 			return err
 		} else if value != nil {
 			svc.ID = value
@@ -98,8 +98,8 @@ func runServiceEdit(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 
 		if value, err := getBool(cmd, "tls_enabled"); err != nil {
 			return err
-		} else {
-			svc.TLSEnabled = value
+		} else if value != nil {
+			svc.TLSEnabled = *value
 		}
 
 		if value, err := getString(cmd, "limits.cpu"); err != nil {
@@ -121,7 +121,7 @@ func runServiceEdit(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 		}
 
 		var formatResponse format
-		if value, err := getString(cmd, format_flag); err != nil {
+		if value, err := getString(cmd, formatFlag); err != nil {
 			return err
 		} else if value != nil {
 			formatResponse = format(*value)
@@ -137,7 +137,7 @@ func runServiceEdit(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 
 		// make request and then print result
 		getResponse, err := apiClient.Service.ServiceGet(getParams, client2.APIKeyAuth(
-			"X-Token", "header", viper.GetString("token")))
+			"X-Token", "header", viper.GetString(tokenFlag)))
 		if err != nil {
 			return humanizeError(err)
 		}
@@ -147,7 +147,7 @@ func runServiceEdit(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 
 		// make request and then print result
 		response, err := apiClient.Service.ServiceEdit(editParams, client2.APIKeyAuth(
-			"X-Token", "header", viper.GetString("token")))
+			"X-Token", "header", viper.GetString(tokenFlag)))
 		if err != nil {
 			return humanizeError(err)
 		}

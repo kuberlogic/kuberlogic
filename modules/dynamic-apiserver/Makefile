@@ -39,12 +39,21 @@ generate-client: recreate-generated-client
 		--target pkg/generated/
 
 .PHONY: test
-test:
+test: cli-configs
 	go test -v ./... -coverprofile cover.out
 
+.PHONY: cli-configs
+cli-configs:
+	cd ../dynamic-operator && zip -r kustomize-configs.zip config/ && mv kustomize-configs.zip ../dynamic-apiserver/pkg/cli/
+
+
 .PHONY: build-cli
-build-cli:
-	go build -o kuberlogic cmd/cli/main.go
+build-cli: cli-configs
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 GO111MODULE=on go build -o kuberlogic_x86_64_darwin cmd/cli/main.go
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 GO111MODULE=on go build -o kuberlogic_arm64_darwin cmd/cli/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o kuberlogic_x86_64_linux cmd/cli/main.go
+	test -e kuberlogic && rm kuberlogic || echo "file does not exist"
+	cp kuberlogic_$(shell uname -m)_$(shell uname | tr '[:upper:]' '[:lower:]') kuberlogic
 
 .PHONY: run
 run:

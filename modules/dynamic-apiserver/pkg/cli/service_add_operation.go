@@ -21,7 +21,7 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.
 		RunE:    runServiceAdd(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(id_flag, "", "service id")
+	_ = cmd.PersistentFlags().String(idFlag, "", "service id")
 	_ = cmd.PersistentFlags().String("type", "", "type of service")
 	_ = cmd.PersistentFlags().Int64("replicas", 1, "how many replicas need for service")
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
@@ -29,7 +29,7 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.
 	_ = cmd.PersistentFlags().String("volume_size", "", "")
 	_ = cmd.PersistentFlags().String("backup_schedule", "", "backup schedule in cron format")
 	_ = cmd.PersistentFlags().Bool("tls_enabled", false, "")
-	_ = cmd.PersistentFlags().Bool(subscription_id_flag, false, "")
+	_ = cmd.PersistentFlags().Bool(subscriptionIdFlag, false, "")
 
 	// limits
 	_ = cmd.PersistentFlags().String("limits.cpu", "", "cpu limits")
@@ -56,7 +56,7 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 		svc := models.Service{}
 		svc.Limits = new(models.Limits)
 
-		if value, err := getString(cmd, id_flag); err != nil {
+		if value, err := getString(cmd, idFlag); err != nil {
 			return err
 		} else if value != nil {
 			svc.ID = value
@@ -100,11 +100,11 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 
 		if value, err := getBool(cmd, "tls_enabled"); err != nil {
 			return err
-		} else {
-			svc.TLSEnabled = value
+		} else if value != nil {
+			svc.TLSEnabled = *value
 		}
 
-		if value, err := getString(cmd, subscription_id_flag); err != nil {
+		if value, err := getString(cmd, subscriptionIdFlag); err != nil {
 			return err
 		} else if value != nil {
 			svc.Subscription = *value
@@ -144,7 +144,7 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 
 		// make request and then print result
 		response, err := apiClient.Service.ServiceAdd(params,
-			client2.APIKeyAuth("X-Token", "header", viper.GetString("token")))
+			client2.APIKeyAuth("X-Token", "header", viper.GetString(tokenFlag)))
 		if err != nil {
 			return humanizeError(err)
 		}

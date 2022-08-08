@@ -22,7 +22,7 @@ func TestDeleteInvalidValidation(t *testing.T) {
 		"message": "id can't be empty",
 	})
 
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func TestDeleteNotFound(t *testing.T) {
 		"message": expected,
 	})
 
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +64,7 @@ func TestDeleteSuccessFormatJson(t *testing.T) {
 	// make own http client
 	expected := map[string]interface{}{}
 	client := makeTestClient(200, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,7 +99,7 @@ func TestDeleteSuccessFormatYaml(t *testing.T) {
 	// make own http client
 	expected := map[string]interface{}{}
 	client := makeTestClient(200, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,7 +134,7 @@ func TestDeleteSuccessFormatStr(t *testing.T) {
 	// make own http client
 	expected := map[string]interface{}{}
 	client := makeTestClient(200, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

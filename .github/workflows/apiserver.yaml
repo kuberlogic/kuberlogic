@@ -31,6 +31,11 @@ jobs:
           restore-keys: |
             go-cache-
 
+      - name: prepare kuberlogic cli configs before lint
+        working-directory: ./modules/dynamic-apiserver
+        run: |
+          make cli-configs
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
@@ -76,4 +81,4 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            ./modules/dynamic-apiserver/kuberlogic
+            ./modules/dynamic-apiserver/kuberlogic_*

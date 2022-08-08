@@ -21,7 +21,7 @@ func TestCreateInvalidValidation(t *testing.T) {
 		"message": "id in body is required",
 	})
 
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +53,7 @@ func TestCreateSuccessFormatJson(t *testing.T) {
 		"volumeSize":     "1Gi",
 	}
 	client := makeTestClient(201, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +102,7 @@ func TestCreateSuccessFormatYaml(t *testing.T) {
 		"volumeSize": "1Gi",
 	}
 	client := makeTestClient(201, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,7 +152,7 @@ func TestCreateSuccessFormatStr(t *testing.T) {
 		"volumeSize": "1Gi",
 	}
 	client := makeTestClient(201, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

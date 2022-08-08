@@ -21,7 +21,7 @@ func TestServiceBackupInvalidValidation(t *testing.T) {
 		"message": "id in body is required",
 	})
 
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func TestServiceBackupSuccessFormatJson(t *testing.T) {
 		"status":     "Unknown",
 		"service_id": "test"}
 	client := makeTestClient(201, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +84,7 @@ func TestServiceBackupSuccessFormatYaml(t *testing.T) {
 		"service_id": "test",
 	}
 	client := makeTestClient(201, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +124,7 @@ func TestServiceBackupSuccessFormatStr(t *testing.T) {
 		"service_id": "test",
 	}
 	client := makeTestClient(201, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -5,36 +5,24 @@ resources:
 - services.yaml
 
 configMapGenerator:
-- behavior: create
-  literals:
-  - backups-enabled=false
-  - backups-snapshots-enabled=false
-  - sentry-dsn=https://b16abaff497941468fdf21aff686ff52@kl.sentry.cloudlinux.com/9
-  name: controller-manager-config
 - files:
   - controller_manager_config.yaml
   name: manager-config
 - files:
-  - docker-compose.yaml
+    - docker-compose.yaml
   name: compose-file
 secretGenerator:
 - behavior: create
-  literals:
-  - token=8ZTjsD3t2Q3Yq-C4-hoahcFn
-  name: apiserver
-- behavior: create
-  literals:
-  - chargebee_site=
-  - chargebee_key=
-  - kuberlogic_domain=example.com
-  name: chargebee-integration
+  envs:
+  - kuberlogic-config.env
+  name: kuberlogic-config
 images:
 - name: apiserver
   newName: quay.io/kuberlogic/dynamic-apiserver
-  newTag: 0.0.9
+  newTag: 0.0.10
 - name: chargebee-integration
   newName: quay.io/kuberlogic/chargebee-integration
-  newTag: 0.0.9
+  newTag: 0.0.10
 - name: controller
   newName: quay.io/kuberlogic/dynamic-operator
-  newTag: 0.0.9
+  newTag: 0.0.10

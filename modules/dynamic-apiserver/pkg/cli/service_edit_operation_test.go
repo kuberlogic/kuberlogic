@@ -16,7 +16,7 @@ func TestEditEmptyID(t *testing.T) {
 	// make own http client
 	client := makeTestClient(400, map[string]string{})
 
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func TestEditNotFound(t *testing.T) {
 		"message": expected,
 	})
 
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +63,7 @@ func TestEditSuccessFormatJson(t *testing.T) {
 		"created_at": "0001-01-01T00:00:00.000Z",
 	}
 	client := makeTestClient(200, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func TestEditFailType(t *testing.T) {
 		"created_at": "0001-01-01T00:00:00.000Z",
 	}
 	client := makeTestClient(200, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

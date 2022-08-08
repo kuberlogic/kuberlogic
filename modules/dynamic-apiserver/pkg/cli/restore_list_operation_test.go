@@ -34,7 +34,7 @@ func TestRestoreListFormatJson(t *testing.T) {
 		},
 	}
 	client := makeTestClient(200, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,7 +67,7 @@ func TestRestoreListEmptyFormatJson(t *testing.T) {
 	// make own http client
 	var expected []map[string]interface{}
 	client := makeTestClient(200, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +113,7 @@ func TestRestoreListFormatYaml(t *testing.T) {
 		},
 	}
 	client := makeTestClient(200, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -159,7 +159,7 @@ func TestRestoreListFormatStr(t *testing.T) {
 		},
 	}
 	client := makeTestClient(200, expected)
-	cmd, err := MakeRootCmd(client)
+	cmd, err := MakeRootCmd(client, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

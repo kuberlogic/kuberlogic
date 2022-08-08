@@ -29,3 +29,8 @@ bin
 
 vendor/
 .github.key
+/modules/dynamic-apiserver/pkg/cli/kustomize-configs.zip
+/modules/dynamic-apiserver/kuberlogic_x86_64_darwin
+/modules/dynamic-apiserver/kuberlogic_arm64_darwin
+/modules/dynamic-apiserver/kuberlogic_x86_64_linux
+/modules/dynamic-apiserver/kuberlogic
