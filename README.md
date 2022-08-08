@@ -16,16 +16,16 @@ Follow [Installing KuberLogic](https://docs.kuberlogic.com/getting-started) to
 ### Features
 
 - Application instance (Tenant) orchestration (list/provision/delete)
+- Scheduled and Instant backups
 - Custom domain (subdomain) support
-- Application (Tenant) isolation
-- RESTful API and CLI for service management (bare minimum)
 - SSL support
+- Integration with billing provider (Chargebee) via webhooks
+- Application (Tenant) isolation
+- Application instance updates
+- RESTful API and CLI for service management
+- Integration with Sentry for errors and exceptions tracking
 
 ### Coming soon
-
-- Integration with billing provider (Chargebee)
-- Scheduled and Instant backups (Velero)
-- Application instance updates
 
 [You can check our Roadmap here](https://kuberlogic.clearflask.com/roadmap)
 
