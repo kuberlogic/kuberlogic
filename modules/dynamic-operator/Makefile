@@ -1,5 +1,4 @@
-
-VERSION ?= 0.0.11
+VERSION = 0.0.11
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.22
@@ -31,6 +30,15 @@ endif
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
+
+ifeq ($(USE_BUILD),true)
+	VERSION := $(VERSION)-$(shell git rev-list --count $(shell git rev-parse --abbrev-ref HEAD))
+endif
+COMMIT_SHA = $(shell git rev-parse HEAD)
+IMG_SHA_TAG ?= $(VERSION)-$(COMMIT_SHA)
+BUILD_TIME = $(shell date +"%d-%m-%yT%T%z")
+
+OUTPUT_CONFIG_FILE=bin/kuberlogic.yaml
 
 .PHONY: all
 all: build
@@ -90,15 +98,37 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go ${ARGS}
 
 .PHONY: docker-build
+docker-build: export CGO_ENABLED=0
+docker-build: export GOOS=linux
+docker-build: export GOARCH=amd64
+docker-build: export GO111MODULE=on
 docker-build: test ## Build docker image with the manager.
+	go build -a -o bin/manager main.go
+	cd plugins/docker-compose && go build  -a -o ../../bin/docker-compose-plugin . && cd -
 	docker build . \
+		--build-arg BIN=bin/manager \
+		--build-arg PLUGIN=bin/docker-compose-plugin \
 		-t $(OPERATOR_IMG):$(VERSION) \
+		-t $(OPERATOR_IMG):$(IMG_SHA_TAG) \
 		-t $(OPERATOR_IMG):$(IMG_LATEST_TAG)
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
 	docker push $(OPERATOR_IMG):$(VERSION)
 	docker push $(OPERATOR_IMG):$(IMG_LATEST_TAG)
+
+.PHONY: docker-push-cache
+docker-push-cache:
+	docker push $(OPERATOR_IMG):$(IMG_SHA_TAG)
+
+.PHONY: docker-pull-cache
+docker-pull-cache:
+	docker pull $(OPERATOR_IMG):$(IMG_SHA_TAG)
+
+.PHONY: docker-restore-cache
+docker-restore-cache: docker-pull-cache
+	docker tag $(OPERATOR_IMG):$(IMG_SHA_TAG) $(OPERATOR_IMG):$(VERSION)
+	docker tag $(OPERATOR_IMG):$(IMG_SHA_TAG) $(OPERATOR_IMG):$(IMG_LATEST_TAG)
 
 ##@ Deployment
 
@@ -118,13 +148,18 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 deploy-certmanager: kustomize
 	$(KUSTOMIZE) build config/cert-manager | kubectl apply -f -
 
-.PHONY: deploy
-deploy: kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+.PHONY: build-configs
+build-configs: kustomize
+	test -e $(OUTPUT_CONFIG_FILE) && mkdir -p $(OUTPUT_CONFIG_FILE) && rm -rf $(OUTPUT_CONFIG_FILE) || echo "generated config does not exist"
 	cd config/manager && \
 		$(KUSTOMIZE) edit set image controller=$(OPERATOR_IMG):$(VERSION) && \
 		$(KUSTOMIZE) edit set image apiserver=$(APISERVER_IMG):$(VERSION) && \
 		$(KUSTOMIZE) edit set image chargebee-integration=$(CHARGEBEE_INTEGRATION_IMG):$(VERSION)
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	$(KUSTOMIZE) build config/default -o $(OUTPUT_CONFIG_FILE)
+
+.PHONY: deploy
+deploy: build-configs
+	kubectl apply -f $(OUTPUT_CONFIG_FILE)
 
 .PHONY: undeploy-certmanager
 undeploy-certmanager:

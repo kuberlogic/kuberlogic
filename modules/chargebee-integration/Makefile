@@ -1,6 +1,6 @@
 .EXPORT_ALL_VARIABLES:
 
-VERSION ?= 0.0.11
+VERSION = 0.0.11
 
 IMG_REPO = quay.io/kuberlogic
 IMG_LATEST_TAG=latest
@@ -17,6 +17,12 @@ KUBERLOGIC_DOMAIN = example.com
 KUBERLOGIC_TYPE = docker-compose
 
 SENTRY_DSN =
+
+ifeq ($(USE_BUILD),true)
+	VERSION := $(VERSION)-$(shell git rev-list --count $(shell git rev-parse --abbrev-ref HEAD))
+endif
+COMMIT_SHA = $(shell git rev-parse HEAD)
+IMG_SHA_TAG ?= $(VERSION)-$(COMMIT_SHA)
 
 .PHONY: run
 run:
@@ -36,9 +42,23 @@ docker-build:
 	docker build . \
 		--build-arg BIN=bin/chargebee-integration \
 		-t $(IMAGE_PATH):$(VERSION) \
-		-t $(IMAGE_PATH):$(IMG_LATEST_TAG)
+		-t $(IMAGE_PATH):$(IMG_LATEST_TAG) \
+		-t $(IMAGE_PATH):$(IMG_SHA_TAG)
 
 .PHONY: docker-push
 docker-push:
 	docker push $(IMAGE_PATH):$(VERSION)
 	docker push $(IMAGE_PATH):$(IMG_LATEST_TAG)
+
+.PHONY: docker-push-cache
+docker-push-cache:
+	docker push $(IMAGE_PATH):$(IMG_SHA_TAG)
+
+.PHONY: docker-pull-cache
+docker-pull-cache:
+	docker pull $(IMAGE_PATH):$(IMG_SHA_TAG)
+
+.PHONY: docker-restore-cache
+docker-restore-cache: docker-pull-cache
+	docker tag $(IMAGE_PATH):$(IMG_SHA_TAG) $(IMAGE_PATH):$(VERSION)
+	docker tag $(IMAGE_PATH):$(IMG_SHA_TAG) $(IMAGE_PATH):$(IMG_LATEST_TAG)

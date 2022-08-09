@@ -17,16 +17,14 @@
 package main
 
 import (
-	"github.com/compose-spec/compose-go/loader"
-	"github.com/compose-spec/compose-go/types"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
-
-	//"github.com/kuberlogic/zapsentry"
-	//"go.uber.org/zap/zapcore"
 	"os"
 
+	"github.com/compose-spec/compose-go/loader"
+	"github.com/compose-spec/compose-go/types"
 	"go.uber.org/zap"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
 )
 
 func main() {
