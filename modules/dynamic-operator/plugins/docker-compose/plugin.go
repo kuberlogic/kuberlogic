@@ -18,6 +18,9 @@ package main
 
 import (
 	compose "github.com/compose-spec/compose-go/types"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+
 	//"github.com/go-logr/logr"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	pluginCompose "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugins/docker-compose/plugin/compose"
@@ -90,9 +93,15 @@ func (d *dockerComposeService) Types() *commons.PluginResponse {
 }
 
 func (d *dockerComposeService) Default() *commons.PluginResponseDefault {
-	return &commons.PluginResponseDefault{
+	defaults := &commons.PluginResponseDefault{
 		Replicas: 1,
 	}
+	err := defaults.SetLimits(&corev1.ResourceList{
+		corev1.ResourceStorage: resource.MustParse("1Gi"),
+	})
+
+	defaults.Err = err.Error()
+	return defaults
 }
 
 func (d *dockerComposeService) ValidateCreate(req commons.PluginRequest) *commons.PluginResponseValidation {

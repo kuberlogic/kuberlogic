@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 )
 
@@ -42,10 +43,6 @@ var _ = Describe("KuberlogicService controller", func() {
 
 			//ctx := context.Background()
 			kls := &KuberLogicService{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "kuberlogic.com/v1alpha1",
-					Kind:       "KuberLogicService",
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      klsName,
 					Namespace: klsNamespace,
@@ -73,6 +70,34 @@ var _ = Describe("KuberlogicService controller", func() {
 			Expect(createdKls.Spec.Limits["memory"]).Should(Equal(defaultLimits["memory"]))
 			Expect(createdKls.Spec.Limits["storage"]).Should(Equal(defaultLimits["storage"]))
 
+			By("By creating a new KuberLogicService with default limits")
+			defaultResourceKls := &KuberLogicService{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      klsName + "-default-resources",
+					Namespace: klsNamespace,
+				},
+				Spec: KuberLogicServiceSpec{
+					Type:     "postgresql",
+					Replicas: defaultReplicas,
+					Version:  defaultVersion,
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, defaultResourceKls)).Should(Succeed())
+
+			By("By checking default plugin resources")
+			Eventually(func() bool {
+				return k8sClient.Get(ctx, client.ObjectKeyFromObject(defaultResourceKls), createdKls) == nil
+			}, timeout, interval).Should(BeTrue())
+
+			log.Info("resources", "res", createdKls.Spec.Limits)
+			Expect(createdKls.Spec.Limits["cpu"]).Should(Equal(resource.MustParse("250m")))
+			Expect(createdKls.Spec.Limits["memory"]).Should(Equal(resource.MustParse("256Mi")))
+			Expect(createdKls.Spec.Limits["storage"]).Should(Equal(resource.MustParse("1Gi")))
+
+			By("Volume downsize is not supported")
+			defaultResourceKls.Spec.Limits["storage"] = resource.MustParse("1Mi")
+			Expect(k8sClient.Update(ctx, defaultResourceKls).Error()).Should(ContainSubstring("volume downsize forbidden"))
 		})
 	})
 })
