@@ -36,8 +36,8 @@ type dockerComposeService struct {
 func (d *dockerComposeService) Convert(req commons.PluginRequest) *commons.PluginResponse {
 	res := &commons.PluginResponse{}
 
-	composeObjects := pluginCompose.NewComposeModel(d.spec, d.logger)
-	objects, err := composeObjects.Reconcile(&req)
+	dcModel := pluginCompose.NewComposeModel(d.spec, d.logger)
+	objects, err := dcModel.Reconcile(&req)
 	if err != nil {
 		d.logger.Error(err, "error reconciling cluster objects")
 		res.Err = err.Error()
@@ -55,7 +55,7 @@ func (d *dockerComposeService) Convert(req commons.PluginRequest) *commons.Plugi
 		}
 	}
 
-	res.Service = composeObjects.AccessServiceName()
+	res.Service = dcModel.AccessServiceName()
 	res.Protocol = commons.HTTPproto
 	return res
 }
@@ -65,8 +65,8 @@ func (d *dockerComposeService) Status(req commons.PluginRequest) *commons.Plugin
 		IsReady: false,
 	}
 
-	composeObjects := pluginCompose.NewComposeModel(d.spec, d.logger)
-	ready, err := composeObjects.Ready(&req)
+	dcModel := pluginCompose.NewComposeModel(d.spec, d.logger)
+	ready, err := dcModel.Ready(&req)
 	if err != nil {
 		d.logger.Error(err.Error(), "error checking for readiness")
 		status.Err = err.Error()
@@ -79,8 +79,8 @@ func (d *dockerComposeService) Status(req commons.PluginRequest) *commons.Plugin
 func (d *dockerComposeService) Types() *commons.PluginResponse {
 	res := &commons.PluginResponse{}
 
-	composeObjects := pluginCompose.NewComposeModel(d.spec, d.logger)
-	types := composeObjects.Types()
+	dcModel := pluginCompose.NewComposeModel(d.spec, d.logger)
+	types := dcModel.Types()
 
 	// we need to filter duplicates first
 	for _, item := range types {

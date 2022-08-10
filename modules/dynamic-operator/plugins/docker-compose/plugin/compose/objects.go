@@ -355,6 +355,9 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 			c.persistentvolumeclaim.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{
 				corev1.ReadWriteOnce,
 			}
+			if req.StorageClass != "" {
+				c.persistentvolumeclaim.Spec.StorageClassName = &req.StorageClass
+			}
 
 			limits, err := req.GetLimits()
 			if err != nil {
@@ -465,6 +468,10 @@ func (c *ComposeModel) setApplicationAccessObjects(req *commons.PluginRequest) e
 	c.ingress.Name = req.Name
 	c.ingress.Namespace = req.Namespace
 	c.ingress.Labels = labels(req.Name)
+
+	if req.IngressClass != "" {
+		c.ingress.Spec.IngressClassName = &req.IngressClass
+	}
 
 	// add TLS if specified
 	if req.TLSEnabled {

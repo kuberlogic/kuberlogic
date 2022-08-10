@@ -289,11 +289,12 @@ var _ = Describe("docker-compose model", func() {
 			c := NewComposeModel(testProject, zap.NewRaw().Sugar())
 
 			requests := &commons.PluginRequest{
-				Name:      "demo-kls",
-				Namespace: "demo-kls",
-				Host:      "demo.example.com",
-				Replicas:  1,
-				Version:   "whatever",
+				Name:         "demo-kls",
+				Namespace:    "demo-kls",
+				Host:         "demo.example.com",
+				Replicas:     1,
+				Version:      "whatever",
+				StorageClass: "default",
 			}
 			err := requests.SetLimits(&corev1.ResourceList{
 				corev1.ResourceStorage: resource.MustParse("10G"),
@@ -308,6 +309,7 @@ var _ = Describe("docker-compose model", func() {
 				By("Checking persistentvolumeclaim object")
 				Expect(c.persistentvolumeclaim).ShouldNot(BeNil())
 				Expect(*c.persistentvolumeclaim.Spec.Resources.Requests.Storage()).Should(Equal(resource.MustParse("10G")))
+				Expect(*c.persistentvolumeclaim.Spec.StorageClassName).Should(Equal(requests.StorageClass))
 
 				By("Checking pod volume")
 				Expect(len(c.deployment.Spec.Template.Spec.Volumes)).Should(Equal(1))
@@ -429,6 +431,7 @@ var _ = Describe("docker-compose model", func() {
 
 				It("Should create an ingress with a valid HTTP project", func() {
 					mReq := *requests
+					mReq.IngressClass = "default"
 					mReq.TLSSecretName = ""
 					mReq.TLSEnabled = false
 
@@ -454,6 +457,7 @@ var _ = Describe("docker-compose model", func() {
 					Expect(err).Should(BeNil())
 					By("Checking Ingress object")
 					Expect(c.ingress.GetName()).Should(Equal(mReq.Name))
+					Expect(*c.ingress.Spec.IngressClassName).Should(Equal(mReq.IngressClass))
 					Expect(len(c.ingress.Spec.TLS)).Should(Equal(0))
 					Expect(len(c.ingress.Spec.Rules)).Should(Equal(1))
 					Expect(c.ingress.Spec.Rules[0].Host).Should(Equal(mReq.Host))

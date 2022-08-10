@@ -89,7 +89,57 @@ func humanizeError(err error) error {
 	return err
 }
 
+func getSelectPrompt(cmd *cobra.Command, parameter, defaultValue string, items []string) (string, error) {
+	if len(items) == 0 {
+		return "", errors.New("no items found")
+	}
+
+	flag := cmd.Flag(parameter)
+
+	nonInteractive, err := getBool(cmd, "non-interactive")
+	if err != nil {
+		return "", err
+	}
+	if nonInteractive == nil {
+		currentPos := 0
+		for ix, i := range items {
+			if defaultValue == i {
+				currentPos = ix
+			}
+		}
+
+		prompt := promptui.Select{
+			Label:     flag.Usage,
+			Items:     items,
+			CursorPos: currentPos,
+			Size:      len(items),
+		}
+		_, result, err := prompt.Run()
+		return result, err
+	}
+	val, err := getString(cmd, parameter)
+	if err != nil {
+		return "", err
+	}
+	if val == nil {
+		val = &defaultValue
+	}
+	for _, item := range items {
+		if item == *val {
+			return *val, nil
+		}
+	}
+
+	return "", errors.New(*val + " is not available. Available: " + strings.Join(items, ","))
+}
+
 func getStringPrompt(cmd *cobra.Command, parameter, defaultValue string, validatef promptui.ValidateFunc) (string, error) {
+	if validatef == nil {
+		validatef = func(s string) error {
+			return nil
+		}
+	}
+
 	flag := cmd.Flag(parameter)
 
 	nonInteractive, err := getBool(cmd, "non-interactive")
@@ -106,10 +156,13 @@ func getStringPrompt(cmd *cobra.Command, parameter, defaultValue string, validat
 		return result, err
 	}
 	val, err := getString(cmd, parameter)
-	if val != nil {
-		return *val, err
+	if err != nil {
+		return "", err
 	}
-	return defaultValue, err
+	if val != nil {
+		return *val, validatef(*val)
+	}
+	return defaultValue, validatef(defaultValue)
 }
 
 func getBoolPrompt(cmd *cobra.Command, defaultValue bool, parameter string) (bool, error) {

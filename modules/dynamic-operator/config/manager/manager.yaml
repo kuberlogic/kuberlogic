@@ -56,6 +56,16 @@ spec:
                   fieldPath: metadata.namespace
             - name: SERVICE_ACCOUNT
               value: $(SERVICE_ACCOUNT)
+            - name: INGRESS_CLASS
+              valueFrom:
+                secretKeyRef:
+                  name: kuberlogic-config
+                  key: INGRESS_CLASS
+            - name: STORAGE_CLASS
+              valueFrom:
+                secretKeyRef:
+                  name: kuberlogic-config
+                  key: STORAGE_CLASS
             - name: BACKUPS_ENABLED
               valueFrom:
                 secretKeyRef:
