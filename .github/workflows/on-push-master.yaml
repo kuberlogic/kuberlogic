@@ -1,7 +1,7 @@
 name: Development build
 on:
   push:
-    branches: [ KL-338 ]
+    branches: [ master ]
 
 jobs:
   build:
@@ -71,14 +71,6 @@ jobs:
     needs: build
     env:
       USE_BUILD: true
-    strategy:
-      matrix:
-        include:
-          - type: postgresql
-            pg_version: 13
-          - type: mysql
-            my_version: 5.7.31
-
     steps:
       - uses: actions/setup-go@v2
         with:

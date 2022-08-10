@@ -35,6 +35,9 @@ spec:
         - name: compose-file
           configMap:
             name: compose-file
+        - name: mapping-fields
+          configMap:
+            name: mapping-fields
       containers:
         - command:
             - /manager
@@ -137,9 +140,12 @@ spec:
         - command:
             - /cmd
           args:
-            - --scheme=http
+            - --mapping=/etc/mapping/mapping-fields.yaml
           image: chargebee-integration:latest
           name: chargebee-integration
+          volumeMounts:
+            - name: mapping-fields
+              mountPath: /etc/mapping
           env:
             - name: KUBERLOGIC_APISERVER_TOKEN
               valueFrom:

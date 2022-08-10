@@ -36,7 +36,6 @@ ifeq ($(USE_BUILD),true)
 endif
 COMMIT_SHA = $(shell git rev-parse HEAD)
 IMG_SHA_TAG ?= $(VERSION)-$(COMMIT_SHA)
-BUILD_TIME = $(shell date +"%d-%m-%yT%T%z")
 
 .PHONY: all
 all: build
@@ -102,7 +101,7 @@ docker-build: export GOARCH=amd64
 docker-build: export GO111MODULE=on
 docker-build: test ## Build docker image with the manager.
 	go build -a -o bin/manager main.go
-	cd plugins/docker-compose && go build  -a -o ../../bin/docker-compose-plugin . && cd -
+	cd plugins/docker-compose && go build -a -o ../../bin/docker-compose-plugin . && cd -
 	docker build . \
 		--build-arg BIN=bin/manager \
 		--build-arg PLUGIN=bin/docker-compose-plugin \
