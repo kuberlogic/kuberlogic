@@ -19,7 +19,10 @@ var log = ctrl.Log.WithName("kuberlogicservice-webhook")
 
 var pluginInstances map[string]commons.PluginService
 
-var errInvalidBackupSchedule = errors.New("invalid backupSchedule format")
+var (
+	errInvalidBackupSchedule = errors.New("invalid backupSchedule format")
+	errVolDownsizeForbidden  = errors.New("volume downsize forbidden")
+)
 
 func (r *KuberLogicService) SetupWebhookWithManager(mgr ctrl.Manager, plugins map[string]commons.PluginService) error {
 	pluginInstances = plugins
@@ -60,17 +63,17 @@ func (r *KuberLogicService) Default() {
 	limits := resp.GetLimits()
 	if limits != nil {
 		if r.Spec.Limits == nil {
-			r.Spec.Limits = *limits
-		} else {
-			if _, set := r.Spec.Limits[v1.ResourceStorage]; !set && !limits.Storage().IsZero() {
-				r.Spec.Limits[v1.ResourceStorage] = *limits.Storage()
-			}
-			if _, set := r.Spec.Limits[v1.ResourceMemory]; !set && !limits.Memory().IsZero() {
-				r.Spec.Limits[v1.ResourceMemory] = *limits.Memory()
-			}
-			if _, set := r.Spec.Limits[v1.ResourceCPU]; !set && !limits.Cpu().IsZero() {
-				r.Spec.Limits[v1.ResourceCPU] = *limits.Cpu()
-			}
+			r.Spec.Limits = make(v1.ResourceList)
+		}
+
+		if _, set := r.Spec.Limits[v1.ResourceStorage]; !set && !limits.Storage().IsZero() {
+			r.Spec.Limits[v1.ResourceStorage] = *limits.Storage()
+		}
+		if _, set := r.Spec.Limits[v1.ResourceMemory]; !set && !limits.Memory().IsZero() {
+			r.Spec.Limits[v1.ResourceMemory] = *limits.Memory()
+		}
+		if _, set := r.Spec.Limits[v1.ResourceCPU]; !set && !limits.Cpu().IsZero() {
+			r.Spec.Limits[v1.ResourceCPU] = *limits.Cpu()
 		}
 	}
 	if r.Spec.Limits == nil && limits != nil {
@@ -137,11 +140,18 @@ func (r *KuberLogicService) ValidateCreate() error {
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *KuberLogicService) ValidateUpdate(old runtime.Object) error {
 	log.Info("validate update", "name", r.Name)
+	oldSpec := old.(*KuberLogicService)
 
 	if r.Spec.BackupSchedule != "" {
 		if validateScheduleFormat(r.Spec.BackupSchedule) != nil {
 			return errInvalidBackupSchedule
 		}
+	}
+
+	// downsize volume is not supported
+	if vol := r.Spec.Limits[v1.ResourceStorage]; !vol.IsZero() &&
+		vol.Cmp(oldSpec.Spec.Limits[v1.ResourceStorage]) == -1 {
+		return errVolDownsizeForbidden
 	}
 
 	plugin, ok := pluginInstances[r.Spec.Type]
