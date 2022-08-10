@@ -60,7 +60,7 @@ help: ## Display this help.
 ##@ Development
 
 build-example-plugin:
-	cd plugin/example-plugin && go build -o example-plugin
+	cd plugins/example-plugin && go build -o example-plugin
 
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
@@ -80,7 +80,7 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: manifests generate fmt vet build-example-plugin envtest ## Run tests.
-	PLUGINS="{postgresql,$(PROJECT_DIR)/plugin/example-plugin/example-plugin}" KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" NAMESPACE="default" SERVICE_ACCOUNT="default" BACKUPS_ENABLED="true" go test -v ./... -coverprofile cover.out
+	PLUGINS="{postgresql,$(PROJECT_DIR)/plugins/example-plugin/example-plugin}" KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" NAMESPACE="default" SERVICE_ACCOUNT="default" BACKUPS_ENABLED="true" go test -v ./... -coverprofile cover.out
 
 ##@ Build
 
