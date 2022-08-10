@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"time"
 )
 
 // embed kustomize files into cli binary
@@ -73,7 +74,7 @@ func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
 // it then uses client-go to get some config values and viper to write config file to disk
 func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, args []string) error {
 	return func(command *cobra.Command, args []string) error {
-		command.Println("Preparing KuberLogic configs")
+		command.Print("Preparing KuberLogic configs...")
 		tmpdir, err := os.MkdirTemp("", "kuberlogic-install")
 		if err != nil {
 			return err
@@ -218,21 +219,21 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		}
 
 		// run kustomize via exec and apply manifests via kubectl
-		command.Println("Installing cert-manager")
+		command.Println("Installing cert-manager...")
 		cmd := fmt.Sprintf("%s build %s/cert-manager | %s apply -f -", kustomizeBin, kustomizeRootDir, kubectlBin)
 		out, err := exec.Command("sh", "-c", cmd).Output()
 		fmt.Println(string(out))
 		if err != nil {
 			return err
 		}
-		fmt.Println("Waiting for cert-manager to be ready")
+		fmt.Println("Waiting for cert-manager to be ready...")
 		cmd = fmt.Sprintf("%s -n cert-manager wait --for=condition=ready pods --all --timeout=300s", kubectlBin)
 		if out, err := exec.Command("sh", "-c", cmd).Output(); err != nil {
 			fmt.Println(string(out))
 			return errors.New("Failed installing cert-manager")
 		}
 
-		command.Println("Installing KuberLogic")
+		command.Println("Installing KuberLogic...")
 		cmd = fmt.Sprintf("%s build %s/default | %s apply -f -", kustomizeBin, kustomizeRootDir, kubectlBin)
 		out, err = exec.Command("sh", "-c", cmd).Output()
 		fmt.Println(string(out))
@@ -245,14 +246,14 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 			return errors.New("Failed installing kuberlogic")
 		}
 
-		command.Println("Fetching KuberLogic endpoint")
+		command.Println("Fetching KuberLogic endpoint...")
 		endpoint, err := getKuberlogicEndpoint(k8sclient)
 		if err != nil {
 			return errors.Wrap(err, "failed to get KuberLogic api server host")
 		}
 		viper.Set(apiHostFlag, endpoint)
 
-		command.Println("Updating KuberLogic config file at " + configFile)
+		command.Println("Updating KuberLogic config file at " + configFile + "...")
 		err = viper.WriteConfig()
 		if errors.Is(err, os.ErrNotExist) {
 			err = viper.WriteConfigAs(configFile)
@@ -354,26 +355,33 @@ func cachedConfigOrEmpty(path string) string {
 
 func getKuberlogicEndpoint(c kubernetes.Interface) (string, error) {
 	var endpoint string
+	var maxLBWaitSec = 60
+	var svc *corev1.Service
+	var err error
 
-	svc, err := c.CoreV1().Services("kuberlogic").Get(context.TODO(), "kls-api-server", metav1.GetOptions{})
-	if err != nil {
-		return "", errors.Wrap(err, "failed to get KuberLogic Service")
-	}
-	port := strconv.Itoa(int(svc.Spec.Ports[0].Port))
+	for ; maxLBWaitSec > 0; maxLBWaitSec -= 1 {
+		time.Sleep(time.Second)
 
-	if extIPs := svc.Spec.ExternalIPs; len(extIPs) != 0 {
-		endpoint = extIPs[0]
-	}
+		svc, err = c.CoreV1().Services("kuberlogic").Get(context.TODO(), "kls-api-server", metav1.GetOptions{})
+		if err != nil {
+			return "", errors.Wrap(err, "failed to get KuberLogic Service")
+		}
+		port := strconv.Itoa(int(svc.Spec.Ports[0].Port))
 
-	if lbIPs := svc.Status.LoadBalancer.Ingress; len(lbIPs) != 0 {
-		endpoint = lbIPs[0].IP
-	}
-	if svc.Spec.ExternalName != "" {
-		endpoint = svc.Spec.ExternalName
-	}
+		if extIPs := svc.Spec.ExternalIPs; len(extIPs) != 0 {
+			endpoint = extIPs[0]
+		}
 
-	if endpoint != "" {
-		return endpoint + ":" + port, nil
+		if lbIPs := svc.Status.LoadBalancer.Ingress; len(lbIPs) != 0 {
+			endpoint = lbIPs[0].IP
+		}
+		if svc.Spec.ExternalName != "" {
+			endpoint = svc.Spec.ExternalName
+		}
+
+		if endpoint != "" {
+			return endpoint + ":" + port, nil
+		}
 	}
 
 	nodePort := strconv.Itoa(int(svc.Spec.Ports[0].NodePort))
