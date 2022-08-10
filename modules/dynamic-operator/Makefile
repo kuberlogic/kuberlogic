@@ -38,8 +38,6 @@ COMMIT_SHA = $(shell git rev-parse HEAD)
 IMG_SHA_TAG ?= $(VERSION)-$(COMMIT_SHA)
 BUILD_TIME = $(shell date +"%d-%m-%yT%T%z")
 
-OUTPUT_CONFIG_FILE=bin/kuberlogic.yaml
-
 .PHONY: all
 all: build
 
@@ -148,18 +146,16 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 deploy-certmanager: kustomize
 	$(KUSTOMIZE) build config/cert-manager | kubectl apply -f -
 
-.PHONY: build-configs
-build-configs: kustomize
-	test -e $(OUTPUT_CONFIG_FILE) && mkdir -p $(OUTPUT_CONFIG_FILE) && rm -rf $(OUTPUT_CONFIG_FILE) || echo "generated config does not exist"
+.PHONY: set-version
+set-version: kustomize
 	cd config/manager && \
 		$(KUSTOMIZE) edit set image controller=$(OPERATOR_IMG):$(VERSION) && \
 		$(KUSTOMIZE) edit set image apiserver=$(APISERVER_IMG):$(VERSION) && \
 		$(KUSTOMIZE) edit set image chargebee-integration=$(CHARGEBEE_INTEGRATION_IMG):$(VERSION)
-	$(KUSTOMIZE) build config/default -o $(OUTPUT_CONFIG_FILE)
 
 .PHONY: deploy
-deploy: build-configs
-	kubectl apply -f $(OUTPUT_CONFIG_FILE)
+deploy: set-version
+	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy-certmanager
 undeploy-certmanager:

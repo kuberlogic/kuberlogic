@@ -51,9 +51,8 @@ test: build-configs
 .PHONY: build-configs
 build-configs:
 	test -e pkg/cli/kustomize-configs.zip && rm -f pkg/cli/kustomize-configs.zip || echo "archive does not exist"
-	cd ../dynamic-operator/ && \
-	$(MAKE) build-configs && \
-	zip -r ../dynamic-apiserver/pkg/cli/kustomize-configs.zip bin/kuberlogic.yaml && \
+	cd ../dynamic-operator/ && $(MAKE) set-version && \
+	zip -r ../dynamic-apiserver/pkg/cli/kustomize-configs.zip config/ && \
 	cd -
 
 .PHONY: build-cli

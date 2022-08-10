@@ -1,7 +1,7 @@
 name: Development build
 on:
   push:
-    branches: [ master ]
+    branches: [ KL-338 ]
 
 jobs:
   build:
