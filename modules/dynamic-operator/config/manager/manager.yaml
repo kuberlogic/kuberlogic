@@ -136,8 +136,6 @@ spec:
               memory: 20Mi
         - command:
             - /cmd
-          args:
-            - --scheme=http
           image: chargebee-integration:latest
           name: chargebee-integration
           env:
