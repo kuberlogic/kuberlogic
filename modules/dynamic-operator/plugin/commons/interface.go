@@ -56,6 +56,10 @@ type PluginRequest struct {
 	// Service resource Limits. Manipulated via SetLimits / GetLimits methods.
 	Limits []byte
 
+	// Service will use StorageClass / IngressClass for volume / ingress or default if empty
+	StorageClass string
+	IngressClass string
+
 	// Additional Parameters
 	Parameters map[string]interface{}
 

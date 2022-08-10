@@ -157,6 +157,9 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		TLSSecretName: r.Cfg.SvcOpts.TLSSecretName,
 		Host:          kls.GetHost(),
 		Parameters:    spec,
+
+		IngressClass: r.Cfg.IngressClass,
+		StorageClass: r.Cfg.StorageClass,
 	}
 
 	if err := pluginRequest.SetLimits(&kls.Spec.Limits); err != nil {

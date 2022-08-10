@@ -36,6 +36,8 @@ const (
 )
 
 const (
+	installIngressClassName             = "ingress_class"
+	installStorageClassName             = "storage_class"
 	installDockerComposeParam           = "docker_compose"
 	installBackupsEnabledParam          = "backups_enabled"
 	installBackupsSnapshotsEnabledParam = "backups_snapshots_enabled"
@@ -56,6 +58,8 @@ func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
 	}
 
 	_ = cmd.PersistentFlags().Bool("non-interactive", false, "Do not enter interactive mode")
+	_ = cmd.PersistentFlags().String(installIngressClassName, "", "Kubernetes ingressClassName that will be used for provisioning applications")
+	_ = cmd.PersistentFlags().String(installStorageClassName, "", "Kubernetes storageClass that will be used for provisioning applications")
 	_ = cmd.PersistentFlags().String(installDockerComposeParam, "", "Path to application docker-compose.yml")
 	_ = cmd.PersistentFlags().Bool(installBackupsEnabledParam, false, "Enable backup/restore support")
 	_ = cmd.PersistentFlags().Bool(installBackupsSnapshotsEnabledParam, false, "Enable volume snapshot backups (Must be supported by Velero provider plugin)")
@@ -106,7 +110,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		}
 
 		if value, err := getStringPrompt(command, tokenFlag, viper.GetString(tokenFlag), nil); err != nil {
-			return err
+			return errors.Wrapf(err, "error processing %s flag", tokenFlag)
 		} else if value != "" {
 
 			klParams.Set(tokenFlag, value)
@@ -118,20 +122,20 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 
 		cachedDockerCompose := filepath.Join(cacheDir, "manager/docker-compose.yaml")
 		if value, err := getStringPrompt(command, installDockerComposeParam, cachedConfigOrEmpty(cachedDockerCompose), nil); err != nil {
-			return err
+			return errors.Wrapf(err, "error processing %s flag", installDockerComposeParam)
 		} else if value != "" {
 			if err := cacheConfigFile(value, cachedDockerCompose); err != nil {
-				return err
+				return errors.Wrapf(err, "error caching %s config file", value)
 			}
 		}
 
 		var backupsEnabled, snapshotsEnabled bool
 		if backupsEnabled, err = getBoolPrompt(command, klParams.GetBool(installBackupsEnabledParam), installBackupsEnabledParam); err != nil {
-			return err
+			return errors.Wrapf(err, "error processing %s flag", installBackupsEnabledParam)
 		} else if backupsEnabled {
 			snapshotsEnabled, err = getBoolPrompt(command, klParams.GetBool(installBackupsSnapshotsEnabledParam), installBackupsSnapshotsEnabledParam)
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "error processing %s flag", installBackupsSnapshotsEnabledParam)
 			}
 		}
 		klParams.Set(installBackupsEnabledParam, backupsEnabled)
@@ -139,7 +143,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 
 		var cSite, cKey, kuberlogicDomain string
 		if cSite, err = getStringPrompt(command, installChargebeeSiteParam, klParams.GetString(installChargebeeSiteParam), nil); err != nil {
-			return err
+			return errors.Wrapf(err, "error processing %s flag", installChargebeeSiteParam)
 		} else if cSite != "" {
 			cKey, err = getStringPrompt(command, installChargebeeKeyParam, klParams.GetString(installChargebeeKeyParam), func(s string) error {
 				if s == "" {
@@ -148,12 +152,12 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 				return nil
 			})
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "error processing %s flag", installChargebeeKeyParam)
 			}
 
 			kuberlogicDomain, err = getStringPrompt(command, installKuberlogicDomainParam, klParams.GetString(installKuberlogicDomainParam), nil)
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "error processing %s flag", installKuberlogicDomainParam)
 			}
 		}
 		klParams.Set(installChargebeeSiteParam, cSite)
@@ -162,7 +166,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 
 		cachedTlsCrt := filepath.Join(cacheDir, "certificates/tls.crt")
 		if tlsCertPath, err := getStringPrompt(command, installTLSCrtParam, cachedConfigOrEmpty(cachedTlsCrt), nil); err != nil {
-			return err
+			return errors.Wrapf(err, "error processing %s flag", installTLSCrtParam)
 		} else if tlsCertPath != "" {
 			cachedTlsKey := filepath.Join(cacheDir, "/certificates/tls.key")
 			tlsKeyPath, err := getStringPrompt(command, installTLSKeyParam, cachedConfigOrEmpty(cachedTlsKey), func(s string) error {
@@ -172,7 +176,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 				return nil
 			})
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "error processing %s flag", installTLSKeyParam)
 			}
 
 			if err := cacheConfigFile(tlsCertPath, cachedTlsCrt); err != nil {
@@ -186,17 +190,45 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		var useKLSentry bool
 		var sentrDSN string
 		if useKLSentry, err = getBoolPrompt(command, klParams.GetBool(installReportErrors), installReportErrors); err != nil {
-			return err
+			return errors.Wrapf(err, "error processing %s flag", installReportErrors)
 		} else if useKLSentry {
 			sentrDSN = klSentryDSN
 		} else {
 			sentrDSN, err = getStringPrompt(command, installSentryDSNParam, klParams.GetString(installSentryDSNParam), nil)
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "error processing %s flag", installSentryDSNParam)
 			}
 		}
 		klParams.Set(installReportErrors, useKLSentry)
 		klParams.Set(installSentryDSNParam, sentrDSN)
+
+		ingressClasses, err := k8sclient.NetworkingV1().IngressClasses().List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			return errors.Wrap(err, "failed to list available ingress classes")
+		}
+		var availableIngressClasses []string
+		for _, ic := range ingressClasses.Items {
+			availableIngressClasses = append(availableIngressClasses, ic.GetName())
+		}
+		if ingressClass, err := getSelectPrompt(command, installIngressClassName, klParams.GetString(installIngressClassName), availableIngressClasses); err != nil {
+			return errors.Wrapf(err, "error processing %s flag", installIngressClassName)
+		} else {
+			klParams.Set(installIngressClassName, ingressClass)
+		}
+
+		storageClasses, err := k8sclient.StorageV1().StorageClasses().List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			return errors.Wrapf(err, "failed to list available storage classes")
+		}
+		var availableStorageClasses []string
+		for _, sc := range storageClasses.Items {
+			availableStorageClasses = append(availableStorageClasses, sc.GetName())
+		}
+		if storageClass, err := getSelectPrompt(command, installStorageClassName, klParams.GetString(installStorageClassName), availableStorageClasses); err != nil {
+			return errors.Wrapf(err, "error processing %s flag", installStorageClassName)
+		} else {
+			klParams.Set(installStorageClassName, storageClass)
+		}
 
 		// write config file
 		if err := klParams.WriteConfigAs(klConfigFile); err != nil {

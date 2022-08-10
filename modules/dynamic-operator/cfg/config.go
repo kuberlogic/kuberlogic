@@ -13,6 +13,9 @@ type Config struct {
 	Namespace string `envconfig:""`
 	// ServiceAccount of controller
 	ServiceAccount string `envconfig:"optional"`
+	// Provisioned services will use this IngressClass / StorageClass or default (if empty)
+	IngressClass string `envconfig:"optional"`
+	StorageClass string `envconfig:"optional"`
 
 	Plugins []struct {
 		Name string
