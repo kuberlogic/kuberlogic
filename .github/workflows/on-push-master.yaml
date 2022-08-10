@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       USE_BUILD: true
-      USE_BUILDX: true
       GOPATH: /tmp/go
     steps:
       - name: Checkout
