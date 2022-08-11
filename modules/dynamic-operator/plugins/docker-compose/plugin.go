@@ -99,8 +99,9 @@ func (d *dockerComposeService) Default() *commons.PluginResponseDefault {
 	err := defaults.SetLimits(&corev1.ResourceList{
 		corev1.ResourceStorage: resource.MustParse("1Gi"),
 	})
-
-	defaults.Err = err.Error()
+	if err != nil {
+		defaults.Err = err.Error()
+	}
 	return defaults
 }
 
@@ -116,7 +117,7 @@ func (d *dockerComposeService) ValidateUpdate(req commons.PluginRequest) *common
 	}
 }
 
-func (d *dockerComposeService) ValidateDelete(req commons.PluginRequest) *commons.PluginResponseValidation {
+func (d *dockerComposeService) ValidateDelete(_ commons.PluginRequest) *commons.PluginResponseValidation {
 	return &commons.PluginResponseValidation{}
 }
 
