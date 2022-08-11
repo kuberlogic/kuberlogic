@@ -25,7 +25,7 @@ function get_arch {
     echo ppc64le
     ;;
   *)
-    echo "$(uname -m) is not supported" >/dev/tty
+    echo "$(uname -m) is not supported"
     exit 1
     ;;
   esac
@@ -38,18 +38,18 @@ function main {
     parentdir=$(dirname $target)
 
     if [ ! -d "$parentdir" ]; then
-      echo "$parentdir" >/dev/tty
+      echo "$parentdir"
       mkdir -p $parentdir
     fi
 
     tmpdir=$(mktemp -d)
     archive="$tmpdir/kustomize.tar.gz"
     url="https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${version}/kustomize_${version}_$(get_system)_$(get_arch).tar.gz"
-    echo "Downloading kustomize $1" >/dev/tty
+    echo "Downloading kustomize $1"
     curl --output $archive --location $url
 
 
-    echo "Extracting archive to $2" >/dev/tty
+    echo "Extracting archive to $2"
     tar -xvf $archive -C $parentdir
 
     rm -rf $tmpdir

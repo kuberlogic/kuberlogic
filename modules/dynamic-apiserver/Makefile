@@ -1,6 +1,6 @@
 .EXPORT_ALL_VARIABLES:
 
-VERSION ?= 0.0.11
+VERSION = 0.0.11
 
 IMG_REPO = quay.io/kuberlogic
 IMG_LATEST_TAG=latest
@@ -11,6 +11,12 @@ APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME)
 KUBERLOGIC_APISERVER_TOKEN=8ZTjsD3t2Q3Yq-C4-hoahcFn
 KUBERLOGIC_SENTRY_DSN =
 KUBERLOGIC_DEBUG_LOGS = true
+
+ifeq ($(USE_BUILD),true)
+	VERSION := $(VERSION)-$(shell git rev-list --count $(shell git rev-parse --abbrev-ref HEAD))
+endif
+COMMIT_SHA = $(shell git rev-parse HEAD)
+IMG_SHA_TAG ?= $(VERSION)-$(COMMIT_SHA)
 
 .PHONY: recreate-generated-server
 recreate-generated-server:
@@ -39,21 +45,25 @@ generate-client: recreate-generated-client
 		--target pkg/generated/
 
 .PHONY: test
-test: cli-configs
+test: build-configs
 	go test -v ./... -coverprofile cover.out
 
-.PHONY: cli-configs
-cli-configs:
-	cd ../dynamic-operator && zip -r kustomize-configs.zip config/ && mv kustomize-configs.zip ../dynamic-apiserver/pkg/cli/
-
+.PHONY: build-configs
+build-configs:
+	test -e pkg/cli/kustomize-configs.zip && rm -f pkg/cli/kustomize-configs.zip || echo "archive does not exist"
+	cd ../dynamic-operator/ && $(MAKE) set-version && \
+	zip -r ../dynamic-apiserver/pkg/cli/kustomize-configs.zip config/ && \
+	cd -
 
 .PHONY: build-cli
-build-cli: cli-configs
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 GO111MODULE=on go build -o kuberlogic_x86_64_darwin cmd/cli/main.go
-	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 GO111MODULE=on go build -o kuberlogic_arm64_darwin cmd/cli/main.go
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o kuberlogic_x86_64_linux cmd/cli/main.go
+build-cli: export CGO_ENABLED=0
+build-cli: export GO111MODULE=on
+build-cli: build-configs
+	GOOS=darwin GOARCH=amd64 go build -a -o bin/kuberlogic_x86_64_darwin cmd/cli/main.go
+	GOOS=darwin GOARCH=arm64 go build -a -o bin/kuberlogic_arm64_darwin cmd/cli/main.go
+	GOOS=linux GOARCH=amd64 go build -a -o bin/kuberlogic_x86_64_linux cmd/cli/main.go
 	test -e kuberlogic && rm kuberlogic || echo "file does not exist"
-	cp kuberlogic_$(shell uname -m)_$(shell uname | tr '[:upper:]' '[:lower:]') kuberlogic
+	cp bin/kuberlogic_$(shell uname -m)_$(shell uname | tr '[:upper:]' '[:lower:]') kuberlogic
 
 .PHONY: run
 run:
@@ -72,9 +82,23 @@ docker-build:
 	docker build . \
 		--build-arg BIN=bin/apiserver \
 		-t $(APISERVER_IMG):$(VERSION) \
-		-t $(APISERVER_IMG):$(IMG_LATEST_TAG)
+		-t $(APISERVER_IMG):$(IMG_LATEST_TAG) \
+		-t $(APISERVER_IMG):$(IMG_SHA_TAG)
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
 	docker push $(APISERVER_IMG):$(VERSION)
 	docker push $(APISERVER_IMG):$(IMG_LATEST_TAG)
+
+.PHONY: docker-push-cache
+docker-push-cache:
+	docker push $(APISERVER_IMG):$(IMG_SHA_TAG)
+
+.PHONY: docker-pull-cache
+docker-pull-cache:
+	docker pull $(APISERVER_IMG):$(IMG_SHA_TAG)
+
+.PHONY: docker-restore-cache
+docker-restore-cache: docker-pull-cache
+	docker tag $(APISERVER_IMG):$(IMG_SHA_TAG) $(APISERVER_IMG):$(VERSION)
+	docker tag $(APISERVER_IMG):$(IMG_SHA_TAG) $(APISERVER_IMG):$(IMG_LATEST_TAG)
