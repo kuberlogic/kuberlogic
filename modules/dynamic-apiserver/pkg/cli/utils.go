@@ -109,7 +109,7 @@ func getSelectPrompt(cmd *cobra.Command, parameter, defaultValue string, items [
 		}
 
 		prompt := promptui.Select{
-			Label:     flag.Usage,
+			Label:     "(Use arrow keys to navigate and hit Enter) " + flag.Usage,
 			Items:     items,
 			CursorPos: currentPos,
 			Size:      len(items),

@@ -226,6 +226,7 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 	c.deployment.Namespace = req.Namespace
 
 	c.deployment.Labels = labels(req.Name)
+	c.deployment.Spec.Strategy.Type = appsv1.RecreateDeploymentStrategyType
 	c.deployment.Spec.Replicas = &req.Replicas
 	c.deployment.Spec.Selector = &metav1.LabelSelector{
 		MatchLabels: labels(req.Name),
