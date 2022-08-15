@@ -78,7 +78,7 @@ func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
 // it then uses client-go to get some config values and viper to write config file to disk
 func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, args []string) error {
 	return func(command *cobra.Command, args []string) error {
-		command.Print("Preparing KuberLogic configs...")
+		command.Println("Preparing KuberLogic configs...")
 		tmpdir, err := os.MkdirTemp("", "kuberlogic-install")
 		if err != nil {
 			return err
@@ -245,7 +245,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		if _, err := k8sclient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{}); err != nil {
 			return err
 		}
-		if out, err := exec.Command(kubectlBin, "cluster-info").Output(); err != nil {
+		if out, err := exec.Command(kubectlBin, "cluster-info").CombinedOutput(); err != nil {
 			command.Println(string(out))
 			return errors.New("Kubernetes is not available via kubectl")
 		}
@@ -253,28 +253,28 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		// run kustomize via exec and apply manifests via kubectl
 		command.Println("Installing cert-manager...")
 		cmd := fmt.Sprintf("%s build %s/cert-manager | %s apply -f -", kustomizeBin, kustomizeRootDir, kubectlBin)
-		out, err := exec.Command("sh", "-c", cmd).Output()
-		fmt.Println(string(out))
+		out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
+		command.Println(string(out))
 		if err != nil {
 			return err
 		}
-		fmt.Println("Waiting for cert-manager to be ready...")
+		command.Println("Waiting for cert-manager to be ready...")
 		cmd = fmt.Sprintf("%s -n cert-manager wait --for=condition=ready pods --all --timeout=300s", kubectlBin)
-		if out, err := exec.Command("sh", "-c", cmd).Output(); err != nil {
-			fmt.Println(string(out))
+		if out, err := exec.Command("sh", "-c", cmd).CombinedOutput(); err != nil {
+			command.Println(string(out))
 			return errors.New("Failed installing cert-manager")
 		}
 
 		command.Println("Installing KuberLogic...")
 		cmd = fmt.Sprintf("%s build %s/default | %s apply -f -", kustomizeBin, kustomizeRootDir, kubectlBin)
-		out, err = exec.Command("sh", "-c", cmd).Output()
-		fmt.Println(string(out))
+		out, err = exec.Command("sh", "-c", cmd).CombinedOutput()
+		command.Println(string(out))
 		if err != nil {
 			return err
 		}
 		cmd = fmt.Sprintf("%s -n kuberlogic wait --for=condition=ready pods --all --timeout=300s", kubectlBin)
-		if out, err := exec.Command("sh", "-c", cmd).Output(); err != nil {
-			fmt.Println(string(out))
+		if out, err := exec.Command("sh", "-c", cmd).CombinedOutput(); err != nil {
+			command.Println(string(out))
 			return errors.New("Failed installing kuberlogic")
 		}
 
