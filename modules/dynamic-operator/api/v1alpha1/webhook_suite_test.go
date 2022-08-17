@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 	cfg2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
+	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	"net"
 	"os"
 	"os/exec"
@@ -22,7 +23,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	//+kubebuilder:scaffold:imports
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -45,10 +45,10 @@ var (
 )
 
 var pluginMap = map[string]plugin.Plugin{
-	"postgresql": &commons.Plugin{},
+	"docker-compose": &commons.Plugin{},
 }
 
-func TestAPIs(t *testing.T) {
+func TestWebhookAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	RunSpecsWithDefaultAndCustomReporters(t,
@@ -64,19 +64,6 @@ var _ = BeforeSuite(func() {
 
 	ctx, cancel = context.WithCancel(context.TODO())
 
-	By("bootstrapping test environment")
-	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
-		ErrorIfCRDPathMissing: false,
-		WebhookInstallOptions: envtest.WebhookInstallOptions{
-			Paths: []string{filepath.Join("..", "..", "config", "webhook")},
-		},
-	}
-
-	cfg, err := testEnv.Start()
-	Expect(err).NotTo(HaveOccurred())
-	Expect(cfg).NotTo(BeNil())
-
 	scheme := runtime.NewScheme()
 	err = AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
@@ -84,75 +71,101 @@ var _ = BeforeSuite(func() {
 	err = admissionv1beta1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	//+kubebuilder:scaffold:scheme
+	useExistingCluster := os.Getenv("USE_EXISTING_CLUSTER") == "true"
 
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
-	Expect(err).NotTo(HaveOccurred())
-	Expect(k8sClient).NotTo(BeNil())
-
-	logger := hclog.New(&hclog.LoggerOptions{
-		Name:   "plugin",
-		Output: os.Stdout,
-		Level:  hclog.Debug,
-	})
-
-	pluginInstances := make(map[string]commons.PluginService)
-	for _, item := range config.Plugins {
-		// We're a host! Start by launching the plugin process.
-		pluginClient := plugin.NewClient(&plugin.ClientConfig{
-			HandshakeConfig: commons.HandshakeConfig,
-			Plugins:         pluginMap,
-			Cmd:             exec.Command(item.Path),
-			Logger:          logger,
-		})
-		pluginClients = append(pluginClients, pluginClient)
-
-		// Connect via RPC
-		rpcClient, err := pluginClient.Client()
-		Expect(err).ToNot(HaveOccurred())
-
-		// Request the plugin
-		raw, err := rpcClient.Dispense(item.Name)
-		Expect(err).ToNot(HaveOccurred())
-
-		pluginInstances[item.Name] = raw.(commons.PluginService)
-	}
-
-	// start webhook server using Manager
-	webhookInstallOptions := &testEnv.WebhookInstallOptions
-	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme:             scheme,
-		Host:               webhookInstallOptions.LocalServingHost,
-		Port:               webhookInstallOptions.LocalServingPort,
-		CertDir:            webhookInstallOptions.LocalServingCertDir,
-		LeaderElection:     false,
-		MetricsBindAddress: "0",
-	})
-	Expect(err).NotTo(HaveOccurred())
-
-	err = (&KuberLogicService{}).SetupWebhookWithManager(mgr, pluginInstances)
-	Expect(err).NotTo(HaveOccurred())
-
-	//+kubebuilder:scaffold:webhook
-
-	go func() {
-		defer GinkgoRecover()
-		err = mgr.Start(ctx)
-		Expect(err).NotTo(HaveOccurred())
-	}()
-
-	// wait for the webhook server to get ready
-	dialer := &net.Dialer{Timeout: time.Second}
-	addrPort := fmt.Sprintf("%s:%d", webhookInstallOptions.LocalServingHost, webhookInstallOptions.LocalServingPort)
-	Eventually(func() error {
-		conn, err := tls.DialWithDialer(dialer, "tcp", addrPort, &tls.Config{InsecureSkipVerify: true})
-		if err != nil {
-			return err
+	if useExistingCluster {
+		testEnv = &envtest.Environment{
+			UseExistingCluster: &useExistingCluster,
 		}
-		conn.Close()
-		return nil
-	}).Should(Succeed())
+		cfg, err := testEnv.Start()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(cfg).NotTo(BeNil())
 
+		k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(k8sClient).NotTo(BeNil())
+	} else {
+
+		By("bootstrapping test environment")
+		testEnv = &envtest.Environment{
+			CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
+			ErrorIfCRDPathMissing: false,
+			WebhookInstallOptions: envtest.WebhookInstallOptions{
+				Paths: []string{filepath.Join("..", "..", "config", "webhook")},
+			},
+		}
+
+		cfg, err := testEnv.Start()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(cfg).NotTo(BeNil())
+
+		k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(k8sClient).NotTo(BeNil())
+
+		logger := hclog.New(&hclog.LoggerOptions{
+			Name:   "plugin",
+			Output: os.Stdout,
+			Level:  hclog.Debug,
+		})
+
+		pluginInstances := make(map[string]commons.PluginService)
+		for _, item := range config.Plugins {
+			// We're a host! Start by launching the plugin process.
+			pluginClient := plugin.NewClient(&plugin.ClientConfig{
+				HandshakeConfig: commons.HandshakeConfig,
+				Plugins:         pluginMap,
+				Cmd:             exec.Command(item.Path),
+				Logger:          logger,
+			})
+			pluginClients = append(pluginClients, pluginClient)
+
+			// Connect via RPC
+			rpcClient, err := pluginClient.Client()
+			Expect(err).ToNot(HaveOccurred())
+
+			// Request the plugin
+			raw, err := rpcClient.Dispense(item.Name)
+			Expect(err).ToNot(HaveOccurred())
+
+			pluginInstances[item.Name] = raw.(commons.PluginService)
+		}
+
+		// start webhook server using Manager
+		webhookInstallOptions := &testEnv.WebhookInstallOptions
+		mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+			Scheme:             scheme,
+			Host:               webhookInstallOptions.LocalServingHost,
+			Port:               webhookInstallOptions.LocalServingPort,
+			CertDir:            webhookInstallOptions.LocalServingCertDir,
+			LeaderElection:     false,
+			MetricsBindAddress: "0",
+		})
+		Expect(err).NotTo(HaveOccurred())
+
+		err = (&KuberLogicService{}).SetupWebhookWithManager(mgr, pluginInstances)
+		Expect(err).NotTo(HaveOccurred())
+
+		//+kubebuilder:scaffold:webhook
+
+		go func() {
+			defer GinkgoRecover()
+			err = mgr.Start(ctx)
+			Expect(err).NotTo(HaveOccurred())
+		}()
+
+		// wait for the webhook server to get ready
+		dialer := &net.Dialer{Timeout: time.Second}
+		addrPort := fmt.Sprintf("%s:%d", webhookInstallOptions.LocalServingHost, webhookInstallOptions.LocalServingPort)
+		Eventually(func() error {
+			conn, err := tls.DialWithDialer(dialer, "tcp", addrPort, &tls.Config{InsecureSkipVerify: true})
+			if err != nil {
+				return err
+			}
+			conn.Close()
+			return nil
+		}).Should(Succeed())
+	}
 }, 60)
 
 var _ = AfterSuite(func() {
