@@ -563,6 +563,50 @@ func init() {
           }
         }
       }
+    },
+    "/services/{ServiceID}/credentials": {
+      "post": {
+        "description": "updates service credentials with passed data",
+        "tags": [
+          "service"
+        ],
+        "summary": "updates service credentials",
+        "operationId": "serviceCredentialsUpdate",
+        "parameters": [
+          {
+            "$ref": "#/parameters/ServiceID"
+          },
+          {
+            "$ref": "#/parameters/ServiceCredentials"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "credentials are updated"
+          },
+          "400": {
+            "description": "invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation"
+          },
+          "503": {
+            "description": "internal service error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -714,6 +758,13 @@ func init() {
         }
       }
     },
+    "ServiceCredentials": {
+      "description": "service credentials",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
     "Services": {
       "type": "array",
       "items": {
@@ -770,6 +821,14 @@ func init() {
       "required": true,
       "schema": {
         "$ref": "#/definitions/Restore"
+      }
+    },
+    "ServiceCredentials": {
+      "description": "service credentials",
+      "name": "ServiceCredentials",
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/ServiceCredentials"
       }
     },
     "ServiceID": {
@@ -1437,6 +1496,62 @@ func init() {
           }
         }
       }
+    },
+    "/services/{ServiceID}/credentials": {
+      "post": {
+        "description": "updates service credentials with passed data",
+        "tags": [
+          "service"
+        ],
+        "summary": "updates service credentials",
+        "operationId": "serviceCredentialsUpdate",
+        "parameters": [
+          {
+            "maxLength": 20,
+            "minLength": 3,
+            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+            "type": "string",
+            "description": "service Resource ID",
+            "name": "ServiceID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "service credentials",
+            "name": "ServiceCredentials",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ServiceCredentials"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "credentials are updated"
+          },
+          "400": {
+            "description": "invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation"
+          },
+          "503": {
+            "description": "internal service error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -1588,6 +1703,13 @@ func init() {
         }
       }
     },
+    "ServiceCredentials": {
+      "description": "service credentials",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
     "Services": {
       "type": "array",
       "items": {
@@ -1644,6 +1766,14 @@ func init() {
       "required": true,
       "schema": {
         "$ref": "#/definitions/Restore"
+      }
+    },
+    "ServiceCredentials": {
+      "description": "service credentials",
+      "name": "ServiceCredentials",
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/ServiceCredentials"
       }
     },
     "ServiceID": {

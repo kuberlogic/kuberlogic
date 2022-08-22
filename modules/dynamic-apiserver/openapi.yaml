@@ -375,6 +375,34 @@ paths:
           description: internal server error
           schema:
             $ref: "#/definitions/Error"
+  /services/{ServiceID}/credentials:
+    post:
+      tags:
+        - service
+      summary: updates service credentials
+      operationId: serviceCredentialsUpdate
+      description: updates service credentials with passed data
+      parameters:
+        - $ref: "#/parameters/ServiceID"
+        - $ref: "#/parameters/ServiceCredentials"
+      responses:
+        200:
+          description: credentials are updated
+        400:
+          description: invalid input
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        422:
+          description: bad validation
+        503:
+          description: internal service error
+          schema:
+            $ref: "#/definitions/Error"
+
 
 definitions:
   Advanced:
@@ -441,6 +469,12 @@ definitions:
     type: array
     items:
       $ref: "#/definitions/Service"
+
+  ServiceCredentials:
+    description: service credentials
+    type: object
+    additionalProperties:
+      type: string
 
   Backups:
     type: array
@@ -521,6 +555,13 @@ parameters:
     description: service item
     schema:
       $ref: "#/definitions/Service"
+
+  ServiceCredentials:
+    name: ServiceCredentials
+    in: body
+    description: service credentials
+    schema:
+      $ref: "#/definitions/ServiceCredentials"
 
   BackupID:
     name: BackupID

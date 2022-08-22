@@ -106,6 +106,7 @@ func Main(args []string) {
 	api.RestoreRestoreDeleteHandler = apiRestore.RestoreDeleteHandlerFunc(srv.RestoreDeleteHandler)
 	api.RestoreRestoreListHandler = apiRestore.RestoreListHandlerFunc(srv.RestoreListHandler)
 	api.ServiceServiceAddHandler = apiService.ServiceAddHandlerFunc(srv.ServiceAddHandler)
+	api.ServiceServiceCredentialsUpdateHandler = apiService.ServiceCredentialsUpdateHandlerFunc(srv.ServiceCredentialsUpdateHandler)
 	api.ServiceServiceDeleteHandler = apiService.ServiceDeleteHandlerFunc(srv.ServiceDeleteHandler)
 	api.ServiceServiceEditHandler = apiService.ServiceEditHandlerFunc(srv.ServiceEditHandler)
 	api.ServiceServiceGetHandler = apiService.ServiceGetHandlerFunc(srv.ServiceGetHandler)

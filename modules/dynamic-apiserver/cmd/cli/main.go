@@ -23,7 +23,7 @@ func main() {
 
 	k8sclient, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		fmt.Println("Erro building Kubernetes client: ", err)
+		fmt.Println("Error building Kubernetes client: ", err)
 		os.Exit(1)
 	}
 

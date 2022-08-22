@@ -68,6 +68,9 @@ func NewKuberlogicAPI(spec *loads.Document) *KuberlogicAPI {
 		ServiceServiceAddHandler: service.ServiceAddHandlerFunc(func(params service.ServiceAddParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceAdd has not yet been implemented")
 		}),
+		ServiceServiceCredentialsUpdateHandler: service.ServiceCredentialsUpdateHandlerFunc(func(params service.ServiceCredentialsUpdateParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation service.ServiceCredentialsUpdate has not yet been implemented")
+		}),
 		ServiceServiceDeleteHandler: service.ServiceDeleteHandlerFunc(func(params service.ServiceDeleteParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceDelete has not yet been implemented")
 		}),
@@ -144,6 +147,8 @@ type KuberlogicAPI struct {
 	RestoreRestoreListHandler restore.RestoreListHandler
 	// ServiceServiceAddHandler sets the operation handler for the service add operation
 	ServiceServiceAddHandler service.ServiceAddHandler
+	// ServiceServiceCredentialsUpdateHandler sets the operation handler for the service credentials update operation
+	ServiceServiceCredentialsUpdateHandler service.ServiceCredentialsUpdateHandler
 	// ServiceServiceDeleteHandler sets the operation handler for the service delete operation
 	ServiceServiceDeleteHandler service.ServiceDeleteHandler
 	// ServiceServiceEditHandler sets the operation handler for the service edit operation
@@ -253,6 +258,9 @@ func (o *KuberlogicAPI) Validate() error {
 	}
 	if o.ServiceServiceAddHandler == nil {
 		unregistered = append(unregistered, "service.ServiceAddHandler")
+	}
+	if o.ServiceServiceCredentialsUpdateHandler == nil {
+		unregistered = append(unregistered, "service.ServiceCredentialsUpdateHandler")
 	}
 	if o.ServiceServiceDeleteHandler == nil {
 		unregistered = append(unregistered, "service.ServiceDeleteHandler")
@@ -393,6 +401,10 @@ func (o *KuberlogicAPI) initHandlerCache() {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
 	o.handlers["POST"]["/services"] = service.NewServiceAdd(o.context, o.ServiceServiceAddHandler)
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/services/{ServiceID}/credentials"] = service.NewServiceCredentialsUpdate(o.context, o.ServiceServiceCredentialsUpdateHandler)
 	if o.handlers["DELETE"] == nil {
 		o.handlers["DELETE"] = make(map[string]http.Handler)
 	}
