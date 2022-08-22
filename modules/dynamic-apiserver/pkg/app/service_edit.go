@@ -22,7 +22,7 @@ func (srv *Service) ServiceEditHandler(params apiService.ServiceEditParams, _ *m
 			})
 	}
 
-	c, err := util.ServiceToKuberlogic(params.ServiceItem)
+	c, err := util.ServiceToKuberlogic(params.ServiceItem, srv.config)
 	if err != nil {
 		srv.log.Errorw("error converting service model to kuberlogic", "error", err)
 		return apiService.NewServiceEditBadRequest().WithPayload(
