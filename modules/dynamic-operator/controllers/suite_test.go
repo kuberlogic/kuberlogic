@@ -8,9 +8,11 @@ import (
 	"context"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
+	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	cfg2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
+	"k8s.io/client-go/kubernetes/scheme"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,13 +22,10 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -42,10 +41,10 @@ var (
 )
 
 var pluginMap = map[string]plugin.Plugin{
-	"postgresql": &commons.Plugin{},
+	"docker-compose": &commons.Plugin{},
 }
 
-func TestAPIs(t *testing.T) {
+func TestControllerAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	RunSpecsWithDefaultAndCustomReporters(t,
@@ -56,111 +55,130 @@ func TestAPIs(t *testing.T) {
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
-	config, err := cfg2.NewConfig()
-	Expect(err).NotTo(HaveOccurred())
-
 	ctx, cancel = context.WithCancel(context.TODO())
+	useExistingCluster := os.Getenv("USE_EXISTING_CLUSTER") == "true"
 
 	By("bootstrapping test environment")
-	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd", "bases"), filepath.Join("..", "config", "crd", "velero")},
-		ErrorIfCRDPathMissing: true,
-	}
 
-	cfg, err := testEnv.Start()
-	Expect(err).NotTo(HaveOccurred())
-	Expect(cfg).NotTo(BeNil())
-
-	err = kuberlogiccomv1alpha1.AddToScheme(scheme.Scheme)
+	err := kuberlogiccomv1alpha1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 	err = velero.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	//+kubebuilder:scaffold:scheme
+	if useExistingCluster {
+		err = os.Unsetenv("KUBEBUILDER_ASSETS")
+		Expect(err).NotTo(HaveOccurred())
 
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
-	Expect(err).NotTo(HaveOccurred())
-	Expect(k8sClient).NotTo(BeNil())
-
-	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme: scheme.Scheme,
-	})
-	Expect(err).ToNot(HaveOccurred())
-
-	// Create an hclog.Logger
-	logger := hclog.New(&hclog.LoggerOptions{
-		Name:   "plugin",
-		Output: os.Stdout,
-		Level:  hclog.Debug,
-	})
-
-	pluginInstances := make(map[string]commons.PluginService)
-	for _, item := range config.Plugins {
-		// We're a host! Start by launching the plugin process.
-		pluginClient := plugin.NewClient(&plugin.ClientConfig{
-			HandshakeConfig: commons.HandshakeConfig,
-			Plugins:         pluginMap,
-			Cmd:             exec.Command(item.Path),
-			Logger:          logger,
-		})
-		pluginClients = append(pluginClients, pluginClient)
-
-		// Connect via RPC
-		rpcClient, err := pluginClient.Client()
-		Expect(err).ToNot(HaveOccurred())
-
-		// Request the plugin
-		raw, err := rpcClient.Dispense(item.Name)
-		Expect(err).ToNot(HaveOccurred())
-
-		pluginInstances[item.Name] = raw.(commons.PluginService)
-	}
-
-	// registering watchers for the dependent resources
-	var dependantObjects []client.Object
-	for _, instance := range pluginInstances {
-		for _, o := range instance.Types().Objects {
-			dependantObjects = append(dependantObjects, o)
+		testEnv = &envtest.Environment{
+			UseExistingCluster: &useExistingCluster,
 		}
+
+		cfg, err := testEnv.Start()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(cfg).NotTo(BeNil())
+
+		k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(k8sClient).NotTo(BeNil())
+
+	} else {
+		testEnv = &envtest.Environment{
+			CRDDirectoryPaths: []string{
+				filepath.Join("..", "config", "crd", "bases"),
+				filepath.Join("..", "config", "crd", "velero"),
+			},
+		}
+
+		cfg, err := testEnv.Start()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(cfg).NotTo(BeNil())
+
+		k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(k8sClient).NotTo(BeNil())
+
+		config, err := cfg2.NewConfig()
+		Expect(err).NotTo(HaveOccurred())
+
+		k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
+			Scheme: scheme.Scheme,
+		})
+		Expect(err).ToNot(HaveOccurred())
+
+		// Create an hclog.Logger
+		logger := hclog.New(&hclog.LoggerOptions{
+			Name:   "plugin",
+			Output: os.Stdout,
+			Level:  hclog.Debug,
+		})
+
+		pluginInstances := make(map[string]commons.PluginService)
+		for _, item := range config.Plugins {
+			// We're a host! Start by launching the plugin process.
+			pluginClient := plugin.NewClient(&plugin.ClientConfig{
+				HandshakeConfig: commons.HandshakeConfig,
+				Plugins:         pluginMap,
+				Cmd:             exec.Command(item.Path),
+				Logger:          logger,
+			})
+			pluginClients = append(pluginClients, pluginClient)
+
+			// Connect via RPC
+			rpcClient, err := pluginClient.Client()
+			Expect(err).ToNot(HaveOccurred())
+
+			// Request the plugin
+			raw, err := rpcClient.Dispense(item.Name)
+			Expect(err).ToNot(HaveOccurred())
+
+			pluginInstances[item.Name] = raw.(commons.PluginService)
+		}
+
+		// registering watchers for the dependent resources
+		var dependantObjects []client.Object
+		for _, instance := range pluginInstances {
+			for _, o := range instance.Types().Objects {
+				dependantObjects = append(dependantObjects, o)
+			}
+		}
+
+		err = (&KuberLogicServiceReconciler{
+			Client:  k8sManager.GetClient(),
+			Scheme:  k8sManager.GetScheme(),
+			Plugins: pluginInstances,
+			Cfg:     config,
+		}).SetupWithManager(k8sManager, dependantObjects...)
+		Expect(err).ToNot(HaveOccurred())
+
+		if config.Backups.Enabled {
+			err = (&KuberlogicServiceBackupReconciler{
+				Client: k8sManager.GetClient(),
+				Scheme: k8sManager.GetScheme(),
+				Cfg:    config,
+			}).SetupWithManager(k8sManager)
+			Expect(err).ToNot(HaveOccurred())
+
+			err = (&KuberlogicServiceRestoreReconciler{
+				Client: k8sManager.GetClient(),
+				Scheme: k8sManager.GetScheme(),
+				Cfg:    config,
+			}).SetupWithManager(k8sManager)
+			Expect(err).ToNot(HaveOccurred())
+
+			err = (&KuberlogicServiceBackupScheduleReconciler{
+				Client: k8sManager.GetClient(),
+				Scheme: k8sManager.GetScheme(),
+				Cfg:    config,
+			}).SetupWithManager(k8sManager)
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		go func() {
+			defer GinkgoRecover()
+			err = k8sManager.Start(ctx)
+			Expect(err).ToNot(HaveOccurred(), "failed to run manager")
+		}()
 	}
-
-	err = (&KuberLogicServiceReconciler{
-		Client:  k8sManager.GetClient(),
-		Scheme:  k8sManager.GetScheme(),
-		Plugins: pluginInstances,
-		Cfg:     config,
-	}).SetupWithManager(k8sManager, dependantObjects...)
-	Expect(err).ToNot(HaveOccurred())
-
-	if config.Backups.Enabled {
-		err = (&KuberlogicServiceBackupReconciler{
-			Client: k8sManager.GetClient(),
-			Scheme: k8sManager.GetScheme(),
-			Cfg:    config,
-		}).SetupWithManager(k8sManager)
-		Expect(err).ToNot(HaveOccurred())
-
-		err = (&KuberlogicServiceRestoreReconciler{
-			Client: k8sManager.GetClient(),
-			Scheme: k8sManager.GetScheme(),
-			Cfg:    config,
-		}).SetupWithManager(k8sManager)
-		Expect(err).ToNot(HaveOccurred())
-
-		err = (&KuberlogicServiceBackupScheduleReconciler{
-			Client: k8sManager.GetClient(),
-			Scheme: k8sManager.GetScheme(),
-			Cfg:    config,
-		}).SetupWithManager(k8sManager)
-		Expect(err).ToNot(HaveOccurred())
-	}
-
-	go func() {
-		defer GinkgoRecover()
-		err = k8sManager.Start(ctx)
-		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
-	}()
-
 }, 60)
 
 var _ = AfterSuite(func() {

@@ -81,6 +81,50 @@ jobs:
           # 0 - all history, it uses in generating part of BUILD in version
           fetch-depth: 0
 
+      - name: Setup Minikube
+        uses: manusa/actions-setup-minikube@v2.7.0
+        with:
+          minikube version: 'v1.26.1'
+          kubernetes version: 'v1.24.3'
+          github token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install kong as ingress controller
+        run: |
+          kubectl create -f https://bit.ly/k4k8s
+
+      - name: Restore CLI
+        uses: actions/cache@v2
+        with:
+          path: ./modules/dynamic-apiserver/bin
+          key: cli-${{ github.sha }}
+
+      - name: Restore cached images
+        run: |
+          for module in dynamic-operator dynamic-apiserver chargebee-integration; do \
+            cd ./modules/${module}; \
+            make docker-restore-cache ;\
+            cd - ;\
+          done
+
+      - name: Install kustomize
+        working-directory: ./modules/dynamic-operator
+        run: |
+          make kustomize
+          install -b bin/kustomize /usr/local/bin
+
+      - name: Run the installer
+        run: |
+          ./modules/dynamic-apiserver/bin/kuberlogic_x86_64_linux install \
+          --non-interactive \
+          --ingress_class=kong \
+          --storage_class=standard \
+          --docker_compose=./modules/dynamic-operator/config/manager/docker-compose.yaml
+
+      - name: Run the tests in cluster
+        working-directory: ./modules/dynamic-operator
+        run: |
+          USE_EXISTING_CLUSTER=true make test
+
   release:
     name: Release images
     runs-on: ubuntu-latest
