@@ -12,6 +12,7 @@ import (
 	client2 "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"time"
@@ -60,7 +61,7 @@ func checkStatus(logger *zap.SugaredLogger, name, subscriptionId string, timeout
 		return
 	}
 
-	if response.Payload != nil && response.Payload.Status == "ReadyConditionMet" {
+	if response.Payload != nil && response.Payload.Status == v1alpha1.ReadyCondType {
 		logger.Infof("status of service '%s' is ready", name)
 		logger.Infof("endpoint is: %s", response.Payload.Endpoint)
 
