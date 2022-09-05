@@ -88,3 +88,13 @@ func (g *PluginClient) ValidateUpdate(req PluginRequest) *PluginResponseValidati
 func (g *PluginClient) ValidateDelete(req PluginRequest) *PluginResponseValidation {
 	return g.callValidate("ValidateDelete", req)
 }
+
+func (g *PluginClient) GetCredentialsMethod(req PluginRequestCredentialsMethod) *PluginResponseCredentialsMethod {
+	fmt.Println("PluginClient -- GetCredentialsMethod -- begin")
+	resp := &PluginResponseCredentialsMethod{}
+	if err := g.client.Call("Plugin.GetCredentialsMethod", req, resp); err != nil {
+		panic(err)
+	}
+	fmt.Println("PluginClient -- GetCredentialsMethod -- end")
+	return resp
+}

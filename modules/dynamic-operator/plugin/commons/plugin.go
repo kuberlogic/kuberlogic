@@ -38,6 +38,8 @@ func init() {
 	gob.Register(&PluginResponseDefault{})
 	gob.Register(&PluginResponseValidation{})
 	gob.Register(&PluginResponseStatus{})
+	gob.Register(&PluginRequestCredentialsMethod{})
+	gob.Register(&PluginResponseCredentialsMethod{})
 
 	gob.Register(map[string]interface{}{})
 	gob.Register([]interface{}{})

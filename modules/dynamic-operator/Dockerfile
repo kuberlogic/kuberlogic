@@ -5,8 +5,8 @@ WORKDIR /
 
 ARG BIN
 ARG PLUGIN
-COPY bin/manager manager
+COPY bin/manager /manager
 COPY bin/docker-compose-plugin /docker-compose-plugin
 USER 65532:65532
 
-ENTRYPOINT ["/cmd"]
+ENTRYPOINT ["/manager"]

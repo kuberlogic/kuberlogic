@@ -156,10 +156,11 @@ func main() {
 	}
 
 	err = (&controllers.KuberLogicServiceReconciler{
-		Client:  mgr.GetClient(),
-		Scheme:  mgr.GetScheme(),
-		Plugins: pluginInstances,
-		Cfg:     cfg,
+		Client:     mgr.GetClient(),
+		Scheme:     mgr.GetScheme(),
+		Plugins:    pluginInstances,
+		Cfg:        cfg,
+		RESTConfig: mgr.GetConfig(),
 	}).SetupWithManager(mgr, dependantObjects...)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KuberLogicService")

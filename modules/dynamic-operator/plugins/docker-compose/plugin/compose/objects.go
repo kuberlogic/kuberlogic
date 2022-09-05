@@ -17,10 +17,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 const (
-	ingressPathExtension = "x-kuberlogic-access-http-path"
+	ingressPathExtension       = "x-kuberlogic-access-http-path"
+	setCredentialsCmdExtension = "x-kuberlogic-set-credentials-cmd"
 )
 
 var (
@@ -54,12 +56,14 @@ var (
 )
 
 var (
-	errUnknownObject          = errors.New("unknown object kind")
-	errTooManyAccessPorts     = errors.New("too many access ports")
-	errParsingPublishedPort   = errors.New("can't parse published port")
-	errDuplicatePublishedPort = errors.New("duplicate published port")
-	errIngressPathEmpty       = errors.New("HTTP access path is not found")
-	errDuplicateIngressPath   = errors.New("HTTP access path has been already used")
+	errUnknownObject                = errors.New("unknown object kind")
+	errTooManyAccessPorts           = errors.New("too many access ports")
+	errParsingPublishedPort         = errors.New("can't parse published port")
+	errDuplicatePublishedPort       = errors.New("duplicate published port")
+	errIngressPathEmpty             = errors.New("HTTP access path is not found")
+	errDuplicateIngressPath         = errors.New("HTTP access path has been already used")
+	errTooManyCredentialsCommands   = errors.New("too many " + setCredentialsCmdExtension + " extensions")
+	errCredentialsCommandNotDefined = errors.New(setCredentialsCmdExtension + " extension not found")
 )
 
 type ComposeModel struct {
@@ -265,61 +269,60 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 		}
 		c.deployment.Spec.Template.Spec.HostAliases[0].Hostnames = append(c.deployment.Spec.Template.Spec.HostAliases[0].Hostnames, container.Name)
 
-		vd := newViewData(req)
 		// this will not be kept in secret even when a flag is set
-		imageValue, _, err := vd.parse(composeService.Image)
-		if err != nil || imageValue == "" {
-			return errors.Wrapf(err, "invalid image value: %s", imageValue)
+		imageValue, err := req.RenderTemplate(composeService.Image)
+		if err != nil || imageValue.Raw == "" {
+			return errors.Wrapf(err, "invalid image value: %s", imageValue.Raw)
 		}
-		container.Image = imageValue
+		container.Image = imageValue.Raw
 		container.Command = composeService.Command
 
 		container.Env = make([]corev1.EnvVar, 0)
 		for key, rawValue := range composeService.Environment {
 			e := corev1.EnvVar{
-				Name: key,
+				Name:  key,
+				Value: "",
 			}
 			if rawValue != nil {
-				value, keyId, err := vd.parse(*rawValue)
+				value, err := req.RenderTemplate(*rawValue)
 				if err != nil {
-					return errors.Wrapf(err, "invalid key `%s` value: %s", e.Name, value)
+					return errors.Wrapf(err, "invalid key `%s` value: %s", e.Name, value.Raw)
 				}
 
-				if vd.isSecret(*rawValue) {
+				if value.Secret {
 					c.secret.Name = req.Name
+					c.secret.Namespace = req.Namespace
 
-					// default secretId is composed of service name and env key
-					secretKey := composeService.Name + "_" + key
-					// custom keyId is set, use this instead of existing one
-					if keyId != "" {
-						secretKey = keyId
+					if value.SecretID == "" {
+						value.SecretID = composeService.Name + "_" + key
 					}
 
-					// create a new key when it is not set
-					if _, ok := c.secret.Data[secretKey]; !ok {
+					// set secret value when not set
+					if _, ok := c.secret.Data[value.SecretID]; !ok {
 						if c.secret.StringData == nil {
-							c.secret.StringData = make(map[string]string)
+							c.secret.StringData = make(map[string]string, 0)
 						}
-						c.secret.StringData[secretKey] = value
+						c.secret.StringData[value.SecretID] = value.Raw
 					}
 
+					// use secretKeyRef instead of raw value
 					e.ValueFrom = &corev1.EnvVarSource{
 						SecretKeyRef: &corev1.SecretKeySelector{
 							LocalObjectReference: corev1.LocalObjectReference{
 								Name: c.secret.GetName(),
 							},
-							Key: secretKey,
+							Key: value.SecretID,
 						},
 					}
 				} else {
-					e.Value = value
+					e.Value = value.Raw
 				}
 			}
 
 			container.Env = append(container.Env, e)
 		}
 		// all additional parameters mapped to env vars for each container
-		c.logger.Infof("extra parameters: %+v", req.Parameters)
+		c.logger.Debugf("extra parameters: %+v", req.Parameters)
 		for key, value := range req.Parameters {
 			container.Env = append(container.Env, corev1.EnvVar{
 				Name:  key,
@@ -435,7 +438,7 @@ func (c *ComposeModel) setApplicationAccessObjects(req *commons.PluginRequest) e
 		targetPort := intstr.FromInt(int(published.Target))
 		publishedPort, err := strconv.Atoi(published.Published)
 		if err != nil {
-			return errors.Wrap(errParsingPublishedPort, fmt.Sprintf("can't parse port %s", published.Published))
+			return errors.Wrap(errParsingPublishedPort, fmt.Sprintf("can't render port %s", published.Published))
 		}
 		if _, found := svcPorts[int32(publishedPort)]; found {
 			return errors.Wrap(errDuplicatePublishedPort, fmt.Sprintf("port %d is already exposed", publishedPort))
@@ -524,6 +527,39 @@ func (c *ComposeModel) setApplicationAccessObjects(req *commons.PluginRequest) e
 		},
 	}
 	return nil
+}
+
+func (c *ComposeModel) GetCredentialsMethod(req *commons.PluginRequestCredentialsMethod) (*commons.PluginResponseCredentialsMethod, error) {
+	// search across services
+	var commandTemplate, container string
+	for _, svc := range c.composeProject.Services {
+		if cmdTmpl := svc.Extensions[setCredentialsCmdExtension]; cmdTmpl != nil {
+			if container != "" || commandTemplate != "" {
+				return nil, errTooManyCredentialsCommands
+			}
+			commandTemplate, container = cmdTmpl.(string), svc.Name
+		}
+	}
+
+	if container == "" || commandTemplate == "" {
+		return nil, errCredentialsCommandNotDefined
+	}
+
+	v, err := req.RenderTemplate(commandTemplate)
+	if err != nil {
+		return nil, err
+	}
+
+	return &commons.PluginResponseCredentialsMethod{
+		Method: "exec",
+		Exec: commons.CredentialsMethodExec{
+			PodSelector: metav1.LabelSelector{
+				MatchLabels: labels(req.Name),
+			},
+			Container: container,
+			Command:   strings.Split(v.Raw, " "),
+		},
+	}, nil
 }
 
 func labels(name string) map[string]string {

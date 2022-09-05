@@ -5,6 +5,7 @@
 package controllers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -14,16 +15,25 @@ import (
 	kuberlogicserviceenv "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/controllers/kuberlogicservice-env"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
+	"io"
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/api/networking/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/remotecommand"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	logger "sigs.k8s.io/controller-runtime/pkg/log"
 	"sync"
 	"time"
 )
+
+var NewRemoteExecutor = remotecommand.NewSPDYExecutor
 
 // KuberLogicServiceReconciler reconciles a KuberLogicService object
 type KuberLogicServiceReconciler struct {
@@ -31,8 +41,10 @@ type KuberLogicServiceReconciler struct {
 	Scheme  *runtime.Scheme
 	Plugins map[string]commons.PluginService
 
-	Cfg *cfg.Config
-	mu  sync.Mutex
+	Cfg        *cfg.Config
+	RESTConfig *rest.Config
+
+	mu sync.Mutex
 }
 
 func HandlePanic() {
@@ -54,6 +66,8 @@ var (
 //+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservices,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservices/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservices/finalizers,verbs=update
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=pods/exec,verbs=get;list;watch;create;update;patch;delete
 
 // compose plugin roles:
 //+kubebuilder:rbac:groups="",resources=serviceaccounts;services;persistentvolumeclaims;,verbs=get;list;watch;create;update;patch;delete
@@ -240,7 +254,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		kls.MarkResumed()
 	}
 
-	// expose service
+	// set service access endpoint
 	kls.SetAccessEndpoint()
 
 	// sync status
@@ -276,6 +290,86 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if err := r.Status().Update(ctx, kls); err != nil {
 		log.Error(err, "error syncing status")
 		return ctrl.Result{}, err
+	}
+
+	// handle application credentials update when requested
+	// a secret with credentials data is created by the KL apiserver
+	// secret deletion marks a request as successful
+	credSecrets := &v1.Secret{}
+	credSecrets.SetName(kuberlogiccomv1alpha1.CredsUpdateSecretName)
+	credSecrets.SetNamespace(kls.Status.Namespace)
+	if err := r.Get(ctx, client.ObjectKeyFromObject(credSecrets), credSecrets); err != nil && !k8serrors.IsNotFound(err) {
+		log.Error(err, "error getting credentials update secret")
+		return ctrl.Result{}, err
+	} else if err == nil {
+		credMethodRequest := commons.PluginRequestCredentialsMethod{
+			Name: kls.GetName(),
+			Data: make(map[string]string, len(credSecrets.Data)),
+		}
+
+		for k, v := range credSecrets.Data {
+			credMethodRequest.Data[k] = string(v)
+		}
+
+		m := plugin.GetCredentialsMethod(credMethodRequest)
+		if m.Err != "" {
+			return ctrl.Result{}, errors.Wrapf(errors.New(m.Err), "failed to get set credentials method")
+		}
+		if m.Method == "exec" {
+			restClient, err := apiutil.RESTClientForGVK(schema.GroupVersionKind{
+				Version: "v1",
+				Group:   "",
+				Kind:    "",
+			}, false, r.RESTConfig, serializer.NewCodecFactory(r.Scheme))
+			if err != nil {
+				return ctrl.Result{}, errors.Wrap(err, "failed to build exec client")
+			}
+
+			pods := &v1.PodList{}
+			if err := r.List(ctx, pods, client.InNamespace(kls.Status.Namespace), client.MatchingLabels(m.Exec.PodSelector.MatchLabels)); err != nil {
+				return ctrl.Result{}, errors.Wrap(err, "failed to list pods")
+			}
+			if len(pods.Items) != 1 {
+				return ctrl.Result{}, errors.Wrapf(err, "exactly one pod should be returned, got %d instead", len(pods.Items))
+			}
+
+			pod := pods.Items[0]
+			execReq := restClient.Post().Resource("pods").Namespace(pod.GetNamespace()).Name(pod.GetName()).SubResource("exec")
+			execReq.VersionedParams(&v1.PodExecOptions{
+				Stdin:     false,
+				Stdout:    true,
+				Stderr:    true,
+				TTY:       true,
+				Container: m.Exec.Container,
+				Command:   m.Exec.Command,
+			}, scheme.ParameterCodec)
+
+			stdoutBuf, stderrByf := &bytes.Buffer{}, &bytes.Buffer{}
+			exec, err := NewRemoteExecutor(r.RESTConfig, "POST", execReq.URL())
+			if err != nil {
+				return ctrl.Result{}, errors.Wrapf(err, "failed to create exec executor")
+			}
+			if err := exec.Stream(remotecommand.StreamOptions{
+				Stdin:             nil,
+				Stdout:            stdoutBuf,
+				Stderr:            stderrByf,
+				Tty:               true,
+				TerminalSizeQueue: nil,
+			}); err != nil {
+				stdout, _ := io.ReadAll(stdoutBuf)
+				stderr, _ := io.ReadAll(stderrByf)
+				log.Error(err, "failed to update user credentials", "stdout", string(stdout), "stderr", string(stderr), "pod", pod.GetName(), "container", m.Exec.Container)
+				return ctrl.Result{}, errors.Wrapf(err, "failed to execute update credentials command")
+			}
+		} else {
+			e := errors.New("unknown credentials management method")
+			log.Error(e, "", "method", m.Method)
+			return ctrl.Result{}, e
+		}
+		if err := r.Delete(ctx, credSecrets); err != nil {
+			log.Error(err, "failed to delete credentials secret request")
+			return ctrl.Result{}, err
+		}
 	}
 
 	return ctrl.Result{RequeueAfter: requeueAfter}, nil

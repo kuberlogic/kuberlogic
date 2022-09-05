@@ -9,16 +9,19 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
-	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	v12 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/remotecommand"
+	"net/url"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"time"
 )
 
@@ -26,9 +29,9 @@ var _ = Describe("KuberlogicService controller", func() {
 	const (
 		klsName = "test-service"
 
-		defaultReplicas   = 1
-		defaultDomain     = "example.com"
-		defaultVersion    = "13"
+		defaultReplicas = 1
+		defaultDomain   = "example.com"
+		//defaultVersion    = "13"
 		defaultVolumeSize = "1G"
 
 		timeout  = time.Second * 10
@@ -53,10 +56,10 @@ var _ = Describe("KuberlogicService controller", func() {
 				Name: klsName,
 			},
 			Spec: v1alpha1.KuberLogicServiceSpec{
-				Type:           "postgresql",
-				Replicas:       defaultReplicas,
-				Domain:         defaultDomain,
-				Version:        defaultVersion,
+				Type:     "docker-compose",
+				Replicas: defaultReplicas,
+				Domain:   defaultDomain,
+				//Version:        defaultVersion,
 				Limits:         limits,
 				BackupSchedule: "*/10 * * * *",
 				//Advanced:   advanced,
@@ -84,77 +87,33 @@ var _ = Describe("KuberlogicService controller", func() {
 			lookupKlsKey := types.NamespacedName{Name: klsName, Namespace: klsName}
 			createdKls := &v1alpha1.KuberLogicService{}
 
-			Eventually(func() bool {
-				return k8sClient.Get(ctx, lookupKlsKey, createdKls) == nil
-			}, timeout, interval).Should(BeTrue())
-			Expect(createdKls.Spec.Type).Should(Equal("postgresql"))
+			Eventually(func() error {
+				return k8sClient.Get(ctx, lookupKlsKey, createdKls)
+			}, timeout, interval).Should(Not(HaveOccurred()))
+			Expect(createdKls.Spec.Type).Should(Equal("docker-compose"))
 
 			By("By checking a new cluster")
-			lookupKey := types.NamespacedName{Name: klsName, Namespace: klsName}
 
-			svc := &unstructured.Unstructured{}
-			svc.SetGroupVersionKind(
-				postgresv1.SchemeGroupVersion.WithKind(postgresv1.PostgresCRDResourceKind),
-			)
+			svc := &appsv1.Deployment{}
 			svc.SetName(kls.Name)
 			svc.SetNamespace(kls.Name)
 
-			Eventually(func() bool {
-				return k8sClient.Get(ctx, lookupKey, svc) == nil
-			}, timeout, interval).Should(BeTrue())
+			Eventually(func() error {
+				return k8sClient.Get(ctx, client.ObjectKeyFromObject(svc), svc)
+			}, time.Second*20, interval).Should(Not(HaveOccurred()))
 
-			pgSpec := svc.UnstructuredContent()["spec"].(map[string]interface{})
-			//fmt.Println("------", pgSpec)
-
-			Expect(pgSpec["numberOfInstances"]).Should(Equal(int64(defaultReplicas)))
-			postgresqlSection := pgSpec["postgresql"].(map[string]interface{})
-			Expect(postgresqlSection["version"]).Should(Equal(defaultVersion))
-			Expect(pgSpec["volume"]).Should(Equal(map[string]interface{}{
-				"size": defaultVolumeSize,
-			}))
-			//Expect(pgSpec["resources"]).Should(Equal(resources))
-			Expect(pgSpec["resources"]).Should(Equal(map[string]interface{}{
-				"limits": map[string]interface{}{
-					"cpu":    "250m",
-					"memory": "256Mi",
-				},
-				"requests": map[string]interface{}{
-					"memory": "128Mi",
-					"cpu":    "100m",
-				},
-			}))
+			pReplicas := int32(defaultReplicas)
+			Expect(svc.Spec.Replicas).Should(Equal(&pReplicas))
 		})
-
-		//It("Status should reflect current application state", func() {
-		//	By("Checking configuration error status")
-		//	// invalid volume size format
-		//	failedKls := kls.DeepCopy()
-		//	failedKls.ObjectMeta = metav1.ObjectMeta{
-		//		Name: "failed",
-		//	}
-		//	failedKls.Spec.Limits = v1.ResourceList{
-		//		v1.ResourceStorage: "fail",
-		//	}
-		//	Expect(k8sClient.Create(ctx, failedKls)).Should(Succeed())
-		//	Eventually(func() bool {
-		//		if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(failedKls), failedKls); err != nil {
-		//			return false
-		//		}
-		//		if failedKls.Status.Phase == "ProvisioningError" {
-		//			return true
-		//		}
-		//		return false
-		//	}, timeout, interval).Should(BeTrue())
-		//})
 
 		It("Scheduled backup job should be created", func() {
 			By("Checking scheduled backup cronjob")
 			cj := &v12.CronJob{}
 			cj.SetName(kls.GetName())
 			cj.SetNamespace("default")
-			Eventually(func() bool {
-				return k8sClient.Get(ctx, client.ObjectKeyFromObject(cj), cj) == nil
-			}, timeout, interval).Should(BeTrue())
+			Eventually(func() error {
+				return k8sClient.Get(ctx, client.ObjectKeyFromObject(cj), cj)
+			}, timeout, interval).Should(Not(HaveOccurred()))
 			Expect(cj.Spec.Schedule).Should(Equal(kls.Spec.BackupSchedule))
 		})
 
@@ -167,17 +126,11 @@ var _ = Describe("KuberlogicService controller", func() {
 			klr.SetName(kls.GetName())
 			klr.Spec.KuberlogicServiceBackup = klb.GetName()
 
-			It("must prepare velero env", func() {
-				ns := &v1.Namespace{}
-				ns.SetName("velero")
-				Expect(k8sClient.Create(ctx, ns)).Should(Succeed())
-			})
-
 			When("triggering backup", func() {
 				It("backup must be successful", func() {
 					Expect(k8sClient.Create(ctx, klb)).Should(Succeed())
 
-					By("kls kls backup running status must be true")
+					By("kls backup running status must be true")
 					Eventually(func() bool {
 						if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(kls), kls); err != nil {
 							return false
@@ -186,14 +139,16 @@ var _ = Describe("KuberlogicService controller", func() {
 						return backingUp && backup == klb.GetName() && kls.Status.Phase == "Backing Up"
 					}, timeout, interval).Should(BeTrue())
 
-					By("Simulating successful backup")
-					vb := &velero.Backup{}
-					vb.SetName(klb.GetName())
-					vb.SetNamespace("velero")
-					vb.Status.Phase = velero.BackupPhaseCompleted
-					_ = controllerruntime.SetControllerReference(klb, vb, k8sClient.Scheme())
+					if !useExistingCluster() {
+						By("Simulating successful backup")
+						vb := &velero.Backup{}
+						vb.SetName(klb.GetName())
+						vb.SetNamespace("velero")
+						vb.Status.Phase = velero.BackupPhaseCompleted
+						_ = controllerruntime.SetControllerReference(klb, vb, k8sClient.Scheme())
 
-					Expect(k8sClient.Create(ctx, vb)).Should(Succeed())
+						Expect(k8sClient.Create(ctx, vb)).Should(Succeed())
+					}
 
 					By("klb must be successful")
 					Eventually(func() bool {
@@ -227,13 +182,17 @@ var _ = Describe("KuberlogicService controller", func() {
 						return restoring && restoreName == klr.GetName() && kls.Status.Phase == "Restoring"
 					}, timeout, interval).Should(BeTrue())
 
-					By("simulating successful restore")
-					vr := &velero.Restore{}
-					vr.SetName(klr.GetName())
-					vr.SetNamespace("velero")
-					vr.Status.Phase = velero.RestorePhaseCompleted
-					_ = controllerruntime.SetControllerReference(klr, vr, k8sClient.Scheme())
-					Expect(k8sClient.Create(ctx, vr))
+					if !useExistingCluster() {
+						By("simulating successful restore")
+						vr := &velero.Restore{}
+						vr.SetName(klr.GetName())
+						vr.SetNamespace("velero")
+						vr.Status.Phase = velero.RestorePhaseCompleted
+						_ = controllerruntime.SetControllerReference(klr, vr, k8sClient.Scheme())
+						Expect(k8sClient.Create(ctx, vr))
+						_ = controllerruntime.SetControllerReference(klb, klr, k8sClient.Scheme())
+						Expect(k8sClient.Update(ctx, klr))
+					}
 
 					By("klr must be successful")
 					Eventually(func() bool {
@@ -258,30 +217,81 @@ var _ = Describe("KuberlogicService controller", func() {
 				It("should be successful", func() {
 					Expect(k8sClient.Delete(ctx, klb)).Should(Succeed())
 
-					By("simulating velero backup delete")
-					Eventually(func() error {
-						if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(klb), klb); err != nil {
-							if errors.IsNotFound(err) {
-								return nil
+					if !useExistingCluster() {
+						By("simulating velero backup delete")
+						Eventually(func() error {
+							if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(klb), klb); err != nil {
+								if errors.IsNotFound(err) {
+									return nil
+								}
+								return err
 							}
-							return err
-						}
-						klb.Finalizers = []string{}
-						return k8sClient.Update(ctx, klb)
-					}, timeout, interval).Should(Succeed())
+							klb.Finalizers = make([]string, 0)
+							return k8sClient.Update(ctx, klb)
+						}, timeout, interval).Should(Succeed())
+					}
 
-					By("klb and related klr must be deleted")
+					By("klb must be deleted")
 					Eventually(func() bool {
-						if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(klb), klb); !errors.IsNotFound(err) {
-							return false
-						}
-						if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(klr), klr); !errors.IsNotFound(err) {
-							return false
-						}
-						return true
-					}, timeout, interval)
+						return errors.IsNotFound(k8sClient.Get(ctx, client.ObjectKeyFromObject(klb), klb)) &&
+							klb.GetUID() == klr.OwnerReferences[0].UID // gc doesn't work in envtest, but it does not really matter in this specific test
+					}, timeout, interval).Should(BeTrue())
 				})
 			})
+		})
+
+		When("testing update-credentials procedure", func() {
+			credUpdateRequest := &v1.Secret{}
+			credUpdateRequest.SetName(v1alpha1.CredsUpdateSecretName)
+			credUpdateRequest.SetNamespace(kls.GetName())
+			credUpdateRequest.StringData = map[string]string{
+				"token": "demo",
+			}
+
+			It("request should be reconciled", func() {
+				By("Creating update-credentials secret")
+				Expect(controllerutil.SetControllerReference(kls, credUpdateRequest, k8sClient.Scheme())).Should(BeNil())
+				Expect(k8sClient.Create(ctx, credUpdateRequest)).Should(Succeed())
+
+				if !useExistingCluster() {
+					// create fake deployment pod
+					p := &v1.Pod{}
+					p.SetName(kls.GetName())
+					p.SetNamespace(kls.GetName())
+					p.Spec.Containers = []v1.Container{
+						{
+							Name:  "test",
+							Image: "test",
+						},
+					}
+					p.SetLabels(map[string]string{"docker-compose.service/name": kls.GetName()})
+					Expect(k8sClient.Create(ctx, p)).Should(Succeed())
+
+					// fake SPDY executor
+					NewRemoteExecutor = func(c *rest.Config, m string, url *url.URL) (remotecommand.Executor, error) {
+						return &fakeExecutor{}, nil
+					}
+				}
+
+				By("Making sure the secret is absent")
+				Eventually(func() bool {
+					return errors.IsNotFound(k8sClient.Get(ctx, client.ObjectKeyFromObject(credUpdateRequest), credUpdateRequest))
+				}, timeout, interval).Should(BeTrue())
+			})
+		})
+
+		It("Should remove KuberLogicService resource", func() {
+			By("Removing KuberLogicService resource")
+
+			Expect(k8sClient.Delete(ctx, kls)).Should(Succeed())
+
+			By("By checking a new KuberLogicService")
+			lookupKlsKey := types.NamespacedName{Name: klsName, Namespace: klsName}
+			createdKls := &v1alpha1.KuberLogicService{}
+
+			Eventually(func() bool {
+				return errors.IsNotFound(k8sClient.Get(ctx, lookupKlsKey, createdKls))
+			}, timeout, interval).Should(BeTrue())
 		})
 	})
 })

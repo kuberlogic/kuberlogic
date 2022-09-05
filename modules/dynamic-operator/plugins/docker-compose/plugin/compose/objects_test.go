@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"strings"
 )
 
 var envVal = "val"
@@ -503,9 +504,9 @@ var _ = Describe("docker-compose model", func() {
 	})
 	Context("When reconciling with templates env, keep secrets, cache", func() {
 		env1 := `{{ "abc" | PersistentSecret }}`
-		env2 := `{{ .GenerateKey 30 }}`
-		env3 := `{{ .GenerateRSA 2048 | .Base64 | PersistentSecret "RSA_PRIVATE_KEY" }}`
-		env4 := `{{ .GenerateRSA 2048 | .Base64 | PersistentSecret "RSA_PRIVATE_KEY" }}`
+		env2 := `{{ GenerateKey 30 }}`
+		env3 := `{{ GenerateRSA 2048 | Base64 | PersistentSecret "RSA_PRIVATE_KEY" }}`
+		env4 := `{{ GenerateRSA 2048 | Base64 | PersistentSecret "RSA_PRIVATE_KEY" }}`
 		testValidProject := &types.Project{
 			Name:       "test",
 			WorkingDir: "/tmp",
@@ -619,6 +620,82 @@ var _ = Describe("docker-compose model", func() {
 			Expect(c.secret.StringData["demo-app_ENV1"]).Should(Equal("abc"))
 			// equals value to the first time reconcilation
 			Expect(c.secret.StringData["RSA_PRIVATE_KEY"]).Should(Equal(genRSA))
+		})
+	})
+	Context("When GetCredentialsMethod is called", func() {
+		proj := &types.Project{
+			Name:       "test",
+			WorkingDir: "/tmp",
+			Services: types.Services{
+				types.ServiceConfig{
+					Name:    "demo-app",
+					Command: types.ShellCommand{"cmd", "arg"},
+					Image:   "demo:test",
+					Ports: []types.ServicePortConfig{
+						{
+							Target:    80,
+							Published: "8001",
+						},
+					},
+					Volumes: []types.ServiceVolumeConfig{
+						{
+							Source: "demo",
+							Target: "/tmp/demo",
+						},
+					},
+				},
+				types.ServiceConfig{
+					Name:    "demo-db",
+					Command: types.ShellCommand{"cmd", "arg"},
+					Image:   "demodb:test",
+				},
+			},
+			Networks: nil,
+			Volumes: types.Volumes{
+				"demo": types.VolumeConfig{
+					Name: "demo",
+				},
+			},
+		}
+		requests := &commons.PluginRequestCredentialsMethod{
+			Name: "demo-kls",
+		}
+
+		It("Should fail when extension is not set", func() {
+			c := NewComposeModel(proj, zap.NewRaw().Sugar())
+			resp, err := c.GetCredentialsMethod(requests)
+			Expect(resp).Should(BeNil())
+			Expect(err).Should(Equal(errCredentialsCommandNotDefined))
+		})
+
+		It("Should fail when too many extensions are set", func() {
+			proj.Services[0].Extensions = map[string]interface{}{"x-kuberlogic-set-credentials-cmd": "echo"}
+			proj.Services[1].Extensions = map[string]interface{}{"x-kuberlogic-set-credentials-cmd": "echo"}
+
+			c := NewComposeModel(proj, zap.NewRaw().Sugar())
+			resp, err := c.GetCredentialsMethod(requests)
+			Expect(resp).Should(BeNil())
+			Expect(err).Should(Equal(errTooManyCredentialsCommands))
+		})
+
+		It("Should render correct credentials command", func() {
+			requests.Data = map[string]string{
+				"user":     "admin",
+				"password": "demopwd",
+			}
+
+			proj.Services[1].Extensions = map[string]interface{}{}
+			proj.Services[0].Extensions = map[string]interface{}{"x-kuberlogic-set-credentials-cmd": "cli set password --user {{ .user }} --password {{ .password }}"}
+			expectedContainer := proj.Services[0].Name
+			expectedCommand := "cli set password --user admin --password demopwd"
+
+			c := NewComposeModel(proj, zap.NewRaw().Sugar())
+			resp, err := c.GetCredentialsMethod(requests)
+			Expect(err).Should(BeNil())
+			Expect(resp).ShouldNot(BeNil())
+			Expect(resp.Method).Should(Equal("exec"))
+			Expect(resp.Exec.Command).Should(Equal(strings.Split(expectedCommand, " ")))
+			Expect(resp.Exec.Container).Should(Equal(expectedContainer))
 		})
 	})
 })

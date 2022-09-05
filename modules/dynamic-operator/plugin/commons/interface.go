@@ -5,13 +5,23 @@
 package commons
 
 import (
+	"bytes"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
+	"fmt"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"log"
+	mathRand "math/rand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"text/template"
 )
 
 type protocol string
@@ -19,6 +29,10 @@ type protocol string
 const (
 	TCPproto  protocol = "tcp"
 	HTTPproto protocol = "http"
+)
+
+var (
+	errPersistentSecretWrongArgs = errors.New("PersistentSecret function needs `secretId <optional,string>, secretData <string> arguments`")
 )
 
 // PluginService is the interface that we're exposing as a plugin.
@@ -31,6 +45,8 @@ type PluginService interface {
 	ValidateCreate(req PluginRequest) *PluginResponseValidation
 	ValidateUpdate(req PluginRequest) *PluginResponseValidation
 	ValidateDelete(req PluginRequest) *PluginResponseValidation
+
+	GetCredentialsMethod(req PluginRequestCredentialsMethod) *PluginResponseCredentialsMethod
 }
 
 type PluginRequestEmpty struct{}
@@ -63,8 +79,17 @@ type PluginRequest struct {
 	// Additional Parameters
 	Parameters map[string]interface{}
 
+	// Credentials
+	Credentials map[string]string
+
 	// Objects contains a list of service related objects
 	Objects []*unstructured.Unstructured
+}
+
+type TemplatedValue struct {
+	Raw      string
+	Secret   bool
+	SecretID string
 }
 
 func (pl *PluginRequest) SetObjects(objs []*unstructured.Unstructured) {
@@ -94,6 +119,90 @@ func (pl *PluginRequest) GetLimits() (*v1.ResourceList, error) {
 		}
 	}
 	return limits, nil
+}
+
+func (pl *PluginRequest) RenderTemplate(tpl string) (*TemplatedValue, error) {
+	v := &TemplatedValue{}
+
+	tmpl, err := template.New("value").Funcs(template.FuncMap{
+		// PersistentSecret func accepts two args (one is optional):
+		// * keyId (this will be used to identify a secret key), empty if not passed
+		// * data (data that needs to be stored in secret)
+		"PersistentSecret": func(args ...string) (string, error) {
+			v.Secret = true
+
+			switch len(args) {
+			case 1:
+				return args[0], nil
+			case 2:
+				v.SecretID = args[0]
+				return args[1], nil
+			default:
+				return "", errPersistentSecretWrongArgs
+			}
+		},
+		"Base64": func(arg string) string {
+			return base64.StdEncoding.EncodeToString([]byte(arg))
+		},
+		"GenerateRSA": func(bits int) (string, error) {
+			pk, err := rsa.GenerateKey(rand.Reader, bits)
+			if err != nil {
+				return "", err
+			}
+
+			privateKeyBlock := &pem.Block{
+				Type:  "RSA PRIVATE KEY",
+				Bytes: x509.MarshalPKCS1PrivateKey(pk),
+			}
+			buff := new(bytes.Buffer)
+			err = pem.Encode(buff, privateKeyBlock)
+			return buff.String(), err
+		},
+		"GenerateKey": func(length int) string {
+			const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+			b := make([]byte, length)
+			for i := range b {
+				b[i] = letterBytes[mathRand.Intn(len(letterBytes))]
+			}
+			return string(b)
+		},
+		"Endpoint": func(defaultValue string) string {
+			schema := "http"
+			if pl.TLSEnabled {
+				schema = "https"
+			}
+			host := defaultValue
+			if pl.Host != "" {
+				host = pl.Host
+			}
+			return fmt.Sprintf("%s://%s", schema, host)
+		},
+	}).Parse(tpl)
+	if err != nil {
+		return v, errors.Wrap(err, "failed to parse template data")
+	}
+
+	data := &bytes.Buffer{}
+	err = tmpl.Execute(data, struct {
+		Name       string
+		Namespace  string
+		Host       string
+		Replicas   int32
+		Version    string
+		TLSEnabled bool
+		Parameters map[string]interface{}
+	}{
+		Name:       pl.Name,
+		Namespace:  pl.Namespace,
+		Host:       pl.Host,
+		Replicas:   pl.Replicas,
+		Version:    pl.Version,
+		TLSEnabled: pl.TLSEnabled,
+		Parameters: pl.Parameters,
+	})
+	v.Raw = data.String()
+	return v, err
 }
 
 type PluginResponseValidation struct {
@@ -180,4 +289,40 @@ func (pl *PluginResponseDefault) Error() error {
 		return errors.New(pl.Err)
 	}
 	return nil
+}
+
+type PluginRequestCredentialsMethod struct {
+	// service Name
+	Name string
+
+	// Credentials Data
+	Data map[string]string
+}
+
+func (m *PluginRequestCredentialsMethod) RenderTemplate(tpl string) (*TemplatedValue, error) {
+	v := &TemplatedValue{}
+
+	tmpl, err := template.New("value").Parse(tpl)
+	if err != nil || tmpl == nil {
+		return nil, errors.Wrap(err, "failed to parse template")
+	}
+
+	data := &bytes.Buffer{}
+	err = tmpl.Execute(data, m.Data)
+	v.Raw = data.String()
+	return v, err
+}
+
+type PluginResponseCredentialsMethod struct {
+	Method string // exec, etc
+	Exec   CredentialsMethodExec
+
+	Err string
+}
+
+type CredentialsMethodExec struct {
+	PodSelector v12.LabelSelector
+
+	Container string
+	Command   []string
 }
