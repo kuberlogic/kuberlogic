@@ -15,11 +15,11 @@ import (
 const (
 	configFailedCondType       = "ConfigurationError"
 	provisioningFailedCondType = "ProvisioningError"
-	readyCondType              = "Ready"
 	clusterUnknownStatus       = "Unknown"
 	pausedCondType             = "Paused"
 	backupRunningCondType      = "BackupRunning"
 	restoreRunningCondType     = "RestoreRunning"
+	ReadyCondType              = "Ready"
 )
 
 // KuberLogicServiceStatus defines the observed state of KuberLogicService
@@ -128,18 +128,18 @@ func (in *KuberLogicService) SetAccessEndpoint() {
 }
 
 func (in *KuberLogicService) MarkReady(msg string) {
-	in.Status.Phase = readyCondType
+	in.Status.Phase = ReadyCondType
 
 	in.setConditionStatus(configFailedCondType, false, "", configFailedCondType)
 	in.setConditionStatus(provisioningFailedCondType, false, "", provisioningFailedCondType)
-	in.setConditionStatus(readyCondType, true, msg, msg)
+	in.setConditionStatus(ReadyCondType, true, msg, msg)
 }
 
 func (in *KuberLogicService) MarkNotReady(msg string) {
 	in.Status.Phase = "NotReady"
 	in.setConditionStatus(configFailedCondType, false, "", configFailedCondType)
 	in.setConditionStatus(provisioningFailedCondType, false, "", provisioningFailedCondType)
-	in.setConditionStatus(readyCondType, false, msg, msg)
+	in.setConditionStatus(ReadyCondType, false, msg, msg)
 }
 
 // IsReady returns
@@ -147,7 +147,7 @@ func (in *KuberLogicService) MarkNotReady(msg string) {
 // * string containing current status
 // * time of last readiness status transition
 func (in *KuberLogicService) IsReady() (bool, string, *time.Time) {
-	c := meta.FindStatusCondition(in.Status.Conditions, readyCondType)
+	c := meta.FindStatusCondition(in.Status.Conditions, ReadyCondType)
 	if c == nil {
 		return false, clusterUnknownStatus, nil
 	}
