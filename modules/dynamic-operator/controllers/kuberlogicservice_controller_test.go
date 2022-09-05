@@ -117,14 +117,14 @@ var _ = Describe("KuberlogicService controller", func() {
 			Expect(cj.Spec.Schedule).Should(Equal(kls.Spec.BackupSchedule))
 		})
 
-			When("testing backup/restore", func() {
-				klb := &v1alpha1.KuberlogicServiceBackup{}
-				klb.SetName(kls.GetName())
-				klb.Spec.KuberlogicServiceName = kls.GetName()
+		When("testing backup/restore", func() {
+			klb := &v1alpha1.KuberlogicServiceBackup{}
+			klb.SetName(kls.GetName())
+			klb.Spec.KuberlogicServiceName = kls.GetName()
 
-				klr := &v1alpha1.KuberlogicServiceRestore{}
-				klr.SetName(kls.GetName())
-				klr.Spec.KuberlogicServiceBackup = klb.GetName()
+			klr := &v1alpha1.KuberlogicServiceRestore{}
+			klr.SetName(kls.GetName())
+			klr.Spec.KuberlogicServiceBackup = klb.GetName()
 
 			When("triggering backup", func() {
 				It("backup must be successful", func() {
@@ -167,6 +167,7 @@ var _ = Describe("KuberlogicService controller", func() {
 						return backingUp && backup == klb.GetName() && kls.Status.Phase != "Backing Up"
 					}, timeout, interval).Should(BeFalse())
 				})
+			})
 
 			When("triggering restore", func() {
 				It("restore should be successful", func() {
@@ -210,10 +211,11 @@ var _ = Describe("KuberlogicService controller", func() {
 						return restoring && restoreName == klr.GetName() && kls.Status.Phase != "Restoring"
 					}, timeout, interval).Should(BeFalse())
 				})
+			})
 
-				When("triggering restore", func() {
-					It("restore should be successful", func() {
-						Expect(k8sClient.Create(ctx, klr)).Should(Succeed())
+			When("Deleting backup", func() {
+				It("Klb delete request should be successful", func() {
+					Expect(k8sClient.Delete(ctx, klb)).Should(Succeed())
 
 					if !useExistingCluster() {
 						By("simulating velero backup delete")
@@ -236,20 +238,6 @@ var _ = Describe("KuberlogicService controller", func() {
 					}, timeout, interval).Should(BeTrue())
 				})
 			})
-		}
-    
-		It("Should remove KuberLogicService resource", func() {
-			By("Removing KuberLogicService resource")
-
-			Expect(k8sClient.Delete(ctx, kls)).Should(Succeed())
-
-			By("By checking a new KuberLogicService")
-			lookupKlsKey := types.NamespacedName{Name: klsName, Namespace: klsName}
-			createdKls := &v1alpha1.KuberLogicService{}
-
-			Eventually(func() bool {
-				return errors.IsNotFound(k8sClient.Get(ctx, lookupKlsKey, createdKls))
-			}, timeout, interval).Should(BeTrue())
 		})
 
 		When("testing update-credentials procedure", func() {

@@ -36,12 +36,12 @@ jobs:
       - name: Build
         working-directory: ./modules/dynamic-operator
         run: |
-          go build -o plugin/example-plugin/postgres plugin/example-plugin/main.go
+          go build -o plugins/example-plugin/postgres plugins/example-plugin/main.go
 
       - name: Run the tests with coverage
         working-directory: ./modules/dynamic-operator
         run: |
-          PLUGINS="{postgresql,$(pwd)/plugin/example-plugin/postgres}" make test
+          PLUGINS="{postgresql,$(pwd)/plugins/example-plugin/postgres}" make test
 
       - name: Upload coverage
         run: |
