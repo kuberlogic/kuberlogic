@@ -1,6 +1,10 @@
 package cli
 
 import (
+	"os"
+	"path/filepath"
+	"testing"
+
 	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
 	v12 "k8s.io/api/networking/v1"
@@ -8,9 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8stesting "k8s.io/client-go/kubernetes/fake"
-	"os"
-	"path/filepath"
-	"testing"
 )
 
 var (
@@ -56,7 +57,6 @@ func TestInstallLB(t *testing.T) {
 
 	configFile = filepath.Join(configDir, "config.yaml")
 	kubectlBin = "echo"
-	kustomizeBin = "echo"
 	viper.SetConfigFile(configFile)
 
 	cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
@@ -83,7 +83,6 @@ func TestInstallClusterNotAvailable(t *testing.T) {
 
 	configFile = filepath.Join(configDir, "config.yaml")
 	kubectlBin = "exit 1"
-	kustomizeBin = "exit 1"
 	viper.SetConfigFile(configFile)
 
 	cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
@@ -102,7 +101,6 @@ func TestIngressClassNotAvailable(t *testing.T) {
 
 	configFile = filepath.Join(configDir, "config.yaml")
 	kubectlBin = "exit 1"
-	kustomizeBin = "exit 1"
 	viper.SetConfigFile(configFile)
 
 	cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
