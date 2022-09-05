@@ -1,6 +1,11 @@
 package cli
 
 import (
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
 	v12 "k8s.io/api/networking/v1"
@@ -8,9 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8stesting "k8s.io/client-go/kubernetes/fake"
-	"os"
-	"path/filepath"
-	"testing"
 )
 
 var (
@@ -112,5 +114,40 @@ func TestIngressClassNotAvailable(t *testing.T) {
 	cmd.SetArgs([]string{"install", "--non-interactive", "--storage_class", "demo", "--ingress_class", "fake"})
 	if err := cmd.Execute(); err.Error() != "error processing ingress_class flag: fake is not available. Available: demo" {
 		t.Fatal(err)
+	}
+}
+
+func TestValidationSentryURI(t *testing.T) {
+	tests := []struct {
+		in  string
+		out error
+	}{
+		{"", nil},
+		{"https://b16abaff497941468fdf21aff686ff52@kl.sentry.cloudlinux.com/9", nil},
+		{"N", errors.Wrapf(errors.Wrap(errSentryInvalidURI, "N"), "error processing %s flag", installSentryDSNParam)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.in, func(t *testing.T) {
+			configDir, _ := os.MkdirTemp("", "install-test")
+			defer os.RemoveAll(configDir)
+
+			configFile = filepath.Join(configDir, "config.yaml")
+			kubectlBin = "echo"
+			kustomizeBin = "echo"
+			viper.SetConfigFile(configFile)
+
+			cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
+			if err != nil {
+				t.Fatal(err)
+			}
+			cmd.SetArgs([]string{"install", "--non-interactive", "--storage_class", "demo", "--ingress_class", "demo", "--sentry_dsn", tt.in})
+			err = cmd.Execute()
+			if err == nil && tt.out == nil {
+				return
+			}
+			if tt.out.Error() != err.Error() {
+				t.Errorf("got %q, want %q", err, tt.out)
+			}
+		})
 	}
 }

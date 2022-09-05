@@ -5,19 +5,21 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"io"
 	"io/fs"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 // embed kustomize files into cli binary
@@ -30,6 +32,7 @@ var (
 
 	errTokenEmpty         = errors.New("token can't be empty")
 	errChargebeeKeyNotSet = errors.New("chargebee key can't be empty")
+	errSentryInvalidURI   = errors.New("invalid uri")
 )
 
 const (
@@ -195,7 +198,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		} else if useKLSentry {
 			sentrDSN = klSentryDSN
 		} else {
-			sentrDSN, err = getStringPrompt(command, installSentryDSNParam, klParams.GetString(installSentryDSNParam), nil)
+			sentrDSN, err = getStringPrompt(command, installSentryDSNParam, klParams.GetString(installSentryDSNParam), validateEmptyStrOrUri)
 			if err != nil {
 				return errors.Wrapf(err, "error processing %s flag", installSentryDSNParam)
 			}
@@ -439,4 +442,15 @@ func getKuberlogicEndpoint(c kubernetes.Interface) (string, error) {
 		}
 	}
 	return endpoint, nil
+}
+
+func validateEmptyStrOrUri(uri string) error {
+	if uri == "" {
+		return nil
+	}
+	u, err := url.ParseRequestURI(uri)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return errors.Wrap(errSentryInvalidURI, uri)
+	}
+	return nil
 }
