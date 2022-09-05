@@ -59,8 +59,9 @@ help: ## Display this help.
 
 ##@ Development
 
-build-example-plugin:
-	cd plugins/example-plugin && go build -o example-plugin
+
+build-docker-compose-plugin:
+	cd plugins/docker-compose/ && go build -a -o ../../bin/docker-compose-plugin .
 
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
@@ -79,8 +80,15 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: manifests generate fmt vet build-example-plugin envtest ## Run tests.
-	PLUGINS="{postgresql,$(PROJECT_DIR)/plugins/example-plugin/example-plugin}" KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" NAMESPACE="default" SERVICE_ACCOUNT="default" BACKUPS_ENABLED="true" go test -v ./... -coverprofile cover.out
+test: manifests generate fmt vet build-docker-compose-plugin envtest ## Run tests.
+	ACK_GINKGO_DEPRECATIONS=1.16.5 \
+	PLUGINS="{docker-compose,$(PROJECT_DIR)/bin/docker-compose-plugin}" \
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
+	NAMESPACE="default" \
+	SERVICE_ACCOUNT="default" \
+	BACKUPS_ENABLED="true" \
+	KL_PLUGIN_DOCKER_COMPOSE_FILE="$(PROJECT_DIR)/config/manager/docker-compose.yaml" \
+	go test -v ./... -coverprofile cover.out ${ARGS}
 
 ##@ Build
 

@@ -66,6 +66,7 @@ var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	ctx, cancel = context.WithCancel(context.TODO())
+	useExistingCluster := os.Getenv("USE_EXISTING_CLUSTER") == "true"
 
 	By("bootstrapping test environment")
 
@@ -75,6 +76,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	if useExistingCluster() {
+
 		err = os.Unsetenv("KUBEBUILDER_ASSETS")
 		Expect(err).NotTo(HaveOccurred())
 
@@ -89,7 +91,6 @@ var _ = BeforeSuite(func() {
 		k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(k8sClient).NotTo(BeNil())
-
 	} else {
 		testEnv = &envtest.Environment{
 			CRDDirectoryPaths: []string{
@@ -164,6 +165,7 @@ var _ = BeforeSuite(func() {
 			ns := &corev1.Namespace{}
 			ns.SetName("velero")
 			Expect(k8sClient.Create(ctx, ns)).Should(Succeed())
+
 
 			err = (&KuberlogicServiceBackupReconciler{
 				Client: k8sManager.GetClient(),
