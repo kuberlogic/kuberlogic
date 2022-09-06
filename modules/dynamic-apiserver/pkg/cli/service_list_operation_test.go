@@ -206,7 +206,7 @@ func TestListFormatStr(t *testing.T) {
 			"status":         "Unknown",
 			"type":           "postgresql",
 			"version":        "13",
-			"domain":         "example.org",
+			"domain":         "example.com",
 			"backupSchedule": "*/15 * * * *",
 			"endpoint":       "",
 		},

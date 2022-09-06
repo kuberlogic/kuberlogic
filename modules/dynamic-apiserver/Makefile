@@ -11,6 +11,7 @@ APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME)
 KUBERLOGIC_APISERVER_TOKEN=8ZTjsD3t2Q3Yq-C4-hoahcFn
 KUBERLOGIC_SENTRY_DSN =
 KUBERLOGIC_DEBUG_LOGS = true
+KUBERLOGIC_DOMAIN = example.com
 
 ifeq ($(USE_BUILD),true)
 	VERSION := $(VERSION)-$(shell git rev-list --count $(shell git rev-parse --abbrev-ref HEAD))
@@ -46,7 +47,7 @@ generate-client: recreate-generated-client
 
 .PHONY: test
 test: build-configs
-	go test -v ./... -coverprofile cover.out $(ARGS)
+	go test -v ./... -coverprofile cover.out ${ARGS}
 
 .PHONY: build-configs
 build-configs:

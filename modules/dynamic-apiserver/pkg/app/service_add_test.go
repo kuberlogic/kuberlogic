@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
@@ -32,6 +33,9 @@ func TestServiceAddSimple(t *testing.T) {
 		log:              &TestLog{t: t},
 		clientset:        fake.NewSimpleClientset(),
 		kuberlogicClient: tc.client,
+		config: &config.Config{
+			Domain: "example.com",
+		},
 	}
 
 	service := &models.Service{
@@ -75,6 +79,9 @@ func TestServiceAddExtended(t *testing.T) {
 		log:              &TestLog{t: t},
 		clientset:        fake.NewSimpleClientset(),
 		kuberlogicClient: tc.client,
+		config: &config.Config{
+			Domain: "example.com",
+		},
 	}
 
 	service := &models.Service{
@@ -131,6 +138,9 @@ func TestServiceAddAdvanced(t *testing.T) {
 		log:              &TestLog{t: t},
 		clientset:        fake.NewSimpleClientset(),
 		kuberlogicClient: tc.client,
+		config: &config.Config{
+			Domain: "example.com",
+		},
 	}
 
 	service := &models.Service{
@@ -174,6 +184,9 @@ func TestServiceSubscriptionAlreadyExists(t *testing.T) {
 		log:              &TestLog{t: t},
 		clientset:        fake.NewSimpleClientset(),
 		kuberlogicClient: tc.client,
+		config: &config.Config{
+			Domain: "example.com",
+		},
 	}
 
 	service := &models.Service{

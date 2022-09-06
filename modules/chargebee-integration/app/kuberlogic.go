@@ -101,11 +101,9 @@ func checkAlreadyExists(err error) bool {
 
 func createServiceItem() *models.Service {
 	name := petname.Generate(2, "-")
-	domain := viper.GetString("KUBERLOGIC_DOMAIN")
 	serviceType := viper.GetString("KUBERLOGIC_TYPE")
 	return &models.Service{
-		ID:     &name,
-		Domain: domain,
-		Type:   &serviceType,
+		ID:   &name,
+		Type: &serviceType,
 	}
 }

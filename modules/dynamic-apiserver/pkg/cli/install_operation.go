@@ -5,19 +5,21 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"io"
 	"io/fs"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 // embed kustomize files into cli binary
@@ -25,11 +27,11 @@ import (
 var klConfigZipData []byte
 
 var (
-	kubectlBin   = "kubectl"
-	kustomizeBin = "kustomize"
+	kubectlBin = "kubectl"
 
 	errTokenEmpty         = errors.New("token can't be empty")
 	errChargebeeKeyNotSet = errors.New("chargebee key can't be empty")
+	errSentryInvalidURI   = errors.New("invalid uri")
 )
 
 const (
@@ -59,18 +61,18 @@ func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
 	}
 
 	_ = cmd.PersistentFlags().Bool("non-interactive", false, "Do not enter interactive mode")
-	_ = cmd.PersistentFlags().String(installIngressClassName, "", "Kubernetes ingressClassName that will be used for provisioning applications")
-	_ = cmd.PersistentFlags().String(installStorageClassName, "", "Kubernetes storageClass that will be used for provisioning applications")
-	_ = cmd.PersistentFlags().String(installDockerComposeParam, "", "Path to application docker-compose.yml")
-	_ = cmd.PersistentFlags().Bool(installBackupsEnabledParam, false, "Enable backup/restore support")
-	_ = cmd.PersistentFlags().Bool(installBackupsSnapshotsEnabledParam, false, "Enable volume snapshot backups (Must be supported by Velero provider plugin)")
-	_ = cmd.PersistentFlags().String(installTLSKeyParam, "", "Path to TLS key to use for provisioned applications")
-	_ = cmd.PersistentFlags().String(installTLSCrtParam, "", "Path to TLS certificate to use for provisioned applications")
-	_ = cmd.PersistentFlags().String(installChargebeeSiteParam, "", "ChargeBee site name")
-	_ = cmd.PersistentFlags().String(installChargebeeKeyParam, "", "ChargeBee secret key")
-	_ = cmd.PersistentFlags().String(installKuberlogicDomainParam, "example.com", "Kuberlogic default domain")
-	_ = cmd.PersistentFlags().Bool(installReportErrors, false, "Report errors to KuberLogic")
-	_ = cmd.PersistentFlags().String(installSentryDSNParam, "", "Sentry DSN (KuberLogic team will not be notified in case of errors)")
+	_ = cmd.PersistentFlags().String(installIngressClassName, "", "Choose Kubernetes Ingress controller that will be used for application")
+	_ = cmd.PersistentFlags().String(installStorageClassName, "", "Choose Kubernetes storageClass that will be used for application instances")
+	_ = cmd.PersistentFlags().String(installDockerComposeParam, "", "Specify path to your docker-compose file with the application you want to provide as SaaS. You can skip this step by pressing 'Enter', then the sample application will be used")
+	_ = cmd.PersistentFlags().Bool(installBackupsEnabledParam, false, "Enable backup/restore support? For more information, read https://kuberlogic.com/docs/configuring/backups. Type 'N' if you have not set up integration with Velero to support backup/restore capabilities, otherwise type 'y'")
+	_ = cmd.PersistentFlags().Bool(installBackupsSnapshotsEnabledParam, false, "Enable volume snapshot backups (Must be supported by the Velero provider plugin)")
+	_ = cmd.PersistentFlags().String(installTLSKeyParam, "", "Specify path to the TLS certificate. It is assumed that the TLS certificate will be a wildcard certificate. All KuberLogic managed applications share the same certificate by sharing the same ingress controller. You can skip this step by pressing 'Enter', In this case, a self-signed (demo) certificate will be used")
+	_ = cmd.PersistentFlags().String(installTLSCrtParam, "", "Specify path to TLS key to use for provisioned applications")
+	_ = cmd.PersistentFlags().String(installChargebeeSiteParam, "", "Specify ChargeBee site name. For more information, read https://kuberlogic.com/docs/configuring/billing. You can skip this step by pressing 'Enter', and set up the integration later")
+	_ = cmd.PersistentFlags().String(installChargebeeKeyParam, "", "Specify ChargeBee API-key. For more information, read https://apidocs.chargebee.com/docs/api/?prod_cat_ver=2. API Keys are used to authenticate KuberLogic and control its access to the Chargebee API")
+	_ = cmd.PersistentFlags().String(installKuberlogicDomainParam, "example.com", "Specify \"KuberLogic default domain\". This configuration parameter is used by KuberLogic to generate subdomains for the application instances when they are provisioned. (e.g. instance1.defaultdomain.com)")
+	_ = cmd.PersistentFlags().Bool(installReportErrors, false, "Report errors to KuberLogic? Please type 'Y' if you want to help us improve KuberLogic, otherwise, type 'n'. Error reports will be generated and sent automatically, these reports contain only information about the errors and do not contain any user data. Let us receive errors at least from your test environments")
+	_ = cmd.PersistentFlags().String(installSentryDSNParam, "", "Specify Sentry Data Source Name (DSN). For more information, read https://docs.sentry.io/product/sentry-basics/dsn-explainer/. (KuberLogic team will not be notified in case of errors)")
 	return cmd
 }
 
@@ -199,7 +201,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		} else if useKLSentry {
 			sentrDSN = klSentryDSN
 		} else {
-			sentrDSN, err = getStringPrompt(command, installSentryDSNParam, klParams.GetString(installSentryDSNParam), nil)
+			sentrDSN, err = getStringPrompt(command, installSentryDSNParam, klParams.GetString(installSentryDSNParam), validateEmptyStrOrUri)
 			if err != nil {
 				return errors.Wrapf(err, "error processing %s flag", installSentryDSNParam)
 			}
@@ -256,7 +258,8 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 
 		// run kustomize via exec and apply manifests via kubectl
 		command.Println("Installing cert-manager...")
-		cmd := fmt.Sprintf("%s build %s/cert-manager | %s apply -f -", kustomizeBin, kustomizeRootDir, kubectlBin)
+
+		cmd := fmt.Sprintf("%s apply --kustomize %s/cert-manager", kubectlBin, kustomizeRootDir)
 		out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
 		command.Println(string(out))
 		if err != nil {
@@ -270,7 +273,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		}
 
 		command.Println("Installing KuberLogic...")
-		cmd = fmt.Sprintf("%s build %s/default | %s apply -f -", kustomizeBin, kustomizeRootDir, kubectlBin)
+		cmd = fmt.Sprintf("%s apply --kustomize %s/default", kubectlBin, kustomizeRootDir)
 		out, err = exec.Command("sh", "-c", cmd).CombinedOutput()
 		command.Println(string(out))
 		if err != nil {
@@ -443,4 +446,15 @@ func getKuberlogicEndpoint(c kubernetes.Interface) (string, error) {
 		}
 	}
 	return endpoint, nil
+}
+
+func validateEmptyStrOrUri(uri string) error {
+	if uri == "" {
+		return nil
+	}
+	u, err := url.ParseRequestURI(uri)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return errors.Wrap(errSentryInvalidURI, uri)
+	}
+	return nil
 }
