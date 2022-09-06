@@ -33,6 +33,7 @@ type Config struct {
 		AllowedOrigins []string `envconfig:"default=https://*;http://*"`
 	}
 	SentryDsn string `envconfig:"optional"`
+	Domain    string
 }
 
 // InitConfig func
@@ -43,6 +44,5 @@ func InitConfig(prefix string, log logging.Logger) (*Config, error) {
 	}
 
 	log.Debugw("config is", "config", config)
-
 	return config, nil
 }

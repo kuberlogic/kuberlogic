@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
@@ -31,6 +32,9 @@ func TestServiceEditNotFound(t *testing.T) {
 		log:              &TestLog{t: t},
 		clientset:        fake.NewSimpleClientset(),
 		kuberlogicClient: tc.client,
+		config: &config.Config{
+			Domain: "example.com",
+		},
 	}
 
 	params := apiService.ServiceEditParams{
@@ -71,6 +75,9 @@ func TestServiceEditSuccess(t *testing.T) {
 		log:              &TestLog{t: t},
 		clientset:        fake.NewSimpleClientset(),
 		kuberlogicClient: tc.client,
+		config: &config.Config{
+			Domain: "example.com",
+		},
 	}
 
 	service := &models.Service{
@@ -114,6 +121,9 @@ func TestServiceEditForbidSetSubscription(t *testing.T) {
 		log:              &TestLog{t: t},
 		clientset:        fake.NewSimpleClientset(),
 		kuberlogicClient: tc.client,
+		config: &config.Config{
+			Domain: "example.com",
+		},
 	}
 
 	params := apiService.ServiceEditParams{

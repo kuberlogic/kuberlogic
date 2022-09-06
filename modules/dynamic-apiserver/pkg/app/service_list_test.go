@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
@@ -23,6 +24,9 @@ func TestServiceListEmpty(t *testing.T) {
 		log:              &TestLog{t: t},
 		clientset:        fake.NewSimpleClientset(),
 		kuberlogicClient: tc.client,
+		config: &config.Config{
+			Domain: "example.com",
+		},
 	}
 
 	params := apiService.ServiceListParams{
@@ -43,6 +47,7 @@ func TestServiceListMany(t *testing.T) {
 				Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
 					Type:     "postgresql",
 					Replicas: 1,
+					Domain:   "example.com",
 				},
 				Status: cloudlinuxv1alpha1.KuberLogicServiceStatus{
 					Phase: "Running",
@@ -54,6 +59,7 @@ func TestServiceListMany(t *testing.T) {
 				},
 				Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
 					Type:     "mysql",
+					Domain:   "example.com",
 					Replicas: 2,
 				},
 				Status: cloudlinuxv1alpha1.KuberLogicServiceStatus{
@@ -70,6 +76,9 @@ func TestServiceListMany(t *testing.T) {
 		log:              &TestLog{t: t},
 		clientset:        fake.NewSimpleClientset(),
 		kuberlogicClient: tc.client,
+		config: &config.Config{
+			Domain: "example.com",
+		},
 	}
 
 	services := models.Services{
@@ -78,12 +87,14 @@ func TestServiceListMany(t *testing.T) {
 			Type:     util.StrAsPointer("postgresql"),
 			Replicas: util.Int64AsPointer(1),
 			Status:   "Running",
+			Domain:   "example.com",
 		},
 		{
 			ID:       util.StrAsPointer("two"),
 			Type:     util.StrAsPointer("mysql"),
 			Replicas: util.Int64AsPointer(2),
 			Status:   "Failed",
+			Domain:   "example.com",
 		},
 	}
 
@@ -108,6 +119,7 @@ func TestServiceListWithSubscriptionFilter(t *testing.T) {
 				Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
 					Type:     "postgresql",
 					Replicas: 1,
+					Domain:   "example.com",
 				},
 				Status: cloudlinuxv1alpha1.KuberLogicServiceStatus{
 					Phase: "Running",
@@ -123,6 +135,9 @@ func TestServiceListWithSubscriptionFilter(t *testing.T) {
 		log:              &TestLog{t: t},
 		clientset:        fake.NewSimpleClientset(),
 		kuberlogicClient: tc.client,
+		config: &config.Config{
+			Domain: "example.com",
+		},
 	}
 
 	services := models.Services{
@@ -132,6 +147,7 @@ func TestServiceListWithSubscriptionFilter(t *testing.T) {
 			Replicas:     util.Int64AsPointer(1),
 			Status:       "Running",
 			Subscription: "some-kind-of-subscription-id",
+			Domain:       "example.com",
 		},
 	}
 
