@@ -95,13 +95,14 @@ func TestInstallClusterNotAvailable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+  
 	cmd.SetArgs([]string{"install",
 		"--non-interactive",
 		"--storage_class", "demo",
 		"--ingress_class", "demo",
 		"--kuberlogic_domain", "example.com",
 	})
-	if err := cmd.Execute(); err.Error() != "Kubernetes is not available via kubectl" {
+	if err := cmd.Execute(); err.Error() != "kubernetes is not available via kubectl" {
 		t.Fatal(err)
 	}
 }

@@ -11,21 +11,23 @@ import (
 	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	cfg2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/remotecommand"
+	"k8s.io/utils/pointer"
 	"os"
 	"os/exec"
 	"path/filepath"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
-	"testing"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
+	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"testing"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -44,6 +46,14 @@ var pluginMap = map[string]plugin.Plugin{
 	"docker-compose": &commons.Plugin{},
 }
 
+type fakeExecutor struct {
+	err error
+}
+
+func (f *fakeExecutor) Stream(o remotecommand.StreamOptions) error {
+	return f.err
+}
+
 func TestControllerAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
@@ -56,7 +66,6 @@ var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	ctx, cancel = context.WithCancel(context.TODO())
-	useExistingCluster := os.Getenv("USE_EXISTING_CLUSTER") == "true"
 
 	By("bootstrapping test environment")
 
@@ -65,12 +74,13 @@ var _ = BeforeSuite(func() {
 	err = velero.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	if useExistingCluster {
+	if useExistingCluster() {
+
 		err = os.Unsetenv("KUBEBUILDER_ASSETS")
 		Expect(err).NotTo(HaveOccurred())
 
 		testEnv = &envtest.Environment{
-			UseExistingCluster: &useExistingCluster,
+			UseExistingCluster: pointer.Bool(useExistingCluster()),
 		}
 
 		cfg, err := testEnv.Start()
@@ -80,7 +90,6 @@ var _ = BeforeSuite(func() {
 		k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(k8sClient).NotTo(BeNil())
-
 	} else {
 		testEnv = &envtest.Environment{
 			CRDDirectoryPaths: []string{
@@ -143,14 +152,19 @@ var _ = BeforeSuite(func() {
 		}
 
 		err = (&KuberLogicServiceReconciler{
-			Client:  k8sManager.GetClient(),
-			Scheme:  k8sManager.GetScheme(),
-			Plugins: pluginInstances,
-			Cfg:     config,
+			Client:     k8sManager.GetClient(),
+			Scheme:     k8sManager.GetScheme(),
+			RESTConfig: cfg,
+			Plugins:    pluginInstances,
+			Cfg:        config,
 		}).SetupWithManager(k8sManager, dependantObjects...)
 		Expect(err).ToNot(HaveOccurred())
 
 		if config.Backups.Enabled {
+			ns := &corev1.Namespace{}
+			ns.SetName("velero")
+			Expect(k8sClient.Create(ctx, ns)).Should(Succeed())
+
 			err = (&KuberlogicServiceBackupReconciler{
 				Client: k8sManager.GetClient(),
 				Scheme: k8sManager.GetScheme(),
@@ -191,3 +205,7 @@ var _ = AfterSuite(func() {
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })
+
+func useExistingCluster() bool {
+	return os.Getenv("USE_EXISTING_CLUSTER") == "true"
+}

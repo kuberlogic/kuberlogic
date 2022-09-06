@@ -33,6 +33,10 @@ type PostgresqlService struct {
 	service postgresv1.Postgresql
 }
 
+func (p *PostgresqlService) GetCredentialsMethod(req commons.PluginRequestCredentialsMethod) *commons.PluginResponseCredentialsMethod {
+	return &commons.PluginResponseCredentialsMethod{}
+}
+
 func NewPostgresqlService(logger hclog.Logger) *PostgresqlService {
 	return &PostgresqlService{
 		logger: logger,

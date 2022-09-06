@@ -104,6 +104,7 @@ func MakeRootCmd(httpClient *http.Client, k8sclient kubernetes.Interface) (*cobr
 		makeRestoreCmd(makeClientClosure(httpClient)),
 
 		makeInstallCmd(k8sclient),
+		makeDiagCmd(),
 		makeVersionCmd(k8sclient),
 		makeInfoCmd(k8sclient, makeClientClosure(httpClient)),
 	)
@@ -141,6 +142,7 @@ func makeServiceCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Com
 		makeServiceDeleteCmd(apiClientFunc),
 		makeServiceListCmd(apiClientFunc),
 		makeServiceBackupCmd(apiClientFunc),
+		makeServiceCredentialsUpdateCmd(apiClientFunc),
 	)
 
 	return operationGroupServiceCmd

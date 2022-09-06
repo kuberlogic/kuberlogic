@@ -33,6 +33,22 @@ type dockerComposeService struct {
 	spec   *compose.Project
 }
 
+func (d *dockerComposeService) GetCredentialsMethod(req commons.PluginRequestCredentialsMethod) *commons.PluginResponseCredentialsMethod {
+	composeObjects := pluginCompose.NewComposeModel(d.spec, d.logger)
+	r, err := composeObjects.GetCredentialsMethod(&req)
+	if r == nil {
+		ret := &commons.PluginResponseCredentialsMethod{
+			Err: "failed to get update credentials method",
+		}
+
+		if err != nil {
+			ret.Err = err.Error()
+		}
+		return ret
+	}
+	return r
+}
+
 func (d *dockerComposeService) Convert(req commons.PluginRequest) *commons.PluginResponse {
 	res := &commons.PluginResponse{}
 

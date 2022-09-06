@@ -89,6 +89,11 @@ func configureAPI(api *operations.KuberlogicAPI) http.Handler {
 			return middleware.NotImplemented("operation service.ServiceAdd has not yet been implemented")
 		})
 	}
+	if api.ServiceServiceCredentialsUpdateHandler == nil {
+		api.ServiceServiceCredentialsUpdateHandler = service.ServiceCredentialsUpdateHandlerFunc(func(params service.ServiceCredentialsUpdateParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation service.ServiceCredentialsUpdate has not yet been implemented")
+		})
+	}
 	if api.ServiceServiceDeleteHandler == nil {
 		api.ServiceServiceDeleteHandler = service.ServiceDeleteHandlerFunc(func(params service.ServiceDeleteParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceDelete has not yet been implemented")

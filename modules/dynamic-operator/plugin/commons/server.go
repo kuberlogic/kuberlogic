@@ -53,3 +53,8 @@ func (s *PluginServer) ValidateDelete(req PluginRequest, resp *PluginResponseVal
 	*resp = *s.Impl.ValidateCreate(req)
 	return nil
 }
+
+func (s *PluginServer) GetCredentialsMethod(req PluginRequestCredentialsMethod, resp *PluginResponseCredentialsMethod) error {
+	*resp = *s.Impl.GetCredentialsMethod(req)
+	return nil
+}

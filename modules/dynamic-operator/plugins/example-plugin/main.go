@@ -8,7 +8,7 @@ import (
 	"encoding/gob"
 	"github.com/hashicorp/go-hclog"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/example-plugin/plugin"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugins/example-plugin/plugin"
 )
 
 func main() {

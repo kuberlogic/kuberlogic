@@ -96,6 +96,7 @@ func (e *EnvironmentManager) SetupEnv(ctx context.Context) error {
 			Name:      e.cfg.SvcOpts.TLSSecretName,
 			Namespace: ns.GetName(),
 		},
+		Type: v1.SecretTypeTLS,
 	}
 
 	if e.cfg.SvcOpts.TLSSecretName != "" {

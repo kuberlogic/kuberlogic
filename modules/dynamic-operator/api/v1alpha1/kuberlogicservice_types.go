@@ -13,6 +13,9 @@ import (
 )
 
 const (
+	// CredsUpdateSecretName is a corev1.Secret name that is created when a credentials update operation is requested via KL apiserver
+	CredsUpdateSecretName = "credential-request"
+
 	configFailedCondType       = "ConfigurationError"
 	provisioningFailedCondType = "ProvisioningError"
 	clusterUnknownStatus       = "Unknown"

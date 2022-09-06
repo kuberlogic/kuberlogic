@@ -125,6 +125,19 @@ jobs:
         run: |
           USE_EXISTING_CLUSTER=true make test
 
+      - name: Collect diagnostic information
+        if: ${{ always() }}
+        run: |
+          ./modules/dynamic-apiserver/bin/kuberlogic_x86_64_linux diag
+
+      - name: Archive test artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: kuberlogic-diag
+          path: |
+            kuberlogic-diag*.zip
+
   release:
     name: Release images
     runs-on: ubuntu-latest
