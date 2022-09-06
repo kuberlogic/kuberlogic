@@ -74,6 +74,8 @@ func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
 	return cmd
 }
 
+// Specify "KuberLogic default domain". This configuration parameter is used by KuberLogic to generate subdomains for the application instances when they are provisioned. (e.g. instance1.defaultdomain.com).
+
 // runInstall function prepares configs and installs KuberLogic by calling kubectl and kustomize binaries
 // it then uses client-go to get some config values and viper to write config file to disk
 func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, args []string) error {
@@ -155,12 +157,14 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 			if err != nil {
 				return errors.Wrapf(err, "error processing %s flag", installChargebeeKeyParam)
 			}
-
-			kuberlogicDomain, err = getStringPrompt(command, installKuberlogicDomainParam, klParams.GetString(installKuberlogicDomainParam), nil)
-			if err != nil {
-				return errors.Wrapf(err, "error processing %s flag", installKuberlogicDomainParam)
-			}
 		}
+		kuberlogicDomain, err = getStringPrompt(command, installKuberlogicDomainParam, klParams.GetString(installKuberlogicDomainParam), nil)
+		if err != nil {
+			return errors.Wrapf(err, "error processing %s flag", installKuberlogicDomainParam)
+		} else if kuberlogicDomain == "" {
+			return errors.New("kuberlogic domain cannot be empty")
+		}
+
 		klParams.Set(installChargebeeSiteParam, cSite)
 		klParams.Set(installChargebeeKeyParam, cKey)
 		klParams.Set(installKuberlogicDomainParam, kuberlogicDomain)
