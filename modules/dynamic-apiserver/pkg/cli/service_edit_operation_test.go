@@ -59,7 +59,7 @@ func TestEditSuccessFormatJson(t *testing.T) {
 	expected := map[string]interface{}{
 		"id":         "test",
 		"type":       "some-type",
-		"domain":     "new-domain",
+		"version":    "10",
 		"created_at": "0001-01-01T00:00:00.000Z",
 	}
 	client := makeTestClient(200, expected)
@@ -73,7 +73,7 @@ func TestEditSuccessFormatJson(t *testing.T) {
 	cmd.SetArgs([]string{"service", "edit",
 		"--id", "test",
 		"--format", "json",
-		"--domain", "new-domain",
+		"--version", "10",
 	})
 	err = cmd.Execute()
 	if err != nil {
@@ -99,7 +99,6 @@ func TestEditFailType(t *testing.T) {
 	expected := map[string]interface{}{
 		"id":         "test",
 		"type":       "some-type",
-		"domain":     "new-domain",
 		"created_at": "0001-01-01T00:00:00.000Z",
 	}
 	client := makeTestClient(200, expected)
@@ -114,7 +113,6 @@ func TestEditFailType(t *testing.T) {
 		"--id", "test",
 		"--format", "json",
 		"--type", "new-type",
-		"--domain", "new-domain",
 	})
 	err = cmd.Execute()
 	if err != nil && err.Error() == "unknown flag: --type" {

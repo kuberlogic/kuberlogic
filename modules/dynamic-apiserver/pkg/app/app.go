@@ -18,6 +18,7 @@ package app
 
 import (
 	"context"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/logging"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
 	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
@@ -38,17 +39,19 @@ type Service struct {
 	clientset        kubernetes.Interface
 	kuberlogicClient rest.Interface
 	log              logging.Logger
+	config           *config.Config
 }
 
 func (srv *Service) GetLogger() logging.Logger {
 	return srv.log
 }
 
-func New(clientset kubernetes.Interface, client rest.Interface, log logging.Logger) *Service {
+func New(cfg *config.Config, clientset kubernetes.Interface, client rest.Interface, log logging.Logger) *Service {
 	return &Service{
 		clientset:        clientset,
 		kuberlogicClient: client,
 		log:              log,
+		config:           cfg,
 	}
 }
 

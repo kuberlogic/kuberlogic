@@ -11,6 +11,7 @@ APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME)
 KUBERLOGIC_APISERVER_TOKEN=8ZTjsD3t2Q3Yq-C4-hoahcFn
 KUBERLOGIC_SENTRY_DSN =
 KUBERLOGIC_DEBUG_LOGS = true
+KUBERLOGIC_DOMAIN = example.com
 
 ifeq ($(USE_BUILD),true)
 	VERSION := $(VERSION)-$(shell git rev-list --count $(shell git rev-parse --abbrev-ref HEAD))
@@ -46,7 +47,7 @@ generate-client: recreate-generated-client
 
 .PHONY: test
 test: build-configs
-	go test -v ./... -coverprofile cover.out
+	go test -v ./... -coverprofile cover.out ${ARGS}
 
 .PHONY: build-configs
 build-configs:
@@ -58,12 +59,13 @@ build-configs:
 .PHONY: build-cli
 build-cli: export CGO_ENABLED=0
 build-cli: export GO111MODULE=on
+build-cli: export LDFLAGS="-X github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/cli.ver=$(VERSION)"
 build-cli: build-configs
-	GOOS=darwin GOARCH=amd64 go build -a -o bin/kuberlogic_x86_64_darwin cmd/cli/main.go
-	GOOS=darwin GOARCH=arm64 go build -a -o bin/kuberlogic_arm64_darwin cmd/cli/main.go
-	GOOS=linux GOARCH=amd64 go build -a -o bin/kuberlogic_x86_64_linux cmd/cli/main.go
-	test -e kuberlogic && rm kuberlogic || echo "file does not exist"
-	cp bin/kuberlogic_$(shell uname -m)_$(shell uname | tr '[:upper:]' '[:lower:]') kuberlogic
+	GOOS=darwin GOARCH=amd64 go build -ldflags $(LDFLAGS) -a -o bin/kuberlogic_x86_64_darwin cmd/cli/main.go
+	GOOS=darwin GOARCH=arm64 go build -ldflags $(LDFLAGS) -a -o bin/kuberlogic_arm64_darwin cmd/cli/main.go
+	GOOS=linux GOARCH=amd64 go build -ldflags $(LDFLAGS) -a -o bin/kuberlogic_x86_64_linux cmd/cli/main.go
+	test -e kuberlogic && rm kuberlogic || echo "link does not exist"
+	ln -s bin/kuberlogic_$(shell uname -m)_$(shell uname | tr '[:upper:]' '[:lower:]') kuberlogic
 
 .PHONY: run
 run:

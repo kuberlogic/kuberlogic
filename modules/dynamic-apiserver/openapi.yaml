@@ -437,8 +437,7 @@ definitions:
         type: string
       tlsEnabled:
         type: boolean
-      domain:
-        type: string
+
       replicas:
         # https://goswagger.io/faq/faq_model.html#non-required-or-nullable-property
         x-nullable: true
@@ -449,6 +448,11 @@ definitions:
         $ref: "#/definitions/Limits"
       advanced:
         $ref: "#/definitions/Advanced"
+
+      domain:
+        readOnly: true
+        type: string
+
       status:
         type: string
         readOnly: true

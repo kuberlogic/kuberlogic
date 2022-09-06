@@ -27,7 +27,7 @@ func (srv *Service) ServiceAddHandler(params apiService.ServiceAddParams, _ *mod
 		}
 	}
 
-	c, err := util.ServiceToKuberlogic(params.ServiceItem)
+	c, err := util.ServiceToKuberlogic(params.ServiceItem, srv.config)
 	if err != nil {
 		srv.log.Errorw("error converting service model to kuberlogic", "error", err)
 		return apiService.NewServiceAddBadRequest().WithPayload(

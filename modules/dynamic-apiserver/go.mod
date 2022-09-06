@@ -19,6 +19,7 @@ require (
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/kuberlogic/kuberlogic/modules/dynamic-operator v0.0.0-20220329063704-75e3ccc06da7
 	github.com/manifoldco/promptui v0.9.0
+	github.com/novln/docker-parser v1.0.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.5.0

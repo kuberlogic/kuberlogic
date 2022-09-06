@@ -18,17 +18,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-// debug flag indicating that cli should output debug logs
-var debug bool
+var (
+	// debug flag indicating that cli should output debug logs
+	debug bool
+	// config file location
+	configFile string
+	// dry run flag
+	dryRun bool
+	// name of the executable
+	exeName = filepath.Base(os.Args[0])
 
-// config file location
-var configFile string
-
-// dry run flag
-var dryRun bool
-
-// name of the executable
-var exeName string = filepath.Base(os.Args[0])
+	// version of package, substitute via ldflags
+	ver string
+)
 
 // logDebugf writes debug log to stdout
 func logDebugf(format string, v ...interface{}) {
@@ -103,6 +105,8 @@ func MakeRootCmd(httpClient *http.Client, k8sclient kubernetes.Interface) (*cobr
 
 		makeInstallCmd(k8sclient),
 		makeDiagCmd(),
+		makeVersionCmd(k8sclient),
+		makeInfoCmd(k8sclient, makeClientClosure(httpClient)),
 	)
 
 	// add cobra completion
@@ -129,8 +133,8 @@ func initViperConfigs() {
 
 func makeServiceCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
 	operationGroupServiceCmd := &cobra.Command{
-		Use:  "service",
-		Long: `Service related operations`,
+		Use:   "service",
+		Short: `Service related operations`,
 	}
 	operationGroupServiceCmd.AddCommand(
 		makeServiceAddCmd(apiClientFunc),
