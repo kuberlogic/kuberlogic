@@ -1,6 +1,6 @@
 .EXPORT_ALL_VARIABLES:
 
-VERSION = 0.0.11
+VERSION = 0.0.12
 
 IMG_REPO = quay.io/kuberlogic
 IMG_LATEST_TAG=latest
