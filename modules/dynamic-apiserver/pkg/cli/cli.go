@@ -102,6 +102,7 @@ func MakeRootCmd(httpClient *http.Client, k8sclient kubernetes.Interface) (*cobr
 		makeRestoreCmd(makeClientClosure(httpClient)),
 
 		makeInstallCmd(k8sclient),
+		makeDiagCmd(),
 	)
 
 	// add cobra completion

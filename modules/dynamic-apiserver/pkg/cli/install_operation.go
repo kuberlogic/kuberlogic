@@ -165,11 +165,11 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		klParams.Set(installChargebeeKeyParam, cKey)
 		klParams.Set(installKuberlogicDomainParam, kuberlogicDomain)
 
-		cachedTlsCrt := filepath.Join(cacheDir, "certificates/tls.crt")
+		cachedTlsCrt := filepath.Join(cacheDir, "certificate/tls.crt")
 		if tlsCertPath, err := getStringPrompt(command, installTLSCrtParam, cachedConfigOrEmpty(cachedTlsCrt), nil); err != nil {
 			return errors.Wrapf(err, "error processing %s flag", installTLSCrtParam)
 		} else if tlsCertPath != "" {
-			cachedTlsKey := filepath.Join(cacheDir, "/certificates/tls.key")
+			cachedTlsKey := filepath.Join(cacheDir, "/certificate/tls.key")
 			tlsKeyPath, err := getStringPrompt(command, installTLSKeyParam, cachedConfigOrEmpty(cachedTlsKey), func(s string) error {
 				if s == "" {
 					return errors.New("tls certificate is set but tls key is missing")
@@ -247,7 +247,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		}
 		if out, err := exec.Command(kubectlBin, "cluster-info").CombinedOutput(); err != nil {
 			command.Println(string(out))
-			return errors.New("Kubernetes is not available via kubectl")
+			return errors.New("kubernetes is not available via kubectl")
 		}
 
 		// run kustomize via exec and apply manifests via kubectl
@@ -262,7 +262,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		cmd = fmt.Sprintf("%s -n cert-manager wait --for=condition=ready pods --all --timeout=300s", kubectlBin)
 		if out, err := exec.Command("sh", "-c", cmd).CombinedOutput(); err != nil {
 			command.Println(string(out))
-			return errors.New("Failed installing cert-manager")
+			return errors.New("failed to install cert-manager")
 		}
 
 		command.Println("Installing KuberLogic...")
@@ -272,10 +272,11 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		if err != nil {
 			return err
 		}
+		command.Println("Waiting for Kuberlogic to be ready...")
 		cmd = fmt.Sprintf("%s -n kuberlogic wait --for=condition=ready pods --all --timeout=300s", kubectlBin)
 		if out, err := exec.Command("sh", "-c", cmd).CombinedOutput(); err != nil {
 			command.Println(string(out))
-			return errors.New("Failed installing kuberlogic")
+			return errors.New("failed to install Kuberlogic")
 		}
 
 		command.Println("Fetching KuberLogic endpoint...")
@@ -371,6 +372,9 @@ func useCachedConfigFiles(configCacheDir, configDir string, printf func(f string
 }
 
 func cacheConfigFile(src, name string) error {
+	if err := os.MkdirAll(filepath.Dir(name), os.ModePerm); err != nil {
+		return err
+	}
 	data, err := os.ReadFile(src)
 	if err != nil {
 		return errors.Wrap(err, "failed to read "+src)
@@ -405,7 +409,11 @@ func getKuberlogicEndpoint(c kubernetes.Interface) (string, error) {
 		}
 
 		if lbIPs := svc.Status.LoadBalancer.Ingress; len(lbIPs) != 0 {
-			endpoint = lbIPs[0].IP
+			if ing := lbIPs[0]; ing.Hostname != "" {
+				endpoint = ing.Hostname
+			} else {
+				endpoint = ing.IP
+			}
 		}
 		if svc.Spec.ExternalName != "" {
 			endpoint = svc.Spec.ExternalName
