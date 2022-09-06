@@ -8,17 +8,18 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin"
-	cfg2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
-	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin"
+	cfg2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
+	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -59,6 +60,7 @@ func TestWebhookAPIs(t *testing.T) {
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
+	os.Setenv("DEPLOYMENT_ID", "123-123-123-123")
 	config, err := cfg2.NewConfig()
 	Expect(err).NotTo(HaveOccurred())
 
@@ -176,4 +178,5 @@ var _ = AfterSuite(func() {
 
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
+	os.Unsetenv("DEPLOYMENT_ID")
 })
