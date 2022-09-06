@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -30,6 +31,7 @@ var (
 
 	errTokenEmpty         = errors.New("token can't be empty")
 	errChargebeeKeyNotSet = errors.New("chargebee key can't be empty")
+	errSentryInvalidURI   = errors.New("invalid uri")
 )
 
 const (
@@ -195,7 +197,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		} else if useKLSentry {
 			sentrDSN = klSentryDSN
 		} else {
-			sentrDSN, err = getStringPrompt(command, installSentryDSNParam, klParams.GetString(installSentryDSNParam), nil)
+			sentrDSN, err = getStringPrompt(command, installSentryDSNParam, klParams.GetString(installSentryDSNParam), validateEmptyStrOrUri)
 			if err != nil {
 				return errors.Wrapf(err, "error processing %s flag", installSentryDSNParam)
 			}
@@ -440,4 +442,15 @@ func getKuberlogicEndpoint(c kubernetes.Interface) (string, error) {
 		}
 	}
 	return endpoint, nil
+}
+
+func validateEmptyStrOrUri(uri string) error {
+	if uri == "" {
+		return nil
+	}
+	u, err := url.ParseRequestURI(uri)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return errors.Wrap(errSentryInvalidURI, uri)
+	}
+	return nil
 }
