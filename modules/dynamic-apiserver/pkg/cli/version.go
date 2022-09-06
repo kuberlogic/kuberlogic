@@ -39,7 +39,6 @@ func runVersion(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 				}
 				command.Printf("%s: %s\n", container.Name, ref.Tag())
 			}
-			break
 		}
 		return nil
 	}

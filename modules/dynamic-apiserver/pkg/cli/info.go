@@ -58,8 +58,6 @@ func runInfo(k8sclient kubernetes.Interface, apiClientFunc func() (*client.Servi
 				}
 				command.Printf("%s: %s\n", status.Name, containerStatus)
 			}
-
-			break
 		}
 
 		command.Println()
