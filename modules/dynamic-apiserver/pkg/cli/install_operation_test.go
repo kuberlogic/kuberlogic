@@ -64,7 +64,12 @@ func TestInstallLB(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd.SetArgs([]string{"install", "--non-interactive", "--storage_class", "demo", "--ingress_class", "demo"})
+	cmd.SetArgs([]string{"install",
+		"--non-interactive",
+		"--storage_class", "demo",
+		"--ingress_class", "demo",
+		"--kuberlogic_domain", "example.com",
+	})
 	if err := cmd.Execute(); err != nil {
 		t.Fatal(err)
 	}
@@ -90,7 +95,12 @@ func TestInstallClusterNotAvailable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd.SetArgs([]string{"install", "--non-interactive", "--storage_class", "demo", "--ingress_class", "demo"})
+	cmd.SetArgs([]string{"install",
+		"--non-interactive",
+		"--storage_class", "demo",
+		"--ingress_class", "demo",
+		"--kuberlogic_domain", "example.com",
+	})
 	if err := cmd.Execute(); err.Error() != "Kubernetes is not available via kubectl" {
 		t.Fatal(err)
 	}
@@ -108,7 +118,12 @@ func TestIngressClassNotAvailable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd.SetArgs([]string{"install", "--non-interactive", "--storage_class", "demo", "--ingress_class", "fake"})
+	cmd.SetArgs([]string{"install",
+		"--non-interactive",
+		"--storage_class", "demo",
+		"--ingress_class", "fake",
+		"--kuberlogic_domain", "example.com",
+	})
 	if err := cmd.Execute(); err.Error() != "error processing ingress_class flag: fake is not available. Available: demo" {
 		t.Fatal(err)
 	}

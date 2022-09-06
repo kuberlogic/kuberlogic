@@ -70,11 +70,13 @@ func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
 	_ = cmd.PersistentFlags().String(installTLSCrtParam, "", "Specify path to TLS key to use for provisioned applications")
 	_ = cmd.PersistentFlags().String(installChargebeeSiteParam, "", "Specify ChargeBee site name. For more information, read https://kuberlogic.com/docs/configuring/billing. You can skip this step by pressing 'Enter', and set up the integration later")
 	_ = cmd.PersistentFlags().String(installChargebeeKeyParam, "", "Specify ChargeBee API-key. For more information, read https://apidocs.chargebee.com/docs/api/?prod_cat_ver=2. API Keys are used to authenticate KuberLogic and control its access to the Chargebee API")
-	_ = cmd.PersistentFlags().String(installKuberlogicDomainParam, "example.com", "Specify \"KuberLogic default domain\". This configuration parameter is used by KuberLogic to generate subdomains for the application instances when they are provisioned. (e.g. instance1.defaultdomain.com)")
+	_ = cmd.PersistentFlags().String(installKuberlogicDomainParam, "", "Specify “Domain name”. This configuration setting is used by KuberLogic to create endpoints for application instances. (e.g. instance1.domainname.com)")
 	_ = cmd.PersistentFlags().Bool(installReportErrors, false, "Report errors to KuberLogic? Please type 'Y' if you want to help us improve KuberLogic, otherwise, type 'n'. Error reports will be generated and sent automatically, these reports contain only information about the errors and do not contain any user data. Let us receive errors at least from your test environments")
 	_ = cmd.PersistentFlags().String(installSentryDSNParam, "", "Specify Sentry Data Source Name (DSN). For more information, read https://docs.sentry.io/product/sentry-basics/dsn-explainer/. (KuberLogic team will not be notified in case of errors)")
 	return cmd
 }
+
+// Specify "KuberLogic default domain". This configuration parameter is used by KuberLogic to generate subdomains for the application instances when they are provisioned. (e.g. instance1.defaultdomain.com).
 
 // runInstall function prepares configs and installs KuberLogic by calling kubectl and kustomize binaries
 // it then uses client-go to get some config values and viper to write config file to disk
@@ -157,12 +159,14 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 			if err != nil {
 				return errors.Wrapf(err, "error processing %s flag", installChargebeeKeyParam)
 			}
-
-			kuberlogicDomain, err = getStringPrompt(command, installKuberlogicDomainParam, klParams.GetString(installKuberlogicDomainParam), nil)
-			if err != nil {
-				return errors.Wrapf(err, "error processing %s flag", installKuberlogicDomainParam)
-			}
 		}
+		kuberlogicDomain, err = getStringPrompt(command, installKuberlogicDomainParam, klParams.GetString(installKuberlogicDomainParam), nil)
+		if err != nil {
+			return errors.Wrapf(err, "error processing %s flag", installKuberlogicDomainParam)
+		} else if kuberlogicDomain == "" {
+			return errors.New("kuberlogic domain cannot be empty")
+		}
+
 		klParams.Set(installChargebeeSiteParam, cSite)
 		klParams.Set(installChargebeeKeyParam, cKey)
 		klParams.Set(installKuberlogicDomainParam, kuberlogicDomain)
