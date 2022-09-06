@@ -46,7 +46,7 @@ generate-client: recreate-generated-client
 
 .PHONY: test
 test: build-configs
-	go test -v ./... -coverprofile cover.out
+	go test -v ./... -coverprofile cover.out $(ARGS)
 
 .PHONY: build-configs
 build-configs:
