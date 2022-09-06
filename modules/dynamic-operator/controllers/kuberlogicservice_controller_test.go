@@ -233,8 +233,7 @@ var _ = Describe("KuberlogicService controller", func() {
 
 					By("klb must be deleted")
 					Eventually(func() bool {
-						return errors.IsNotFound(k8sClient.Get(ctx, client.ObjectKeyFromObject(klb), klb)) &&
-							klb.GetUID() == klr.OwnerReferences[0].UID // gc doesn't work in envtest, but it does not really matter in this specific test
+						return errors.IsNotFound(k8sClient.Get(ctx, client.ObjectKeyFromObject(klb), klb))
 					}, timeout, interval).Should(BeTrue())
 				})
 			})
