@@ -25,7 +25,6 @@ func makeServiceEditCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra
 	_ = cmd.PersistentFlags().String(idFlag, "", "service id [required]")
 	_ = cmd.PersistentFlags().Int64("replicas", 1, "how many replicas need for service")
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
-	_ = cmd.PersistentFlags().String("domain", "", "domain for external connection to service")
 	_ = cmd.PersistentFlags().String("backup_schedule", "", "backup schedule in cron format")
 	_ = cmd.PersistentFlags().Bool("tls_enabled", false, "")
 
@@ -75,12 +74,6 @@ func runServiceEdit(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 			return err
 		} else if value != nil {
 			svc.Version = *value
-		}
-
-		if value, err := getString(cmd, "domain"); err != nil {
-			return err
-		} else if value != nil {
-			svc.Domain = *value
 		}
 
 		if value, err := getString(cmd, "backup_schedule"); err != nil {

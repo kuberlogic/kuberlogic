@@ -27,8 +27,7 @@ import (
 var klConfigZipData []byte
 
 var (
-	kubectlBin   = "kubectl"
-	kustomizeBin = "kustomize"
+	kubectlBin = "kubectl"
 
 	errTokenEmpty         = errors.New("token can't be empty")
 	errChargebeeKeyNotSet = errors.New("chargebee key can't be empty")
@@ -255,7 +254,8 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 
 		// run kustomize via exec and apply manifests via kubectl
 		command.Println("Installing cert-manager...")
-		cmd := fmt.Sprintf("%s build %s/cert-manager | %s apply -f -", kustomizeBin, kustomizeRootDir, kubectlBin)
+
+		cmd := fmt.Sprintf("%s apply --kustomize %s/cert-manager", kubectlBin, kustomizeRootDir)
 		out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
 		command.Println(string(out))
 		if err != nil {
@@ -269,7 +269,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		}
 
 		command.Println("Installing KuberLogic...")
-		cmd = fmt.Sprintf("%s build %s/default | %s apply -f -", kustomizeBin, kustomizeRootDir, kubectlBin)
+		cmd = fmt.Sprintf("%s apply --kustomize %s/default", kubectlBin, kustomizeRootDir)
 		out, err = exec.Command("sh", "-c", cmd).CombinedOutput()
 		command.Println(string(out))
 		if err != nil {

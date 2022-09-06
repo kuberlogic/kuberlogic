@@ -128,6 +128,11 @@ spec:
                 secretKeyRef:
                   name: kuberlogic-config
                   key: SENTRY_DSN
+            - name: KUBERLOGIC_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: kuberlogic-config
+                  key: KUBERLOGIC_DOMAIN
           ports:
             - containerPort: 8001
           resources:
@@ -166,11 +171,6 @@ spec:
                 secretKeyRef:
                   name: kuberlogic-config
                   key: CHARGEBEE_KEY
-            - name: KUBERLOGIC_DOMAIN
-              valueFrom:
-                secretKeyRef:
-                  name: kuberlogic-config
-                  key: KUBERLOGIC_DOMAIN
             - name: KUBERLOGIC_TYPE
               value: docker-compose
             - name: SENTRY_DSN

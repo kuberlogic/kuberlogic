@@ -72,7 +72,6 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	useExistingCluster := os.Getenv("USE_EXISTING_CLUSTER") == "true"
-
 	if useExistingCluster {
 		testEnv = &envtest.Environment{
 			UseExistingCluster: &useExistingCluster,

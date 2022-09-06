@@ -96,7 +96,7 @@ func Main(args []string) {
 		mainLog.Fatalw("could not get base client", "error", err)
 	}
 
-    srv := app.New(baseClient, crdClient, logging.WithComponentLogger("server"))
+    srv := app.New(cfg, baseClient, crdClient, logging.WithComponentLogger("server"))
     api := operations.NewKuberlogicAPI(swaggerSpec)
     // Applies when the "x-token" header is set
     api.KeyAuth = func(token string) (*models.Principal, error) {

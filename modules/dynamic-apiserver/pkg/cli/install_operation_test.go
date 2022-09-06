@@ -58,7 +58,6 @@ func TestInstallLB(t *testing.T) {
 
 	configFile = filepath.Join(configDir, "config.yaml")
 	kubectlBin = "echo"
-	kustomizeBin = "echo"
 	viper.SetConfigFile(configFile)
 
 	cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
@@ -85,7 +84,6 @@ func TestInstallClusterNotAvailable(t *testing.T) {
 
 	configFile = filepath.Join(configDir, "config.yaml")
 	kubectlBin = "exit 1"
-	kustomizeBin = "exit 1"
 	viper.SetConfigFile(configFile)
 
 	cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
@@ -104,7 +102,6 @@ func TestIngressClassNotAvailable(t *testing.T) {
 
 	configFile = filepath.Join(configDir, "config.yaml")
 	kubectlBin = "exit 1"
-	kustomizeBin = "exit 1"
 	viper.SetConfigFile(configFile)
 
 	cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
@@ -133,7 +130,6 @@ func TestValidationSentryURI(t *testing.T) {
 
 			configFile = filepath.Join(configDir, "config.yaml")
 			kubectlBin = "echo"
-			kustomizeBin = "echo"
 			viper.SetConfigFile(configFile)
 
 			cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
