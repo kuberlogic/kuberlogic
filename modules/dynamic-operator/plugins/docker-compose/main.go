@@ -27,6 +27,10 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
 )
 
+var (
+	version = ""
+)
+
 func main() {
 	cfg, err := getConfig()
 	if err != nil {
@@ -61,7 +65,12 @@ func main() {
 
 	// init sentry
 	if dsn := cfg.SentryDsn; dsn != "" {
-		rawLogger = sentry.UseSentryWithLogger(dsn, rawLogger, pluginName)
+		sentryTags := &sentry.SentryTags{
+			Component:    pluginName,
+			Version:      version,
+			DeploymentId: cfg.DeploymentId,
+		}
+		rawLogger = sentry.UseSentryWithLogger(dsn, rawLogger, sentryTags)
 		rawLogger.Info("sentry for plugin docker-compose is initialized")
 	}
 	logger := rawLogger.Sugar()

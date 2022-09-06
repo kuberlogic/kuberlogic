@@ -31,12 +31,12 @@ func NewBackupAdd(ctx *middleware.Context, handler BackupAddHandler) *BackupAdd 
 	return &BackupAdd{Context: ctx, Handler: handler}
 }
 
-/* BackupAdd swagger:route POST /backups/ backup backupAdd
+/*
+	BackupAdd swagger:route POST /backups/ backup backupAdd
 
 create backup object
 
 Create backup object
-
 */
 type BackupAdd struct {
 	Context *middleware.Context

@@ -31,12 +31,12 @@ func NewBackupList(ctx *middleware.Context, handler BackupListHandler) *BackupLi
 	return &BackupList{Context: ctx, Handler: handler}
 }
 
-/* BackupList swagger:route GET /backups/ backup backupList
+/*
+	BackupList swagger:route GET /backups/ backup backupList
 
 list backups
 
 List backup objects
-
 */
 type BackupList struct {
 	Context *middleware.Context

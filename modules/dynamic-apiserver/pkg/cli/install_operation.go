@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -51,6 +52,7 @@ const (
 	installKuberlogicDomainParam        = "kuberlogic_domain"
 	installReportErrors                 = "report_errors"
 	installSentryDSNParam               = "sentry_dsn"
+	installDeploymentId                 = "deployment_id"
 )
 
 func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
@@ -103,6 +105,10 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 
 		// handle kuberlogic parameters
 		klParams := viper.New()
+		deploymentId := klParams.GetString(installDeploymentId)
+		if deploymentId == "" {
+			klParams.Set(installDeploymentId, uuid.New().String())
+		}
 
 		klConfigFile := filepath.Join(cacheDir, "manager", "kuberlogic-config.env")
 		if err := os.MkdirAll(filepath.Dir(klConfigFile), os.ModePerm); err != nil {

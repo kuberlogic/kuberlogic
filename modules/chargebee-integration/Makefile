@@ -25,7 +25,7 @@ IMG_SHA_TAG ?= $(VERSION)-$(COMMIT_SHA)
 
 .PHONY: run
 run:
-	go run main.go ${ARGS}
+	go run -ldflags="-X main.version=$(VERSION)" main.go ${ARGS}
 
 .PHONY: test
 test:
@@ -37,7 +37,7 @@ docker-build:
 	GOOS=linux \
 	GOARCH=amd64 \
 	GO111MODULE=on \
-	go build -a -o bin/chargebee-integration main.go
+	go build -a -o bin/chargebee-integration -ldflags="-X main.version=$(VERSION)" main.go
 	docker build . \
 		--build-arg BIN=bin/chargebee-integration \
 		-t $(IMAGE_PATH):$(VERSION) \

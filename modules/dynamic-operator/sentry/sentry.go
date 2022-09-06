@@ -11,11 +11,19 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func UseSentryWithLogger(dsn string, log *zap.Logger, component string) *zap.Logger {
+type SentryTags struct {
+	Component    string
+	Version      string
+	DeploymentId string
+}
+
+func UseSentryWithLogger(dsn string, log *zap.Logger, tags *SentryTags) *zap.Logger {
 	cfg := zapsentry.Configuration{
 		Level: zapcore.WarnLevel, //when to send message to sentry
 		Tags: map[string]string{
-			"component": component,
+			"component":     tags.Component,
+			"version":       tags.Version,
+			"deployment_id": tags.DeploymentId,
 		},
 	}
 	core, err := zapsentry.NewCore(cfg, zapsentry.NewSentryClientFromDSN(dsn))
@@ -26,7 +34,7 @@ func UseSentryWithLogger(dsn string, log *zap.Logger, component string) *zap.Log
 	return zapsentry.AttachCoreToLogger(core, log)
 }
 
-func InitSentry(dsn, component string) error {
+func InitSentry(dsn string, tags *SentryTags) error {
 	if err := sentry.Init(sentry.ClientOptions{
 		Dsn:              dsn,
 		AttachStacktrace: true,
@@ -38,7 +46,9 @@ func InitSentry(dsn, component string) error {
 		return err
 	}
 	sentry.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetTag("component", component)
+		scope.SetTag("component", tags.Component)
+		scope.SetTag("version", tags.Version)
+		scope.SetTag("deployment_id", tags.DeploymentId)
 	})
 	return nil
 }

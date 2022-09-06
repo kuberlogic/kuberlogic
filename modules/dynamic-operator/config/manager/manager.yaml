@@ -84,6 +84,11 @@ spec:
                 secretKeyRef:
                   name: kuberlogic-config
                   key: SENTRY_DSN
+            - name: DEPLOYMENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: kuberlogic-config
+                  key: DEPLOYMENT_ID
           args:
             - --manager-config=/etc/manager-config/controller_manager_config.yaml
           image: controller:latest
@@ -128,6 +133,11 @@ spec:
                 secretKeyRef:
                   name: kuberlogic-config
                   key: SENTRY_DSN
+            - name: KUBERLOGIC_DEPLOYMENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: kuberlogic-config
+                  key: DEPLOYMENT_ID
             - name: KUBERLOGIC_DOMAIN
               valueFrom:
                 secretKeyRef:
@@ -178,6 +188,11 @@ spec:
                 secretKeyRef:
                   name: kuberlogic-config
                   key: SENTRY_DSN
+            - name: KUBERLOGIC_DEPLOYMENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: kuberlogic-config
+                  key: DEPLOYMENT_ID
           ports:
             - containerPort: 4242
           resources:

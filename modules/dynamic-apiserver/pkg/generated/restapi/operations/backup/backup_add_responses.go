@@ -16,7 +16,8 @@ import (
 // BackupAddCreatedCode is the HTTP code returned for type BackupAddCreated
 const BackupAddCreatedCode int = 201
 
-/*BackupAddCreated item created
+/*
+BackupAddCreated item created
 
 swagger:response backupAddCreated
 */
@@ -60,7 +61,8 @@ func (o *BackupAddCreated) WriteResponse(rw http.ResponseWriter, producer runtim
 // BackupAddBadRequestCode is the HTTP code returned for type BackupAddBadRequest
 const BackupAddBadRequestCode int = 400
 
-/*BackupAddBadRequest invalid input, object invalid
+/*
+BackupAddBadRequest invalid input, object invalid
 
 swagger:response backupAddBadRequest
 */
@@ -104,7 +106,8 @@ func (o *BackupAddBadRequest) WriteResponse(rw http.ResponseWriter, producer run
 // BackupAddUnauthorizedCode is the HTTP code returned for type BackupAddUnauthorized
 const BackupAddUnauthorizedCode int = 401
 
-/*BackupAddUnauthorized bad authentication
+/*
+BackupAddUnauthorized bad authentication
 
 swagger:response backupAddUnauthorized
 */
@@ -128,7 +131,8 @@ func (o *BackupAddUnauthorized) WriteResponse(rw http.ResponseWriter, producer r
 // BackupAddConflictCode is the HTTP code returned for type BackupAddConflict
 const BackupAddConflictCode int = 409
 
-/*BackupAddConflict item already exists
+/*
+BackupAddConflict item already exists
 
 swagger:response backupAddConflict
 */
@@ -152,7 +156,8 @@ func (o *BackupAddConflict) WriteResponse(rw http.ResponseWriter, producer runti
 // BackupAddUnprocessableEntityCode is the HTTP code returned for type BackupAddUnprocessableEntity
 const BackupAddUnprocessableEntityCode int = 422
 
-/*BackupAddUnprocessableEntity bad validation
+/*
+BackupAddUnprocessableEntity bad validation
 
 swagger:response backupAddUnprocessableEntity
 */
@@ -196,7 +201,8 @@ func (o *BackupAddUnprocessableEntity) WriteResponse(rw http.ResponseWriter, pro
 // BackupAddServiceUnavailableCode is the HTTP code returned for type BackupAddServiceUnavailable
 const BackupAddServiceUnavailableCode int = 503
 
-/*BackupAddServiceUnavailable internal server error
+/*
+BackupAddServiceUnavailable internal server error
 
 swagger:response backupAddServiceUnavailable
 */

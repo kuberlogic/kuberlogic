@@ -16,7 +16,8 @@ import (
 // BackupDeleteOKCode is the HTTP code returned for type BackupDeleteOK
 const BackupDeleteOKCode int = 200
 
-/*BackupDeleteOK item deleted
+/*
+BackupDeleteOK item deleted
 
 swagger:response backupDeleteOK
 */
@@ -40,7 +41,8 @@ func (o *BackupDeleteOK) WriteResponse(rw http.ResponseWriter, producer runtime.
 // BackupDeleteBadRequestCode is the HTTP code returned for type BackupDeleteBadRequest
 const BackupDeleteBadRequestCode int = 400
 
-/*BackupDeleteBadRequest invalid input, object invalid
+/*
+BackupDeleteBadRequest invalid input, object invalid
 
 swagger:response backupDeleteBadRequest
 */
@@ -84,7 +86,8 @@ func (o *BackupDeleteBadRequest) WriteResponse(rw http.ResponseWriter, producer 
 // BackupDeleteUnauthorizedCode is the HTTP code returned for type BackupDeleteUnauthorized
 const BackupDeleteUnauthorizedCode int = 401
 
-/*BackupDeleteUnauthorized bad authentication
+/*
+BackupDeleteUnauthorized bad authentication
 
 swagger:response backupDeleteUnauthorized
 */
@@ -108,7 +111,8 @@ func (o *BackupDeleteUnauthorized) WriteResponse(rw http.ResponseWriter, produce
 // BackupDeleteForbiddenCode is the HTTP code returned for type BackupDeleteForbidden
 const BackupDeleteForbiddenCode int = 403
 
-/*BackupDeleteForbidden bad permissions
+/*
+BackupDeleteForbidden bad permissions
 
 swagger:response backupDeleteForbidden
 */
@@ -132,7 +136,8 @@ func (o *BackupDeleteForbidden) WriteResponse(rw http.ResponseWriter, producer r
 // BackupDeleteNotFoundCode is the HTTP code returned for type BackupDeleteNotFound
 const BackupDeleteNotFoundCode int = 404
 
-/*BackupDeleteNotFound item not found
+/*
+BackupDeleteNotFound item not found
 
 swagger:response backupDeleteNotFound
 */
@@ -176,7 +181,8 @@ func (o *BackupDeleteNotFound) WriteResponse(rw http.ResponseWriter, producer ru
 // BackupDeleteUnprocessableEntityCode is the HTTP code returned for type BackupDeleteUnprocessableEntity
 const BackupDeleteUnprocessableEntityCode int = 422
 
-/*BackupDeleteUnprocessableEntity bad validation
+/*
+BackupDeleteUnprocessableEntity bad validation
 
 swagger:response backupDeleteUnprocessableEntity
 */
@@ -200,7 +206,8 @@ func (o *BackupDeleteUnprocessableEntity) WriteResponse(rw http.ResponseWriter, 
 // BackupDeleteServiceUnavailableCode is the HTTP code returned for type BackupDeleteServiceUnavailable
 const BackupDeleteServiceUnavailableCode int = 503
 
-/*BackupDeleteServiceUnavailable internal server error
+/*
+BackupDeleteServiceUnavailable internal server error
 
 swagger:response backupDeleteServiceUnavailable
 */

@@ -31,12 +31,12 @@ func NewRestoreList(ctx *middleware.Context, handler RestoreListHandler) *Restor
 	return &RestoreList{Context: ctx, Handler: handler}
 }
 
-/* RestoreList swagger:route GET /restores/ restore restoreList
+/*
+	RestoreList swagger:route GET /restores/ restore restoreList
 
 list restores
 
 List restore objects
-
 */
 type RestoreList struct {
 	Context *middleware.Context

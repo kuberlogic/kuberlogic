@@ -16,7 +16,8 @@ import (
 // ServiceEditOKCode is the HTTP code returned for type ServiceEditOK
 const ServiceEditOKCode int = 200
 
-/*ServiceEditOK item edited
+/*
+ServiceEditOK item edited
 
 swagger:response serviceEditOK
 */
@@ -60,7 +61,8 @@ func (o *ServiceEditOK) WriteResponse(rw http.ResponseWriter, producer runtime.P
 // ServiceEditBadRequestCode is the HTTP code returned for type ServiceEditBadRequest
 const ServiceEditBadRequestCode int = 400
 
-/*ServiceEditBadRequest invalid input, object invalid
+/*
+ServiceEditBadRequest invalid input, object invalid
 
 swagger:response serviceEditBadRequest
 */
@@ -104,7 +106,8 @@ func (o *ServiceEditBadRequest) WriteResponse(rw http.ResponseWriter, producer r
 // ServiceEditUnauthorizedCode is the HTTP code returned for type ServiceEditUnauthorized
 const ServiceEditUnauthorizedCode int = 401
 
-/*ServiceEditUnauthorized bad authentication
+/*
+ServiceEditUnauthorized bad authentication
 
 swagger:response serviceEditUnauthorized
 */
@@ -128,7 +131,8 @@ func (o *ServiceEditUnauthorized) WriteResponse(rw http.ResponseWriter, producer
 // ServiceEditForbiddenCode is the HTTP code returned for type ServiceEditForbidden
 const ServiceEditForbiddenCode int = 403
 
-/*ServiceEditForbidden bad permissions
+/*
+ServiceEditForbidden bad permissions
 
 swagger:response serviceEditForbidden
 */
@@ -152,7 +156,8 @@ func (o *ServiceEditForbidden) WriteResponse(rw http.ResponseWriter, producer ru
 // ServiceEditNotFoundCode is the HTTP code returned for type ServiceEditNotFound
 const ServiceEditNotFoundCode int = 404
 
-/*ServiceEditNotFound item not found
+/*
+ServiceEditNotFound item not found
 
 swagger:response serviceEditNotFound
 */
@@ -196,7 +201,8 @@ func (o *ServiceEditNotFound) WriteResponse(rw http.ResponseWriter, producer run
 // ServiceEditUnprocessableEntityCode is the HTTP code returned for type ServiceEditUnprocessableEntity
 const ServiceEditUnprocessableEntityCode int = 422
 
-/*ServiceEditUnprocessableEntity bad validation
+/*
+ServiceEditUnprocessableEntity bad validation
 
 swagger:response serviceEditUnprocessableEntity
 */
@@ -240,7 +246,8 @@ func (o *ServiceEditUnprocessableEntity) WriteResponse(rw http.ResponseWriter, p
 // ServiceEditServiceUnavailableCode is the HTTP code returned for type ServiceEditServiceUnavailable
 const ServiceEditServiceUnavailableCode int = 503
 
-/*ServiceEditServiceUnavailable internal server error
+/*
+ServiceEditServiceUnavailable internal server error
 
 swagger:response serviceEditServiceUnavailable
 */

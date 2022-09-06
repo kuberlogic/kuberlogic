@@ -61,7 +61,7 @@ help: ## Display this help.
 
 
 build-docker-compose-plugin:
-	cd plugins/docker-compose/ && go build -a -o ../../bin/docker-compose-plugin .
+	cd plugins/docker-compose/ && go build -a -o ../../bin/docker-compose-plugin -ldflags="-X main.version=$(VERSION)" .
 
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
@@ -94,13 +94,13 @@ test: manifests generate fmt vet build-docker-compose-plugin envtest ## Run test
 
 .PHONY: build
 build: generate fmt vet ## Build manager binary.
-	go build -o bin/manager main.go
+	go build -o bin/manager -ldflags="-X main.version=$(VERSION)" main.go
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
 	NAMESPACE=kuberlogic \
 	SENTRY_DSN=${SENTRY_DSN} \
-	go run ./main.go ${ARGS}
+	go run -ldflags="-X main.version=$(VERSION)" ./main.go ${ARGS}
 
 .PHONY: docker-build
 docker-build: export CGO_ENABLED=0
@@ -108,8 +108,8 @@ docker-build: export GOOS=linux
 docker-build: export GOARCH=amd64
 docker-build: export GO111MODULE=on
 docker-build: test ## Build docker image with the manager.
-	go build -a -o bin/manager main.go
-	cd plugins/docker-compose && go build -a -o ../../bin/docker-compose-plugin . && cd -
+	go build -a -o bin/manager -ldflags="-X main.version=$(VERSION)" main.go
+	cd plugins/docker-compose && go build -a -o ../../bin/docker-compose-plugin -ldflags="-X main.version=$(VERSION)" . && cd -
 	docker build . \
 		--build-arg BIN=bin/manager \
 		--build-arg PLUGIN=bin/docker-compose-plugin \

@@ -16,7 +16,8 @@ import (
 // ServiceListOKCode is the HTTP code returned for type ServiceListOK
 const ServiceListOKCode int = 200
 
-/*ServiceListOK search results matching criteria
+/*
+ServiceListOK search results matching criteria
 
 swagger:response serviceListOK
 */
@@ -63,7 +64,8 @@ func (o *ServiceListOK) WriteResponse(rw http.ResponseWriter, producer runtime.P
 // ServiceListBadRequestCode is the HTTP code returned for type ServiceListBadRequest
 const ServiceListBadRequestCode int = 400
 
-/*ServiceListBadRequest bad input parameter
+/*
+ServiceListBadRequest bad input parameter
 
 swagger:response serviceListBadRequest
 */
@@ -107,7 +109,8 @@ func (o *ServiceListBadRequest) WriteResponse(rw http.ResponseWriter, producer r
 // ServiceListUnauthorizedCode is the HTTP code returned for type ServiceListUnauthorized
 const ServiceListUnauthorizedCode int = 401
 
-/*ServiceListUnauthorized bad authentication
+/*
+ServiceListUnauthorized bad authentication
 
 swagger:response serviceListUnauthorized
 */
@@ -131,7 +134,8 @@ func (o *ServiceListUnauthorized) WriteResponse(rw http.ResponseWriter, producer
 // ServiceListForbiddenCode is the HTTP code returned for type ServiceListForbidden
 const ServiceListForbiddenCode int = 403
 
-/*ServiceListForbidden bad permissions
+/*
+ServiceListForbidden bad permissions
 
 swagger:response serviceListForbidden
 */
@@ -155,7 +159,8 @@ func (o *ServiceListForbidden) WriteResponse(rw http.ResponseWriter, producer ru
 // ServiceListUnprocessableEntityCode is the HTTP code returned for type ServiceListUnprocessableEntity
 const ServiceListUnprocessableEntityCode int = 422
 
-/*ServiceListUnprocessableEntity bad validation
+/*
+ServiceListUnprocessableEntity bad validation
 
 swagger:response serviceListUnprocessableEntity
 */
@@ -199,7 +204,8 @@ func (o *ServiceListUnprocessableEntity) WriteResponse(rw http.ResponseWriter, p
 // ServiceListServiceUnavailableCode is the HTTP code returned for type ServiceListServiceUnavailable
 const ServiceListServiceUnavailableCode int = 503
 
-/*ServiceListServiceUnavailable internal server error
+/*
+ServiceListServiceUnavailable internal server error
 
 swagger:response serviceListServiceUnavailable
 */

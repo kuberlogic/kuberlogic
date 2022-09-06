@@ -16,7 +16,8 @@ import (
 // ServiceDeleteOKCode is the HTTP code returned for type ServiceDeleteOK
 const ServiceDeleteOKCode int = 200
 
-/*ServiceDeleteOK item deleted
+/*
+ServiceDeleteOK item deleted
 
 swagger:response serviceDeleteOK
 */
@@ -40,7 +41,8 @@ func (o *ServiceDeleteOK) WriteResponse(rw http.ResponseWriter, producer runtime
 // ServiceDeleteBadRequestCode is the HTTP code returned for type ServiceDeleteBadRequest
 const ServiceDeleteBadRequestCode int = 400
 
-/*ServiceDeleteBadRequest invalid input, object invalid
+/*
+ServiceDeleteBadRequest invalid input, object invalid
 
 swagger:response serviceDeleteBadRequest
 */
@@ -84,7 +86,8 @@ func (o *ServiceDeleteBadRequest) WriteResponse(rw http.ResponseWriter, producer
 // ServiceDeleteUnauthorizedCode is the HTTP code returned for type ServiceDeleteUnauthorized
 const ServiceDeleteUnauthorizedCode int = 401
 
-/*ServiceDeleteUnauthorized bad authentication
+/*
+ServiceDeleteUnauthorized bad authentication
 
 swagger:response serviceDeleteUnauthorized
 */
@@ -108,7 +111,8 @@ func (o *ServiceDeleteUnauthorized) WriteResponse(rw http.ResponseWriter, produc
 // ServiceDeleteForbiddenCode is the HTTP code returned for type ServiceDeleteForbidden
 const ServiceDeleteForbiddenCode int = 403
 
-/*ServiceDeleteForbidden bad permissions
+/*
+ServiceDeleteForbidden bad permissions
 
 swagger:response serviceDeleteForbidden
 */
@@ -132,7 +136,8 @@ func (o *ServiceDeleteForbidden) WriteResponse(rw http.ResponseWriter, producer 
 // ServiceDeleteNotFoundCode is the HTTP code returned for type ServiceDeleteNotFound
 const ServiceDeleteNotFoundCode int = 404
 
-/*ServiceDeleteNotFound item not found
+/*
+ServiceDeleteNotFound item not found
 
 swagger:response serviceDeleteNotFound
 */
@@ -176,7 +181,8 @@ func (o *ServiceDeleteNotFound) WriteResponse(rw http.ResponseWriter, producer r
 // ServiceDeleteUnprocessableEntityCode is the HTTP code returned for type ServiceDeleteUnprocessableEntity
 const ServiceDeleteUnprocessableEntityCode int = 422
 
-/*ServiceDeleteUnprocessableEntity bad validation
+/*
+ServiceDeleteUnprocessableEntity bad validation
 
 swagger:response serviceDeleteUnprocessableEntity
 */
@@ -200,7 +206,8 @@ func (o *ServiceDeleteUnprocessableEntity) WriteResponse(rw http.ResponseWriter,
 // ServiceDeleteServiceUnavailableCode is the HTTP code returned for type ServiceDeleteServiceUnavailable
 const ServiceDeleteServiceUnavailableCode int = 503
 
-/*ServiceDeleteServiceUnavailable internal server error
+/*
+ServiceDeleteServiceUnavailable internal server error
 
 swagger:response serviceDeleteServiceUnavailable
 */

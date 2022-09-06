@@ -31,13 +31,12 @@ func NewBackupDelete(ctx *middleware.Context, handler BackupDeleteHandler) *Back
 	return &BackupDelete{Context: ctx, Handler: handler}
 }
 
-/* BackupDelete swagger:route DELETE /backups/{BackupID}/ backup backupDelete
+/*
+	BackupDelete swagger:route DELETE /backups/{BackupID}/ backup backupDelete
 
 deletes a backup item
 
 Deletes a backup object
-
-
 */
 type BackupDelete struct {
 	Context *middleware.Context

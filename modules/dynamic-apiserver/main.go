@@ -17,10 +17,15 @@
 package main
 
 import (
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/cmd"
 	"os"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/cmd"
+)
+
+var (
+	version = ""
 )
 
 func main() {
-	cmd.Main(os.Args[1:])
+	cmd.Main(os.Args[1:], version)
 }

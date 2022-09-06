@@ -69,7 +69,7 @@ build-cli: build-configs
 
 .PHONY: run
 run:
-	go run main.go
+	go run -ldflags="-X main.version=$(VERSION)" main.go
 
 .PHONY: generate
 generate: generate-server generate-client
@@ -80,7 +80,7 @@ docker-build:
 	GOOS=linux \
 	GOARCH=amd64 \
 	GO111MODULE=on \
-	go build -a -o bin/apiserver main.go
+	go build -a -o bin/apiserver -ldflags="-X main.version=$(VERSION)" main.go
 	docker build . \
 		--build-arg BIN=bin/apiserver \
 		-t $(APISERVER_IMG):$(VERSION) \

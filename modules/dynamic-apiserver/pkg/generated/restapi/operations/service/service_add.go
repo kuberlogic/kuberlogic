@@ -31,13 +31,12 @@ func NewServiceAdd(ctx *middleware.Context, handler ServiceAddHandler) *ServiceA
 	return &ServiceAdd{Context: ctx, Handler: handler}
 }
 
-/* ServiceAdd swagger:route POST /services/ service serviceAdd
+/*
+	ServiceAdd swagger:route POST /services/ service serviceAdd
 
 adds a service item
 
 Adds service object
-
-
 */
 type ServiceAdd struct {
 	Context *middleware.Context
