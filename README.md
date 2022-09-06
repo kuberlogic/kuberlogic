@@ -11,7 +11,7 @@ KuberLogic is an open-source solution that helps to deliver any single-tenant ap
 
 ### Installation
 
-Follow [Installing KuberLogic](https://docs.kuberlogic.com/getting-started) to set up your environment and install KuberLogic.
+Follow [Installing KuberLogic](https://kuberlogic.com/docs/getting-started) to set up your environment and install KuberLogic.
 
 ### Features
 
@@ -44,9 +44,6 @@ KuberLogic:
 ### Requirements
 
 Kubernetes cluster 1.20-1.23
-
-- StorageClass configured as a default
-- IngressClass configured as a default
 
 ### Documentation
 
