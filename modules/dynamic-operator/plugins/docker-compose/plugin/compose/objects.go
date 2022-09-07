@@ -2,6 +2,10 @@ package compose
 
 import (
 	"fmt"
+	"sort"
+	"strconv"
+	"strings"
+
 	"github.com/compose-spec/compose-go/types"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
@@ -15,9 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sort"
-	"strconv"
-	"strings"
 )
 
 const (
@@ -345,6 +346,18 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 				Protocol:      proto,
 			}
 			container.Ports = append(container.Ports, port)
+
+			container.ReadinessProbe = &corev1.Probe{
+				Handler: corev1.Handler{
+					HTTPGet: &corev1.HTTPGetAction{
+						Path: "/healthz",
+						Port: target,
+					},
+				},
+				FailureThreshold:    3,
+				InitialDelaySeconds: 5,
+				PeriodSeconds:       5,
+			}
 		}
 		sort.SliceStable(container.Ports, func(i, j int) bool {
 			return container.Ports[i].Name < container.Ports[j].Name
