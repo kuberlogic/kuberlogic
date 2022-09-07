@@ -39,9 +39,9 @@ func init() {
 	l = newZapLogger().Sugar()
 }
 
-func UseSentry(dsn, version, deploymentId string) {
+func UseSentry(dsn, component, version, deploymentId string) {
 	sentryTags := &sentry.SentryTags{
-		Component:    "apiserver",
+		Component:    component,
 		Version:      version,
 		DeploymentId: deploymentId,
 	}

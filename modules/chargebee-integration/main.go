@@ -25,7 +25,8 @@ import (
 )
 
 var (
-	version = ""
+	// version of package, substitute via ldflags
+	ver string
 )
 
 func main() {
@@ -54,7 +55,7 @@ func main() {
 	if dsn := viper.GetString("SENTRY_DSN"); dsn != "" {
 		sentryTags := &sentry2.SentryTags{
 			Component:    "chargebee-integration",
-			Version:      version,
+			Version:      ver,
 			DeploymentId: deploymentId,
 		}
 		rawLogger = sentry2.UseSentryWithLogger(dsn, rawLogger, sentryTags)

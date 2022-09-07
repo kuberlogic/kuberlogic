@@ -18,6 +18,7 @@ ifeq ($(USE_BUILD),true)
 endif
 COMMIT_SHA = $(shell git rev-parse HEAD)
 IMG_SHA_TAG ?= $(VERSION)-$(COMMIT_SHA)
+LDFLAGS = -ldflags="-X main.ver=$(VERSION)"
 
 .PHONY: recreate-generated-server
 recreate-generated-server:
@@ -69,7 +70,7 @@ build-cli: build-configs
 
 .PHONY: run
 run:
-	go run -ldflags="-X main.version=$(VERSION)" main.go
+	go run $(LDFLAGS) main.go
 
 .PHONY: generate
 generate: generate-server generate-client
@@ -80,7 +81,7 @@ docker-build:
 	GOOS=linux \
 	GOARCH=amd64 \
 	GO111MODULE=on \
-	go build -a -o bin/apiserver -ldflags="-X main.version=$(VERSION)" main.go
+	go build -a -o bin/apiserver $(LDFLAGS) main.go
 	docker build . \
 		--build-arg BIN=bin/apiserver \
 		-t $(APISERVER_IMG):$(VERSION) \

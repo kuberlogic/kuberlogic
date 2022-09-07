@@ -23,9 +23,9 @@ import (
 )
 
 var (
-	version = ""
+	ver string
 )
 
 func main() {
-	cmd.Main(os.Args[1:], version)
+	cmd.Main(os.Args[1:], ver)
 }

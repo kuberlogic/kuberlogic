@@ -28,7 +28,8 @@ import (
 )
 
 var (
-	version = ""
+	// version of package, substitute via ldflags
+	ver string
 )
 
 func main() {
@@ -67,7 +68,7 @@ func main() {
 	if dsn := cfg.SentryDsn; dsn != "" {
 		sentryTags := &sentry.SentryTags{
 			Component:    pluginName,
-			Version:      version,
+			Version:      ver,
 			DeploymentId: cfg.DeploymentId,
 		}
 		rawLogger = sentry.UseSentryWithLogger(dsn, rawLogger, sentryTags)

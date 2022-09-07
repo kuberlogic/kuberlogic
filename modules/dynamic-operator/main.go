@@ -41,7 +41,8 @@ import (
 )
 
 var (
-	version  = ""
+	// version of package, substitute via ldflags
+	ver      string
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
@@ -74,7 +75,7 @@ func main() {
 	if dsn := cfg.SentryDsn; dsn != "" {
 		sentryTags := &sentry2.SentryTags{
 			Component:    "operator",
-			Version:      version,
+			Version:      ver,
 			DeploymentId: cfg.DeploymentId,
 		}
 		err := sentry2.InitSentry(dsn, sentryTags)

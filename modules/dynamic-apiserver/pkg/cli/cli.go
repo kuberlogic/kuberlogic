@@ -2,14 +2,15 @@ package cli
 
 import (
 	"fmt"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/util/homedir"
 	"log"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/util/homedir"
 
 	"github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"

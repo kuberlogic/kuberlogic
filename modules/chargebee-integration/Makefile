@@ -22,10 +22,11 @@ ifeq ($(USE_BUILD),true)
 endif
 COMMIT_SHA = $(shell git rev-parse HEAD)
 IMG_SHA_TAG ?= $(VERSION)-$(COMMIT_SHA)
+LDFLAGS = -ldflags="-X main.ver=$(VERSION)"
 
 .PHONY: run
 run:
-	go run -ldflags="-X main.version=$(VERSION)" main.go ${ARGS}
+	go run $(LDFLAGS) main.go ${ARGS}
 
 .PHONY: test
 test:
@@ -37,7 +38,7 @@ docker-build:
 	GOOS=linux \
 	GOARCH=amd64 \
 	GO111MODULE=on \
-	go build -a -o bin/chargebee-integration -ldflags="-X main.version=$(VERSION)" main.go
+	go build -a -o bin/chargebee-integration $(LDFLAGS) main.go
 	docker build . \
 		--build-arg BIN=bin/chargebee-integration \
 		-t $(IMAGE_PATH):$(VERSION) \

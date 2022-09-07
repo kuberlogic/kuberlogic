@@ -42,7 +42,7 @@ func Main(args []string, version string) {
 
 	// init sentry
 	if dsn := cfg.SentryDsn; dsn != "" {
-		logging.UseSentry(dsn, version, cfg.DeploymentId)
+		logging.UseSentry(dsn, "apiserver", version, cfg.DeploymentId)
 
 		// To initialize Sentry's handler, you need to initialize Sentry itself beforehand
 		if err := sentry.Init(sentry.ClientOptions{

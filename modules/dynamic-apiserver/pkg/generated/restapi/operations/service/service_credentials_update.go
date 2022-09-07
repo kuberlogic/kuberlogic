@@ -31,12 +31,12 @@ func NewServiceCredentialsUpdate(ctx *middleware.Context, handler ServiceCredent
 	return &ServiceCredentialsUpdate{Context: ctx, Handler: handler}
 }
 
-/* ServiceCredentialsUpdate swagger:route POST /services/{ServiceID}/credentials service serviceCredentialsUpdate
+/*
+	ServiceCredentialsUpdate swagger:route POST /services/{ServiceID}/credentials service serviceCredentialsUpdate
 
 updates service credentials
 
 updates service credentials with passed data
-
 */
 type ServiceCredentialsUpdate struct {
 	Context *middleware.Context

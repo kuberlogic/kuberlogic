@@ -107,7 +107,6 @@ var _ = BeforeSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(k8sClient).NotTo(BeNil())
 
-		os.Setenv("DEPLOYMENT_ID", "123-123-123-123")
 		config, err := cfg2.NewConfig()
 		Expect(err).NotTo(HaveOccurred())
 
@@ -206,7 +205,6 @@ var _ = AfterSuite(func() {
 
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
-	os.Unsetenv("DEPLOYMENT_ID")
 })
 
 func useExistingCluster() bool {
