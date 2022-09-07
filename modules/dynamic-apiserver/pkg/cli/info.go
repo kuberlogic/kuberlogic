@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"strings"
 )
 
 func makeInfoCmd(k8sclient kubernetes.Interface, apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
@@ -79,7 +80,7 @@ func runInfo(k8sclient kubernetes.Interface, apiClientFunc func() (*client.Servi
 		}
 
 		command.Println()
-		command.Println("To further debug and diagnose problems, use './kuberlogic diag'.")
+		command.Printf("To further debug and diagnose problems, use '%s diag'.\n", strings.Fields(command.CommandPath())[0])
 		return nil
 	}
 }

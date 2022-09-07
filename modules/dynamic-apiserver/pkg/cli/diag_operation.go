@@ -31,7 +31,7 @@ func runDiag() func(command *cobra.Command, args []string) error {
 
 		var cmd string
 		command.Println("Gathering pods status")
-		cmd = fmt.Sprintf("%s --all-namespaces get pods -o yaml", kubectlBin)
+		cmd = fmt.Sprintf("%s get pods --all-namespaces -o yaml", kubectlBin)
 		if err := saveDiagInfo(cmd, "pods-status.yaml", zipWriter); err != nil {
 			return errors.Wrapf(err, "failed to save %s info", cmd)
 		}

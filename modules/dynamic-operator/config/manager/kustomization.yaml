@@ -19,13 +19,21 @@ secretGenerator:
   envs:
   - kuberlogic-config.env
   name: kuberlogic-config
+patches:
+- patch: |-
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: kuberlogic-config
+      labels:
+        kl-config: "true"
 images:
 - name: apiserver
   newName: quay.io/kuberlogic/dynamic-apiserver
-  newTag: 0.0.11
+  newTag: 0.0.12
 - name: chargebee-integration
   newName: quay.io/kuberlogic/chargebee-integration
-  newTag: 0.0.11
+  newTag: 0.0.12
 - name: controller
   newName: quay.io/kuberlogic/dynamic-operator
-  newTag: 0.0.11
+  newTag: 0.0.12

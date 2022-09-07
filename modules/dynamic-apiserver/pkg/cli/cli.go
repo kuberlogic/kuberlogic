@@ -80,7 +80,7 @@ func MakeRootCmd(httpClient *http.Client, k8sclient kubernetes.Interface) (*cobr
 	if err != nil {
 		return nil, err
 	}
-	rootCmd.PersistentFlags().String(tokenFlag, "8ZTjsD3t2Q3Yq-C4-hoahcFn", "Specify KuberLogic API server authentication token. The authentication token is used for authentication to KuberLogic API every time an API request is made. Like passwords, Authentication tokens should remain a secret.")
+	rootCmd.PersistentFlags().String(tokenFlag, "8ZTjsD3t2Q3Yq-C4-hoahcFn", "Specify KuberLogic API server authentication token.\nThe authentication token is used for authentication to KuberLogic API every time an API request is made. Like passwords, Authentication tokens should remain a secret.")
 	err = viper.BindPFlag(tokenFlag, rootCmd.PersistentFlags().Lookup(tokenFlag))
 	if err != nil {
 		return nil, err
