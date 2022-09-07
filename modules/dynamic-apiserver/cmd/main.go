@@ -28,11 +28,17 @@ import (
 	apiserverMiddleware "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/net/middleware"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/util/k8s"
 	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	sentry2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
 	"k8s.io/client-go/kubernetes"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"
 )
 
-func Main(args []string, version string) {
+var (
+	// version of package, substitute via ldflags
+	ver string
+)
+
+func Main(args []string) {
 	mainLog := logging.WithComponentLogger("main")
 	cfg, err := config.InitConfig("kuberlogic", logging.WithComponentLogger("config"))
 	if err != nil {
@@ -42,17 +48,15 @@ func Main(args []string, version string) {
 
 	// init sentry
 	if dsn := cfg.SentryDsn; dsn != "" {
-		logging.UseSentry(dsn, "apiserver", version, cfg.DeploymentId)
+		sentryTags := &sentry2.SentryTags{
+			Component:    "apiserver",
+			Version:      ver,
+			DeploymentId: cfg.DeploymentId,
+		}
+		logging.UseSentry(dsn, sentryTags)
 
-		// To initialize Sentry's handler, you need to initialize Sentry itself beforehand
-		if err := sentry.Init(sentry.ClientOptions{
-			Dsn:              dsn,
-			AttachStacktrace: true,
-			// Set TracesSampleRate to 1.0 to capture 100%
-			// of transactions for performance monitoring.
-			// We recommend adjusting this value in production,
-			TracesSampleRate: 1.0,
-		}); err != nil {
+		err := sentry2.InitSentry(dsn, sentryTags)
+		if err != nil {
 			mainLog.Errorw("Sentry initialization failed", "error", err)
 		}
 

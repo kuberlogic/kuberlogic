@@ -32,7 +32,7 @@ type Config struct {
 		SnapshotsEnabled bool `envconfig:"optional"`
 	} `envconfig:"optional"`
 
-	DeploymentId string `envconfig:""`
+	DeploymentId string `envconfig:"optional"`
 	SentryDsn    string `envconfig:"optional"`
 }
 

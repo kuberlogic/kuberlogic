@@ -20,7 +20,6 @@ ifeq ($(USE_BUILD),true)
 endif
 COMMIT_SHA = $(shell git rev-parse HEAD)
 IMG_SHA_TAG ?= $(VERSION)-$(COMMIT_SHA)
-LDFLAGS = -ldflags="-X main.ver=$(VERSION)"
 
 SWAGGER = $(shell pwd)/bin/swagger
 .PHONY: swagger
@@ -77,18 +76,19 @@ build-cli: build-configs
 
 .PHONY: run
 run:
-	go run $(LDFLAGS) main.go
+	go run main.go
 
 .PHONY: generate
 generate: generate-server generate-client
 
 .PHONY: docker-build
-docker-build:
+docker-build: export LDFLAGS="-X github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/cmd.ver=$(VERSION)"
+docker-build: 
 	CGO_ENABLED=0 \
 	GOOS=linux \
 	GOARCH=amd64 \
 	GO111MODULE=on \
-	go build -a -o bin/apiserver $(LDFLAGS) main.go
+	go build -a -o bin/apiserver -ldflags=$(LDFLAGS) main.go
 	docker build . \
 		--build-arg BIN=bin/apiserver \
 		-t $(APISERVER_IMG):$(VERSION) \

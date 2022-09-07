@@ -22,10 +22,6 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/cmd"
 )
 
-var (
-	ver string
-)
-
 func main() {
-	cmd.Main(os.Args[1:], ver)
+	cmd.Main(os.Args[1:])
 }

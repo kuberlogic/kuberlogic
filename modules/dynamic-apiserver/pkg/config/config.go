@@ -33,7 +33,7 @@ type Config struct {
 		AllowedOrigins []string `envconfig:"default=https://*;http://*"`
 	}
 	SentryDsn    string `envconfig:"optional"`
-	DeploymentId string `envconfig:""`
+	DeploymentId string `envconfig:"optional"`
 	Domain       string
 }
 
