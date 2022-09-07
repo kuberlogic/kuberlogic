@@ -16,8 +16,7 @@ import (
 // RestoreAddCreatedCode is the HTTP code returned for type RestoreAddCreated
 const RestoreAddCreatedCode int = 201
 
-/*
-RestoreAddCreated item created
+/*RestoreAddCreated item created
 
 swagger:response restoreAddCreated
 */
@@ -61,8 +60,7 @@ func (o *RestoreAddCreated) WriteResponse(rw http.ResponseWriter, producer runti
 // RestoreAddBadRequestCode is the HTTP code returned for type RestoreAddBadRequest
 const RestoreAddBadRequestCode int = 400
 
-/*
-RestoreAddBadRequest invalid input, object invalid
+/*RestoreAddBadRequest invalid input, object invalid
 
 swagger:response restoreAddBadRequest
 */
@@ -106,8 +104,7 @@ func (o *RestoreAddBadRequest) WriteResponse(rw http.ResponseWriter, producer ru
 // RestoreAddUnauthorizedCode is the HTTP code returned for type RestoreAddUnauthorized
 const RestoreAddUnauthorizedCode int = 401
 
-/*
-RestoreAddUnauthorized bad authentication
+/*RestoreAddUnauthorized bad authentication
 
 swagger:response restoreAddUnauthorized
 */
@@ -131,8 +128,7 @@ func (o *RestoreAddUnauthorized) WriteResponse(rw http.ResponseWriter, producer 
 // RestoreAddConflictCode is the HTTP code returned for type RestoreAddConflict
 const RestoreAddConflictCode int = 409
 
-/*
-RestoreAddConflict item already exists
+/*RestoreAddConflict item already exists
 
 swagger:response restoreAddConflict
 */
@@ -156,8 +152,7 @@ func (o *RestoreAddConflict) WriteResponse(rw http.ResponseWriter, producer runt
 // RestoreAddUnprocessableEntityCode is the HTTP code returned for type RestoreAddUnprocessableEntity
 const RestoreAddUnprocessableEntityCode int = 422
 
-/*
-RestoreAddUnprocessableEntity bad validation
+/*RestoreAddUnprocessableEntity bad validation
 
 swagger:response restoreAddUnprocessableEntity
 */
@@ -201,8 +196,7 @@ func (o *RestoreAddUnprocessableEntity) WriteResponse(rw http.ResponseWriter, pr
 // RestoreAddServiceUnavailableCode is the HTTP code returned for type RestoreAddServiceUnavailable
 const RestoreAddServiceUnavailableCode int = 503
 
-/*
-RestoreAddServiceUnavailable internal server error
+/*RestoreAddServiceUnavailable internal server error
 
 swagger:response restoreAddServiceUnavailable
 */

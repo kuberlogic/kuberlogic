@@ -31,12 +31,13 @@ func NewServiceList(ctx *middleware.Context, handler ServiceListHandler) *Servic
 	return &ServiceList{Context: ctx, Handler: handler}
 }
 
-/*
-	ServiceList swagger:route GET /services/ service serviceList
+/* ServiceList swagger:route GET /services/ service serviceList
 
 lists all services
 
 List of service objects
+
+
 */
 type ServiceList struct {
 	Context *middleware.Context

@@ -31,12 +31,13 @@ func NewRestoreDelete(ctx *middleware.Context, handler RestoreDeleteHandler) *Re
 	return &RestoreDelete{Context: ctx, Handler: handler}
 }
 
-/*
-	RestoreDelete swagger:route DELETE /restores/{RestoreID}/ restore restoreDelete
+/* RestoreDelete swagger:route DELETE /restores/{RestoreID}/ restore restoreDelete
 
 deletes a restore item
 
 Deletes a restore object
+
+
 */
 type RestoreDelete struct {
 	Context *middleware.Context

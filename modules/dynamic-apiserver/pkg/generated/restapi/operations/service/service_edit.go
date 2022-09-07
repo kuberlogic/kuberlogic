@@ -31,12 +31,13 @@ func NewServiceEdit(ctx *middleware.Context, handler ServiceEditHandler) *Servic
 	return &ServiceEdit{Context: ctx, Handler: handler}
 }
 
-/*
-	ServiceEdit swagger:route PATCH /services/{ServiceID}/ service serviceEdit
+/* ServiceEdit swagger:route PATCH /services/{ServiceID}/ service serviceEdit
 
 edit a service item
 
 Edit service object
+
+
 */
 type ServiceEdit struct {
 	Context *middleware.Context

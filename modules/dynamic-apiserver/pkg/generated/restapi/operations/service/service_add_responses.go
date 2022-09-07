@@ -16,8 +16,7 @@ import (
 // ServiceAddCreatedCode is the HTTP code returned for type ServiceAddCreated
 const ServiceAddCreatedCode int = 201
 
-/*
-ServiceAddCreated item created
+/*ServiceAddCreated item created
 
 swagger:response serviceAddCreated
 */
@@ -61,8 +60,7 @@ func (o *ServiceAddCreated) WriteResponse(rw http.ResponseWriter, producer runti
 // ServiceAddBadRequestCode is the HTTP code returned for type ServiceAddBadRequest
 const ServiceAddBadRequestCode int = 400
 
-/*
-ServiceAddBadRequest invalid input, object invalid
+/*ServiceAddBadRequest invalid input, object invalid
 
 swagger:response serviceAddBadRequest
 */
@@ -106,8 +104,7 @@ func (o *ServiceAddBadRequest) WriteResponse(rw http.ResponseWriter, producer ru
 // ServiceAddUnauthorizedCode is the HTTP code returned for type ServiceAddUnauthorized
 const ServiceAddUnauthorizedCode int = 401
 
-/*
-ServiceAddUnauthorized bad authentication
+/*ServiceAddUnauthorized bad authentication
 
 swagger:response serviceAddUnauthorized
 */
@@ -131,8 +128,7 @@ func (o *ServiceAddUnauthorized) WriteResponse(rw http.ResponseWriter, producer 
 // ServiceAddForbiddenCode is the HTTP code returned for type ServiceAddForbidden
 const ServiceAddForbiddenCode int = 403
 
-/*
-ServiceAddForbidden bad permissions
+/*ServiceAddForbidden bad permissions
 
 swagger:response serviceAddForbidden
 */
@@ -156,8 +152,7 @@ func (o *ServiceAddForbidden) WriteResponse(rw http.ResponseWriter, producer run
 // ServiceAddConflictCode is the HTTP code returned for type ServiceAddConflict
 const ServiceAddConflictCode int = 409
 
-/*
-ServiceAddConflict item already exists
+/*ServiceAddConflict item already exists
 
 swagger:response serviceAddConflict
 */
@@ -181,8 +176,7 @@ func (o *ServiceAddConflict) WriteResponse(rw http.ResponseWriter, producer runt
 // ServiceAddUnprocessableEntityCode is the HTTP code returned for type ServiceAddUnprocessableEntity
 const ServiceAddUnprocessableEntityCode int = 422
 
-/*
-ServiceAddUnprocessableEntity bad validation
+/*ServiceAddUnprocessableEntity bad validation
 
 swagger:response serviceAddUnprocessableEntity
 */
@@ -226,8 +220,7 @@ func (o *ServiceAddUnprocessableEntity) WriteResponse(rw http.ResponseWriter, pr
 // ServiceAddServiceUnavailableCode is the HTTP code returned for type ServiceAddServiceUnavailable
 const ServiceAddServiceUnavailableCode int = 503
 
-/*
-ServiceAddServiceUnavailable internal server error
+/*ServiceAddServiceUnavailable internal server error
 
 swagger:response serviceAddServiceUnavailable
 */

@@ -31,12 +31,12 @@ func NewRestoreAdd(ctx *middleware.Context, handler RestoreAddHandler) *RestoreA
 	return &RestoreAdd{Context: ctx, Handler: handler}
 }
 
-/*
-	RestoreAdd swagger:route POST /restores/ restore restoreAdd
+/* RestoreAdd swagger:route POST /restores/ restore restoreAdd
 
 create restore object
 
 Create restore object
+
 */
 type RestoreAdd struct {
 	Context *middleware.Context

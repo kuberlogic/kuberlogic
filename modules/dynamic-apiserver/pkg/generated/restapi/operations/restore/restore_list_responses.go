@@ -16,8 +16,7 @@ import (
 // RestoreListOKCode is the HTTP code returned for type RestoreListOK
 const RestoreListOKCode int = 200
 
-/*
-RestoreListOK search results matching criteria
+/*RestoreListOK search results matching criteria
 
 swagger:response restoreListOK
 */
@@ -64,8 +63,7 @@ func (o *RestoreListOK) WriteResponse(rw http.ResponseWriter, producer runtime.P
 // RestoreListBadRequestCode is the HTTP code returned for type RestoreListBadRequest
 const RestoreListBadRequestCode int = 400
 
-/*
-RestoreListBadRequest bad input parameter
+/*RestoreListBadRequest bad input parameter
 
 swagger:response restoreListBadRequest
 */
@@ -109,8 +107,7 @@ func (o *RestoreListBadRequest) WriteResponse(rw http.ResponseWriter, producer r
 // RestoreListUnauthorizedCode is the HTTP code returned for type RestoreListUnauthorized
 const RestoreListUnauthorizedCode int = 401
 
-/*
-RestoreListUnauthorized bad authentication
+/*RestoreListUnauthorized bad authentication
 
 swagger:response restoreListUnauthorized
 */
@@ -134,8 +131,7 @@ func (o *RestoreListUnauthorized) WriteResponse(rw http.ResponseWriter, producer
 // RestoreListForbiddenCode is the HTTP code returned for type RestoreListForbidden
 const RestoreListForbiddenCode int = 403
 
-/*
-RestoreListForbidden bad permissions
+/*RestoreListForbidden bad permissions
 
 swagger:response restoreListForbidden
 */
@@ -159,8 +155,7 @@ func (o *RestoreListForbidden) WriteResponse(rw http.ResponseWriter, producer ru
 // RestoreListUnprocessableEntityCode is the HTTP code returned for type RestoreListUnprocessableEntity
 const RestoreListUnprocessableEntityCode int = 422
 
-/*
-RestoreListUnprocessableEntity bad validation
+/*RestoreListUnprocessableEntity bad validation
 
 swagger:response restoreListUnprocessableEntity
 */
@@ -204,8 +199,7 @@ func (o *RestoreListUnprocessableEntity) WriteResponse(rw http.ResponseWriter, p
 // RestoreListServiceUnavailableCode is the HTTP code returned for type RestoreListServiceUnavailable
 const RestoreListServiceUnavailableCode int = 503
 
-/*
-RestoreListServiceUnavailable internal server error
+/*RestoreListServiceUnavailable internal server error
 
 swagger:response restoreListServiceUnavailable
 */

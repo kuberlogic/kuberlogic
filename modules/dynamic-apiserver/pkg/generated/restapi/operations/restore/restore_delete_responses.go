@@ -16,8 +16,7 @@ import (
 // RestoreDeleteOKCode is the HTTP code returned for type RestoreDeleteOK
 const RestoreDeleteOKCode int = 200
 
-/*
-RestoreDeleteOK item deleted
+/*RestoreDeleteOK item deleted
 
 swagger:response restoreDeleteOK
 */
@@ -41,8 +40,7 @@ func (o *RestoreDeleteOK) WriteResponse(rw http.ResponseWriter, producer runtime
 // RestoreDeleteBadRequestCode is the HTTP code returned for type RestoreDeleteBadRequest
 const RestoreDeleteBadRequestCode int = 400
 
-/*
-RestoreDeleteBadRequest invalid input, object invalid
+/*RestoreDeleteBadRequest invalid input, object invalid
 
 swagger:response restoreDeleteBadRequest
 */
@@ -86,8 +84,7 @@ func (o *RestoreDeleteBadRequest) WriteResponse(rw http.ResponseWriter, producer
 // RestoreDeleteUnauthorizedCode is the HTTP code returned for type RestoreDeleteUnauthorized
 const RestoreDeleteUnauthorizedCode int = 401
 
-/*
-RestoreDeleteUnauthorized bad authentication
+/*RestoreDeleteUnauthorized bad authentication
 
 swagger:response restoreDeleteUnauthorized
 */
@@ -111,8 +108,7 @@ func (o *RestoreDeleteUnauthorized) WriteResponse(rw http.ResponseWriter, produc
 // RestoreDeleteForbiddenCode is the HTTP code returned for type RestoreDeleteForbidden
 const RestoreDeleteForbiddenCode int = 403
 
-/*
-RestoreDeleteForbidden bad permissions
+/*RestoreDeleteForbidden bad permissions
 
 swagger:response restoreDeleteForbidden
 */
@@ -136,8 +132,7 @@ func (o *RestoreDeleteForbidden) WriteResponse(rw http.ResponseWriter, producer 
 // RestoreDeleteNotFoundCode is the HTTP code returned for type RestoreDeleteNotFound
 const RestoreDeleteNotFoundCode int = 404
 
-/*
-RestoreDeleteNotFound item not found
+/*RestoreDeleteNotFound item not found
 
 swagger:response restoreDeleteNotFound
 */
@@ -181,8 +176,7 @@ func (o *RestoreDeleteNotFound) WriteResponse(rw http.ResponseWriter, producer r
 // RestoreDeleteUnprocessableEntityCode is the HTTP code returned for type RestoreDeleteUnprocessableEntity
 const RestoreDeleteUnprocessableEntityCode int = 422
 
-/*
-RestoreDeleteUnprocessableEntity bad validation
+/*RestoreDeleteUnprocessableEntity bad validation
 
 swagger:response restoreDeleteUnprocessableEntity
 */
@@ -206,8 +200,7 @@ func (o *RestoreDeleteUnprocessableEntity) WriteResponse(rw http.ResponseWriter,
 // RestoreDeleteServiceUnavailableCode is the HTTP code returned for type RestoreDeleteServiceUnavailable
 const RestoreDeleteServiceUnavailableCode int = 503
 
-/*
-RestoreDeleteServiceUnavailable internal server error
+/*RestoreDeleteServiceUnavailable internal server error
 
 swagger:response restoreDeleteServiceUnavailable
 */

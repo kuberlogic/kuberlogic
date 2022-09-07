@@ -16,8 +16,7 @@ import (
 // ServiceCredentialsUpdateOKCode is the HTTP code returned for type ServiceCredentialsUpdateOK
 const ServiceCredentialsUpdateOKCode int = 200
 
-/*
-ServiceCredentialsUpdateOK credentials are updated
+/*ServiceCredentialsUpdateOK credentials are updated
 
 swagger:response serviceCredentialsUpdateOK
 */
@@ -41,8 +40,7 @@ func (o *ServiceCredentialsUpdateOK) WriteResponse(rw http.ResponseWriter, produ
 // ServiceCredentialsUpdateBadRequestCode is the HTTP code returned for type ServiceCredentialsUpdateBadRequest
 const ServiceCredentialsUpdateBadRequestCode int = 400
 
-/*
-ServiceCredentialsUpdateBadRequest invalid input
+/*ServiceCredentialsUpdateBadRequest invalid input
 
 swagger:response serviceCredentialsUpdateBadRequest
 */
@@ -86,8 +84,7 @@ func (o *ServiceCredentialsUpdateBadRequest) WriteResponse(rw http.ResponseWrite
 // ServiceCredentialsUpdateUnauthorizedCode is the HTTP code returned for type ServiceCredentialsUpdateUnauthorized
 const ServiceCredentialsUpdateUnauthorizedCode int = 401
 
-/*
-ServiceCredentialsUpdateUnauthorized bad authentication
+/*ServiceCredentialsUpdateUnauthorized bad authentication
 
 swagger:response serviceCredentialsUpdateUnauthorized
 */
@@ -111,8 +108,7 @@ func (o *ServiceCredentialsUpdateUnauthorized) WriteResponse(rw http.ResponseWri
 // ServiceCredentialsUpdateForbiddenCode is the HTTP code returned for type ServiceCredentialsUpdateForbidden
 const ServiceCredentialsUpdateForbiddenCode int = 403
 
-/*
-ServiceCredentialsUpdateForbidden bad permissions
+/*ServiceCredentialsUpdateForbidden bad permissions
 
 swagger:response serviceCredentialsUpdateForbidden
 */
@@ -136,8 +132,7 @@ func (o *ServiceCredentialsUpdateForbidden) WriteResponse(rw http.ResponseWriter
 // ServiceCredentialsUpdateUnprocessableEntityCode is the HTTP code returned for type ServiceCredentialsUpdateUnprocessableEntity
 const ServiceCredentialsUpdateUnprocessableEntityCode int = 422
 
-/*
-ServiceCredentialsUpdateUnprocessableEntity bad validation
+/*ServiceCredentialsUpdateUnprocessableEntity bad validation
 
 swagger:response serviceCredentialsUpdateUnprocessableEntity
 */
@@ -161,8 +156,7 @@ func (o *ServiceCredentialsUpdateUnprocessableEntity) WriteResponse(rw http.Resp
 // ServiceCredentialsUpdateServiceUnavailableCode is the HTTP code returned for type ServiceCredentialsUpdateServiceUnavailable
 const ServiceCredentialsUpdateServiceUnavailableCode int = 503
 
-/*
-ServiceCredentialsUpdateServiceUnavailable internal service error
+/*ServiceCredentialsUpdateServiceUnavailable internal service error
 
 swagger:response serviceCredentialsUpdateServiceUnavailable
 */

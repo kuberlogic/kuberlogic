@@ -16,8 +16,7 @@ import (
 // ServiceGetOKCode is the HTTP code returned for type ServiceGetOK
 const ServiceGetOKCode int = 200
 
-/*
-ServiceGetOK item edited
+/*ServiceGetOK item edited
 
 swagger:response serviceGetOK
 */
@@ -61,8 +60,7 @@ func (o *ServiceGetOK) WriteResponse(rw http.ResponseWriter, producer runtime.Pr
 // ServiceGetBadRequestCode is the HTTP code returned for type ServiceGetBadRequest
 const ServiceGetBadRequestCode int = 400
 
-/*
-ServiceGetBadRequest invalid input, object invalid
+/*ServiceGetBadRequest invalid input, object invalid
 
 swagger:response serviceGetBadRequest
 */
@@ -106,8 +104,7 @@ func (o *ServiceGetBadRequest) WriteResponse(rw http.ResponseWriter, producer ru
 // ServiceGetUnauthorizedCode is the HTTP code returned for type ServiceGetUnauthorized
 const ServiceGetUnauthorizedCode int = 401
 
-/*
-ServiceGetUnauthorized bad authentication
+/*ServiceGetUnauthorized bad authentication
 
 swagger:response serviceGetUnauthorized
 */
@@ -131,8 +128,7 @@ func (o *ServiceGetUnauthorized) WriteResponse(rw http.ResponseWriter, producer 
 // ServiceGetForbiddenCode is the HTTP code returned for type ServiceGetForbidden
 const ServiceGetForbiddenCode int = 403
 
-/*
-ServiceGetForbidden bad permissions
+/*ServiceGetForbidden bad permissions
 
 swagger:response serviceGetForbidden
 */
@@ -156,8 +152,7 @@ func (o *ServiceGetForbidden) WriteResponse(rw http.ResponseWriter, producer run
 // ServiceGetNotFoundCode is the HTTP code returned for type ServiceGetNotFound
 const ServiceGetNotFoundCode int = 404
 
-/*
-ServiceGetNotFound item not found
+/*ServiceGetNotFound item not found
 
 swagger:response serviceGetNotFound
 */
@@ -201,8 +196,7 @@ func (o *ServiceGetNotFound) WriteResponse(rw http.ResponseWriter, producer runt
 // ServiceGetUnprocessableEntityCode is the HTTP code returned for type ServiceGetUnprocessableEntity
 const ServiceGetUnprocessableEntityCode int = 422
 
-/*
-ServiceGetUnprocessableEntity bad validation
+/*ServiceGetUnprocessableEntity bad validation
 
 swagger:response serviceGetUnprocessableEntity
 */
@@ -246,8 +240,7 @@ func (o *ServiceGetUnprocessableEntity) WriteResponse(rw http.ResponseWriter, pr
 // ServiceGetServiceUnavailableCode is the HTTP code returned for type ServiceGetServiceUnavailable
 const ServiceGetServiceUnavailableCode int = 503
 
-/*
-ServiceGetServiceUnavailable internal server error
+/*ServiceGetServiceUnavailable internal server error
 
 swagger:response serviceGetServiceUnavailable
 */

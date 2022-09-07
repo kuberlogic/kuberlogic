@@ -31,12 +31,13 @@ func NewServiceGet(ctx *middleware.Context, handler ServiceGetHandler) *ServiceG
 	return &ServiceGet{Context: ctx, Handler: handler}
 }
 
-/*
-	ServiceGet swagger:route GET /services/{ServiceID}/ service serviceGet
+/* ServiceGet swagger:route GET /services/{ServiceID}/ service serviceGet
 
 get a service item
 
 Get service object
+
+
 */
 type ServiceGet struct {
 	Context *middleware.Context

@@ -16,8 +16,7 @@ import (
 // BackupListOKCode is the HTTP code returned for type BackupListOK
 const BackupListOKCode int = 200
 
-/*
-BackupListOK search results matching criteria
+/*BackupListOK search results matching criteria
 
 swagger:response backupListOK
 */
@@ -64,8 +63,7 @@ func (o *BackupListOK) WriteResponse(rw http.ResponseWriter, producer runtime.Pr
 // BackupListBadRequestCode is the HTTP code returned for type BackupListBadRequest
 const BackupListBadRequestCode int = 400
 
-/*
-BackupListBadRequest bad input parameter
+/*BackupListBadRequest bad input parameter
 
 swagger:response backupListBadRequest
 */
@@ -109,8 +107,7 @@ func (o *BackupListBadRequest) WriteResponse(rw http.ResponseWriter, producer ru
 // BackupListUnauthorizedCode is the HTTP code returned for type BackupListUnauthorized
 const BackupListUnauthorizedCode int = 401
 
-/*
-BackupListUnauthorized bad authentication
+/*BackupListUnauthorized bad authentication
 
 swagger:response backupListUnauthorized
 */
@@ -134,8 +131,7 @@ func (o *BackupListUnauthorized) WriteResponse(rw http.ResponseWriter, producer 
 // BackupListForbiddenCode is the HTTP code returned for type BackupListForbidden
 const BackupListForbiddenCode int = 403
 
-/*
-BackupListForbidden bad permissions
+/*BackupListForbidden bad permissions
 
 swagger:response backupListForbidden
 */
@@ -159,8 +155,7 @@ func (o *BackupListForbidden) WriteResponse(rw http.ResponseWriter, producer run
 // BackupListUnprocessableEntityCode is the HTTP code returned for type BackupListUnprocessableEntity
 const BackupListUnprocessableEntityCode int = 422
 
-/*
-BackupListUnprocessableEntity bad validation
+/*BackupListUnprocessableEntity bad validation
 
 swagger:response backupListUnprocessableEntity
 */
@@ -204,8 +199,7 @@ func (o *BackupListUnprocessableEntity) WriteResponse(rw http.ResponseWriter, pr
 // BackupListServiceUnavailableCode is the HTTP code returned for type BackupListServiceUnavailable
 const BackupListServiceUnavailableCode int = 503
 
-/*
-BackupListServiceUnavailable internal server error
+/*BackupListServiceUnavailable internal server error
 
 swagger:response backupListServiceUnavailable
 */
