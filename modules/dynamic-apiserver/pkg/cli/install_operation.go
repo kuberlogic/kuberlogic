@@ -105,10 +105,6 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 
 		// handle kuberlogic parameters
 		klParams := viper.New()
-		deploymentId := klParams.GetString(installDeploymentId)
-		if deploymentId == "" {
-			klParams.Set(installDeploymentId, uuid.New().String())
-		}
 
 		klConfigFile := filepath.Join(cacheDir, "manager", "kuberlogic-config.env")
 		if err := os.MkdirAll(filepath.Dir(klConfigFile), os.ModePerm); err != nil {
@@ -118,6 +114,10 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		err = klParams.ReadInConfig()
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
+		}
+		deploymentId := klParams.GetString(installDeploymentId)
+		if deploymentId == "" {
+			klParams.Set(installDeploymentId, uuid.New().String())
 		}
 
 		if value, err := getStringPrompt(command, tokenFlag, viper.GetString(tokenFlag), nil); err != nil {
