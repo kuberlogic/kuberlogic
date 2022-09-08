@@ -93,7 +93,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		}
 
 		// cache config files passed by flags
-		configBaseDir := filepath.Dir(configFile)
+		configBaseDir := filepath.Dir(viper.ConfigFileUsed())
 		cacheDir := filepath.Join(configBaseDir, "cache", "config")
 		if err := os.MkdirAll(cacheDir, os.ModePerm); err != nil {
 			return errors.Wrap(err, "error creating config directory")
@@ -124,7 +124,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		}
 
 		cachedDockerCompose := filepath.Join(cacheDir, "manager/docker-compose.yaml")
-		if value, err := getStringPrompt(command, installDockerComposeParam, cachedConfigOrEmpty(cachedDockerCompose), true, validateFileAvailable); err != nil {
+		if value, err := getStringPrompt(command, installDockerComposeParam, cachedConfigOrEmpty(cachedDockerCompose), false, validateFileAvailable); err != nil {
 			return errors.Wrapf(err, "error processing %s flag", installDockerComposeParam)
 		} else if value != "" {
 			if err := cacheConfigFile(value, cachedDockerCompose); err != nil {
@@ -281,10 +281,10 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		}
 		viper.Set(apiHostFlag, endpoint)
 
-		command.Println("Updating KuberLogic config file at " + configFile)
+		command.Println("Updating KuberLogic config file at " + viper.ConfigFileUsed())
 		err = viper.WriteConfig()
 		if errors.Is(err, os.ErrNotExist) {
-			err = viper.WriteConfigAs(configFile)
+			err = viper.WriteConfigAs(viper.ConfigFileUsed())
 		}
 		return errors.Wrap(err, "failed to write KuberLogic config")
 	}

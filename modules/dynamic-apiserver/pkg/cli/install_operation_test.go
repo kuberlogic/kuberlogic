@@ -16,6 +16,12 @@ import (
 )
 
 var (
+	defaultArgs = []string{
+		"--non-interactive",
+		"--storage_class", "demo",
+		"--ingress_class", "demo",
+		"--kuberlogic_domain", "example.com",
+	}
 	fakeClusterResources = []runtime.Object{
 		&corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
@@ -56,22 +62,28 @@ func TestInstallLB(t *testing.T) {
 	configDir, _ := os.MkdirTemp("", "install-test")
 	defer os.RemoveAll(configDir)
 
-	configFile = filepath.Join(configDir, "config.yaml")
+	configFile := filepath.Join(configDir, "config.yaml")
 	kubectlBin = "echo"
-	viper.SetConfigFile(configFile)
+
+	if _, err := os.Stat(configFile); err == nil {
+		t.Fatalf("config file %s should not exist before install", configFile)
+	}
 
 	cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd.SetArgs([]string{"install",
-		"--non-interactive",
-		"--storage_class", "demo",
-		"--ingress_class", "demo",
-		"--kuberlogic_domain", "example.com",
-	})
+	cmd.SetArgs(append([]string{"install", "--config", configFile}, defaultArgs...))
 	if err := cmd.Execute(); err != nil {
 		t.Fatal(err)
+	}
+
+	if _, err := os.Stat(configFile); err != nil {
+		t.Fatalf("config file %s should exist after install", configFile)
+	}
+
+	if viper.ConfigFileUsed() != configFile {
+		t.Fatal("viper should be using created config file")
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
@@ -87,21 +99,15 @@ func TestInstallClusterNotAvailable(t *testing.T) {
 	configDir, _ := os.MkdirTemp("", "install-test")
 	defer os.RemoveAll(configDir)
 
-	configFile = filepath.Join(configDir, "config.yaml")
+	configFile := filepath.Join(configDir, "config.yaml")
 	kubectlBin = "exit 1"
-	viper.SetConfigFile(configFile)
 
 	cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	cmd.SetArgs([]string{"install",
-		"--non-interactive",
-		"--storage_class", "demo",
-		"--ingress_class", "demo",
-		"--kuberlogic_domain", "example.com",
-	})
+	cmd.SetArgs(append([]string{"install", "--config", configFile}, defaultArgs...))
 	if err := cmd.Execute(); err.Error() != "kubernetes is not available via kubectl" {
 		t.Fatal(err)
 	}
@@ -111,20 +117,15 @@ func TestIngressClassNotAvailable(t *testing.T) {
 	configDir, _ := os.MkdirTemp("", "install-test")
 	defer os.RemoveAll(configDir)
 
-	configFile = filepath.Join(configDir, "config.yaml")
-	kubectlBin = "exit 1"
-	viper.SetConfigFile(configFile)
+	configFile := filepath.Join(configDir, "config.yaml")
+	kubectlBin = "echo"
 
 	cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd.SetArgs([]string{"install",
-		"--non-interactive",
-		"--storage_class", "demo",
-		"--ingress_class", "fake",
-		"--kuberlogic_domain", "example.com",
-	})
+
+	cmd.SetArgs(append([]string{"install", "--config", configFile}, append(defaultArgs, "--ingress_class", "fake")...))
 	if err := cmd.Execute(); err.Error() != "error processing ingress_class flag: fake is not available. Available: demo" {
 		t.Fatal(err)
 	}
@@ -144,20 +145,19 @@ func TestValidationSentryURI(t *testing.T) {
 			configDir, _ := os.MkdirTemp("", "install-test")
 			defer os.RemoveAll(configDir)
 
-			configFile = filepath.Join(configDir, "config.yaml")
+			configFile := filepath.Join(configDir, "config.yaml")
 			kubectlBin = "echo"
-			viper.SetConfigFile(configFile)
 
 			cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
 			if err != nil {
 				t.Fatal(err)
 			}
-			cmd.SetArgs([]string{"install", "--non-interactive", "--storage_class", "demo", "--ingress_class", "demo", "--sentry_dsn", tt.in})
+			cmd.SetArgs(append([]string{"install", "--config", configFile, "--sentry_dsn", tt.in}, defaultArgs...))
 			err = cmd.Execute()
 			if err == nil && tt.out == nil {
 				return
 			}
-			if tt.out.Error() != err.Error() {
+			if err.Error() != tt.out.Error() {
 				t.Errorf("got %q, want %q", err, tt.out)
 			}
 		})
@@ -183,20 +183,19 @@ func TestValidationDockerComposeProvided(t *testing.T) {
 			configDir, _ := os.MkdirTemp("", "install-test")
 			defer os.RemoveAll(configDir)
 
-			configFile = filepath.Join(configDir, "config.yaml")
+			configFile := filepath.Join(configDir, "config.yaml")
 			kubectlBin = "echo"
-			viper.SetConfigFile(configFile)
 
 			cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
 			if err != nil {
 				t.Fatal(err)
 			}
-			cmd.SetArgs([]string{"install", "--non-interactive", "--storage_class", "demo", "--ingress_class", "demo", "--docker_compose", in})
+			cmd.SetArgs(append([]string{"install", "--config", configFile, "--docker_compose", in}, defaultArgs...))
 			err = cmd.Execute()
 			if err == nil && expectedErr == nil {
 				return
 			}
-			if expectedErr != nil && !errors.Is(err, expectedErr) {
+			if !errors.Is(err, expectedErr) {
 				t.Fatalf("got %v, expected %v", err, expectedErr)
 			}
 		})
