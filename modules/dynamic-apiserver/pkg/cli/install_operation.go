@@ -29,10 +29,9 @@ var klConfigZipData []byte
 var (
 	kubectlBin = "kubectl"
 
-	errTokenEmpty         = errors.New("token can't be empty")
-	errChargebeeKeyNotSet = errors.New("chargebee key can't be empty")
-	errSentryInvalidURI   = errors.New("invalid uri")
-	errDirFound           = errors.New("text file required, directory found")
+	errTokenEmpty       = errors.New("token can't be empty")
+	errSentryInvalidURI = errors.New("invalid uri")
+	errDirFound         = errors.New("text file required, directory found")
 )
 
 const (
