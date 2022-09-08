@@ -341,7 +341,7 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 			proto := corev1.ProtocolTCP
 
 			port := corev1.ContainerPort{
-				Name:          target.String() + "-port",
+				Name:          target.String(),
 				ContainerPort: target.IntVal,
 				Protocol:      proto,
 			}
