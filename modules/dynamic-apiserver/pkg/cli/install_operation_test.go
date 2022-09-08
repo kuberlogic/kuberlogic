@@ -18,7 +18,7 @@ import (
 var (
 	defaultArgs = []string{
 		"--non-interactive",
-		"--storage_class", "demo",
+		"--storage_class", "standard",
 		"--ingress_class", "demo",
 		"--kuberlogic_domain", "example.com",
 	}
@@ -47,7 +47,7 @@ var (
 		},
 		&v1.StorageClass{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "demo",
+				Name: "standard",
 			},
 		},
 		&v12.IngressClass{
@@ -92,6 +92,16 @@ func TestInstallLB(t *testing.T) {
 
 	if current := viper.GetString("hostname"); current != "127.0.0.1:80" {
 		t.Fatal("incorrect hostname: " + current)
+	}
+
+	// validate provided options
+	klParams := viper.New()
+	klParams.SetConfigFile(filepath.Join(configDir, "cache/config/manager/kuberlogic-config.env"))
+	if err := klParams.ReadInConfig(); err != nil {
+		t.Fatal(err)
+	}
+	if v := klParams.GetString("INGRESS_CLASS"); v != "demo" {
+		t.Fatalf("incorrect ingress class. expected %s, got %s", "demo", v)
 	}
 }
 

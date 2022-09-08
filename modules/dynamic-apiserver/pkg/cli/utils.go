@@ -14,7 +14,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"os"
+	"reflect"
 	"strings"
+)
+
+var (
+	errRequiredValue   = errors.New("value can't be empty")
+	errPointerExpected = errors.New("pointer type expected")
 )
 
 type WithPayload interface {
@@ -109,9 +115,7 @@ func getSelectPrompt(cmd *cobra.Command, parameter, defaultValue string, items [
 			Options: items,
 		}
 		var r string
-		if survey.AskOne(p, r) == terminal.InterruptErr {
-			os.Exit(0)
-		}
+		err = readAnswer(p, &r)
 		return r, err
 	}
 	val, err := getString(cmd, parameter)
@@ -150,21 +154,22 @@ func getStringPrompt(cmd *cobra.Command, parameter, defaultValue string, require
 		}
 
 		var r string
-		if survey.AskOne(p, r, survey.WithValidator(func(ans interface{}) error {
+		err = readAnswer(p, &r, survey.WithValidator(func(ans interface{}) error {
 			sAns := ans.(string)
-			if sAns == "" && !required {
+			if sAns == "" {
+				if required {
+					return errRequiredValue
+				}
 				return nil
 			}
 			return validatef(sAns)
-		})) == terminal.InterruptErr {
-			os.Exit(0)
-		}
+		}))
 
 		if r == "" && defaultValue != "" {
 			r = defaultValue
 		}
 
-		return r, nil
+		return r, err
 	}
 	val, err := getString(cmd, parameter)
 	if err != nil {
@@ -198,9 +203,7 @@ func getBoolPrompt(cmd *cobra.Command, defaultValue bool, parameter string) (boo
 		}
 
 		var r string
-		if survey.AskOne(p, r) == terminal.InterruptErr {
-			os.Exit(0)
-		}
+		err = readAnswer(p, &r)
 		return r == "yes", err
 	}
 	val, err := getBool(cmd, parameter)
@@ -208,4 +211,15 @@ func getBoolPrompt(cmd *cobra.Command, defaultValue bool, parameter string) (boo
 		return *val, err
 	}
 	return defaultValue, err
+}
+
+func readAnswer(p survey.Prompt, dst interface{}, opts ...survey.AskOpt) error {
+	if reflect.ValueOf(dst).Kind() != reflect.Ptr {
+		return errPointerExpected
+	}
+	err := survey.AskOne(p, dst, opts...)
+	if err == terminal.InterruptErr {
+		os.Exit(0)
+	}
+	return nil
 }

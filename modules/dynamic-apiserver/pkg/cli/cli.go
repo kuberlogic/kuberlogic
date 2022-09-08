@@ -21,12 +21,12 @@ import (
 var (
 	// debug flag indicating that cli should output debug logs
 	debug bool
-	// config file location
-	configFile string
 	// dry run flag
 	dryRun bool
 	// name of the executable
 	exeName = filepath.Base(os.Args[0])
+
+	configFile string
 
 	// version of package, substitute via ldflags
 	ver string
@@ -88,11 +88,10 @@ func MakeRootCmd(httpClient *http.Client, k8sclient kubernetes.Interface) (*cobr
 
 	// configure debug flag
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "output debug logs")
-	// configure config location
-	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file path")
 	// configure dry run flag
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "do not send the request to server")
-
+	// configure config key
+	rootCmd.PersistentFlags().StringVar(&configFile, "config", path.Join(homedir.HomeDir(), ".config", "kuberlogic", "config.yaml"), "config file")
 	var formatResponse format
 	rootCmd.PersistentFlags().Var(&formatResponse, formatFlag, "Format response value: json, yaml or string. (default: string)")
 
@@ -116,12 +115,8 @@ func MakeRootCmd(httpClient *http.Client, k8sclient kubernetes.Interface) (*cobr
 }
 
 // initViperConfigs initialize viper config using config file in '$HOME/.config/<cli name>/config.<json|yaml...>'
-// currently hostname, scheme and auth tokens can be specified in this config file.
+// currently hostname, scheme and auth token can be specified in this config file.
 func initViperConfigs() {
-	if configFile == "" {
-		// use default config file
-		configFile = path.Join(homedir.HomeDir(), ".config", "kuberlogic", "config.yaml")
-	}
 	viper.SetConfigFile(configFile)
 
 	if err := viper.ReadInConfig(); err != nil {
