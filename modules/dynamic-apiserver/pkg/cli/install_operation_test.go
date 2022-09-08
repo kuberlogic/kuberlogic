@@ -95,7 +95,7 @@ func TestInstallClusterNotAvailable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-  
+
 	cmd.SetArgs([]string{"install",
 		"--non-interactive",
 		"--storage_class", "demo",
@@ -159,6 +159,45 @@ func TestValidationSentryURI(t *testing.T) {
 			}
 			if tt.out.Error() != err.Error() {
 				t.Errorf("got %q, want %q", err, tt.out)
+			}
+		})
+	}
+}
+
+func TestValidationDockerComposeProvided(t *testing.T) {
+	testFile, _ := os.CreateTemp(".", "docker-compose")
+	testFile.Close()
+	defer os.Remove(testFile.Name())
+
+	testDir, _ := os.MkdirTemp(".", "docker-compose")
+	defer os.RemoveAll(testDir)
+
+	tests := map[string]error{
+		testFile.Name(): nil,
+		testDir:         errDirFound,
+		"fake123":       os.ErrNotExist,
+	}
+
+	for in, expectedErr := range tests {
+		t.Run(in, func(t *testing.T) {
+			configDir, _ := os.MkdirTemp("", "install-test")
+			defer os.RemoveAll(configDir)
+
+			configFile = filepath.Join(configDir, "config.yaml")
+			kubectlBin = "echo"
+			viper.SetConfigFile(configFile)
+
+			cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
+			if err != nil {
+				t.Fatal(err)
+			}
+			cmd.SetArgs([]string{"install", "--non-interactive", "--storage_class", "demo", "--ingress_class", "demo", "--docker_compose", in})
+			err = cmd.Execute()
+			if err == nil && expectedErr == nil {
+				return
+			}
+			if expectedErr != nil && !errors.Is(err, expectedErr) {
+				t.Fatalf("got %v, expected %v", err, expectedErr)
 			}
 		})
 	}
