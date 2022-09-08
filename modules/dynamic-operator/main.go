@@ -6,13 +6,14 @@ package main
 
 import (
 	"flag"
+	"os"
+	"os/exec"
+	"time"
+
 	"github.com/getsentry/sentry-go"
 	"github.com/go-logr/zapr"
 	sentry2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
 	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
-	"os"
-	"os/exec"
-	"time"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
@@ -40,6 +41,8 @@ import (
 )
 
 var (
+	// version of package, substitute via ldflags
+	ver      string
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
@@ -70,12 +73,17 @@ func main() {
 
 	// init sentry
 	if dsn := cfg.SentryDsn; dsn != "" {
-		err := sentry2.InitSentry(dsn, "operator")
+		sentryTags := &sentry2.SentryTags{
+			Component:    "operator",
+			Version:      ver,
+			DeploymentId: cfg.DeploymentId,
+		}
+		err := sentry2.InitSentry(dsn, sentryTags)
 		if err != nil {
 			setupLog.Error(err, "unable to init sentry")
 			os.Exit(1)
 		}
-		ctrl.SetLogger(zapr.NewLogger(sentry2.UseSentryWithLogger(dsn, rawLogger, "operator")))
+		ctrl.SetLogger(zapr.NewLogger(sentry2.UseSentryWithLogger(dsn, rawLogger, sentryTags)))
 
 		defer sentry.Flush(2 * time.Second)
 

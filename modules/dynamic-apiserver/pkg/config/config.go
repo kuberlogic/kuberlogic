@@ -32,8 +32,9 @@ type Config struct {
 	Cors           struct {
 		AllowedOrigins []string `envconfig:"default=https://*;http://*"`
 	}
-	SentryDsn string `envconfig:"optional"`
-	Domain    string
+	SentryDsn    string `envconfig:"optional"`
+	DeploymentId string `envconfig:"optional"`
+	Domain       string
 }
 
 // InitConfig func

@@ -32,12 +32,13 @@ test:
 	go test -v ./... -coverprofile cover.out
 
 .PHONY: docker-build
+docker-build: export LDFLAGS="-X main.ver=$(VERSION)"
 docker-build:
 	CGO_ENABLED=0 \
 	GOOS=linux \
 	GOARCH=amd64 \
 	GO111MODULE=on \
-	go build -a -o bin/chargebee-integration main.go
+	go build -a -o bin/chargebee-integration -ldflags=$(LDFLAGS) main.go
 	docker build . \
 		--build-arg BIN=bin/chargebee-integration \
 		-t $(IMAGE_PATH):$(VERSION) \

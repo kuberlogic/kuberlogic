@@ -8,6 +8,12 @@ import (
 	"chargebee_integration/app"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"math/rand"
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/chargebee/chargebee-go"
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
@@ -16,11 +22,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"io/ioutil"
-	"math/rand"
-	"net/http"
-	"os"
-	"time"
+)
+
+var (
+	// version of package, substitute via ldflags
+	ver string
 )
 
 func main() {
@@ -35,6 +41,7 @@ func main() {
 		"CHARGEBEE_KEY",
 		"KUBERLOGIC_TYPE",
 		"SENTRY_DSN",
+		"KUBERLOGIC_DEPLOYMENT_ID",
 	} {
 		if err := initEnv(value); err != nil {
 			rawLogger.Warn(err.Error())
@@ -42,12 +49,18 @@ func main() {
 			rawLogger.Debug("env", zap.String(value, viper.GetString(value)))
 		}
 	}
+	deploymentId := viper.GetString("KUBERLOGIC_DEPLOYMENT_ID")
 
 	// init sentry
 	if dsn := viper.GetString("SENTRY_DSN"); dsn != "" {
-		rawLogger = sentry2.UseSentryWithLogger(dsn, rawLogger, "chargebee-integration")
+		sentryTags := &sentry2.SentryTags{
+			Component:    "chargebee-integration",
+			Version:      ver,
+			DeploymentId: deploymentId,
+		}
+		rawLogger = sentry2.UseSentryWithLogger(dsn, rawLogger, sentryTags)
 
-		err := sentry2.InitSentry(dsn, "chargebee-integration")
+		err := sentry2.InitSentry(dsn, sentryTags)
 		if err != nil {
 			rawLogger.Error(fmt.Sprintf("unable to init sentry: %v", err))
 			os.Exit(1)

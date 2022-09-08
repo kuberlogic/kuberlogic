@@ -17,8 +17,9 @@
 package main
 
 import (
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/cmd"
 	"os"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/cmd"
 )
 
 func main() {

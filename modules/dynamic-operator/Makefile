@@ -60,8 +60,9 @@ help: ## Display this help.
 ##@ Development
 
 
+build-docker-compose-plugin: export LDFLAGS="-X main.ver=$(VERSION)"
 build-docker-compose-plugin:
-	cd plugins/docker-compose/ && go build -a -o ../../bin/docker-compose-plugin .
+	cd plugins/docker-compose/ && go build -a -o ../../bin/docker-compose-plugin -ldflags=$(LDFLAGS) .
 
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
@@ -93,8 +94,9 @@ test: manifests generate fmt vet build-docker-compose-plugin envtest ## Run test
 ##@ Build
 
 .PHONY: build
+build: export LDFLAGS="-X main.ver=$(VERSION)"
 build: generate fmt vet ## Build manager binary.
-	go build -o bin/manager main.go
+	go build -o bin/manager -ldflags=$(LDFLAGS) main.go
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
@@ -107,9 +109,11 @@ docker-build: export CGO_ENABLED=0
 docker-build: export GOOS=linux
 docker-build: export GOARCH=amd64
 docker-build: export GO111MODULE=on
+docker-build: export LDFLAGS="-X main.ver=$(VERSION)"
+docker-build: export COMPOSE_LDFLAGS="-X main.ver=$(VERSION)"
 docker-build: test ## Build docker image with the manager.
-	go build -a -o bin/manager main.go
-	cd plugins/docker-compose && go build -a -o ../../bin/docker-compose-plugin . && cd -
+	go build -a -o bin/manager -ldflags=$(LDFLAGS) main.go
+	cd plugins/docker-compose && go build -a -o ../../bin/docker-compose-plugin -ldflags=$(COMPOSE_LDFLAGS) . && cd -
 	docker build . \
 		--build-arg BIN=bin/manager \
 		--build-arg PLUGIN=bin/docker-compose-plugin \

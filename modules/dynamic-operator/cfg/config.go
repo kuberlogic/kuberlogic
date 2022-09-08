@@ -32,7 +32,8 @@ type Config struct {
 		SnapshotsEnabled bool `envconfig:"optional"`
 	} `envconfig:"optional"`
 
-	SentryDsn string `envconfig:"optional"`
+	DeploymentId string `envconfig:"optional"`
+	SentryDsn    string `envconfig:"optional"`
 }
 
 func NewConfig() (*Config, error) {

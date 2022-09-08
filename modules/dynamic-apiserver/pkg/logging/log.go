@@ -39,8 +39,8 @@ func init() {
 	l = newZapLogger().Sugar()
 }
 
-func UseSentry(dsn string) {
-	l = sentry.UseSentryWithLogger(dsn, newZapLogger(), "apiserver").Sugar()
+func UseSentry(dsn string, tags *sentry.SentryTags) {
+	l = sentry.UseSentryWithLogger(dsn, newZapLogger(), tags).Sugar()
 }
 
 func WithComponentLogger(component string) Logger {

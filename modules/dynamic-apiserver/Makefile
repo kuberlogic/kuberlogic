@@ -13,11 +13,18 @@ KUBERLOGIC_SENTRY_DSN =
 KUBERLOGIC_DEBUG_LOGS = true
 KUBERLOGIC_DOMAIN = example.com
 
+PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+
 ifeq ($(USE_BUILD),true)
 	VERSION := $(VERSION)-$(shell git rev-list --count $(shell git rev-parse --abbrev-ref HEAD))
 endif
 COMMIT_SHA = $(shell git rev-parse HEAD)
 IMG_SHA_TAG ?= $(VERSION)-$(COMMIT_SHA)
+
+SWAGGER = $(shell pwd)/bin/swagger
+.PHONY: swagger
+swagger: ## Download swagger locally if necessary.
+	$(call go-get-tool,$(SWAGGER),github.com/go-swagger/go-swagger/cmd/swagger@v0.29.0)
 
 .PHONY: recreate-generated-server
 recreate-generated-server:
@@ -30,8 +37,8 @@ recreate-generated-client:
 	mkdir -p pkg/generated
 
 .PHONY: generate-server
-generate-server: recreate-generated-server
-	swagger generate server \
+generate-server: recreate-generated-server swagger
+	$(SWAGGER) generate server \
 		--spec openapi.yaml \
 		--target pkg/generated \
 		-P models.Principal \
@@ -40,8 +47,8 @@ generate-server: recreate-generated-server
 		--name kuberlogic
 
 .PHONY: generate-client
-generate-client: recreate-generated-client
-	swagger generate client \
+generate-client: recreate-generated-client swagger
+	$(SWAGGER) generate client \
 		--spec openapi.yaml \
 		--target pkg/generated/
 
@@ -75,12 +82,13 @@ run:
 generate: generate-server generate-client
 
 .PHONY: docker-build
-docker-build:
+docker-build: export LDFLAGS="-X github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/cmd.ver=$(VERSION)"
+docker-build: 
 	CGO_ENABLED=0 \
 	GOOS=linux \
 	GOARCH=amd64 \
 	GO111MODULE=on \
-	go build -a -o bin/apiserver main.go
+	go build -a -o bin/apiserver -ldflags=$(LDFLAGS) main.go
 	docker build . \
 		--build-arg BIN=bin/apiserver \
 		-t $(APISERVER_IMG):$(VERSION) \
@@ -104,3 +112,16 @@ docker-pull-cache:
 docker-restore-cache: docker-pull-cache
 	docker tag $(APISERVER_IMG):$(IMG_SHA_TAG) $(APISERVER_IMG):$(VERSION)
 	docker tag $(APISERVER_IMG):$(IMG_SHA_TAG) $(APISERVER_IMG):$(IMG_LATEST_TAG)
+
+# go-get-tool will 'go get' any package $2 and install it to $1.
+define go-get-tool
+@[ -f $(1) ] || { \
+set -e ;\
+TMP_DIR=$$(mktemp -d) ;\
+cd $$TMP_DIR ;\
+go mod init tmp ;\
+echo "Downloading $(2)" ;\
+GOBIN=$(PROJECT_DIR)/bin go install $(2) ;\
+rm -rf $$TMP_DIR ;\
+}
+endef
