@@ -341,7 +341,7 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 			proto := corev1.ProtocolTCP
 
 			port := corev1.ContainerPort{
-				Name:          target.String(),
+				Name:          target.String() + "-port",
 				ContainerPort: target.IntVal,
 				Protocol:      proto,
 			}
@@ -351,7 +351,7 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 				Handler: corev1.Handler{
 					HTTPGet: &corev1.HTTPGetAction{
 						Path: "/healthz",
-						Port: target,
+						Port: intstr.FromString(port.Name),
 					},
 				},
 				FailureThreshold:    3,
