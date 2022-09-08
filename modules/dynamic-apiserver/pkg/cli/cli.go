@@ -25,7 +25,9 @@ var (
 	dryRun bool
 	// name of the executable
 	exeName = filepath.Base(os.Args[0])
-
+	// configFile that is used by the application
+	// this is used by viper.ReadConfig() and is not safe to use directly
+	// instead, use viper.ConfigUsed()
 	configFile string
 
 	// version of package, substitute via ldflags
@@ -90,8 +92,9 @@ func MakeRootCmd(httpClient *http.Client, k8sclient kubernetes.Interface) (*cobr
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "output debug logs")
 	// configure dry run flag
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "do not send the request to server")
-	// configure config key
+	// configure config file flag
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", path.Join(homedir.HomeDir(), ".config", "kuberlogic", "config.yaml"), "config file")
+
 	var formatResponse format
 	rootCmd.PersistentFlags().Var(&formatResponse, formatFlag, "Format response value: json, yaml or string. (default: string)")
 

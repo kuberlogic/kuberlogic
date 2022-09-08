@@ -149,15 +149,14 @@ func getStringPrompt(cmd *cobra.Command, parameter, defaultValue string, require
 	}
 	if nonInteractive == nil {
 		p := &survey.Input{
-			Message: fmt.Sprintf("%s\nPress Enter to keep current value", flag.Usage),
-			Default: defaultValue,
+			Message: fmt.Sprintf("%s\nPress Enter to keep current value '%s':", flag.Usage, defaultValue),
 		}
 
 		var r string
 		err = readAnswer(p, &r, survey.WithValidator(func(ans interface{}) error {
 			sAns := ans.(string)
 			if sAns == "" {
-				if required {
+				if required && defaultValue == "" {
 					return errRequiredValue
 				}
 				return nil
