@@ -350,7 +350,7 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 			container.ReadinessProbe = &corev1.Probe{
 				Handler: corev1.Handler{
 					HTTPGet: &corev1.HTTPGetAction{
-						Path: "/healthz",
+						Path: "/",
 						Port: intstr.FromString(port.Name),
 					},
 				},
