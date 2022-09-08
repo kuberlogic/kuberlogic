@@ -173,6 +173,10 @@ func getStringPrompt(cmd *cobra.Command, parameter, defaultValue string, require
 	if val != nil {
 		return *val, validatef(*val)
 	}
+	// do not run validation if a parameter is not required
+	if !required {
+		return defaultValue, nil
+	}
 	return defaultValue, validatef(defaultValue)
 }
 
