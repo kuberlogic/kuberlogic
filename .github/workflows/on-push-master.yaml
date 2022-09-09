@@ -11,7 +11,7 @@ jobs:
   build:
     name: Build images
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/master' || (github.event.issue.pull_request && github.event.comment.body == '/ct') }}
+    if: ${{ github.event.issue.pull_request && github.event.comment.body == '/ct' }}
     env:
       USE_BUILD: true
       GOPATH: /tmp/go
