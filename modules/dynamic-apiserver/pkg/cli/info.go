@@ -79,7 +79,7 @@ func runInfo(k8sclient kubernetes.Interface, apiClientFunc func() (*client.Servi
 		}
 
 		command.Println()
-		command.Println("To further debug and diagnose problems, use './kuberlogic diag'.")
+		command.Printf("To further debug and diagnose problems, use '%s diag'.\n", exeName)
 		return nil
 	}
 }

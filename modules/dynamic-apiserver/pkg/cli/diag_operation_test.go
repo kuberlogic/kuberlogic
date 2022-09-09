@@ -61,7 +61,7 @@ func TestDiagSuccess(t *testing.T) {
 			if _, err := io.Copy(statusFileContent, statusFileHandler); err != nil {
 				t.Fatal(err)
 			}
-			expected := "--all-namespaces get pods -o yaml\n"
+			expected := "get pods --all-namespaces -o yaml\n"
 			if actual := statusFileContent.String(); expected != actual {
 				t.Fatalf("actual `%s` does not match expected `%s`", actual, expected)
 			}

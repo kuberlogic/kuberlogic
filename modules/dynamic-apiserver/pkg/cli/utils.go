@@ -7,12 +7,20 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/ghodss/yaml"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
-	"github.com/manifoldco/promptui"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"os"
+	"reflect"
 	"strings"
+)
+
+var (
+	errRequiredValue   = errors.New("value can't be empty")
+	errPointerExpected = errors.New("pointer type expected")
 )
 
 type WithPayload interface {
@@ -101,21 +109,14 @@ func getSelectPrompt(cmd *cobra.Command, parameter, defaultValue string, items [
 		return "", err
 	}
 	if nonInteractive == nil {
-		currentPos := 0
-		for ix, i := range items {
-			if defaultValue == i {
-				currentPos = ix
-			}
+		p := &survey.Select{
+			Message: flag.Usage,
+			Default: defaultValue,
+			Options: items,
 		}
-
-		prompt := promptui.Select{
-			Label:     "(Use arrow keys to navigate and hit Enter) " + flag.Usage,
-			Items:     items,
-			CursorPos: currentPos,
-			Size:      len(items),
-		}
-		_, result, err := prompt.Run()
-		return result, err
+		var r string
+		err = readAnswer(p, &r)
+		return r, err
 	}
 	val, err := getString(cmd, parameter)
 	if err != nil {
@@ -133,7 +134,7 @@ func getSelectPrompt(cmd *cobra.Command, parameter, defaultValue string, items [
 	return "", errors.New(*val + " is not available. Available: " + strings.Join(items, ","))
 }
 
-func getStringPrompt(cmd *cobra.Command, parameter, defaultValue string, validatef promptui.ValidateFunc) (string, error) {
+func getStringPrompt(cmd *cobra.Command, parameter, defaultValue string, required bool, validatef func(string) error) (string, error) {
 	if validatef == nil {
 		validatef = func(s string) error {
 			return nil
@@ -147,13 +148,27 @@ func getStringPrompt(cmd *cobra.Command, parameter, defaultValue string, validat
 		return "", err
 	}
 	if nonInteractive == nil {
-		prompt := promptui.Prompt{
-			Label:    flag.Usage,
-			Validate: validatef,
-			Default:  defaultValue,
+		p := &survey.Input{
+			Message: fmt.Sprintf("%s\nPress Enter to keep current value '%s':", flag.Usage, defaultValue),
 		}
-		result, err := prompt.Run()
-		return result, err
+
+		var r string
+		err = readAnswer(p, &r, survey.WithValidator(func(ans interface{}) error {
+			sAns := ans.(string)
+			if sAns == "" {
+				if required && defaultValue == "" {
+					return errRequiredValue
+				}
+				return nil
+			}
+			return validatef(sAns)
+		}))
+
+		if r == "" && defaultValue != "" {
+			r = defaultValue
+		}
+
+		return r, err
 	}
 	val, err := getString(cmd, parameter)
 	if err != nil {
@@ -161,6 +176,10 @@ func getStringPrompt(cmd *cobra.Command, parameter, defaultValue string, validat
 	}
 	if val != nil {
 		return *val, validatef(*val)
+	}
+	// do not run validation if a parameter is not required
+	if !required {
+		return defaultValue, nil
 	}
 	return defaultValue, validatef(defaultValue)
 }
@@ -173,30 +192,33 @@ func getBoolPrompt(cmd *cobra.Command, defaultValue bool, parameter string) (boo
 		return false, err
 	}
 	if nonInteractive == nil {
-		promptDefault := "N"
-		suffix := " [y/N]"
+		p := &survey.Select{
+			Message: flag.Usage,
+			Default: "no",
+			Options: []string{"yes", "no"},
+		}
 		if defaultValue {
-			promptDefault = "y"
-			suffix = " [Y/n]"
+			p.Default = "yes"
 		}
 
-		prompt := promptui.Prompt{
-			Label:   flag.Usage + suffix,
-			Default: promptDefault,
-			Validate: func(s string) error {
-				if lower := strings.ToLower(s); lower != "y" && lower != "n" {
-					return errors.New("Please answer with [y]es or [n]o")
-				}
-				return nil
-			},
-		}
-		result, err := prompt.Run()
-		isTrue := strings.ToLower(result) == "y"
-		return isTrue, err
+		var r string
+		err = readAnswer(p, &r)
+		return r == "yes", err
 	}
 	val, err := getBool(cmd, parameter)
 	if val != nil {
 		return *val, err
 	}
 	return defaultValue, err
+}
+
+func readAnswer(p survey.Prompt, dst interface{}, opts ...survey.AskOpt) error {
+	if reflect.ValueOf(dst).Kind() != reflect.Ptr {
+		return errPointerExpected
+	}
+	err := survey.AskOne(p, dst, opts...)
+	if err == terminal.InterruptErr {
+		os.Exit(0)
+	}
+	return nil
 }

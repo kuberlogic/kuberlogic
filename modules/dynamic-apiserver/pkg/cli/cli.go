@@ -22,12 +22,14 @@ import (
 var (
 	// debug flag indicating that cli should output debug logs
 	debug bool
-	// config file location
-	configFile string
 	// dry run flag
 	dryRun bool
 	// name of the executable
 	exeName = filepath.Base(os.Args[0])
+	// configFile that is used by the application
+	// this is used by viper.ReadConfig() and is not safe to use directly
+	// instead, use viper.ConfigUsed()
+	configFile string
 
 	// version of package, substitute via ldflags
 	ver string
@@ -81,7 +83,7 @@ func MakeRootCmd(httpClient *http.Client, k8sclient kubernetes.Interface) (*cobr
 	if err != nil {
 		return nil, err
 	}
-	rootCmd.PersistentFlags().String(tokenFlag, "8ZTjsD3t2Q3Yq-C4-hoahcFn", "Specify KuberLogic API server authentication token. The authentication token is used for authentication to KuberLogic API every time an API request is made. Like passwords, Authentication tokens should remain a secret.")
+	rootCmd.PersistentFlags().String(tokenFlag, "8ZTjsD3t2Q3Yq-C4-hoahcFn", "Specify KuberLogic API server authentication token.\nThe authentication token is used for authentication to KuberLogic API every time an API request is made. Like passwords, Authentication tokens should remain a secret.")
 	err = viper.BindPFlag(tokenFlag, rootCmd.PersistentFlags().Lookup(tokenFlag))
 	if err != nil {
 		return nil, err
@@ -89,10 +91,10 @@ func MakeRootCmd(httpClient *http.Client, k8sclient kubernetes.Interface) (*cobr
 
 	// configure debug flag
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "output debug logs")
-	// configure config location
-	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file path")
 	// configure dry run flag
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "do not send the request to server")
+	// configure config file flag
+	rootCmd.PersistentFlags().StringVar(&configFile, "config", path.Join(homedir.HomeDir(), ".config", "kuberlogic", "config.yaml"), "config file")
 
 	var formatResponse format
 	rootCmd.PersistentFlags().Var(&formatResponse, formatFlag, "Format response value: json, yaml or string. (default: string)")
@@ -117,12 +119,8 @@ func MakeRootCmd(httpClient *http.Client, k8sclient kubernetes.Interface) (*cobr
 }
 
 // initViperConfigs initialize viper config using config file in '$HOME/.config/<cli name>/config.<json|yaml...>'
-// currently hostname, scheme and auth tokens can be specified in this config file.
+// currently hostname, scheme and auth token can be specified in this config file.
 func initViperConfigs() {
-	if configFile == "" {
-		// use default config file
-		configFile = path.Join(homedir.HomeDir(), ".config", "kuberlogic", "config.yaml")
-	}
 	viper.SetConfigFile(configFile)
 
 	if err := viper.ReadInConfig(); err != nil {
