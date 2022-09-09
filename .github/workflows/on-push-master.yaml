@@ -8,8 +8,9 @@ on:
 jobs:
   build:
     name: Build images
+    if: contains(github.event.comment.body, '/cluster-test')
+
     runs-on: ubuntu-latest
-    if: ${{ github.event.issue.pull_request && github.event.comment.body == '/ct' }}
     env:
       USE_BUILD: true
       GOPATH: /tmp/go
