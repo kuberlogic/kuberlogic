@@ -1,7 +1,5 @@
 name: Development build
 on:
-  push:
-    branches: [ master ]
 
   issue_comment:
     types:
