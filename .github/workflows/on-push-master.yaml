@@ -1,12 +1,11 @@
 name: Development build
 on:
   issue_comment:
-    types: [created]
 
 jobs:
   build:
     name: Build images
-
+    if: ${{ github.event.issue.pull_request }}
     runs-on: ubuntu-latest
     env:
       USE_BUILD: true
