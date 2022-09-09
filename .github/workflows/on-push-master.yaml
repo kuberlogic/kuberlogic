@@ -3,10 +3,15 @@ on:
   push:
     branches: [ master ]
 
+  issue_comment:
+    types:
+      - created
+
 jobs:
   build:
     name: Build images
     runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/master' || (github.event.issue.pull_request && github.event.comment.body == '/ct') }}
     env:
       USE_BUILD: true
       GOPATH: /tmp/go
@@ -141,6 +146,7 @@ jobs:
   release:
     name: Release images
     runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/master' }} # run only for merge in master
     needs: setup_and_test
     env:
       USE_BUILD: true
