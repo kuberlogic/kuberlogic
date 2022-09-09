@@ -1,11 +1,11 @@
 name: Development build
 on:
-  issue_comment:
+  push:
+    branches: [ master ]
 
 jobs:
   build:
     name: Build images
-    if: ${{ github.event.issue.pull_request }}
     runs-on: ubuntu-latest
     env:
       USE_BUILD: true
@@ -141,7 +141,6 @@ jobs:
   release:
     name: Release images
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/master' }} # run only for merge in master
     needs: setup_and_test
     env:
       USE_BUILD: true
