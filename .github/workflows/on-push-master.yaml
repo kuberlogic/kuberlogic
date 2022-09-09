@@ -1,14 +1,11 @@
 name: Development build
 on:
-
   issue_comment:
-    types:
-      - created
+    types: [created]
 
 jobs:
   build:
     name: Build images
-    if: contains(github.event.comment.body, '/cluster-test')
 
     runs-on: ubuntu-latest
     env:
