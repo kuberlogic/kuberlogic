@@ -118,7 +118,8 @@ jobs:
           --non-interactive \
           --ingress_class=kong \
           --storage_class=standard \
-          --docker_compose=./modules/dynamic-operator/config/manager/docker-compose.yaml
+          --docker_compose=./modules/dynamic-operator/config/manager/docker-compose.yaml \
+          --kuberlogic_domain=kuberlogic.local
 
       - name: Run the tests in cluster
         working-directory: ./modules/dynamic-operator
