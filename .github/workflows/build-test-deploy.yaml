@@ -1,0 +1,204 @@
+on:
+  workflow_call:
+    inputs:
+      use_build:
+        required: true
+        type: boolean
+
+jobs:
+  build:
+    name: Build images
+    runs-on: ubuntu-latest
+    env:
+      USE_BUILD: ${{ inputs.use_build }}
+      GOPATH: /tmp/go
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # 0 - all history, it uses in generating part of BUILD in version
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.16.0'
+
+      - name: Cache Go modules
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.GOPATH }}
+          key: go-cache-${{ github.run_id }}
+          restore-keys: |
+            go-cache-
+
+      - name: Cache CLI
+        uses: actions/cache@v2
+        with:
+          path: ./modules/dynamic-apiserver/bin
+          key: cli-${{ github.sha }}
+
+      - name: Build CLI
+        working-directory: ./modules/dynamic-apiserver
+        run: |
+          make build-cli
+
+      - name: Build images
+        run: |
+          ls -la .
+          for module in dynamic-operator dynamic-apiserver chargebee-integration; do \
+            cd ./modules/${module}; \
+            make docker-build ;\
+            cd - ;\
+          done
+
+      - name: Login to Docker Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ secrets.REGISTRY_SERVER }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Save operator image's cache
+        run: |
+          for module in dynamic-operator dynamic-apiserver chargebee-integration; do \
+            cd ./modules/${module}; \
+            make docker-push-cache ;\
+            cd - ;\
+          done
+
+  setup_and_test:
+    name: Setup and test
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      USE_BUILD: ${{ inputs.use_build }}
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.16.0'
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # 0 - all history, it uses in generating part of BUILD in version
+          fetch-depth: 0
+
+      - name: Setup Minikube
+        uses: manusa/actions-setup-minikube@v2.7.0
+        with:
+          minikube version: 'v1.26.1'
+          kubernetes version: 'v1.24.3'
+          github token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install kong as ingress controller
+        run: |
+          kubectl create -f https://bit.ly/k4k8s
+
+      - name: Restore CLI
+        uses: actions/cache@v2
+        with:
+          path: ./modules/dynamic-apiserver/bin
+          key: cli-${{ github.sha }}
+
+      - name: Restore cached images
+        run: |
+          for module in dynamic-operator dynamic-apiserver chargebee-integration; do \
+            cd ./modules/${module}; \
+            make docker-restore-cache ;\
+            cd - ;\
+          done
+
+      - name: Install kustomize
+        working-directory: ./modules/dynamic-operator
+        run: |
+          make kustomize
+          install -b bin/kustomize /usr/local/bin
+
+      - name: Run the installer
+        run: |
+          ./modules/dynamic-apiserver/bin/kuberlogic_x86_64_linux install \
+          --non-interactive \
+          --ingress_class=kong \
+          --storage_class=standard \
+          --docker_compose=./modules/dynamic-operator/config/manager/docker-compose.yaml \
+          --kuberlogic_domain=kuberlogic.local
+
+      - name: Run the tests in cluster
+        working-directory: ./modules/dynamic-operator
+        run: |
+          USE_EXISTING_CLUSTER=true make test
+
+      - name: Collect diagnostic information
+        if: ${{ always() }}
+        run: |
+          ./modules/dynamic-apiserver/bin/kuberlogic_x86_64_linux diag
+
+      - name: Archive test artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: kuberlogic-diag
+          path: |
+            kuberlogic-diag*.zip
+
+  release:
+    name: Release images
+    runs-on: ubuntu-latest
+    needs: setup_and_test
+    env:
+      USE_BUILD: ${{ inputs.use_build }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # 0 - all history, it uses in generating part of BUILD in version
+          fetch-depth: 0
+
+      - name: Login to Docker Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ secrets.REGISTRY_SERVER }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Restore cached images
+        run: |
+          for module in dynamic-operator dynamic-apiserver chargebee-integration; do \
+            cd ./modules/${module}; \
+            make docker-restore-cache ;\
+            cd - ;\
+          done
+
+      - name: Push the new images
+        run: |
+          for module in dynamic-operator dynamic-apiserver chargebee-integration; do \
+            cd ./modules/${module}; \
+            make docker-push ;\
+            cd - ;\
+          done
+
+      - name: Restore CLI
+        uses: actions/cache@v2
+        with:
+          path: ./modules/dynamic-apiserver/bin
+          key: cli-${{ github.sha }}
+
+      - name: Release CLI (dev)
+        uses: marvinpinto/action-automatic-releases@v1.2.1
+        if: steps.cache-installer.outputs.cache-hit == 'true' && github.ref == 'KL-362'
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            ./modules/dynamic-apiserver/bin/kuberlogic_*
+
+      - name: Release
+        uses: anton-yurchenko/git-release@v4.2.4
+        if: steps.cache-installer.outputs.cache-hit == 'true' && startsWith(github.ref, 'refs/tags/v')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRE_RELEASE: true
+          files: |
+            ./modules/dynamic-apiserver/bin/kuberlogic_*
