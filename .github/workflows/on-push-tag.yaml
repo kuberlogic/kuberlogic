@@ -1,12 +1,12 @@
-name: Development build
+name: Release
 on:
   push:
-    branches: [ master ]
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
   build_test_deploy:
     uses: ./.github/workflows/build-test-deploy.yaml
     with:
-      DEV_BUILD: true
-      PUBLISH_DEV_BUILD: true
+      PUBLISH_PROD_BUILD: true
     secrets: inherit

@@ -17,7 +17,7 @@ KUBERLOGIC_TYPE = docker-compose
 
 SENTRY_DSN =
 
-ifeq ($(USE_BUILD),true)
+ifeq ($(DEV_BUILD),true)
 	VERSION := $(VERSION)-$(shell git rev-list --count $(shell git rev-parse --abbrev-ref HEAD))
 endif
 COMMIT_SHA = $(shell git rev-parse HEAD)

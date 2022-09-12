@@ -1,13 +1,7 @@
 name: Apiserver unittests
-
 on:
-#  pull_request:
-#    branches: [ master ]
-
-  push:
-    branches: [ KL-1 ]
-
-
+  pull_request:
+    branches: [ master ]
 
 jobs:
   unittests:

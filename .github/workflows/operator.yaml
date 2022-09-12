@@ -1,12 +1,7 @@
 name: Operator tests
-
 on:
-#  pull_request:
-#    branches: [ master ]
-
-  push:
-    branches: [ KL-1 ]
-
+  pull_request:
+    branches: [ master ]
 
 jobs:
   e2e-test:
