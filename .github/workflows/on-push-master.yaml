@@ -1,7 +1,7 @@
 name: Development build
 on:
   push:
-    branches: [ KL-362 ]
+    branches: [ master ]
 
 jobs:
   build_test_deploy:

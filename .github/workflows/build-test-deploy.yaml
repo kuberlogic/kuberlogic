@@ -1,3 +1,4 @@
+name: Build / In-cluster tests / Deploy
 on:
   workflow_call:
     inputs:
@@ -191,6 +192,7 @@ jobs:
           done
 
       - name: Restore CLI
+        id: cache-installer
         uses: actions/cache@v2
         with:
           path: ./modules/dynamic-apiserver/bin

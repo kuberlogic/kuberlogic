@@ -1,3 +1,4 @@
+name: Run in-cluster tests
 on:
   issue_comment:
     types:
@@ -5,6 +6,7 @@ on:
 
 jobs:
   build_test_deploy:
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '/run in-cluster tests')
     uses: ./.github/workflows/build-test-deploy.yaml
     with:
       DEV_BUILD: true
