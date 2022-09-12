@@ -5,11 +5,12 @@ on:
         required: true
         type: boolean
     secrets:
-#      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      REGISTRY_SERVER: ${{ secrets.REGISTRY_SERVER }}
-      REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
-      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-
+      REGISTRY_SERVER:
+        required: true
+      REGISTRY_USER:
+        required: true
+      REGISTRY_PASSWORD:
+        required: true
 
 jobs:
   build:
