@@ -1,5 +1,4 @@
 name: Operator tests
-
 on:
   pull_request:
     branches: [ master ]
