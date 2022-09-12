@@ -6,6 +6,8 @@ package util
 
 import (
 	"encoding/json"
+	"fmt"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
@@ -18,6 +20,7 @@ import (
 )
 
 const (
+	DomainField               = "domain"
 	SubscriptionField         = "subscription-id"
 	BackupRestoreServiceField = "kls-id"
 )
@@ -25,7 +28,8 @@ const (
 func ServiceToKuberlogic(svc *models.Service, cfg *config.Config) (*kuberlogiccomv1alpha1.KuberLogicService, error) {
 	c := &kuberlogiccomv1alpha1.KuberLogicService{
 		ObjectMeta: v1.ObjectMeta{
-			Name: *svc.ID,
+			Name:   *svc.ID,
+			Labels: map[string]string{},
 		},
 	}
 
@@ -37,7 +41,12 @@ func ServiceToKuberlogic(svc *models.Service, cfg *config.Config) (*kuberlogicco
 		c.Spec.Version = svc.Version
 	}
 
-	c.Spec.Domain = cfg.Domain
+	c.Spec.Domain = fmt.Sprintf("%s.%s", *svc.ID, cfg.Domain)
+	if svc.Domain != "" {
+		c.Spec.Domain = svc.Domain
+	}
+	c.ObjectMeta.Labels[DomainField] = c.Spec.Domain
+
 	if svc.BackupSchedule != "" {
 		c.Spec.BackupSchedule = svc.BackupSchedule
 	}

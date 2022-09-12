@@ -5,6 +5,8 @@
 package v1alpha1
 
 import (
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
@@ -13,7 +15,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 var _ = Describe("KuberlogicService controller", func() {
@@ -65,14 +66,14 @@ var _ = Describe("KuberlogicService controller", func() {
 		It("Should create KuberLogicService resource", func() {
 			By("By creating a new KuberLogicService")
 
-			Expect(k8sClient.Create(ctx, kls)).Should(Succeed())
+			Expect(testK8sClient.Create(ctx, kls)).Should(Succeed())
 
 			By("By checking a new KuberLogicService")
 			lookupKlsKey := types.NamespacedName{Name: klsName, Namespace: klsNamespace}
 			createdKls := &KuberLogicService{}
 
 			Eventually(func() error {
-				return k8sClient.Get(ctx, lookupKlsKey, createdKls)
+				return testK8sClient.Get(ctx, lookupKlsKey, createdKls)
 			}, timeout, interval).Should(Not(HaveOccurred()))
 
 			log.Info("resources", "res", createdKls.Spec.Limits)
@@ -82,11 +83,11 @@ var _ = Describe("KuberlogicService controller", func() {
 
 			By("By creating a new KuberLogicService with default limits")
 
-			Expect(k8sClient.Create(ctx, defaultResourceKls)).Should(Succeed())
+			Expect(testK8sClient.Create(ctx, defaultResourceKls)).Should(Succeed())
 
 			By("By checking default plugin resources")
 			Eventually(func() error {
-				return k8sClient.Get(ctx, client.ObjectKeyFromObject(defaultResourceKls), createdKls)
+				return testK8sClient.Get(ctx, client.ObjectKeyFromObject(defaultResourceKls), createdKls)
 			}, timeout, interval).Should(Not(HaveOccurred()))
 
 			log.Info("resources", "res", createdKls.Spec.Limits)
@@ -94,18 +95,18 @@ var _ = Describe("KuberlogicService controller", func() {
 
 			By("Volume downsize is not supported")
 			defaultResourceKls.Spec.Limits["storage"] = resource.MustParse("1Mi")
-			Expect(k8sClient.Update(ctx, defaultResourceKls).Error()).Should(ContainSubstring("volume downsize forbidden"))
+			Expect(testK8sClient.Update(ctx, defaultResourceKls).Error()).Should(ContainSubstring("volume downsize forbidden"))
 		})
 		It("Should remove KuberLogicService resource", func() {
 			By("Removing KuberLogicService resource")
 
 			for _, item := range []*KuberLogicService{kls, defaultResourceKls} {
-				Expect(k8sClient.Delete(ctx, item)).Should(Succeed())
+				Expect(testK8sClient.Delete(ctx, item)).Should(Succeed())
 
 				By("By checking a new KuberLogicService")
 				removedKls := &KuberLogicService{}
 				Eventually(func() bool {
-					return errors.IsNotFound(k8sClient.Get(ctx, client.ObjectKeyFromObject(item), removedKls))
+					return errors.IsNotFound(testK8sClient.Get(ctx, client.ObjectKeyFromObject(item), removedKls))
 				}, timeout, interval).Should(BeTrue())
 			}
 		})
