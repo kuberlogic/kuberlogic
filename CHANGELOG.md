@@ -1,22 +1,18 @@
-## [0.0.12] - 2022-09-03
-### Added
-- Glob pattern support
-- Unit Tests
-- Log version
+## [0.0.12] - 2022-09-06
+- Add 'info' command to CLI (check KuberLogic component statuses)
+- Add 'version' command to CLI (check KuberLogic component versions)
+- Add 'diag' command to CLI (gather information for debugging)
+- Installation flow improvements (help texts, error messages, bug fixes)
+- Add update-credentials capabilities for managed applications
+- Various ChargeBee integration fixes
+- Other minor bug fixes, stability improvements
 
-### Fixed
-- Exception on margins larger than context of changelog
-- Nil pointer exception in 'release' package
+## [0.0.11] - 2022-08-08
+- Add 'install' command to KuberLogic CLI
+- Add Sentry integration
+- Update 'Service' 'model in KuberLogic REST API
+- Support custom fields mapping in Chargebee integration
+- More stability fixes
 
-### Changed
-- Refactor JavaScript wrapper
-
-## [0.0.11] - 2022-08-01
-### Added
-- Wrapper script: allow execution on Windows runners
-
-### Changed
-- Action execution through Git: from Docker to NodeJS
-
-[0.0.12]: https://github.com/anton-yurchenko/git-release/compare/0.0.11...0.0.12
-[0.0.11]: https://github.com/anton-yurchenko/git-release/releases/tag/0.0.11
+[0.0.12]: https://github.com/kuberlogic/kuberlogic/compare/0.0.11...0.0.12
+[0.0.11]: https://github.com/kuberlogic/kuberlogic/releases/tag/0.0.11
