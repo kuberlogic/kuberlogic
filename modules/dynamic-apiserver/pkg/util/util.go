@@ -20,7 +20,6 @@ import (
 )
 
 const (
-	DomainField               = "domain"
 	SubscriptionField         = "subscription-id"
 	BackupRestoreServiceField = "kls-id"
 )
@@ -28,8 +27,7 @@ const (
 func ServiceToKuberlogic(svc *models.Service, cfg *config.Config) (*kuberlogiccomv1alpha1.KuberLogicService, error) {
 	c := &kuberlogiccomv1alpha1.KuberLogicService{
 		ObjectMeta: v1.ObjectMeta{
-			Name:   *svc.ID,
-			Labels: map[string]string{},
+			Name: *svc.ID,
 		},
 	}
 
@@ -45,7 +43,6 @@ func ServiceToKuberlogic(svc *models.Service, cfg *config.Config) (*kuberlogicco
 	if svc.Domain != "" {
 		c.Spec.Domain = svc.Domain
 	}
-	c.ObjectMeta.Labels[DomainField] = c.Spec.Domain
 
 	if svc.BackupSchedule != "" {
 		c.Spec.BackupSchedule = svc.BackupSchedule

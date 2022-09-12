@@ -241,12 +241,13 @@ func validateScheduleFormat(schedule string) error {
 
 func validateDomain(domain string) error {
 	klsList := &KuberLogicServiceList{}
-	options := client.MatchingLabels(map[string]string{"domain": domain})
-	if err := k8sClient.List(context.TODO(), klsList, &options); err != nil {
+	if err := k8sClient.List(context.TODO(), klsList); err != nil {
 		return err
 	}
 	for _, item := range klsList.Items {
-		return errors.New(fmt.Sprintf("Domain \"%s\" conflicts with tenant: %s", domain, item.Name))
+		if item.Spec.Domain == domain {
+			return errors.New(fmt.Sprintf("Domain %s conflicts with tenant: %s", domain, item.Name))
+		}
 	}
 	return nil
 }
