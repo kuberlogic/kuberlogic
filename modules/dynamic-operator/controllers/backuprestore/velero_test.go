@@ -64,6 +64,9 @@ var _ = Describe("Velero BackupRestore provider", func() {
 			Spec: kuberlogiccomv1alpha1.KuberlogicServiceBackupSpec{
 				KuberlogicServiceName: kls.GetName(),
 			},
+			Status: kuberlogiccomv1alpha1.KuberlogicServiceBackupStatus{
+				BackupReference: "test",
+			},
 		}
 		klr = &kuberlogiccomv1alpha1.KuberlogicServiceRestore{
 			ObjectMeta: metav1.ObjectMeta{
@@ -71,6 +74,9 @@ var _ = Describe("Velero BackupRestore provider", func() {
 			},
 			Spec: kuberlogiccomv1alpha1.KuberlogicServiceRestoreSpec{
 				KuberlogicServiceBackup: klb.GetName(),
+			},
+			Status: kuberlogiccomv1alpha1.KuberlogicServiceRestoreStatus{
+				RestoreReference: "test",
 			},
 		}
 
@@ -138,10 +144,6 @@ var _ = Describe("Velero BackupRestore provider", func() {
 
 				err := backupRestore.BackupRequest(ctx, klb)
 				Expect(errors.Is(err, errVeleroBackupStorageLocationIsNotAvailable)).Should(Equal(true))
-
-				err = backupRestore.SetKuberlogicBackupStatus(ctx, klb)
-				Expect(err).Should(BeNil())
-				Expect(klb.IsPending()).Should(Equal(true))
 			})
 		})
 		When("With available backup storage location", func() {
@@ -155,13 +157,11 @@ var _ = Describe("Velero BackupRestore provider", func() {
 				}
 				_ = fakeClient.Create(ctx, svcPod)
 
-				err := backupRestore.BackupRequest(ctx, klb)
+				Expect(errors.Is(backupRestore.BackupRequest(ctx, klb), errServicePodsFound)).Should(BeTrue())
 				By("Service pod should not exist")
-				Expect(errors2.IsNotFound(fakeClient.Get(ctx, client.ObjectKeyFromObject(svcPod), svcPod))).Should(Equal(true))
+				Expect(errors2.IsNotFound(fakeClient.Get(ctx, client.ObjectKeyFromObject(svcPod), svcPod))).Should(BeTrue())
 
-				By("Backup pod must not be ready")
-				Expect(errors.Is(err, errBackupPodNotReady)).Should(Equal(true))
-
+				Expect(backupRestore.BackupRequest(ctx, klb)).Should(Succeed())
 				By("Backup pod is ready")
 				backupPod := &corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
@@ -169,32 +169,27 @@ var _ = Describe("Velero BackupRestore provider", func() {
 						Namespace: ns.GetName(),
 					},
 				}
-				_ = fakeClient.Get(ctx, client.ObjectKeyFromObject(backupPod), backupPod)
-				go func() {
-					time.Sleep(5 * time.Second)
-					backupPod.Status.Phase = corev1.PodRunning
-					_ = fakeClient.Update(ctx, backupPod)
-				}()
-				err = backupRestore.BackupRequest(ctx, klb)
-				Expect(err).Should(BeNil())
+				Expect(fakeClient.Get(ctx, client.ObjectKeyFromObject(backupPod), backupPod)).Should(Succeed())
+				backupPod.Status.Phase = corev1.PodRunning
+				Expect(fakeClient.Update(ctx, backupPod))
+				Expect(backupRestore.BackupRequest(ctx, klb)).Should(Succeed())
 
 				By("Checking backup pod volume mounts")
 				_ = fakeClient.Get(ctx, client.ObjectKeyFromObject(backupPod), backupPod)
 				Expect(backupPod.Spec.Volumes[0].PersistentVolumeClaim.ClaimName).Should(Equal(backupPVC.GetName()))
 
 				By("Checking velero backup existence")
-				veleroBackup = newVeleroBackupObject(klb.GetName(), kls)
-				err = fakeClient.Get(ctx, client.ObjectKeyFromObject(veleroBackup), veleroBackup)
-				Expect(err).Should(BeNil())
+				veleroBackup = &velero.Backup{}
+				veleroBackup.SetName(klb.Status.BackupReference)
+				veleroBackup.SetNamespace(veleroNamespace)
+				Expect(fakeClient.Get(ctx, client.ObjectKeyFromObject(veleroBackup), veleroBackup)).Should(Succeed())
 
 				By("Updating velero backup status")
 				veleroBackup.Status.Phase = velero.BackupPhaseInProgress
-				err = fakeClient.Update(ctx, veleroBackup)
-				Expect(err).Should(BeNil())
+				Expect(fakeClient.Update(ctx, veleroBackup)).Should(Succeed())
 
 				By("klb status must be requested")
-				err = backupRestore.SetKuberlogicBackupStatus(ctx, klb)
-				Expect(err).Should(BeNil())
+				Expect(backupRestore.SetKuberlogicBackupStatus(ctx, klb)).Should(Succeed())
 				Expect(klb.IsRequested()).Should(Equal(true))
 			})
 		})
@@ -202,19 +197,18 @@ var _ = Describe("Velero BackupRestore provider", func() {
 	When("Backup is finished", func() {
 		It("Should clean up successfully", func() {
 			backupPod := resticBackupPod(kls)
-			_ = fakeClient.Create(ctx, backupPod)
+			Expect(fakeClient.Create(ctx, backupPod)).Should(Succeed())
 
 			By("Deleting pods if backup pod exists")
-			err := backupRestore.AfterBackup(ctx, klb)
-			Expect(err).Should(BeNil())
-			err = fakeClient.Get(ctx, client.ObjectKeyFromObject(backupPod), backupPod)
-			Expect(errors2.IsNotFound(err)).Should(Equal(true))
+			Expect(backupRestore.AfterBackup(ctx, klb)).Should(Succeed())
+			Expect(errors2.IsNotFound(fakeClient.Get(ctx, client.ObjectKeyFromObject(backupPod), backupPod))).Should(BeTrue())
 		})
 	})
 	When("Backup delete requested", func() {
 		It("Should be successful", func() {
-			err := backupRestore.BackupDeleteRequest(ctx, klb)
-			Expect(err).Should(BeNil())
+			Expect(fakeClient.Create(ctx, veleroBackup)).Should(Succeed())
+
+			Expect(backupRestore.BackupDeleteRequest(ctx, klb)).Should(BeNil())
 
 			By("Checking delete backup request finalizer")
 			bdr := &velero.DeleteBackupRequest{
@@ -223,14 +217,13 @@ var _ = Describe("Velero BackupRestore provider", func() {
 					Namespace: "velero",
 				},
 			}
-			_ = fakeClient.Get(ctx, client.ObjectKeyFromObject(bdr), bdr)
+			Expect(fakeClient.Get(ctx, client.ObjectKeyFromObject(bdr), bdr)).Should(Succeed())
 			Expect(controllerutil.ContainsFinalizer(bdr, BackupDeleteFinalizer)).Should(Equal(true))
 
 			By("backup delete backup request is being deleted")
 			bdr.DeletionTimestamp = &metav1.Time{Time: time.Now()}
-			_ = fakeClient.Update(ctx, bdr)
-			err = backupRestore.BackupDeleteRequest(ctx, klb)
-			Expect(err).Should(BeNil())
+			Expect(fakeClient.Update(ctx, bdr)).Should(Succeed())
+			Expect(backupRestore.BackupDeleteRequest(ctx, klb)).Should(Succeed())
 
 			By("backup delete request should not have finalizer now")
 			bdr = &velero.DeleteBackupRequest{
@@ -239,26 +232,14 @@ var _ = Describe("Velero BackupRestore provider", func() {
 					Namespace: "velero",
 				},
 			}
-			_ = fakeClient.Get(ctx, client.ObjectKeyFromObject(bdr), bdr)
-			Expect(controllerutil.ContainsFinalizer(bdr, BackupDeleteFinalizer)).Should(Equal(false))
+			Expect(errors2.IsNotFound(fakeClient.Get(ctx, client.ObjectKeyFromObject(bdr), bdr))).Should(BeTrue())
 		})
 	})
 	When("Restore requested", func() {
-		When("Velero backup does not exist", func() {
-			It("Should fail with error", func() {
-				err := backupRestore.RestoreRequest(ctx, klb, klr)
-				Expect(errors2.IsNotFound(err)).Should(Equal(true))
-
-				By("Checking if klr status is pending")
-				err = backupRestore.SetKuberlogicRestoreStatus(ctx, klr)
-				Expect(err).Should(BeNil())
-				Expect(klr.IsFailed() || klr.IsSuccessful() || klr.IsRequested()).Should(Equal(false))
-			})
-		})
 		When("Velero backup is not successful", func() {
 			It("Should fail with error", func() {
 				veleroBackup.Status.Phase = velero.BackupPhaseFailed
-				_ = fakeClient.Create(ctx, veleroBackup)
+				Expect(fakeClient.Create(ctx, veleroBackup)).Should(Succeed())
 				err := backupRestore.RestoreRequest(ctx, klb, klr)
 				Expect(errors.Is(err, errVeleroBackupIsNotSuccessful)).Should(Equal(true))
 			})
@@ -274,31 +255,27 @@ var _ = Describe("Velero BackupRestore provider", func() {
 		})
 		When("backup storage location is available", func() {
 			It("Should be successful", func() {
-				_ = fakeClient.Create(ctx, veleroBackup)
+				Expect(fakeClient.Create(ctx, veleroBackup)).Should(Succeed())
 
-				err := backupRestore.RestoreRequest(ctx, klb, klr)
-				Expect(err).Should(BeNil())
+				// first run will only submit a namespace delete request and return with nil
+				Expect(backupRestore.RestoreRequest(ctx, klb, klr)).Should(Succeed())
+				Expect(backupRestore.RestoreRequest(ctx, klb, klr)).Should(Succeed())
 
 				By("Checking if namespace is deleted")
-				err = fakeClient.Get(ctx, client.ObjectKeyFromObject(ns), ns)
+				err := fakeClient.Get(ctx, client.ObjectKeyFromObject(ns), ns)
 				Expect(errors2.IsNotFound(err)).Should(Equal(true))
 
 				By("Checking if velero restore is created")
+				Expect(backupRestore.RestoreRequest(ctx, klb, klr)).Should(Succeed())
 				err = fakeClient.Get(ctx, client.ObjectKeyFromObject(veleroRestore), veleroRestore)
 				Expect(err).Should(BeNil())
 
-				By("Checking if klr is controlled by klb")
-				_ = fakeClient.Get(ctx, client.ObjectKeyFromObject(klr), klr)
-				Expect(klr.OwnerReferences[0].Kind).Should(Equal("KuberlogicServiceBackup"))
-
 				By("Updating velero restore status")
 				veleroRestore.Status.Phase = velero.RestorePhaseInProgress
-				err = fakeClient.Update(ctx, veleroRestore)
-				Expect(err).Should(BeNil())
+				Expect(fakeClient.Update(ctx, veleroRestore)).Should(Succeed())
 
 				By("Checking if klr status is requested")
-				err = backupRestore.SetKuberlogicRestoreStatus(ctx, klr)
-				Expect(err).Should(BeNil())
+				Expect(backupRestore.SetKuberlogicRestoreStatus(ctx, klr)).Should(Succeed())
 				Expect(klr.IsRequested()).Should(Equal(true))
 			})
 		})
@@ -309,9 +286,8 @@ var _ = Describe("Velero BackupRestore provider", func() {
 			_ = fakeClient.Create(ctx, backupPod)
 
 			By("Deleting pods if backup pod exists")
-			err := backupRestore.AfterRestore(ctx, klr)
-			Expect(err).Should(BeNil())
-			err = fakeClient.Get(ctx, client.ObjectKeyFromObject(backupPod), backupPod)
+			Expect(backupRestore.AfterRestore(ctx, klr)).Should(Succeed())
+			err := fakeClient.Get(ctx, client.ObjectKeyFromObject(backupPod), backupPod)
 			Expect(errors2.IsNotFound(err)).Should(Equal(true))
 		})
 	})
