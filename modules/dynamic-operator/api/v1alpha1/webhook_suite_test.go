@@ -20,6 +20,7 @@ import (
 	cfg2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -72,6 +73,9 @@ var _ = BeforeSuite(func() {
 	err = admissionv1beta1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
+	err = corev1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
 	useExistingCluster := os.Getenv("USE_EXISTING_CLUSTER") == "true"
 	if useExistingCluster {
 		testEnv = &envtest.Environment{
@@ -102,6 +106,10 @@ var _ = BeforeSuite(func() {
 		k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(k8sClient).NotTo(BeNil())
+
+		ns := &corev1.Namespace{}
+		ns.SetName(os.Getenv("NAMESPACE"))
+		Expect(k8sClient.Create(ctx, ns)).Should(Succeed())
 
 		logger := hclog.New(&hclog.LoggerOptions{
 			Name:   "plugin",
