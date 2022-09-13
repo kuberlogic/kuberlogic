@@ -31,7 +31,6 @@ type Service struct {
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
 
 	// domain
-	// Read Only: true
 	Domain string `json:"domain,omitempty"`
 
 	// endpoint
@@ -191,10 +190,6 @@ func (m *Service) ContextValidate(ctx context.Context, formats strfmt.Registry) 
 		res = append(res, err)
 	}
 
-	if err := m.contextValidateDomain(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
 	if err := m.contextValidateEndpoint(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -230,15 +225,6 @@ func (m *Service) contextValidateAdvanced(ctx context.Context, formats strfmt.Re
 func (m *Service) contextValidateCreatedAt(ctx context.Context, formats strfmt.Registry) error {
 
 	if err := validate.ReadOnly(ctx, "created_at", "body", strfmt.DateTime(m.CreatedAt)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Service) contextValidateDomain(ctx context.Context, formats strfmt.Registry) error {
-
-	if err := validate.ReadOnly(ctx, "domain", "body", string(m.Domain)); err != nil {
 		return err
 	}
 

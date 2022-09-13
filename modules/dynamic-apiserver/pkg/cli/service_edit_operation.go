@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+
 	client2 "github.com/go-openapi/runtime/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 	"github.com/pkg/errors"
@@ -27,6 +28,7 @@ func makeServiceEditCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
 	_ = cmd.PersistentFlags().String("backup_schedule", "", "backup schedule in cron format")
 	_ = cmd.PersistentFlags().Bool("tls_enabled", false, "")
+	_ = cmd.PersistentFlags().String("domain", "", "on which domain service will be available")
 
 	// limits
 	_ = cmd.PersistentFlags().String("limits.cpu", "", "cpu limits")
@@ -88,6 +90,12 @@ func runServiceEdit(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 			svc.TLSEnabled = *value
 		}
 
+		if value, err := getString(cmd, "domain"); err != nil {
+			return err
+		} else if value != nil {
+			svc.Domain = *value
+		}
+
 		if value, err := getString(cmd, "limits.cpu"); err != nil {
 			return err
 		} else if value != nil {
@@ -130,6 +138,9 @@ func runServiceEdit(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *
 
 		// set required fields
 		svc.Type = getResponse.GetPayload().Type
+		if svc.Domain == "" {
+			svc.Domain = getResponse.GetPayload().Domain
+		}
 
 		// make request and then print result
 		response, err := apiClient.Service.ServiceEdit(editParams, client2.APIKeyAuth(

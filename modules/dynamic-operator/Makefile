@@ -211,5 +211,5 @@ patch-webhook-endpoint:
 .PHONY: generate-local-webhook-certs
 generate-local-webhook-certs:
 	mkdir -p /tmp/k8s-webhook-server/serving-certs/; \
-	kubectl get secret webhook-server-cert -o=jsonpath="{.data['tls\.key']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.key
-	kubectl get secret webhook-server-cert -o=jsonpath="{.data['tls\.crt']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.crt
+	kubectl get secret --namespace=kuberlogic webhook-server-cert -o=jsonpath="{.data['tls\.key']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.key
+	kubectl get secret --namespace=kuberlogic webhook-server-cert -o=jsonpath="{.data['tls\.crt']}" | base64 -d >  /tmp/k8s-webhook-server/serving-certs/tls.crt

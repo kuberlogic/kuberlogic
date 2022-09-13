@@ -83,7 +83,7 @@ generate: generate-server generate-client
 
 .PHONY: docker-build
 docker-build: export LDFLAGS="-X github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/cmd.ver=$(VERSION)"
-docker-build: 
+docker-build:
 	CGO_ENABLED=0 \
 	GOOS=linux \
 	GOARCH=amd64 \
