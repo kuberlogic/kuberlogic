@@ -26,22 +26,16 @@ const (
 )
 
 var (
-	maxWaitTimeout = 60
-
 	errVeleroBackupIsNotSuccessful = errors.New("velero backup is not successful")
 
 	backupStorageLocationMaxCheckTTL             = 15.0
 	errVeleroBackupStorageLocationIsNotAvailable = fmt.Errorf("velero backup storage location is unavailable or checked more than %f minutes ago", backupStorageLocationMaxCheckTTL)
 
-	errBackupPodNotReady = errors.New("backup pod did not become ready")
-
-	errNamespaceExists  = errors.New("namespace still exists")
 	errServicePodsFound = errors.New("found non-pending service pods")
 )
 
 type VeleroBackupRestore struct {
 	volumeSnapshotsEnabled bool
-	backupStorageLocation  string
 
 	kubeClient client.Client
 	log        logr.Logger

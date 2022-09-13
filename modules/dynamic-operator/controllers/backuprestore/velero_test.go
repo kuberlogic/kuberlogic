@@ -43,9 +43,6 @@ var _ = Describe("Velero BackupRestore provider", func() {
 	var fakeClient client.Client
 	var backupRestore Provider
 
-	// modify wait timeout for tests
-	maxWaitTimeout = 10
-
 	BeforeEach(func() {
 		kls = &kuberlogiccomv1alpha1.KuberLogicService{
 			ObjectMeta: metav1.ObjectMeta{
