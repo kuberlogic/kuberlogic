@@ -11,15 +11,13 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 )
 
 var _ = Describe("KuberlogicService controller", func() {
 	const (
-		klsName      = "test-service"
-		klsNamespace = "default"
+		klsName = "test-service"
 
 		defaultReplicas = 1
 		//defaultVersion  = "13"
@@ -41,8 +39,7 @@ var _ = Describe("KuberlogicService controller", func() {
 		//ctx := context.Background()
 		kls := &KuberLogicService{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      klsName,
-				Namespace: klsNamespace,
+				GenerateName: klsName,
 			},
 			Spec: KuberLogicServiceSpec{
 				Type:     "docker-compose",
@@ -53,8 +50,7 @@ var _ = Describe("KuberlogicService controller", func() {
 
 		defaultResourceKls := &KuberLogicService{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      klsName + "-default-resources",
-				Namespace: klsNamespace,
+				GenerateName: klsName,
 			},
 			Spec: KuberLogicServiceSpec{
 				Type:     "docker-compose",
@@ -68,11 +64,10 @@ var _ = Describe("KuberlogicService controller", func() {
 			Expect(k8sClient.Create(ctx, kls)).Should(Succeed())
 
 			By("By checking a new KuberLogicService")
-			lookupKlsKey := types.NamespacedName{Name: klsName, Namespace: klsNamespace}
 			createdKls := &KuberLogicService{}
 
 			Eventually(func() error {
-				return k8sClient.Get(ctx, lookupKlsKey, createdKls)
+				return k8sClient.Get(ctx, client.ObjectKeyFromObject(kls), createdKls)
 			}, timeout, interval).Should(Not(HaveOccurred()))
 
 			log.Info("resources", "res", createdKls.Spec.Limits)
