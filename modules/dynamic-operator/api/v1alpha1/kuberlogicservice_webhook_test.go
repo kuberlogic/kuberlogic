@@ -70,7 +70,7 @@ var _ = Describe("KuberlogicService controller", func() {
 			createdKls := &KuberLogicService{}
 
 			Eventually(func() error {
-				return k8sClient.Get(ctx, client.ObjectKeyFromObject(kls), createdKls)
+				return testK8sClient.Get(ctx, client.ObjectKeyFromObject(kls), createdKls)
 			}, timeout, interval).Should(Not(HaveOccurred()))
 
 			log.Info("resources", "res", createdKls.Spec.Limits)
