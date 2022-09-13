@@ -55,7 +55,7 @@ func runDiag() func(command *cobra.Command, args []string) error {
 		}
 
 		command.Println("Gathering Kuberlogic resources status")
-		cmd = fmt.Sprintf("%s get kls,klr,klb,klbs -o yaml", kubectlBin)
+		cmd = fmt.Sprintf("%s kuberlogic -o yaml", kubectlBin)
 		if err := saveDiagInfo(cmd, "kuberlogic-resources.yaml", zipWriter); err != nil {
 			return errors.Wrapf(err, "failed to save %s info", cmd)
 		}
