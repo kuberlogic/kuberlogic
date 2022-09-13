@@ -22,9 +22,9 @@ type KuberlogicServiceBackupSpec struct {
 
 // KuberlogicServiceBackupStatus defines the observed state of KuberlogicServiceBackup
 type KuberlogicServiceBackupStatus struct {
-	Conditions     []metav1.Condition `json:"conditions"`
-	Phase          string             `json:"phase,omitempty"`
-	FailedAttempts int                `json:"FailedAttempts,omitempty"`
+	Conditions      []metav1.Condition `json:"conditions"`
+	Phase           string             `json:"phase,omitempty"`
+	BackupReference string             `json:"backupReference,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -56,10 +56,6 @@ func (in *KuberlogicServiceBackup) IsFailed() bool {
 
 func (in *KuberlogicServiceBackup) IsSuccessful() bool {
 	return in.Status.Phase == klbSuccessfulCondType
-}
-
-func (in *KuberlogicServiceBackup) IsPending() bool {
-	return !(in.IsFailed() || in.IsSuccessful() || in.IsRequested())
 }
 
 func (in *KuberlogicServiceBackup) IsRequested() bool {
@@ -94,10 +90,6 @@ func (in *KuberlogicServiceBackup) setConditionStatus(cond string, status bool, 
 		c.Status = metav1.ConditionTrue
 	}
 	meta.SetStatusCondition(&in.Status.Conditions, c)
-}
-
-func (in *KuberlogicServiceBackup) IncreaseFailedAttemptCount() {
-	in.Status.FailedAttempts += 1
 }
 
 func init() {

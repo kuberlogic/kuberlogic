@@ -22,9 +22,9 @@ type KuberlogicServiceRestoreSpec struct {
 
 // KuberlogicServiceRestoreStatus defines the observed state of KuberlogicServiceRestore
 type KuberlogicServiceRestoreStatus struct {
-	Conditions     []metav1.Condition `json:"conditions"`
-	Phase          string             `json:"phase,omitempty"`
-	FailedAttempts int                `json:"failedAttempts,omitempty"`
+	RestoreReference string             `json:"restoreReference,omitempty"`
+	Conditions       []metav1.Condition `json:"conditions"`
+	Phase            string             `json:"phase,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -90,14 +90,6 @@ func (in *KuberlogicServiceRestore) IsSuccessful() bool {
 
 func (in *KuberlogicServiceRestore) IsRequested() bool {
 	return in.Status.Phase == klrRequestedCondType
-}
-
-func (in *KuberlogicServiceRestore) IsPending() bool {
-	return !(in.IsSuccessful() || in.IsFailed() || in.IsRequested())
-}
-
-func (in *KuberlogicServiceRestore) IncreaseFailedAttemptCount() {
-	in.Status.FailedAttempts += 1
 }
 
 func init() {
