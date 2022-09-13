@@ -721,8 +721,7 @@ func init() {
           "readOnly": true
         },
         "domain": {
-          "type": "string",
-          "readOnly": true
+          "type": "string"
         },
         "endpoint": {
           "type": "string",
@@ -1667,8 +1666,7 @@ func init() {
           "readOnly": true
         },
         "domain": {
-          "type": "string",
-          "readOnly": true
+          "type": "string"
         },
         "endpoint": {
           "type": "string",

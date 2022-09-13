@@ -39,7 +39,7 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	k8sClient     client.Client
+	testK8sClient client.Client
 	testEnv       *envtest.Environment
 	ctx           context.Context
 	cancel        context.CancelFunc
@@ -85,9 +85,9 @@ var _ = BeforeSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(cfg).NotTo(BeNil())
 
-		k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
+		testK8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(k8sClient).NotTo(BeNil())
+		Expect(testK8sClient).NotTo(BeNil())
 	} else {
 
 		By("bootstrapping test environment")
@@ -103,13 +103,13 @@ var _ = BeforeSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(cfg).NotTo(BeNil())
 
-		k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
+		testK8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(k8sClient).NotTo(BeNil())
+		Expect(testK8sClient).NotTo(BeNil())
 
 		ns := &corev1.Namespace{}
 		ns.SetName(os.Getenv("NAMESPACE"))
-		Expect(k8sClient.Create(ctx, ns)).Should(Succeed())
+		Expect(testK8sClient.Create(ctx, ns)).Should(Succeed())
 
 		logger := hclog.New(&hclog.LoggerOptions{
 			Name:   "plugin",

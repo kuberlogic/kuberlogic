@@ -5,11 +5,12 @@
 package v1alpha1
 
 import (
+	"time"
+
 	v1 "k8s.io/api/core/v1"
 	v11 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
 )
 
 const (
@@ -111,11 +112,7 @@ func (in *KuberLogicService) TLSEnabled() bool {
 }
 
 func (in *KuberLogicService) GetHost() string {
-	var host string
-	if in.Spec.Domain != "" {
-		host = in.GetName() + "." + in.Spec.Domain
-	}
-	return host
+	return in.Spec.Domain
 }
 
 func (in *KuberLogicService) SetAccessEndpoint() {

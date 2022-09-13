@@ -6,6 +6,8 @@ package util
 
 import (
 	"encoding/json"
+	"fmt"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
@@ -37,7 +39,11 @@ func ServiceToKuberlogic(svc *models.Service, cfg *config.Config) (*kuberlogicco
 		c.Spec.Version = svc.Version
 	}
 
-	c.Spec.Domain = cfg.Domain
+	c.Spec.Domain = fmt.Sprintf("%s.%s", *svc.ID, cfg.Domain)
+	if svc.Domain != "" {
+		c.Spec.Domain = svc.Domain
+	}
+
 	if svc.BackupSchedule != "" {
 		c.Spec.BackupSchedule = svc.BackupSchedule
 	}

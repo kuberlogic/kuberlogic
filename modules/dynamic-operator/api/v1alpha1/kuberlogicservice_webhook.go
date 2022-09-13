@@ -5,19 +5,24 @@
 package v1alpha1
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 var log = ctrl.Log.WithName("kuberlogicservice-webhook")
 
 var pluginInstances map[string]commons.PluginService
+var k8sClient client.Client
 
 var (
 	errInvalidBackupSchedule = errors.New("invalid backupSchedule format")
@@ -25,6 +30,7 @@ var (
 )
 
 func (r *KuberLogicService) SetupWebhookWithManager(mgr ctrl.Manager, plugins map[string]commons.PluginService) error {
+	k8sClient = mgr.GetClient()
 	pluginInstances = plugins
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
@@ -134,6 +140,10 @@ func (r *KuberLogicService) ValidateCreate() error {
 	if err = plugin.ValidateCreate(*req).Error(); err != nil {
 		return err
 	}
+
+	if err = validateDomain(r.Spec.Domain); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -169,6 +179,13 @@ func (r *KuberLogicService) ValidateUpdate(old runtime.Object) error {
 	if err = plugin.ValidateUpdate(*req).Error(); err != nil {
 		return err
 	}
+
+	if r.Spec.Domain != oldSpec.Spec.Domain {
+		if err = validateDomain(r.Spec.Domain); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -220,4 +237,17 @@ func makeRequest(kls *KuberLogicService) (*commons.PluginRequest, error) {
 func validateScheduleFormat(schedule string) error {
 	_, err := cron.ParseStandard(schedule)
 	return err
+}
+
+func validateDomain(domain string) error {
+	klsList := &KuberLogicServiceList{}
+	if err := k8sClient.List(context.TODO(), klsList); err != nil {
+		return err
+	}
+	for _, item := range klsList.Items {
+		if item.Spec.Domain == domain {
+			return errors.New(fmt.Sprintf("Domain %s conflicts with tenant: %s", domain, item.Name))
+		}
+	}
+	return nil
 }
