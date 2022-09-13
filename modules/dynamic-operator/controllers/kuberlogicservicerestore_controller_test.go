@@ -110,18 +110,18 @@ var _ = Describe("KuberlogicServiceRestore Controller", func() {
 			})
 		})
 
-		When("too many failures happen", func() {
-			It("klb should be marked as failed", func() {
-				// this will fail because velero is not installed
-				for try := 1; try <= 10; try += 1 {
-					_, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: client.ObjectKeyFromObject(klr)})
-					Expect(err).ShouldNot(BeNil())
-				}
-				_, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: client.ObjectKeyFromObject(klr)})
-				Expect(err).Should(BeNil())
-				Expect(r.Get(ctx, client.ObjectKeyFromObject(klr), klr))
-				Expect(klr.IsFailed()).Should(BeTrue())
-			})
-		})
+		//When("too many failures happen", func() {
+		//	It("klr should be marked as failed", func() {
+		//		// this will fail because velero backup is not present
+		//		for try := 1; try <= 10; try += 1 {
+		//			_, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: client.ObjectKeyFromObject(klr)})
+		//			Expect(err).ShouldNot(BeNil())
+		//		}
+		//		_, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: client.ObjectKeyFromObject(klr)})
+		//		Expect(err).Should(BeNil())
+		//		Expect(r.Get(ctx, client.ObjectKeyFromObject(klr), klr))
+		//		Expect(klr.IsFailed()).Should(BeTrue())
+		//	})
+		//})
 	})
 })

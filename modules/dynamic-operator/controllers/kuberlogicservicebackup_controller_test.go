@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -100,11 +101,8 @@ var _ = Describe("KuberlogicServiceBackup Controller", func() {
 
 		When("too many failures happen", func() {
 			It("klb should be marked as failed", func() {
-				// this will fail because velero is not installed
-				for try := 1; try <= 10; try += 1 {
-					_, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: client.ObjectKeyFromObject(klb)})
-					Expect(err).ShouldNot(BeNil())
-				}
+				klb.CreationTimestamp = metav1.Time{Time: time.Now().Add(time.Hour * -2)}
+				Expect(k8sClient.Update(ctx, klb))
 				_, err := r.Reconcile(ctx, ctrl.Request{NamespacedName: client.ObjectKeyFromObject(klb)})
 				Expect(err).Should(BeNil())
 				Expect(r.Get(ctx, client.ObjectKeyFromObject(klb), klb))

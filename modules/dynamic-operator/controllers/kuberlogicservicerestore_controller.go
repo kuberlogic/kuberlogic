@@ -10,8 +10,12 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/controllers/backuprestore"
 	"github.com/pkg/errors"
 	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 	"sync"
 	"time"
 
@@ -36,6 +40,7 @@ type KuberlogicServiceRestoreReconciler struct {
 //+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservicerestores/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservicerestores/finalizers,verbs=update
 //+kubebuilder:rbac:groups="velero.io",resources=restores,verbs=list;watch
+//+kubebuilder:rbac:groups="",resources=namespaces,verbs=list;watch
 
 func (r *KuberlogicServiceRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithValues("key", req.String(), "run", time.Now().UnixNano())
@@ -73,6 +78,11 @@ func (r *KuberlogicServiceRestoreReconciler) Reconcile(ctx context.Context, req 
 		l.Error(err, "source backup is not successful", "backup", klb)
 		return ctrl.Result{}, err
 	}
+	_ = controllerutil.SetControllerReference(klb, klr, r.Scheme)
+	if err := r.Update(ctx, klr); err != nil {
+		l.Error(err, "failed to own klr by klb")
+		return ctrl.Result{}, err
+	}
 
 	kls := &kuberlogiccomv1alpha1.KuberLogicService{}
 	kls.SetName(klb.Spec.KuberlogicServiceName)
@@ -104,9 +114,13 @@ func (r *KuberlogicServiceRestoreReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, err
 	}
 
-	maxAttempts := 10
-	if klr.Status.FailedAttempts >= maxAttempts {
-		klr.MarkFailed("too many failures")
+	if !klr.GetDeletionTimestamp().IsZero() {
+		l.Info("klr is being deleted")
+		return ctrl.Result{}, nil
+	}
+
+	if !klr.IsSuccessful() && time.Since(klr.GetCreationTimestamp().Time) > time.Hour {
+		klr.MarkFailed("backup has not been successful for too long")
 		return ctrl.Result{}, r.Status().Update(ctx, klr)
 	}
 
@@ -119,22 +133,17 @@ func (r *KuberlogicServiceRestoreReconciler) Reconcile(ctx context.Context, req 
 	}
 	l.Info("restore status updated", "new status", klr.Status.Phase)
 
-	var err error
 	if klr.IsFailed() || klr.IsSuccessful() {
-		if err = restore.AfterRestore(ctx, klr); err != nil {
+		if err := restore.AfterRestore(ctx, klr); err != nil {
 			l.Error(err, "failed to execute after restore routine")
+			return ctrl.Result{}, err
 		}
-	} else if !klr.IsRequested() {
-		if err = restore.RestoreRequest(ctx, klb, klr); err != nil {
+	} else if klr.IsRequested() {
+		if err := restore.RestoreRequest(ctx, klb, klr); err != nil {
 			l.Error(err, "failed to start restore")
+			return ctrl.Result{}, err
 		}
 	}
-	if err != nil {
-		klr.IncreaseFailedAttemptCount()
-		_ = r.Status().Update(ctx, klr)
-		return ctrl.Result{}, err
-	}
-
 	return ctrl.Result{}, nil
 }
 
@@ -143,5 +152,10 @@ func (r *KuberlogicServiceRestoreReconciler) SetupWithManager(mgr ctrl.Manager) 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kuberlogiccomv1alpha1.KuberlogicServiceRestore{}).
 		Owns(&velero.Restore{}).
+		// also watch for owned namespaces
+		Watches(&source.Kind{Type: &corev1.Namespace{}}, &handler.EnqueueRequestForOwner{
+			OwnerType:    &kuberlogiccomv1alpha1.KuberlogicServiceRestore{},
+			IsController: false,
+		}).
 		Complete(r)
 }
