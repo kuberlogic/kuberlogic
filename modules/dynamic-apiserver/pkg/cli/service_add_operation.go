@@ -28,7 +28,7 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
 	_ = cmd.PersistentFlags().String("backup_schedule", "", "backup schedule in cron format")
 	_ = cmd.PersistentFlags().String("domain", "", "on which domain service will be available")
-	_ = cmd.PersistentFlags().Bool("tls_enabled", false, "")
+	_ = cmd.PersistentFlags().Bool("insecure", false, "")
 	_ = cmd.PersistentFlags().Bool(subscriptionIdFlag, false, "")
 
 	// limits
@@ -86,10 +86,10 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 			svc.BackupSchedule = *value
 		}
 
-		if value, err := getBool(cmd, "tls_enabled"); err != nil {
+		if value, err := getBool(cmd, "insecure"); err != nil {
 			return err
 		} else if value != nil {
-			svc.TLSEnabled = *value
+			svc.Insecure = *value
 		}
 
 		if value, err := getString(cmd, "domain"); err != nil {

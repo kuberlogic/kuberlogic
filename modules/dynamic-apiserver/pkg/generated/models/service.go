@@ -44,6 +44,9 @@ type Service struct {
 	// Pattern: [a-z0-9]([-a-z0-9]*[a-z0-9])?
 	ID *string `json:"id"`
 
+	// insecure
+	Insecure bool `json:"insecure,omitempty"`
+
 	// limits
 	Limits *Limits `json:"limits,omitempty"`
 
@@ -56,9 +59,6 @@ type Service struct {
 
 	// subscription
 	Subscription string `json:"subscription,omitempty"`
-
-	// tls enabled
-	TLSEnabled bool `json:"tlsEnabled,omitempty"`
 
 	// type
 	// Required: true
