@@ -1,3 +1,9 @@
+## [0.0.13] - 2022-09-15
+- Support custom domains when creating/editing services (`--domain` when using CLI and `domain` field when using REST API)
+- Improve `kuberlogic install` command UX
+- Check managed applications' readiness with HTTP based `ReadinessProbe`
+- Minor bug fixes and stability improvements
+
 ## [0.0.12] - 2022-09-06
 - Add 'info' command to CLI (check KuberLogic component statuses)
 - Add 'version' command to CLI (check KuberLogic component versions)
