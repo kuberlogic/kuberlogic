@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	klbSuccessfulCondType = "Successful"
-	klbFailedCondType     = "Failed"
-	klbRequestedCondType  = "Requested"
+	KlbSuccessfulCondType = "Successful"
+	KlbFailedCondType     = "Failed"
+	KlbRequestedCondType  = "Requested"
 )
 
 // KuberlogicServiceBackupSpec defines the desired state of KuberlogicServiceBackup
@@ -51,11 +51,11 @@ type KuberlogicServiceBackupList struct {
 }
 
 func (in *KuberlogicServiceBackup) IsFailed() bool {
-	return in.Status.Phase == klbFailedCondType
+	return in.Status.Phase == KlbFailedCondType
 }
 
 func (in *KuberlogicServiceBackup) IsSuccessful() bool {
-	return in.Status.Phase == klbSuccessfulCondType
+	return in.Status.Phase == KlbSuccessfulCondType
 }
 
 func (in *KuberlogicServiceBackup) IsPending() bool {
@@ -63,24 +63,24 @@ func (in *KuberlogicServiceBackup) IsPending() bool {
 }
 
 func (in *KuberlogicServiceBackup) IsRequested() bool {
-	return in.Status.Phase == klbRequestedCondType
+	return in.Status.Phase == KlbRequestedCondType
 }
 
 func (in *KuberlogicServiceBackup) MarkFailed(reason string) {
-	in.Status.Phase = klbFailedCondType
-	in.setConditionStatus(klbFailedCondType, true, reason, klbFailedCondType)
-	in.setConditionStatus(klbSuccessfulCondType, false, reason, klbSuccessfulCondType)
+	in.Status.Phase = KlbFailedCondType
+	in.setConditionStatus(KlbFailedCondType, true, reason, KlbFailedCondType)
+	in.setConditionStatus(KlbSuccessfulCondType, false, reason, KlbSuccessfulCondType)
 }
 
 func (in *KuberlogicServiceBackup) MarkSuccessful() {
-	in.Status.Phase = klbSuccessfulCondType
-	in.setConditionStatus(klbSuccessfulCondType, true, "", klbSuccessfulCondType)
-	in.setConditionStatus(klbFailedCondType, false, "", klbFailedCondType)
+	in.Status.Phase = KlbSuccessfulCondType
+	in.setConditionStatus(KlbSuccessfulCondType, true, "", KlbSuccessfulCondType)
+	in.setConditionStatus(KlbFailedCondType, false, "", KlbFailedCondType)
 }
 
 func (in *KuberlogicServiceBackup) MarkRequested() {
-	in.Status.Phase = klbRequestedCondType
-	in.setConditionStatus(klbRequestedCondType, true, "", klbRequestedCondType)
+	in.Status.Phase = KlbRequestedCondType
+	in.setConditionStatus(KlbRequestedCondType, true, "", KlbRequestedCondType)
 }
 
 func (in *KuberlogicServiceBackup) setConditionStatus(cond string, status bool, msg, reason string) {

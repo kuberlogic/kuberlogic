@@ -17,9 +17,10 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
+	admissionv1beta1 "k8s.io/api/admission/v1beta1"
+
 	cfg2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
-	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -144,6 +145,9 @@ var _ = BeforeSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		err = (&KuberLogicService{}).SetupWebhookWithManager(mgr, pluginInstances)
+		Expect(err).NotTo(HaveOccurred())
+
+		err = (&KuberlogicServiceBackup{}).SetupWebhookWithManager(mgr, config.Backups.Enabled)
 		Expect(err).NotTo(HaveOccurred())
 
 		//+kubebuilder:scaffold:webhook
