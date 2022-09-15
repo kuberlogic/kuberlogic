@@ -1,18 +1,6 @@
-VERSION = 0.0.14
-
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.22
 
-IMG_REPO = quay.io/kuberlogic
-IMG_LATEST_TAG=latest
-OPERATOR_NAME = dynamic-operator
-OPERATOR_IMG ?= $(IMG_REPO)/$(OPERATOR_NAME)
-
-APISERVER_NAME = dynamic-apiserver
-APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME)
-
-CHARGEBEE_INTEGRATION_NAME = chargebee-integration
-CHARGEBEE_INTEGRATION_IMG = $(IMG_REPO)/$(CHARGEBEE_INTEGRATION_NAME)
 
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -31,14 +19,6 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
-ifeq ($(DEV_BUILD),true)
-	VERSION := $(VERSION)-$(shell git rev-list --count $(shell git rev-parse --abbrev-ref HEAD))
-endif
-COMMIT_SHA = $(shell git rev-parse HEAD)
-IMG_SHA_TAG ?= $(VERSION)-$(COMMIT_SHA)
-
-.PHONY: all
-all: build
 
 ##@ General
 
@@ -59,11 +39,6 @@ help: ## Display this help.
 
 ##@ Development
 
-
-build-docker-compose-plugin: export LDFLAGS="-X main.ver=$(VERSION)"
-build-docker-compose-plugin:
-	cd plugins/docker-compose/ && go build -a -o ../../bin/docker-compose-plugin -ldflags=$(LDFLAGS) .
-
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
@@ -81,7 +56,7 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: manifests generate fmt vet build-docker-compose-plugin envtest
+test: manifests generate fmt vet build-docker-compose-plugin envtest ## Run tests.
 	ACK_GINKGO_DEPRECATIONS=1.16.5 \
 	PLUGINS="{docker-compose,$(PROJECT_DIR)/bin/docker-compose-plugin}" \
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
@@ -96,59 +71,39 @@ cluster-test: envtest deploy-velero
 	ACK_GINKGO_DEPRECATIONS=1.16.5 \
 	NAMESPACE=kuberlogic \
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
-	go test -timeout 30m -v ./... -coverprofile cover.out ${ARGS}
+	go test -v ./... -coverprofile cover.out ${ARGS}
 
 ##@ Build
 
+build-docker-compose-plugin: export LDFLAGS="-X main.ver=$(VERSION)"
+build-docker-compose-plugin:
+	cd plugins/docker-compose/ && \
+	GOARCH=amd64 GOOS=linux go build -a -o ../../bin/docker-compose-plugin -ldflags=$(LDFLAGS) .
+
 .PHONY: build
+build: export CGO_ENABLED=0
+build: export GO111MODULE=on
 build: export LDFLAGS="-X main.ver=$(VERSION)"
-build: generate fmt vet ## Build manager binary.
-	go build -o bin/manager -ldflags=$(LDFLAGS) main.go
+build: generate fmt vet test build-docker-compose-plugin
+	GOARCH=amd64 GOOS=linux go build -a -o bin/manager -ldflags=$(LDFLAGS) main.go
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
-	NAMESPACE=kuberlogic \
-	SENTRY_DSN=${SENTRY_DSN} \
+	NAMESPACE=kuberlogic SENTRY_DSN=${SENTRY_DSN} \
 	go run ./main.go ${ARGS}
-
-.PHONY: docker-build
-docker-build: export CGO_ENABLED=0
-docker-build: export GO111MODULE=on
-docker-build: export LDFLAGS="-X main.ver=$(VERSION)"
-docker-build: export COMPOSE_LDFLAGS="-X main.ver=$(VERSION)"
-docker-build: test ## Build docker image with the manager.
-	GOARCH=amd64 GOOS=linux go build -a -o bin/manager -ldflags=$(LDFLAGS) main.go
-	cd plugins/docker-compose && GOARCH=amd64 GOOS=linux go build -a -o ../../bin/docker-compose-plugin -ldflags=$(COMPOSE_LDFLAGS) . && cd -
-	docker build . \
-		--build-arg BIN=bin/manager \
-		--build-arg PLUGIN=bin/docker-compose-plugin \
-		-t $(OPERATOR_IMG):$(VERSION) \
-		-t $(OPERATOR_IMG):$(IMG_SHA_TAG) \
-		-t $(OPERATOR_IMG):$(IMG_LATEST_TAG)
-
-.PHONY: docker-push
-docker-push: ## Push docker image with the manager.
-	docker push $(OPERATOR_IMG):$(VERSION)
-	docker push $(OPERATOR_IMG):$(IMG_LATEST_TAG)
-
-.PHONY: docker-push-cache
-docker-push-cache:
-	docker push $(OPERATOR_IMG):$(IMG_SHA_TAG)
-
-.PHONY: docker-pull-cache
-docker-pull-cache:
-	docker pull $(OPERATOR_IMG):$(IMG_SHA_TAG)
-
-.PHONY: docker-restore-cache
-docker-restore-cache: docker-pull-cache
-	docker tag $(OPERATOR_IMG):$(IMG_SHA_TAG) $(OPERATOR_IMG):$(VERSION)
-	docker tag $(OPERATOR_IMG):$(IMG_SHA_TAG) $(OPERATOR_IMG):$(IMG_LATEST_TAG)
 
 ##@ Deployment
 
 ifndef ignore-not-found
   ignore-not-found = false
 endif
+
+.PHONY: set-version
+set-version: kustomize
+	cd config/manager && \
+		$(KUSTOMIZE) edit set image controller=$(OPERATOR_IMG):$(VERSION) && \
+		$(KUSTOMIZE) edit set image apiserver=$(APISERVER_IMG):$(VERSION) && \
+		$(KUSTOMIZE) edit set image chargebee-integration=$(CHARGEBEE_INTEGRATION_IMG):$(VERSION)
 
 .PHONY: install
 install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
@@ -161,13 +116,6 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 .PHONY: deploy-certmanager
 deploy-certmanager: kustomize
 	$(KUSTOMIZE) build config/cert-manager | kubectl apply -f -
-
-.PHONY: set-version
-set-version: kustomize
-	cd config/manager && \
-		$(KUSTOMIZE) edit set image controller=$(OPERATOR_IMG):$(VERSION) && \
-		$(KUSTOMIZE) edit set image apiserver=$(APISERVER_IMG):$(VERSION) && \
-		$(KUSTOMIZE) edit set image chargebee-integration=$(CHARGEBEE_INTEGRATION_IMG):$(VERSION)
 
 .PHONY: deploy
 deploy: set-version
@@ -184,7 +132,7 @@ undeploy: kustomize ## Undeploy controller from the K8s cluster specified in ~/.
 deploy-velero:
 	kubectl apply -f config/velero/crd
 	kubectl apply -k config/velero
-	kubectl -n velero wait --timeout=120s --for=condition=Ready pod -l app.kubernetes.io/instance=velero
+	kubectl -n velero wait --for=condition=Ready pod -l app.kubernetes.io/instance=velero
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 .PHONY: controller-gen
