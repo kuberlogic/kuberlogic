@@ -130,7 +130,7 @@ jobs:
 
       - name: Run the installer
         run: |
-          cd modules/dynamic-operator && make deploy-velero
+          cd modules/dynamic-operator && make deploy-velero && cd -
           ./modules/dynamic-apiserver/bin/kuberlogic_x86_64_linux install \
           --non-interactive \
           --ingress_class=kong \
