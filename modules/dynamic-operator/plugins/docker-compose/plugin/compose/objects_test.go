@@ -6,6 +6,7 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -23,6 +24,9 @@ var _ = Describe("docker-compose model", func() {
 				types.ServiceConfig{
 					Name:    "demo-app",
 					Command: types.ShellCommand{"cmd", "arg"},
+					Extensions: map[string]interface{}{
+						"x-kuberlogic-health-endpoint": "/health",
+					},
 					Environment: types.MappingWithEquals{
 						"DEMO_ENV": nil,
 						"ENV1":     &envVal,
@@ -70,7 +74,7 @@ var _ = Describe("docker-compose model", func() {
 			By("Checking Reconcile return parameters")
 			objs, err := c.Reconcile(requests)
 			Expect(err).Should(BeNil())
-			Expect(len(objs)).Should(Equal(6))
+			Expect(len(objs)).Should(Equal(7))
 
 			By("Validating returned Deployment")
 			firstDeployment := *c.deployment
@@ -80,6 +84,9 @@ var _ = Describe("docker-compose model", func() {
 			Expect(container.Name).Should(Equal("demo-app"))
 			Expect(len(container.Env)).Should(Equal(4))
 			Expect(container.Ports[0].ContainerPort).Should(Equal(int32(80)))
+			Expect(container.ReadinessProbe).ShouldNot(BeNil())
+			Expect(container.ReadinessProbe.HTTPGet.Path).Should(Equal("/health"))
+			Expect(container.ReadinessProbe.HTTPGet.Port.String()).Should(Equal(container.Ports[0].Name))
 			Expect(podSpec.Containers[1].Name).Should(Equal("demo-db"))
 			Expect(podSpec.Containers[0]).ShouldNot(Equal(podSpec.Containers[1]))
 
@@ -99,7 +106,7 @@ var _ = Describe("docker-compose model", func() {
 			By("Checking Reconcile result for the 2nd time")
 			secondRunObjs, secondErr := c.Reconcile(requests)
 			Expect(secondErr).Should(BeNil())
-			Expect(len(secondRunObjs)).Should(Equal(6))
+			Expect(len(secondRunObjs)).Should(Equal(7))
 
 			By("Validating returned Deployment")
 			secondDeployment := *c.deployment
@@ -503,13 +510,19 @@ var _ = Describe("docker-compose model", func() {
 		})
 	})
 	Context("When reconciling with templates env, keep secrets, cache", func() {
-		env1 := `{{ "abc" | PersistentSecret }}`
+		env1 := `{{ "abc" }}`
 		env2 := `{{ GenerateKey 30 }}`
-		env3 := `{{ GenerateRSA 2048 | Base64 | PersistentSecret "RSA_PRIVATE_KEY" }}`
-		env4 := `{{ GenerateRSA 2048 | Base64 | PersistentSecret "RSA_PRIVATE_KEY" }}`
+		env3 := `{{ Secret "key" }}`
+		env4 := `{{ Secret "key" }}`
 		testValidProject := &types.Project{
 			Name:       "test",
 			WorkingDir: "/tmp",
+			Extensions: map[string]interface{}{
+				"x-kuberlogic-secrets": map[string]interface{}{
+					"token": "exampletoken",
+					"key":   "{{ GenerateRSA 2048 | Base64 }}",
+				},
+			},
 			Services: types.Services{
 				types.ServiceConfig{
 					Name:    "demo-app",
@@ -565,7 +578,7 @@ var _ = Describe("docker-compose model", func() {
 			By("Checking Reconcile return parameters")
 			objs, err := c.Reconcile(requests)
 			Expect(err).Should(BeNil())
-			Expect(len(objs)).Should(Equal(6))
+			Expect(len(objs)).Should(Equal(7))
 
 			By("Validating returned Deployment")
 
@@ -574,25 +587,20 @@ var _ = Describe("docker-compose model", func() {
 			container := podSpec.Containers[0]
 			Expect(len(container.Env)).Should(Equal(4))
 
-			Expect(container.Env[0].ValueFrom.SecretKeyRef.Name).Should(Equal(requests.Name))
-			Expect(container.Env[0].ValueFrom.SecretKeyRef.Key).Should(Equal("demo-app_ENV1"))
+			Expect(container.Env[0].Value).Should(Equal("abc"))
 			genKey := container.Env[1].Value
 			Expect(len(genKey)).Should(Equal(30))
-			Expect(container.Env[2].ValueFrom.SecretKeyRef.Key).Should(Equal("RSA_PRIVATE_KEY"))
+			Expect(container.Env[2].ValueFrom.SecretKeyRef.Key).Should(Equal("key"))
 			Expect(*container.Env[2].ValueFrom).Should(Equal(*container.Env[3].ValueFrom))
 
 			By("Validating returned secret")
 			Expect(c.secret.Name).Should(Equal("demo-kls"))
-			Expect(len(c.secret.StringData)).Should(Equal(3))
-			Expect(c.secret.StringData["demo-app_ENV1"]).Should(Equal("abc"))
-			genRSA := c.secret.StringData["RSA_PRIVATE_KEY"]
-			Expect(len(genRSA)).Should(BeNumerically(">", 2048))
+			Expect(len(c.secret.Data)).Should(Equal(2))
+			genRSA := c.secret.Data["key"]
+			Expect(len(string(genRSA))).Should(BeNumerically(">", 2048))
 
-			// populate .Data object from .StringData looks like emulating saving secrets to k8s
-			c.secret.Data = make(map[string][]byte)
-			for k, v := range c.secret.StringData {
-				c.secret.Data[k] = []byte(v)
-			}
+			// validate secrets
+			Expect(c.secret.Data["token"]).Should(Equal([]byte("exampletoken")))
 
 			By("Repopulating with existing objects")
 			// populate requests objects from the previous run
@@ -610,16 +618,12 @@ var _ = Describe("docker-compose model", func() {
 			By("Validating returned Deployment")
 			cont := c.deployment.Spec.Template.Spec.Containers[0]
 			Expect(len(cont.Env)).Should(Equal(4))
-			Expect(cont.Env[0].ValueFrom.SecretKeyRef.Key).Should(Equal("demo-app_ENV1"))
-			Expect(len(container.Env[1].Value)).Should(Equal(30))
-			Expect(container.Env[2].ValueFrom.SecretKeyRef.Key).Should(Equal("RSA_PRIVATE_KEY"))
+			Expect(container.Env[2].ValueFrom.SecretKeyRef.Key).Should(Equal("key"))
 			Expect(*container.Env[2].ValueFrom).Should(Equal(*container.Env[3].ValueFrom))
 
 			By("Validating returned secret")
 			Expect(c.secret.Name).Should(Equal("demo-kls"))
-			Expect(c.secret.StringData["demo-app_ENV1"]).Should(Equal("abc"))
-			// equals value to the first time reconcilation
-			Expect(c.secret.StringData["RSA_PRIVATE_KEY"]).Should(Equal(genRSA))
+			Expect(c.secret.Data["key"]).Should(Equal(genRSA))
 		})
 	})
 	Context("When GetCredentialsMethod is called", func() {
@@ -696,6 +700,93 @@ var _ = Describe("docker-compose model", func() {
 			Expect(resp.Method).Should(Equal("exec"))
 			Expect(resp.Exec.Command).Should(Equal(strings.Split(expectedCommand, " ")))
 			Expect(resp.Exec.Container).Should(Equal(expectedContainer))
+		})
+	})
+	Context("When configs extension is set", func() {
+		proj := &types.Project{
+			Name:       "test",
+			WorkingDir: "/tmp",
+			Services: types.Services{
+				types.ServiceConfig{
+					Name:    "demo-app",
+					Command: types.ShellCommand{"cmd", "arg"},
+					Image:   "demo:test",
+					Ports: []types.ServicePortConfig{
+						{
+							Target:    80,
+							Published: "8001",
+						},
+					},
+					Volumes: []types.ServiceVolumeConfig{
+						{
+							Source: "demo",
+							Target: "/tmp/demo",
+						},
+					},
+				},
+				types.ServiceConfig{
+					Name:    "demo-db",
+					Command: types.ShellCommand{"cmd", "arg"},
+					Image:   "demodb:test",
+				},
+			},
+			Networks: nil,
+			Volumes: types.Volumes{
+				"demo": types.VolumeConfig{
+					Name: "demo",
+				},
+			},
+		}
+		requests := &commons.PluginRequest{
+			Name: "demo-kls",
+		}
+
+		It("Should fail when extension is set incorrectly", func() {
+			proj.Services[0].Extensions = map[string]interface{}{
+				"x-kuberlogic-file-configs": "nil",
+			}
+			c := NewComposeModel(proj, zap.NewRaw().Sugar())
+			resp, err := c.Reconcile(requests)
+			Expect(resp).Should(BeNil())
+			Expect(errors.Is(err, errConfigsDecodeFailed)).Should(BeTrue())
+		})
+
+		It("Should be mapped to container correctly", func() {
+			proj.Services[0].Extensions = map[string]interface{}{
+				"x-kuberlogic-file-configs": map[string]interface{}{
+					"/test": "app={{ .Name }}",
+				},
+			}
+			c := NewComposeModel(proj, zap.NewRaw().Sugar())
+			resp, err := c.Reconcile(requests)
+			Expect(resp).ShouldNot(BeNil())
+			Expect(err).Should(BeNil())
+
+			Expect(len(c.configmap.Data)).Should(Equal(1))
+			Expect(c.configmap.Data["/test"]).Should(Equal("app=demo-kls"))
+			Expect(c.deployment.Spec.Template.Spec.Volumes[1].ConfigMap.Name).Should(Equal(c.configmap.GetName()))
+			Expect(c.deployment.Spec.Template.Spec.Volumes[1].Name).Should(Equal("file-configs"))
+			Expect(c.deployment.Spec.Template.Spec.Containers[0].VolumeMounts[1].Name).Should(Equal(c.deployment.Spec.Template.Spec.Volumes[1].Name))
+			Expect(c.deployment.Spec.Template.Spec.Containers[0].VolumeMounts[1].MountPath).Should(Equal("/test"))
+		})
+		It("Should be using a secret to container correctly", func() {
+			proj.Extensions = map[string]interface{}{
+				"x-kuberlogic-secrets": map[string]interface{}{
+					"app-key": "{{ GenerateKey 30 }}",
+				},
+			}
+			proj.Services[0].Extensions = map[string]interface{}{
+				"x-kuberlogic-file-configs": map[string]interface{}{
+					"/test": `app={{ Secret "app-key" }}`,
+				},
+			}
+			c := NewComposeModel(proj, zap.NewRaw().Sugar())
+			resp, err := c.Reconcile(requests)
+			Expect(resp).ShouldNot(BeNil())
+			Expect(err).Should(BeNil())
+
+			Expect(len(c.configmap.Data)).Should(Equal(1))
+			Expect(c.configmap.Data["/test"]).Should(MatchRegexp("app=[a-zA-Z]+"))
 		})
 	})
 })

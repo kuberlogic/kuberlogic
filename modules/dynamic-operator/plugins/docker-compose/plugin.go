@@ -72,7 +72,7 @@ func (d *dockerComposeService) Convert(req commons.PluginRequest) *commons.Plugi
 	}
 
 	res.Service = dcModel.AccessServiceName()
-	res.Protocol = commons.HTTPproto
+	res.Protocol = commons.HTTPProto
 	return res
 }
 

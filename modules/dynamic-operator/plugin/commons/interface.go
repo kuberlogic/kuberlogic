@@ -27,12 +27,12 @@ import (
 type protocol string
 
 const (
-	TCPproto  protocol = "tcp"
-	HTTPproto protocol = "http"
+	TCPProto  protocol = "tcp"
+	HTTPProto protocol = "http"
 )
 
 var (
-	errPersistentSecretWrongArgs = errors.New("PersistentSecret function needs `secretId <optional,string>, secretData <string> arguments`")
+	errSecretNotFound = errors.New("secret not found")
 )
 
 // PluginService is the interface that we're exposing as a plugin.
@@ -86,12 +86,6 @@ type PluginRequest struct {
 	Objects []*unstructured.Unstructured
 }
 
-type TemplatedValue struct {
-	Raw      string
-	Secret   bool
-	SecretID string
-}
-
 func (pl *PluginRequest) SetObjects(objs []*unstructured.Unstructured) {
 	pl.Objects = objs
 }
@@ -105,8 +99,8 @@ func (pl *PluginRequest) GetObjects() []*unstructured.Unstructured {
 }
 
 func (pl *PluginRequest) SetLimits(limits *v1.ResourceList) error {
-	bytes, _ := json.Marshal(limits)
-	pl.Limits = bytes
+	b, _ := json.Marshal(limits)
+	pl.Limits = b
 	return nil
 }
 
@@ -121,25 +115,16 @@ func (pl *PluginRequest) GetLimits() (*v1.ResourceList, error) {
 	return limits, nil
 }
 
-func (pl *PluginRequest) RenderTemplate(tpl string) (*TemplatedValue, error) {
+func (pl *PluginRequest) RenderTemplate(tpl string, secrets map[string][]byte) (*TemplatedValue, error) {
 	v := &TemplatedValue{}
 
 	tmpl, err := template.New("value").Funcs(template.FuncMap{
-		// PersistentSecret func accepts two args (one is optional):
-		// * keyId (this will be used to identify a secret key), empty if not passed
-		// * data (data that needs to be stored in secret)
-		"PersistentSecret": func(args ...string) (string, error) {
-			v.Secret = true
-
-			switch len(args) {
-			case 1:
-				return args[0], nil
-			case 2:
-				v.SecretID = args[0]
-				return args[1], nil
-			default:
-				return "", errPersistentSecretWrongArgs
+		"Secret": func(name string) (string, error) {
+			if secret, found := secrets[name]; found {
+				v.SecretID = name
+				return string(secret), nil
 			}
+			return "", errSecretNotFound
 		},
 		"Base64": func(arg string) string {
 			return base64.StdEncoding.EncodeToString([]byte(arg))
@@ -168,15 +153,15 @@ func (pl *PluginRequest) RenderTemplate(tpl string) (*TemplatedValue, error) {
 			return string(b)
 		},
 		"Endpoint": func(defaultValue string) string {
-			schema := "http"
+			proto := "http"
 			if pl.TLSEnabled {
-				schema = "https"
+				proto = "https"
 			}
 			host := defaultValue
 			if pl.Host != "" {
 				host = pl.Host
 			}
-			return fmt.Sprintf("%s://%s", schema, host)
+			return fmt.Sprintf("%s://%s", proto, host)
 		},
 	}).Parse(tpl)
 	if err != nil {
@@ -201,7 +186,7 @@ func (pl *PluginRequest) RenderTemplate(tpl string) (*TemplatedValue, error) {
 		TLSEnabled: pl.TLSEnabled,
 		Parameters: pl.Parameters,
 	})
-	v.Raw = data.String()
+	v.raw = data.String()
 	return v, err
 }
 
@@ -263,11 +248,11 @@ type PluginResponseDefault struct {
 }
 
 func (pl *PluginResponseDefault) SetLimits(limits *v1.ResourceList) error {
-	bytes, err := json.Marshal(limits)
+	b, err := json.Marshal(limits)
 	if err != nil {
 		log.Fatalf("error when marshaling limits: %v", err)
 	}
-	pl.Limits = bytes
+	pl.Limits = b
 	return nil
 }
 
@@ -309,7 +294,7 @@ func (m *PluginRequestCredentialsMethod) RenderTemplate(tpl string) (*TemplatedV
 
 	data := &bytes.Buffer{}
 	err = tmpl.Execute(data, m.Data)
-	v.Raw = data.String()
+	v.raw = data.String()
 	return v, err
 }
 
@@ -325,4 +310,14 @@ type CredentialsMethodExec struct {
 
 	Container string
 	Command   []string
+}
+
+// TemplatedValue is returned on each template value
+type TemplatedValue struct {
+	raw      string
+	SecretID string
+}
+
+func (v *TemplatedValue) String() string {
+	return v.raw
 }

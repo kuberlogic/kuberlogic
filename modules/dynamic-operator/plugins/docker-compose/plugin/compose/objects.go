@@ -2,6 +2,8 @@ package compose
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -13,7 +15,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -23,14 +24,18 @@ import (
 
 const (
 	ingressPathExtension       = "x-kuberlogic-access-http-path"
+	healthEndpointExtension    = "x-kuberlogic-health-endpoint"
 	setCredentialsCmdExtension = "x-kuberlogic-set-credentials-cmd"
+	configsExtension           = "x-kuberlogic-file-configs"
+	secretsExtension           = "x-kuberlogic-secrets"
 )
 
 var (
 	serviceAccountGVK = schema.GroupVersionKind{
 		Group:   "",
 		Version: "v1",
-		Kind:    "ServiceAccount"}
+		Kind:    "ServiceAccount",
+	}
 	serviceGVK = schema.GroupVersionKind{
 		Group:   "",
 		Version: "v1",
@@ -54,6 +59,11 @@ var (
 		Version: "v1",
 		Kind:    "Secret",
 	}
+	configmapGVK = schema.GroupVersionKind{
+		Group:   "",
+		Version: "v1",
+		Kind:    "ConfigMap",
+	}
 )
 
 var (
@@ -65,6 +75,9 @@ var (
 	errDuplicateIngressPath         = errors.New("HTTP access path has been already used")
 	errTooManyCredentialsCommands   = errors.New("too many " + setCredentialsCmdExtension + " extensions")
 	errCredentialsCommandNotDefined = errors.New(setCredentialsCmdExtension + " extension not found")
+	errConfigsDecodeFailed          = errors.New(configsExtension + " must be of type map[string]string")
+	errSecretsDecodeFailed          = errors.New(secretsExtension + " must be of type map[string]string")
+	errStringConversionFailed       = errors.New("failed to read string")
 )
 
 type ComposeModel struct {
@@ -77,6 +90,7 @@ type ComposeModel struct {
 	deployment            *appsv1.Deployment
 	ingress               *networkingv1.Ingress
 	secret                *corev1.Secret
+	configmap             *corev1.ConfigMap
 }
 
 // Reconcile method updates current request object to their required parameters
@@ -127,6 +141,9 @@ func (c *ComposeModel) Types() []map[schema.GroupVersionKind]client.Object {
 		{
 			secretGVK: &corev1.Secret{},
 		},
+		{
+			configmapGVK: &corev1.ConfigMap{},
+		},
 	}
 }
 
@@ -145,6 +162,7 @@ func NewComposeModel(p *types.Project, l *zap.SugaredLogger) *ComposeModel {
 		deployment:            &appsv1.Deployment{},
 		ingress:               &networkingv1.Ingress{},
 		secret:                &corev1.Secret{},
+		configmap:             &corev1.ConfigMap{},
 	}
 }
 
@@ -169,6 +187,9 @@ func (c *ComposeModel) objectsWithGVK() []map[schema.GroupVersionKind]client.Obj
 		{
 			ingressGVK: c.ingress,
 		},
+		{
+			configmapGVK: c.configmap,
+		},
 	}
 }
 
@@ -189,6 +210,8 @@ func (c *ComposeModel) fromCluster(objects []*unstructured.Unstructured) error {
 			object = c.ingress
 		case "Secret":
 			object = c.secret
+		case "ConfigMap":
+			object = c.configmap
 		default:
 			return errUnknownObject
 		}
@@ -223,20 +246,52 @@ func (c *ComposeModel) setObjects(req *commons.PluginRequest) error {
 }
 
 func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
-	c.serviceaccount.Name = req.Name
-	c.serviceaccount.Namespace = req.Namespace
-	c.serviceaccount.ObjectMeta.Labels = labels(req.Name)
+	c.serviceaccount.SetName(req.Name)
+	c.serviceaccount.SetNamespace(req.Namespace)
+	c.serviceaccount.ObjectMeta.SetLabels(labels(req.Name))
 
-	c.deployment.Name = req.Name
-	c.deployment.Namespace = req.Namespace
+	c.secret.SetName(req.Name)
+	c.secret.SetNamespace(req.Namespace)
+	c.secret.SetLabels(labels(req.Name))
+	if c.secret.Data == nil {
+		c.secret.Data = make(map[string][]byte, 0)
+	}
+	// now go and set secret data
+	if secrets, set := c.composeProject.Extensions[secretsExtension]; set {
+		var secretsMap map[string]interface{}
+		var converted bool
+		if secretsMap, converted = secrets.(map[string]interface{}); !converted {
+			return errSecretsDecodeFailed
+		}
 
-	c.deployment.Labels = labels(req.Name)
+		for k, v := range secretsMap {
+			if _, set := c.secret.Data[k]; set {
+				c.logger.Debug("secret %s is already set. skipping.", k)
+				continue
+			}
+
+			var strVal string
+			if strVal, converted = v.(string); !converted {
+				return errStringConversionFailed
+			}
+			value, err := req.RenderTemplate(strVal, c.secret.Data)
+			if err != nil {
+				return errors.Wrapf(err, "failed to generate secret %s", k)
+			}
+			c.secret.Data[k] = []byte(value.String())
+		}
+	}
+
+	c.deployment.SetName(req.Name)
+	c.deployment.SetNamespace(req.Namespace)
+	c.deployment.SetLabels(labels(req.Name))
+
 	c.deployment.Spec.Strategy.Type = appsv1.RecreateDeploymentStrategyType
 	c.deployment.Spec.Replicas = &req.Replicas
 	c.deployment.Spec.Selector = &metav1.LabelSelector{
 		MatchLabels: labels(req.Name),
 	}
-	c.deployment.Spec.Template.Labels = labels(req.Name)
+	c.deployment.Spec.Template.SetLabels(labels(req.Name))
 	c.deployment.Spec.Template.Spec.ServiceAccountName = c.serviceaccount.GetName()
 	c.deployment.Spec.Template.Spec.RestartPolicy = corev1.RestartPolicyAlways
 	c.deployment.Spec.Template.Spec.Volumes = make([]corev1.Volume, 0)
@@ -271,69 +326,16 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 		c.deployment.Spec.Template.Spec.HostAliases[0].Hostnames = append(c.deployment.Spec.Template.Spec.HostAliases[0].Hostnames, container.Name)
 
 		// this will not be kept in secret even when a flag is set
-		imageValue, err := req.RenderTemplate(composeService.Image)
-		if err != nil || imageValue.Raw == "" {
-			return errors.Wrapf(err, "invalid image value: %s", imageValue.Raw)
+		imageValue, err := req.RenderTemplate(composeService.Image, c.secret.Data)
+		if err != nil || imageValue.String() == "" {
+			return errors.Wrapf(err, "invalid image value: %s", imageValue.String())
 		}
-		container.Image = imageValue.Raw
+		container.Image = imageValue.String()
 		container.Command = composeService.Command
 
-		container.Env = make([]corev1.EnvVar, 0)
-		for key, rawValue := range composeService.Environment {
-			e := corev1.EnvVar{
-				Name:  key,
-				Value: "",
-			}
-			if rawValue != nil {
-				value, err := req.RenderTemplate(*rawValue)
-				if err != nil {
-					return errors.Wrapf(err, "invalid key `%s` value: %s", e.Name, value.Raw)
-				}
-
-				if value.Secret {
-					c.secret.Name = req.Name
-					c.secret.Namespace = req.Namespace
-
-					if value.SecretID == "" {
-						value.SecretID = composeService.Name + "_" + key
-					}
-
-					// set secret value when not set
-					if _, ok := c.secret.Data[value.SecretID]; !ok {
-						if c.secret.StringData == nil {
-							c.secret.StringData = make(map[string]string, 0)
-						}
-						c.secret.StringData[value.SecretID] = value.Raw
-					}
-
-					// use secretKeyRef instead of raw value
-					e.ValueFrom = &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: c.secret.GetName(),
-							},
-							Key: value.SecretID,
-						},
-					}
-				} else {
-					e.Value = value.Raw
-				}
-			}
-
-			container.Env = append(container.Env, e)
+		if container.Env, err = c.buildContainerEnvVars(&composeService, req); err != nil {
+			return errors.Wrapf(err, "failed to build environment variables for service %s", composeService.Name)
 		}
-		// all additional parameters mapped to env vars for each container
-		c.logger.Debugf("extra parameters: %+v", req.Parameters)
-		for key, value := range req.Parameters {
-			container.Env = append(container.Env, corev1.EnvVar{
-				Name:  key,
-				Value: fmt.Sprintf("%v", value),
-			})
-		}
-
-		sort.Slice(container.Env, func(i, j int) bool {
-			return container.Env[i].Name < container.Env[j].Name
-		})
 
 		container.Ports = make([]corev1.ContainerPort, 0)
 		for _, p := range composeService.Ports {
@@ -347,10 +349,15 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 			}
 			container.Ports = append(container.Ports, port)
 
+			healthz := "/"
+			if customHealthz := composeService.Extensions[healthEndpointExtension]; customHealthz != nil {
+				healthz = customHealthz.(string)
+			}
+
 			container.ReadinessProbe = &corev1.Probe{
 				Handler: corev1.Handler{
 					HTTPGet: &corev1.HTTPGetAction{
-						Path: "/",
+						Path: healthz,
 						Port: intstr.FromString(port.Name),
 					},
 				},
@@ -363,56 +370,9 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 			return container.Ports[i].Name < container.Ports[j].Name
 		})
 
-		container.VolumeMounts = make([]corev1.VolumeMount, 0)
-		if len(composeService.Volumes) > 0 {
-			c.persistentvolumeclaim.Name = req.Name
-			c.persistentvolumeclaim.Namespace = req.Namespace
-			c.persistentvolumeclaim.Labels = labels(req.Namespace)
-
-			c.persistentvolumeclaim.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{
-				corev1.ReadWriteOnce,
-			}
-			if req.StorageClass != "" {
-				c.persistentvolumeclaim.Spec.StorageClassName = &req.StorageClass
-			}
-
-			limits, err := req.GetLimits()
-			if err != nil {
-				return errors.Wrap(err, "failed to get limits")
-			}
-
-			storage := limits.Storage()
-			if storage != nil && !storage.IsZero() {
-				c.persistentvolumeclaim.Spec.Resources = corev1.ResourceRequirements{
-					Requests: map[corev1.ResourceName]resource.Quantity{
-						corev1.ResourceStorage: *storage,
-					},
-				}
-			}
-
-			c.deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
-				{
-					Name: c.persistentvolumeclaim.GetName(),
-					VolumeSource: corev1.VolumeSource{
-						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-							ClaimName: c.persistentvolumeclaim.GetName(),
-							ReadOnly:  false,
-						},
-					},
-				},
-			}
+		if container.VolumeMounts, err = c.buildContainerVolumeMounts(&composeService, req); err != nil {
+			return errors.Wrapf(err, "failed to build volume mounts for container %s", composeService.Name)
 		}
-		for _, v := range composeService.Volumes {
-			container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
-				Name:      c.persistentvolumeclaim.GetName(),
-				ReadOnly:  false,
-				MountPath: v.Target,
-				SubPath:   v.Source + "-" + container.Name,
-			})
-		}
-		sort.SliceStable(container.VolumeMounts, func(i, j int) bool {
-			return container.VolumeMounts[i].Name < container.VolumeMounts[j].Name
-		})
 
 		containers = append(containers, *container)
 		c.logger.Debug("Deployment containers list", "containers", containers)
@@ -429,10 +389,10 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 }
 
 func (c *ComposeModel) setApplicationAccessObjects(req *commons.PluginRequest) error {
-	c.service.Name = req.Name
-	c.service.Namespace = req.Namespace
+	c.service.SetName(req.Name)
+	c.service.SetNamespace(req.Namespace)
+	c.service.SetLabels(labels(req.Name))
 
-	c.service.Labels = labels(req.Name)
 	c.service.Spec.Selector = labels(req.Name)
 	c.service.Spec.Type = corev1.ServiceTypeClusterIP
 	c.service.Spec.Ports = []corev1.ServicePort{}
@@ -482,9 +442,9 @@ func (c *ComposeModel) setApplicationAccessObjects(req *commons.PluginRequest) e
 		return nil
 	}
 
-	c.ingress.Name = req.Name
-	c.ingress.Namespace = req.Namespace
-	c.ingress.Labels = labels(req.Name)
+	c.ingress.SetName(req.Name)
+	c.ingress.SetNamespace(req.Namespace)
+	c.ingress.SetLabels(labels(req.Name))
 
 	if req.IngressClass != "" {
 		c.ingress.Spec.IngressClassName = &req.IngressClass
@@ -570,7 +530,7 @@ func (c *ComposeModel) GetCredentialsMethod(req *commons.PluginRequestCredential
 				MatchLabels: labels(req.Name),
 			},
 			Container: container,
-			Command:   strings.Split(v.Raw, " "),
+			Command:   strings.Split(v.String(), " "),
 		},
 	}, nil
 }
@@ -579,4 +539,152 @@ func labels(name string) map[string]string {
 	return map[string]string{
 		"docker-compose.service/name": name,
 	}
+}
+
+// buildContainerEnvVars transforms composeSvc environment variables to Kuberlogic compatible []corev1.EnvVar
+func (c *ComposeModel) buildContainerEnvVars(composeSvc *types.ServiceConfig, req *commons.PluginRequest) ([]corev1.EnvVar, error) {
+	envs := make([]corev1.EnvVar, 0)
+
+	for key, rawValue := range composeSvc.Environment {
+		e := corev1.EnvVar{
+			Name:  key,
+			Value: "",
+		}
+		if rawValue != nil {
+			value, err := req.RenderTemplate(*rawValue, c.secret.Data)
+			if err != nil {
+				return nil, errors.Wrapf(err, "invalid key `%s` value: %s", e.Name, value.String())
+			}
+
+			if value.SecretID != "" {
+				// use secretKeyRef instead of raw value
+				e.ValueFrom = &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: c.secret.GetName(),
+						},
+						Key: value.SecretID,
+					},
+				}
+			} else {
+				e.Value = value.String()
+			}
+		}
+
+		envs = append(envs, e)
+	}
+	// all additional parameters mapped to env vars for each container
+	c.logger.Debugf("extra parameters: %+v", req.Parameters)
+	for key, value := range req.Parameters {
+		envs = append(envs, corev1.EnvVar{
+			Name:  key,
+			Value: fmt.Sprintf("%v", value),
+		})
+	}
+
+	sort.Slice(envs, func(i, j int) bool {
+		return envs[i].Name < envs[j].Name
+	})
+	return envs, nil
+}
+
+func (c *ComposeModel) buildContainerVolumeMounts(s *types.ServiceConfig, req *commons.PluginRequest) ([]corev1.VolumeMount, error) {
+	volumeMounts := make([]corev1.VolumeMount, 0)
+
+	if len(s.Volumes) > 0 {
+		c.persistentvolumeclaim.SetName(req.Name)
+		c.persistentvolumeclaim.SetNamespace(req.Namespace)
+		c.persistentvolumeclaim.Labels = labels(req.Namespace)
+
+		c.persistentvolumeclaim.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{
+			corev1.ReadWriteOnce,
+		}
+		if req.StorageClass != "" {
+			c.persistentvolumeclaim.Spec.StorageClassName = &req.StorageClass
+		}
+
+		limits, err := req.GetLimits()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to get limits")
+		}
+
+		storage := limits.Storage()
+		if storage != nil && !storage.IsZero() {
+			c.persistentvolumeclaim.Spec.Resources = corev1.ResourceRequirements{
+				Requests: map[corev1.ResourceName]resource.Quantity{
+					corev1.ResourceStorage: *storage,
+				},
+			}
+		}
+
+		c.deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
+			{
+				Name: c.persistentvolumeclaim.GetName(),
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+						ClaimName: c.persistentvolumeclaim.GetName(),
+						ReadOnly:  false,
+					},
+				},
+			},
+		}
+	}
+
+	if configMap, set := s.Extensions[configsExtension]; set {
+		var configs map[string]interface{}
+		var converted bool
+		if configs, converted = configMap.(map[string]interface{}); !converted {
+			return nil, errConfigsDecodeFailed
+		}
+
+		c.configmap.SetName(req.Name)
+		c.configmap.SetNamespace(req.Namespace)
+		c.configmap.Data = make(map[string]string, 0)
+
+		const configVolumeName = "file-configs"
+		c.deployment.Spec.Template.Spec.Volumes = append(c.deployment.Spec.Template.Spec.Volumes,
+			corev1.Volume{
+				Name: configVolumeName,
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: c.configmap.GetName(),
+						},
+					},
+				},
+			})
+
+		for path, config := range configs {
+			var strVal string
+			if strVal, converted = config.(string); !converted {
+				return nil, errStringConversionFailed
+			}
+
+			rendered, err := req.RenderTemplate(strVal, c.secret.Data)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to render config %s", path)
+			}
+
+			c.configmap.Data[path] = rendered.String()
+
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      configVolumeName,
+				MountPath: path,
+				SubPath:   filepath.Base(path),
+			})
+		}
+	}
+
+	for _, v := range s.Volumes {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      c.persistentvolumeclaim.GetName(),
+			ReadOnly:  false,
+			MountPath: v.Target,
+			SubPath:   v.Source + "-" + s.Name,
+		})
+	}
+	sort.SliceStable(volumeMounts, func(i, j int) bool {
+		return volumeMounts[i].Name < volumeMounts[j].Name
+	})
+	return volumeMounts, nil
 }
