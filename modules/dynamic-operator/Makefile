@@ -81,7 +81,7 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: manifests generate fmt vet build-docker-compose-plugin envtest ## Run tests.
+test: manifests generate fmt vet build-docker-compose-plugin envtest
 	ACK_GINKGO_DEPRECATIONS=1.16.5 \
 	PLUGINS="{docker-compose,$(PROJECT_DIR)/bin/docker-compose-plugin}" \
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
