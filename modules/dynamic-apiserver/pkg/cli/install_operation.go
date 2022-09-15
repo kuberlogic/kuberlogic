@@ -173,7 +173,8 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 			return errors.Wrapf(err, "error processing %s flag", installBackupsEnabledParam)
 		} else if backupsEnabled {
 			// check velero
-			if err := exec.Command(kubectlBin, "get crd backups.velero.io").Run(); err != nil {
+			if out, err := exec.Command("sh", "-c", kubectlBin+" get crd backups.velero.io").CombinedOutput(); err != nil {
+				fmt.Println(string(out))
 				return errVeleroNotAvailable
 			}
 
