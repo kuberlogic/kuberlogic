@@ -60,7 +60,7 @@ func (r *KuberLogicService) Default() {
 		r.Spec.Version = resp.Version
 	}
 	if r.Spec.Domain == "" {
-		r.Spec.Domain = resp.Host
+		r.Spec.Domain = fmt.Sprintf("%s.%s", r.Name, resp.Host)
 	}
 	if r.Spec.Replicas == 0 {
 		r.Spec.Replicas = resp.Replicas
