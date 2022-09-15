@@ -27,7 +27,7 @@ func makeServiceEditCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra
 	_ = cmd.PersistentFlags().Int64("replicas", 1, "how many replicas need for service")
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
 	_ = cmd.PersistentFlags().String("backup_schedule", "", "backup schedule in cron format")
-	_ = cmd.PersistentFlags().Bool("insecure", false, "")
+	_ = cmd.PersistentFlags().Bool("insecure", false, "setup unsecure service with http, not https")
 	_ = cmd.PersistentFlags().String("domain", "", "on which domain service will be available")
 
 	// limits
