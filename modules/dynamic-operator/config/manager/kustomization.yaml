@@ -19,6 +19,14 @@ secretGenerator:
   envs:
   - kuberlogic-config.env
   name: kuberlogic-config
+patches:
+- patch: |-
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: kuberlogic-config
+      labels:
+        kl-config: "true"
 images:
 - name: apiserver
   newName: quay.io/kuberlogic/dynamic-apiserver

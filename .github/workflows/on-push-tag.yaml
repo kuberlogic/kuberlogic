@@ -1,0 +1,13 @@
+name: Release
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  build_test_deploy:
+    uses: ./.github/workflows/build-test-deploy.yaml
+    with:
+      PUBLISH_PROD_BUILD: true
+      DEV_BUILD: false
+    secrets: inherit

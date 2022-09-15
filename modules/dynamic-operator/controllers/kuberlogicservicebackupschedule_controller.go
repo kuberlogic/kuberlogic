@@ -87,7 +87,7 @@ func (r *KuberlogicServiceBackupScheduleReconciler) Reconcile(ctx context.Contex
 				},
 				Args: []string{
 					"-c",
-					fmt.Sprintf("echo '{\"apiVersion\":\"kuberlogic.com/v1alpha1\",\"kind\":\"KuberlogicServiceBackup\",\"metadata\":{\"name\":\"%s\", \"labels\":{\"kls-id\": \"%s\"}},\"spec\":{\"kuberlogicServiceName\":\"%s\"}}' | kubectl apply -f -", klbs.GetName(), klbs.Spec.KuberlogicServiceName, klbs.Spec.KuberlogicServiceName),
+					fmt.Sprintf("echo '{\"apiVersion\":\"kuberlogic.com/v1alpha1\",\"kind\":\"KuberlogicServiceBackup\",\"metadata\":{\"generateName\":\"%s\", \"labels\":{\"kls-id\": \"%s\"}},\"spec\":{\"kuberlogicServiceName\":\"%s\"}}' | kubectl apply -f -", klbs.GetName(), klbs.Spec.KuberlogicServiceName, klbs.Spec.KuberlogicServiceName),
 				},
 			},
 		}

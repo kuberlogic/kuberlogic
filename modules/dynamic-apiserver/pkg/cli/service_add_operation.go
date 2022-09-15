@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+
 	client2 "github.com/go-openapi/runtime/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 	"github.com/spf13/viper"
@@ -26,6 +27,7 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.
 	_ = cmd.PersistentFlags().Int64("replicas", 1, "how many replicas need for service")
 	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
 	_ = cmd.PersistentFlags().String("backup_schedule", "", "backup schedule in cron format")
+	_ = cmd.PersistentFlags().String("domain", "", "on which domain service will be available")
 	_ = cmd.PersistentFlags().Bool("tls_enabled", false, "")
 	_ = cmd.PersistentFlags().Bool(subscriptionIdFlag, false, "")
 
@@ -88,6 +90,12 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 			return err
 		} else if value != nil {
 			svc.TLSEnabled = *value
+		}
+
+		if value, err := getString(cmd, "domain"); err != nil {
+			return err
+		} else if value != nil {
+			svc.Domain = *value
 		}
 
 		if value, err := getString(cmd, subscriptionIdFlag); err != nil {

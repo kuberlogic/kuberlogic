@@ -14,8 +14,8 @@ fi
 TMPFILE=$(date +%s)
 
 echo "Installing Kuberlogic version ${TAG}..."
-wget -q "https://github.com/kuberlogic/kuberlogic/releases/download/${TAG}/kuberlogic_${ARCH}_${OS}" -O "${TMPFILE}"
-install -b "${TMPFILE}" $INSTALL_DIR/kuberlogic
+curl -s -L "https://github.com/kuberlogic/kuberlogic/releases/download/${TAG}/kuberlogic_${ARCH}_${OS}" -o "${TMPFILE}"
+sudo install -b "${TMPFILE}" $INSTALL_DIR/kuberlogic
 rm "${TMPFILE}"
 
 echo "KuberLogic CLI installed at ${INSTALL_DIR}/kuberlogic\nUse 'kuberlogic help' command to start."

@@ -125,9 +125,9 @@ spec:
                   - type
                   type: object
                 type: array
-              failedAttempts:
-                type: integer
               phase:
+                type: string
+              restoreReference:
                 type: string
             required:
             - conditions

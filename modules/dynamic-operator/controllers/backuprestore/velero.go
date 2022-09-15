@@ -26,17 +26,12 @@ const (
 )
 
 var (
-	maxWaitTimeout = 60
-
 	errVeleroBackupIsNotSuccessful = errors.New("velero backup is not successful")
 
 	backupStorageLocationMaxCheckTTL             = 15.0
 	errVeleroBackupStorageLocationIsNotAvailable = fmt.Errorf("velero backup storage location is unavailable or checked more than %f minutes ago", backupStorageLocationMaxCheckTTL)
 
-	errBackupPodNotReady = errors.New("backup pod did not become ready")
-
-	errNamespaceExists = errors.New("namespace exists during timeout")
-	errPodsNotPaused   = errors.New("found non-pending service pods")
+	errServicePodsFound = errors.New("found non-pending service pods")
 )
 
 type VeleroBackupRestore struct {
@@ -54,14 +49,22 @@ type VeleroBackupRestore struct {
 //+kubebuilder:rbac:groups="velero.io",resources=deletebackuprequests/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=pvc,verbs=list
 //+kubebuilder:rbac:groups="",resources=pods,verbs=get;delete;create;list
-//+kubebuilder:rbac:groups="",resources=namespaces,verbs=get;delete
+//+kubebuilder:rbac:groups="",resources=namespaces,verbs=get;delete;update
 
 func (v *VeleroBackupRestore) BackupRequest(ctx context.Context, klb *kuberlogiccomv1alpha1.KuberlogicServiceBackup) error {
 	log := v.log.WithValues("operation", "BackupRequest")
 	log.Info("Started routine")
 
 	veleroBackup := newVeleroBackupObject(klb.GetName(), v.kls)
+	_ = controllerruntime.SetControllerReference(klb, veleroBackup, v.kubeClient.Scheme())
 	veleroBackup.Spec.SnapshotVolumes = &v.volumeSnapshotsEnabled
+
+	// exit immediately when found
+	if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(veleroBackup), veleroBackup); err != nil && !k8serrors.IsNotFound(err) {
+		return errors.Wrap(err, "failed to check if velero backup already exists")
+	} else if err == nil {
+		return nil
+	}
 
 	veleroBackupStorageLocation := &velero.BackupStorageLocation{
 		ObjectMeta: metav1.ObjectMeta{
@@ -81,35 +84,21 @@ func (v *VeleroBackupRestore) BackupRequest(ctx context.Context, klb *kuberlogic
 
 	// snapshots are disabled. going the restic route
 	if !v.volumeSnapshotsEnabled {
-		var podsPaused bool
-		for waitForPausedPods := maxWaitTimeout; waitForPausedPods > 0; waitForPausedPods -= 1 {
-			time.Sleep(1 * time.Second)
-			podList := &v1.PodList{}
-			log.Info("found pods in namespace", "count", len(podList.Items), "pods", podList.Items)
-			if err := v.kubeClient.List(ctx, podList, &client.ListOptions{Namespace: v.kls.Status.Namespace}); err != nil {
-				log.Error(err, "failed to list service pods")
-				continue
-			}
-
-			podsPaused = true
-			for _, p := range podList.Items {
-				if p.GetName() == ResticBackupPodName {
-					continue
-				}
-				if p.Status.Phase != v1.PodPending {
-					podsPaused = false
-					err := v.kubeClient.Delete(ctx, &p)
-					v.log.Info("tried to delete service pod", "name", p.GetName(), "error", err)
-				}
-			}
-			if podsPaused {
-				log.Info("all service pods are paused")
-				break
-			}
+		// make sure no service pods are running
+		podList := &v1.PodList{}
+		if err := v.kubeClient.List(ctx, podList, &client.ListOptions{Namespace: v.kls.Status.Namespace}); err != nil {
+			log.Error(err, "failed to list service pods")
 		}
-		if !podsPaused {
-			log.Error(errPodsNotPaused, "all service pods must be paused")
-			return errPodsNotPaused
+
+		for _, p := range podList.Items {
+			if p.GetName() != ResticBackupPodName && p.Status.Phase != v1.PodPending {
+				log.Info("got non-backup pod in namespace", "pod", p.GetName(), "phase", p.Status.Phase)
+				if err := v.kubeClient.Delete(ctx, &p); err != nil {
+					log.Error(err, "failed to delete pod", "pod", p.GetName())
+					return errors.Wrap(err, "failed to delete pod")
+				}
+				return errServicePodsFound
+			}
 		}
 
 		// prepare a backup helper pod and mark all volumes that need to be backed up
@@ -138,6 +127,7 @@ func (v *VeleroBackupRestore) BackupRequest(ctx context.Context, klb *kuberlogic
 			backupPod.Annotations[resticBackupVolumesAnnotation] = backupPod.Annotations[resticBackupVolumesAnnotation] + pvc.GetName() + ","
 		}
 
+		log.Info("create backup pod if it does not exist")
 		err := controllerruntime.SetControllerReference(klb, backupPod, v.kubeClient.Scheme())
 		if err != nil {
 			return err
@@ -147,32 +137,23 @@ func (v *VeleroBackupRestore) BackupRequest(ctx context.Context, klb *kuberlogic
 			return err
 		}
 
-		// wait until pod is ready
-		for waitForBackupPodSec := maxWaitTimeout; waitForBackupPodSec > 0; waitForBackupPodSec -= 1 {
-			time.Sleep(1 * time.Second)
-			log.Info("waiting for backup pod to be ready")
-			if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(backupPod), backupPod); err != nil && !k8serrors.IsNotFound(err) {
-				// only log error and continue
-				log.Error(err, "error getting backup pod state")
-				continue
-			}
-			if backupPod.Status.Phase == v1.PodRunning {
-				log.Info("backup pod ready")
-				break
-			}
+		log.Info("check if backup pod is ready")
+		if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(backupPod), backupPod); err != nil {
+			log.Error(err, "error getting backup pod state")
+			return err
 		}
 		if backupPod.Status.Phase != v1.PodRunning {
-			log.Error(errBackupPodNotReady, "timed out waiting for backup pod")
-			return errBackupPodNotReady
+			return nil
 		}
+		log.Info("backup pod is ready")
 	}
 
-	_ = controllerruntime.SetControllerReference(klb, veleroBackup, v.kubeClient.Scheme())
 	if err := v.kubeClient.Create(ctx, veleroBackup); err != nil && !k8serrors.IsAlreadyExists(err) {
 		log.Error(err, "failed to create velero backup request", "object", veleroBackup)
 		return err
 	}
-	return nil
+	klb.Status.BackupReference = veleroBackup.GetName()
+	return v.kubeClient.Status().Update(ctx, klb)
 }
 
 func (v *VeleroBackupRestore) AfterBackup(ctx context.Context, klb *kuberlogiccomv1alpha1.KuberlogicServiceBackup) error {
@@ -208,13 +189,10 @@ func (v *VeleroBackupRestore) SetKuberlogicBackupStatus(ctx context.Context, klb
 	log := v.log.WithValues("operation", "SetKuberlogicBackupStatus")
 	log.Info("Started routine")
 
-	veleroBackup := newVeleroBackupObject(klb.GetName(), v.kls)
-	if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(veleroBackup), veleroBackup); k8serrors.IsNotFound(err) {
-		if !klb.IsPending() {
-			log.Error(err, "velero backup not found and klb is not pending")
-			return err
-		}
-	} else if err != nil {
+	veleroBackup := &velero.Backup{}
+	veleroBackup.SetName(klb.Status.BackupReference)
+	veleroBackup.SetNamespace(veleroNamespace)
+	if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(veleroBackup), veleroBackup); err != nil && !k8serrors.IsNotFound(err) {
 		return err
 	}
 
@@ -223,11 +201,8 @@ func (v *VeleroBackupRestore) SetKuberlogicBackupStatus(ctx context.Context, klb
 		klb.MarkSuccessful()
 	case velero.BackupPhaseFailedValidation, velero.BackupPhaseUploadingPartialFailure, velero.BackupPhasePartiallyFailed, velero.BackupPhaseFailed:
 		klb.MarkFailed(string(veleroBackup.Status.Phase))
-	case velero.BackupPhaseNew, velero.BackupPhaseInProgress, velero.BackupPhaseUploading:
-		klb.MarkRequested()
 	default:
-		// unknown status
-		return nil
+		klb.MarkRequested()
 	}
 
 	return v.kubeClient.Status().Update(ctx, klb)
@@ -237,7 +212,18 @@ func (v *VeleroBackupRestore) BackupDeleteRequest(ctx context.Context, klb *kube
 	log := v.log.WithValues("operation", "DeleteRequest")
 	log.Info("Started routine")
 
-	veleroBackup := newVeleroBackupObject(klb.GetName(), v.kls)
+	veleroBackup := &velero.Backup{}
+	veleroBackup.SetName(klb.Status.BackupReference)
+	veleroBackup.SetNamespace(veleroNamespace)
+
+	if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(veleroBackup), veleroBackup); err != nil {
+		if k8serrors.IsNotFound(err) {
+			controllerutil.RemoveFinalizer(klb, BackupDeleteFinalizer)
+			return v.kubeClient.Update(ctx, klb)
+		}
+		log.Error(err, "failed to check if velero backup object exists", "velero backup name", veleroBackup.GetName())
+		return err
+	}
 
 	deleteRequest := &velero.DeleteBackupRequest{
 		ObjectMeta: metav1.ObjectMeta{
@@ -261,10 +247,11 @@ func (v *VeleroBackupRestore) BackupDeleteRequest(ctx context.Context, klb *kube
 		return err
 	}
 
-	if !deleteRequest.ObjectMeta.DeletionTimestamp.IsZero() {
+	if !deleteRequest.ObjectMeta.DeletionTimestamp.IsZero() || deleteRequest.Status.Phase == velero.DeleteBackupRequestPhaseProcessed {
 		log.Info("backup delete request has been fulfilled")
 		controllerutil.RemoveFinalizer(deleteRequest, BackupDeleteFinalizer)
-		if err := v.kubeClient.Update(ctx, deleteRequest); err != nil {
+		err := v.kubeClient.Update(ctx, deleteRequest)
+		if err != nil {
 			v.log.Error(err, "failed to remove velero backup delete request finalizer")
 			return err
 		}
@@ -281,12 +268,23 @@ func (v *VeleroBackupRestore) BackupDeleteRequest(ctx context.Context, klb *kube
 func (v *VeleroBackupRestore) RestoreRequest(ctx context.Context, klb *kuberlogiccomv1alpha1.KuberlogicServiceBackup, klr *kuberlogiccomv1alpha1.KuberlogicServiceRestore) error {
 	log := v.log.WithValues("operation", "RestoreRequest")
 
-	veleroBackup := newVeleroBackupObject(klb.GetName(), v.kls)
+	veleroRestore := newVeleroRestoreObject(klr)
+	_ = controllerruntime.SetControllerReference(klr, veleroRestore, v.kubeClient.Scheme())
+	// exit immediately when found
+	if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(veleroRestore), veleroRestore); err != nil && !k8serrors.IsNotFound(err) {
+		return errors.Wrap(err, "failed to check if velero backup already exists")
+	} else if err == nil {
+		return nil
+	}
+
+	veleroBackup := &velero.Backup{}
+	veleroBackup.SetName(klb.Status.BackupReference)
+	veleroBackup.SetNamespace(veleroNamespace)
 	if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(veleroBackup), veleroBackup); err != nil {
 		log.Error(err, "failed to get velero backup object", "velero backup", veleroBackup)
 		return err
 	}
-	if !(veleroBackup.Status.Phase == velero.BackupPhaseCompleted) {
+	if veleroBackup.Status.Phase != velero.BackupPhaseCompleted {
 		log.Error(errVeleroBackupIsNotSuccessful,
 			"velero backup must be successful", "velero backup status", veleroBackup.Status.Phase)
 		return errVeleroBackupIsNotSuccessful
@@ -308,44 +306,46 @@ func (v *VeleroBackupRestore) RestoreRequest(ctx context.Context, klb *kuberlogi
 		return errVeleroBackupStorageLocationIsNotAvailable
 	}
 
-	// now delete kls namespace (it will be created with restore)
+	// now delete kls namespace (it will be created again with restore)
 	ns := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: v.kls.Status.Namespace,
 		},
 	}
-	if err := v.kubeClient.Delete(ctx, ns); err != nil && !k8serrors.IsNotFound(err) {
-		log.Error(err, "failed to delete kls namespace for restore")
+
+	err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(ns), ns)
+	if err != nil && !k8serrors.IsNotFound(err) {
+		log.Error(err, "failed to get kls namespace")
 		return err
 	}
-
-	nsDeleted := false
-	for waitForNsDeletion := maxWaitTimeout; waitForNsDeletion > 0; waitForNsDeletion -= 1 {
-		v.log.Info("waiting for namespace to be deleted", "namespace", ns)
-		time.Sleep(time.Second * 1)
-		if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(ns), ns); err != nil {
-			if k8serrors.IsNotFound(err) {
-				log.Info("namespace is deleted")
-				nsDeleted = true
-				break
+	if err == nil {
+		if !ns.DeletionTimestamp.IsZero() {
+			log.Info("namespace is still found, but is deleting", "namespace", ns)
+			return nil
+		} else {
+			if err := controllerutil.SetOwnerReference(klr, ns, v.kubeClient.Scheme()); err != nil {
+				log.Error(err, "failed to get control over service namespace")
 			}
-			log.Error(err, "failed to get namespace", "namespace", ns)
+			if err := v.kubeClient.Update(ctx, ns); err != nil {
+				log.Error(err, "failed to get control over service namespace")
+				return err
+			}
+			if err := v.kubeClient.Delete(ctx, ns); err != nil {
+				log.Error(err, "failed to delete namespace", "namespace", ns)
+				return errors.Wrap(err, "failed to delete namespace")
+			}
+			return nil
 		}
-	}
-	if !nsDeleted {
-		return errors.Wrap(errNamespaceExists, fmt.Sprintf("namespace %s was not deleted within timeout", ns))
 	}
 
 	// create velero restore object
-	veleroRestore := newVeleroRestoreObject(klr)
-	_ = controllerruntime.SetControllerReference(klr, veleroRestore, v.kubeClient.Scheme())
 	if err := v.kubeClient.Create(ctx, veleroRestore); err != nil && !k8serrors.IsAlreadyExists(err) {
 		log.Error(err, "failed to create velero restore", "velero restore", veleroRestore)
 		return err
 	}
 
-	_ = controllerruntime.SetControllerReference(klb, klr, v.kubeClient.Scheme())
-	return v.kubeClient.Update(ctx, klr)
+	klr.Status.RestoreReference = veleroRestore.GetName()
+	return v.kubeClient.Status().Update(ctx, klr)
 }
 
 func (v *VeleroBackupRestore) AfterRestore(ctx context.Context, klr *kuberlogiccomv1alpha1.KuberlogicServiceRestore) error {
@@ -378,12 +378,7 @@ func (v *VeleroBackupRestore) SetKuberlogicRestoreStatus(ctx context.Context, kl
 	log.Info("Started routine")
 
 	veleroRestore := newVeleroRestoreObject(klr)
-	if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(veleroRestore), veleroRestore); k8serrors.IsNotFound(err) {
-		if !klr.IsPending() {
-			log.Error(err, "velero restore request is not found and klr is not pending")
-			return err
-		}
-	} else if err != nil {
+	if err := v.kubeClient.Get(ctx, client.ObjectKeyFromObject(veleroRestore), veleroRestore); err != nil && !k8serrors.IsNotFound(err) {
 		log.Error(err, "failed to get velero restore", "velero restore", veleroRestore)
 		return err
 	}
@@ -393,11 +388,8 @@ func (v *VeleroBackupRestore) SetKuberlogicRestoreStatus(ctx context.Context, kl
 		klr.MarkSuccessful()
 	case velero.RestorePhaseFailedValidation, velero.RestorePhasePartiallyFailed, velero.RestorePhaseFailed:
 		klr.MarkFailed(string(veleroRestore.Status.Phase))
-	case velero.RestorePhaseNew, velero.RestorePhaseInProgress:
-		klr.MarkRequested()
 	default:
-		// unknown status
-		return nil
+		klr.MarkRequested()
 	}
 
 	return v.kubeClient.Status().Update(ctx, klr)
@@ -425,7 +417,6 @@ func newVeleroRestoreObject(klr *kuberlogiccomv1alpha1.KuberlogicServiceRestore)
 }
 
 func newVeleroBackupObject(name string, kls *kuberlogiccomv1alpha1.KuberLogicService) *velero.Backup {
-
 	return &velero.Backup{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,

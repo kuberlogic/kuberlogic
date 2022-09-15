@@ -20,6 +20,7 @@ import (
 	. "github.com/onsi/gomega"
 	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/utils/pointer"
@@ -30,6 +31,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	//+kubebuilder:scaffold:imports
+	"time"
 )
 
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
@@ -41,6 +43,8 @@ var (
 	ctx           context.Context
 	cancel        context.CancelFunc
 	pluginClients []*plugin.Client
+
+	kuberlogicNamespace = os.Getenv("NAMESPACE")
 )
 
 var pluginMap = map[string]plugin.Plugin{
@@ -95,7 +99,7 @@ var _ = BeforeSuite(func() {
 		testEnv = &envtest.Environment{
 			CRDDirectoryPaths: []string{
 				filepath.Join("..", "config", "crd", "bases"),
-				filepath.Join("..", "config", "crd", "velero"),
+				filepath.Join("..", "config", "velero", "crd"),
 			},
 		}
 
@@ -106,6 +110,10 @@ var _ = BeforeSuite(func() {
 		k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(k8sClient).NotTo(BeNil())
+
+		ns := &corev1.Namespace{}
+		ns.SetName(kuberlogicNamespace)
+		Expect(k8sClient.Create(ctx, ns)).Should(BeNil())
 
 		config, err := cfg2.NewConfig()
 		Expect(err).NotTo(HaveOccurred())
@@ -162,9 +170,31 @@ var _ = BeforeSuite(func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		if config.Backups.Enabled {
-			ns := &corev1.Namespace{}
-			ns.SetName("velero")
-			Expect(k8sClient.Create(ctx, ns)).Should(Succeed())
+			veleroNs := &corev1.Namespace{}
+			veleroNs.SetName("velero")
+			Expect(k8sClient.Create(ctx, veleroNs)).Should(Succeed())
+
+			backupStorage := &velero.BackupStorageLocation{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "default",
+					Namespace: veleroNs.GetName(),
+				},
+				Spec: velero.BackupStorageLocationSpec{
+					Default:    true,
+					Provider:   "aws",
+					AccessMode: "ReadWrite",
+					StorageType: velero.StorageType{
+						ObjectStorage: &velero.ObjectStorageLocation{
+							Bucket: "test",
+						},
+					},
+				},
+				Status: velero.BackupStorageLocationStatus{
+					Phase:              velero.BackupStorageLocationPhaseAvailable,
+					LastValidationTime: &metav1.Time{Time: time.Now()},
+				},
+			}
+			Expect(k8sClient.Create(ctx, backupStorage)).Should(Succeed())
 
 			err = (&KuberlogicServiceBackupReconciler{
 				Client: k8sManager.GetClient(),

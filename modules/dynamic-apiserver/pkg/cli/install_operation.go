@@ -31,8 +31,9 @@ var (
 	kubectlBin = "kubectl"
 
 	errTokenEmpty         = errors.New("token can't be empty")
-	errChargebeeKeyNotSet = errors.New("chargebee key can't be empty")
 	errSentryInvalidURI   = errors.New("invalid uri")
+	errDirFound           = errors.New("text file required, directory found")
+	errVeleroNotAvailable = errors.New("velero resources are not available")
 )
 
 const (
@@ -63,27 +64,54 @@ func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
 	}
 
 	_ = cmd.PersistentFlags().Bool("non-interactive", false, "Do not enter interactive mode")
-	_ = cmd.PersistentFlags().String(installIngressClassName, "", "Choose Kubernetes Ingress controller that will be used for application")
-	_ = cmd.PersistentFlags().String(installStorageClassName, "", "Choose Kubernetes storageClass that will be used for application instances")
-	_ = cmd.PersistentFlags().String(installDockerComposeParam, "", "Specify path to your docker-compose file with the application you want to provide as SaaS. You can skip this step by pressing 'Enter', then the sample application will be used")
-	_ = cmd.PersistentFlags().Bool(installBackupsEnabledParam, false, "Enable backup/restore support? For more information, read https://kuberlogic.com/docs/configuring/backups. Type 'N' if you have not set up integration with Velero to support backup/restore capabilities, otherwise type 'y'")
-	_ = cmd.PersistentFlags().Bool(installBackupsSnapshotsEnabledParam, false, "Enable volume snapshot backups (Must be supported by the Velero provider plugin)")
-	_ = cmd.PersistentFlags().String(installTLSKeyParam, "", "Specify path to the TLS certificate. It is assumed that the TLS certificate will be a wildcard certificate. All KuberLogic managed applications share the same certificate by sharing the same ingress controller. You can skip this step by pressing 'Enter', In this case, a self-signed (demo) certificate will be used")
-	_ = cmd.PersistentFlags().String(installTLSCrtParam, "", "Specify path to TLS key to use for provisioned applications")
-	_ = cmd.PersistentFlags().String(installChargebeeSiteParam, "", "Specify ChargeBee site name. For more information, read https://kuberlogic.com/docs/configuring/billing. You can skip this step by pressing 'Enter', and set up the integration later")
-	_ = cmd.PersistentFlags().String(installChargebeeKeyParam, "", "Specify ChargeBee API-key. For more information, read https://apidocs.chargebee.com/docs/api/?prod_cat_ver=2. API Keys are used to authenticate KuberLogic and control its access to the Chargebee API")
-	_ = cmd.PersistentFlags().String(installKuberlogicDomainParam, "", "Specify “Domain name”. This configuration setting is used by KuberLogic to create endpoints for application instances. (e.g. instance1.domainname.com)")
-	_ = cmd.PersistentFlags().Bool(installReportErrors, false, "Report errors to KuberLogic? Please type 'Y' if you want to help us improve KuberLogic, otherwise, type 'n'. Error reports will be generated and sent automatically, these reports contain only information about the errors and do not contain any user data. Let us receive errors at least from your test environments")
-	_ = cmd.PersistentFlags().String(installSentryDSNParam, "", "Specify Sentry Data Source Name (DSN). For more information, read https://docs.sentry.io/product/sentry-basics/dsn-explainer/. (KuberLogic team will not be notified in case of errors)")
+	_ = cmd.PersistentFlags().String(installIngressClassName, "", "Choose Kubernetes ingress class that will be used to configure external access for application instances.")
+	_ = cmd.PersistentFlags().String(installStorageClassName, "", "Choose Kubernetes storage class that will be used to configure storage volumes for application instances.")
+	_ = cmd.PersistentFlags().String(installDockerComposeParam, "", "Specify the path to your docker-compose file with the application you want to provide as SaaS.\nSee https://kuberlogic.com/docs/configuring/docker-compose for additional information. You can skip this step by pressing 'Enter', then the sample application will be used.")
+	_ = cmd.PersistentFlags().Bool(installBackupsEnabledParam, false, "Enable backup/restore support\nFor more information, read https://kuberlogic.com/docs/configuring/backups for more information. Choose 'no' if you have not set up integration with Velero to support backup/restore capabilities, otherwise choose 'yes'")
+	_ = cmd.PersistentFlags().Bool(installBackupsSnapshotsEnabledParam, false, "Enable volume snapshot backups (Must be supported by the Velero provider plugin).")
+	_ = cmd.PersistentFlags().String(installTLSCrtParam, "", "Specify path to the TLS certificate.\nIt is assumed that the TLS certificate will be a wildcard certificate. All applications managed by Kuberlogic share the same certificate by sharing the same ingress controller. You can skip this step by pressing 'Enter', In this case, a self-signed (demo) certificate will be used.")
+	_ = cmd.PersistentFlags().String(installTLSKeyParam, "", "Specify path to TLS key to use for provisioned applications.")
+	_ = cmd.PersistentFlags().String(installChargebeeSiteParam, "", "Specify ChargeBee site name.\nFor more information, read https://kuberlogic.com/docs/configuring/billing page. You can skip this step by pressing 'Enter', and set up the integration later.")
+	_ = cmd.PersistentFlags().String(installChargebeeKeyParam, "", "Specify ChargeBee API key.\nFor more information, read https://apidocs.chargebee.com/docs/api/?prod_cat_ver=2 . API Key are used to configure Kuberlogic ChargeBee integration.")
+	_ = cmd.PersistentFlags().String(installKuberlogicDomainParam, "", "Specify “Domain name”.\nThis configuration setting is used by KuberLogic to create endpoints for application instances. (e.g. instance1.domainname.com).")
+	_ = cmd.PersistentFlags().Bool(installReportErrors, false, "Report errors to KuberLogic?\nChoose 'yes' if you want to help us improve KuberLogic, otherwise, select 'no'. Error reports will be generated and sent automatically, these reports contain only information about the errors and do not contain any user data. Let us receive errors at least from your test environments.")
+	_ = cmd.PersistentFlags().String(installSentryDSNParam, "", "Specify Sentry Data Source Name (DSN).\nFor more information, read https://docs.sentry.io/product/sentry-basics/dsn-explainer/ . (KuberLogic team will not be notified in case of errors).")
 	return cmd
 }
-
-// Specify "KuberLogic default domain". This configuration parameter is used by KuberLogic to generate subdomains for the application instances when they are provisioned. (e.g. instance1.defaultdomain.com).
 
 // runInstall function prepares configs and installs KuberLogic by calling kubectl and kustomize binaries
 // it then uses client-go to get some config values and viper to write config file to disk
 func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, args []string) error {
 	return func(command *cobra.Command, args []string) error {
+		command.Println("Checking available environment...")
+
+		// check if kubernetes is available
+		if _, err := k8sclient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{}); err != nil {
+			return err
+		}
+		if out, err := exec.Command(kubectlBin, "cluster-info").CombinedOutput(); err != nil {
+			command.Println(string(out))
+			return errors.New("kubernetes is not available via kubectl")
+		}
+
+		// collect storageClasses
+		storageClasses, err := k8sclient.StorageV1().StorageClasses().List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			return errors.Wrapf(err, "failed to list available storage classes")
+		}
+		if len(storageClasses.Items) == 0 {
+			return errors.New("storage classes not found")
+		}
+
+		// collect ingressClasses
+		ingressClasses, err := k8sclient.NetworkingV1().IngressClasses().List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			return errors.Wrap(err, "failed to list available ingress classes")
+		}
+		if len(ingressClasses.Items) == 0 {
+			return errors.New("ingress classes not found")
+		}
+
 		command.Println("Preparing KuberLogic configs...")
 		tmpdir, err := os.MkdirTemp("", "kuberlogic-install")
 		if err != nil {
@@ -97,7 +125,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		}
 
 		// cache config files passed by flags
-		configBaseDir := filepath.Dir(configFile)
+		configBaseDir := filepath.Dir(viper.ConfigFileUsed())
 		cacheDir := filepath.Join(configBaseDir, "cache", "config")
 		if err := os.MkdirAll(cacheDir, os.ModePerm); err != nil {
 			return errors.Wrap(err, "error creating config directory")
@@ -120,7 +148,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 			klParams.Set(installDeploymentId, uuid.New().String())
 		}
 
-		if value, err := getStringPrompt(command, tokenFlag, viper.GetString(tokenFlag), nil); err != nil {
+		if value, err := getStringPrompt(command, tokenFlag, viper.GetString(tokenFlag), true, nil); err != nil {
 			return errors.Wrapf(err, "error processing %s flag", tokenFlag)
 		} else if value != "" {
 
@@ -132,7 +160,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		}
 
 		cachedDockerCompose := filepath.Join(cacheDir, "manager/docker-compose.yaml")
-		if value, err := getStringPrompt(command, installDockerComposeParam, cachedConfigOrEmpty(cachedDockerCompose), nil); err != nil {
+		if value, err := getStringPrompt(command, installDockerComposeParam, cachedConfigOrEmpty(cachedDockerCompose), false, validateFileAvailable); err != nil {
 			return errors.Wrapf(err, "error processing %s flag", installDockerComposeParam)
 		} else if value != "" {
 			if err := cacheConfigFile(value, cachedDockerCompose); err != nil {
@@ -144,6 +172,11 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		if backupsEnabled, err = getBoolPrompt(command, klParams.GetBool(installBackupsEnabledParam), installBackupsEnabledParam); err != nil {
 			return errors.Wrapf(err, "error processing %s flag", installBackupsEnabledParam)
 		} else if backupsEnabled {
+			// check velero
+			if err := exec.Command(kubectlBin, "get crd backups.velero.io").Run(); err != nil {
+				return errVeleroNotAvailable
+			}
+
 			snapshotsEnabled, err = getBoolPrompt(command, klParams.GetBool(installBackupsSnapshotsEnabledParam), installBackupsSnapshotsEnabledParam)
 			if err != nil {
 				return errors.Wrapf(err, "error processing %s flag", installBackupsSnapshotsEnabledParam)
@@ -153,20 +186,15 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		klParams.Set(installBackupsSnapshotsEnabledParam, snapshotsEnabled)
 
 		var cSite, cKey, kuberlogicDomain string
-		if cSite, err = getStringPrompt(command, installChargebeeSiteParam, klParams.GetString(installChargebeeSiteParam), nil); err != nil {
+		if cSite, err = getStringPrompt(command, installChargebeeSiteParam, klParams.GetString(installChargebeeSiteParam), false, nil); err != nil {
 			return errors.Wrapf(err, "error processing %s flag", installChargebeeSiteParam)
 		} else if cSite != "" {
-			cKey, err = getStringPrompt(command, installChargebeeKeyParam, klParams.GetString(installChargebeeKeyParam), func(s string) error {
-				if s == "" {
-					return errChargebeeKeyNotSet
-				}
-				return nil
-			})
+			cKey, err = getStringPrompt(command, installChargebeeKeyParam, klParams.GetString(installChargebeeKeyParam), true, nil)
 			if err != nil {
 				return errors.Wrapf(err, "error processing %s flag", installChargebeeKeyParam)
 			}
 		}
-		kuberlogicDomain, err = getStringPrompt(command, installKuberlogicDomainParam, klParams.GetString(installKuberlogicDomainParam), nil)
+		kuberlogicDomain, err = getStringPrompt(command, installKuberlogicDomainParam, klParams.GetString(installKuberlogicDomainParam), true, nil)
 		if err != nil {
 			return errors.Wrapf(err, "error processing %s flag", installKuberlogicDomainParam)
 		} else if kuberlogicDomain == "" {
@@ -178,16 +206,11 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		klParams.Set(installKuberlogicDomainParam, kuberlogicDomain)
 
 		cachedTlsCrt := filepath.Join(cacheDir, "certificate/tls.crt")
-		if tlsCertPath, err := getStringPrompt(command, installTLSCrtParam, cachedConfigOrEmpty(cachedTlsCrt), nil); err != nil {
+		if tlsCertPath, err := getStringPrompt(command, installTLSCrtParam, cachedConfigOrEmpty(cachedTlsCrt), false, validateFileAvailable); err != nil {
 			return errors.Wrapf(err, "error processing %s flag", installTLSCrtParam)
 		} else if tlsCertPath != "" {
 			cachedTlsKey := filepath.Join(cacheDir, "/certificate/tls.key")
-			tlsKeyPath, err := getStringPrompt(command, installTLSKeyParam, cachedConfigOrEmpty(cachedTlsKey), func(s string) error {
-				if s == "" {
-					return errors.New("tls certificate is set but tls key is missing")
-				}
-				return nil
-			})
+			tlsKeyPath, err := getStringPrompt(command, installTLSKeyParam, cachedConfigOrEmpty(cachedTlsKey), false, validateFileAvailable)
 			if err != nil {
 				return errors.Wrapf(err, "error processing %s flag", installTLSKeyParam)
 			}
@@ -207,7 +230,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		} else if useKLSentry {
 			sentrDSN = klSentryDSN
 		} else {
-			sentrDSN, err = getStringPrompt(command, installSentryDSNParam, klParams.GetString(installSentryDSNParam), validateEmptyStrOrUri)
+			sentrDSN, err = getStringPrompt(command, installSentryDSNParam, klParams.GetString(installSentryDSNParam), false, validateEmptyStrOrUri)
 			if err != nil {
 				return errors.Wrapf(err, "error processing %s flag", installSentryDSNParam)
 			}
@@ -215,10 +238,6 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		klParams.Set(installReportErrors, useKLSentry)
 		klParams.Set(installSentryDSNParam, sentrDSN)
 
-		ingressClasses, err := k8sclient.NetworkingV1().IngressClasses().List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			return errors.Wrap(err, "failed to list available ingress classes")
-		}
 		var availableIngressClasses []string
 		for _, ic := range ingressClasses.Items {
 			availableIngressClasses = append(availableIngressClasses, ic.GetName())
@@ -229,10 +248,6 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 			klParams.Set(installIngressClassName, ingressClass)
 		}
 
-		storageClasses, err := k8sclient.StorageV1().StorageClasses().List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			return errors.Wrapf(err, "failed to list available storage classes")
-		}
 		var availableStorageClasses []string
 		for _, sc := range storageClasses.Items {
 			availableStorageClasses = append(availableStorageClasses, sc.GetName())
@@ -251,15 +266,6 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		// copy cached configuration files to kustomize configs
 		if err := useCachedConfigFiles(cacheDir, kustomizeRootDir, command.Printf); err != nil {
 			return errors.Wrap(err, "failed to restore cached configs")
-		}
-
-		// check if kubernetes is available
-		if _, err := k8sclient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{}); err != nil {
-			return err
-		}
-		if out, err := exec.Command(kubectlBin, "cluster-info").CombinedOutput(); err != nil {
-			command.Println(string(out))
-			return errors.New("kubernetes is not available via kubectl")
 		}
 
 		// run kustomize via exec and apply manifests via kubectl
@@ -293,18 +299,25 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		}
 
 		command.Println("Fetching KuberLogic endpoint...")
-		endpoint, err := getKuberlogicEndpoint(k8sclient)
+		endpoint, err := getKuberlogicServiceEndpoint("kls-api-server", 60, k8sclient)
 		if err != nil {
 			return errors.Wrap(err, "failed to get KuberLogic api server host")
 		}
 		viper.Set(apiHostFlag, endpoint)
 
-		command.Println("Updating KuberLogic config file at " + configFile + "...")
-		err = viper.WriteConfig()
-		if errors.Is(err, os.ErrNotExist) {
-			err = viper.WriteConfigAs(configFile)
+		command.Println("Updating KuberLogic config file at " + viper.ConfigFileUsed())
+		if err = viper.WriteConfig(); err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				if err := viper.WriteConfigAs(viper.ConfigFileUsed()); err != nil {
+					return errors.Wrap(err, "failed to write KuberLogic config")
+				}
+			} else {
+				return errors.Wrap(err, "failed to write KuberLogic config")
+			}
 		}
-		return errors.Wrap(err, "failed to write KuberLogic config")
+
+		command.Printf("Installation completed successfully.\nRun `%s info` to see information about your Kuberlogic installation.", exeName)
+		return nil
 	}
 }
 
@@ -402,16 +415,16 @@ func cachedConfigOrEmpty(path string) string {
 	return path
 }
 
-func getKuberlogicEndpoint(c kubernetes.Interface) (string, error) {
+// getKuberlogicServiceEndpoint gets an access endpoint for a kuberlogic service named `name`
+func getKuberlogicServiceEndpoint(name string, maxLbWaitSec int, c kubernetes.Interface) (string, error) {
 	var endpoint string
-	var maxLBWaitSec = 60
 	var svc *corev1.Service
 	var err error
 
-	for ; maxLBWaitSec > 0; maxLBWaitSec -= 1 {
+	for ; maxLbWaitSec > 0; maxLbWaitSec -= 1 {
 		time.Sleep(time.Second)
 
-		svc, err = c.CoreV1().Services("kuberlogic").Get(context.TODO(), "kls-api-server", metav1.GetOptions{})
+		svc, err = c.CoreV1().Services("kuberlogic").Get(context.TODO(), name, metav1.GetOptions{})
 		if err != nil {
 			return "", errors.Wrap(err, "failed to get KuberLogic Service")
 		}
@@ -469,6 +482,17 @@ func validateEmptyStrOrUri(uri string) error {
 	u, err := url.ParseRequestURI(uri)
 	if err != nil || u.Scheme == "" || u.Host == "" {
 		return errors.Wrap(errSentryInvalidURI, uri)
+	}
+	return nil
+}
+
+func validateFileAvailable(f string) error {
+	fInfo, err := os.Stat(f)
+	if err != nil {
+		return err
+	}
+	if fInfo.IsDir() {
+		return errDirFound
 	}
 	return nil
 }
