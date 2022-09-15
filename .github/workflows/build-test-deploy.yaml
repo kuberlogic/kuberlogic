@@ -130,12 +130,14 @@ jobs:
 
       - name: Run the installer
         run: |
+          cd modules/dynamic-operator && make deploy-velero && cd -
           ./modules/dynamic-apiserver/bin/kuberlogic_x86_64_linux install \
           --non-interactive \
           --ingress_class=kong \
           --storage_class=standard \
           --docker_compose=./modules/dynamic-operator/config/manager/docker-compose.yaml \
-          --kuberlogic_domain=kuberlogic.local
+          --kuberlogic_domain=kuberlogic.local \
+          --backups_enabled
 
       - name: Run the tests in cluster
         working-directory: ./modules/dynamic-operator
