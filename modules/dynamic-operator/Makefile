@@ -112,10 +112,13 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go ${ARGS}
 
 .PHONY: docker-build
+ocker-build: export CGO_ENABLED=0
+docker-build: export GO111MODULE=on
 docker-build: export LDFLAGS="-X main.ver=$(VERSION)"
+docker-build: export COMPOSE_LDFLAGS="-X main.ver=$(VERSION)"
 docker-build: test ## Build docker image with the manager.
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o bin/manager -ldflags=$(LDFLAGS) main.go
-	cd plugins/docker-compose && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o ../../bin/docker-compose-plugin -ldflags=$(COMPOSE_LDFLAGS) . && cd -
+	GOARCH=amd64 GOOS=linux go build -a -o bin/manager -ldflags=$(LDFLAGS) main.go
+	cd plugins/docker-compose && GOARCH=amd64 GOOS=linux go build -a -o ../../bin/docker-compose-plugin -ldflags=$(COMPOSE_LDFLAGS) . && cd -
 	docker build . \
 		--build-arg BIN=bin/manager \
 		--build-arg PLUGIN=bin/docker-compose-plugin \
