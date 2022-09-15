@@ -112,7 +112,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go ${ARGS}
 
 .PHONY: docker-build
-ocker-build: export CGO_ENABLED=0
+docker-build: export CGO_ENABLED=0
 docker-build: export GO111MODULE=on
 docker-build: export LDFLAGS="-X main.ver=$(VERSION)"
 docker-build: export COMPOSE_LDFLAGS="-X main.ver=$(VERSION)"
