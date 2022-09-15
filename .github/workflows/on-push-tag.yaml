@@ -9,4 +9,5 @@ jobs:
     uses: ./.github/workflows/build-test-deploy.yaml
     with:
       PUBLISH_PROD_BUILD: true
+      DEV_BUILD: false
     secrets: inherit
