@@ -99,9 +99,8 @@ func (r *KuberlogicServiceBackupReconciler) Reconcile(ctx context.Context, req c
 		return ctrl.Result{}, err
 	}
 
-	maxAttempts := 10
-	if klb.Status.FailedAttempts >= maxAttempts {
-		klb.MarkFailed("too many failures")
+	if !klb.IsSuccessful() && time.Since(klb.GetCreationTimestamp().Time) > time.Hour {
+		klb.MarkFailed("backup is not successful for too long")
 		return ctrl.Result{}, r.Status().Update(ctx, klb)
 	}
 
@@ -116,9 +115,7 @@ func (r *KuberlogicServiceBackupReconciler) Reconcile(ctx context.Context, req c
 			return ctrl.Result{}, nil
 		}
 		l.Info("object is being deleted but has no finalizers")
-		return ctrl.Result{
-			RequeueAfter: time.Second * 2,
-		}, nil
+		return ctrl.Result{}, nil
 	}
 
 	l.Info("syncing backup status")
@@ -128,22 +125,17 @@ func (r *KuberlogicServiceBackupReconciler) Reconcile(ctx context.Context, req c
 	}
 	l.Info("backup status updated", "new status", klb.Status.Phase)
 
-	var err error
 	if klb.IsSuccessful() || klb.IsFailed() {
-		if err = backup.AfterBackup(ctx, klb); err != nil {
+		if err := backup.AfterBackup(ctx, klb); err != nil {
 			l.Error(err, "error during after backup routine")
+			return ctrl.Result{}, err
 		}
-	} else if !klb.IsRequested() {
-		if err = backup.BackupRequest(ctx, klb); err != nil {
+	} else if klb.IsRequested() {
+		if err := backup.BackupRequest(ctx, klb); err != nil {
 			l.Error(err, "error planning backup")
+			return ctrl.Result{}, err
 		}
 	}
-	if err != nil {
-		klb.IncreaseFailedAttemptCount()
-		_ = r.Status().Update(ctx, klb)
-		return ctrl.Result{}, err
-	}
-
 	return ctrl.Result{}, nil
 }
 

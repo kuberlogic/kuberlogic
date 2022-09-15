@@ -5,6 +5,7 @@
 package cli
 
 import (
+	"fmt"
 	client2 "github.com/go-openapi/runtime/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/service"
@@ -12,6 +13,7 @@ import (
 	"github.com/spf13/viper"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"net/http"
 )
 
 func makeInfoCmd(k8sclient kubernetes.Interface, apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
@@ -69,6 +71,18 @@ func runInfo(k8sclient kubernetes.Interface, apiClientFunc func() (*client.Servi
 			command.Printf("API server is running at %s://%s\n", scheme, hostname)
 		} else {
 			command.Printf("API server is NOT running at %s://%s\n", scheme, hostname)
+		}
+
+		chargebeeEndpoint, err := getKuberlogicServiceEndpoint("kls-chargebee-integration", 1, k8sclient)
+		if err != nil {
+			command.Printf("Failed to get ChargeBee integration service endpoint")
+			return err
+		}
+		fullChargebeeEndpoint := fmt.Sprintf("http://%s", chargebeeEndpoint)
+		if _, err := http.Get(fullChargebeeEndpoint); err == nil {
+			command.Printf("ChargeBee integration service is running at %s\n", fullChargebeeEndpoint)
+		} else {
+			command.Printf("ChargeBee integration service is NOT running at %s\n", fullChargebeeEndpoint)
 		}
 
 		command.Println()

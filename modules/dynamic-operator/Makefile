@@ -85,10 +85,17 @@ test: manifests generate fmt vet build-docker-compose-plugin envtest ## Run test
 	ACK_GINKGO_DEPRECATIONS=1.16.5 \
 	PLUGINS="{docker-compose,$(PROJECT_DIR)/bin/docker-compose-plugin}" \
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
-	NAMESPACE="default" \
+	NAMESPACE="kuberlogic" \
 	SERVICE_ACCOUNT="default" \
 	BACKUPS_ENABLED="true" \
 	KL_PLUGIN_DOCKER_COMPOSE_FILE="$(PROJECT_DIR)/config/manager/docker-compose.yaml" \
+	go test -v ./... -coverprofile cover.out ${ARGS}
+
+cluster-test: envtest deploy-velero
+	USE_EXISTING_CLUSTER=true \
+	ACK_GINKGO_DEPRECATIONS=1.16.5 \
+	NAMESPACE=kuberlogic \
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
 	go test -v ./... -coverprofile cover.out ${ARGS}
 
 ##@ Build
@@ -105,15 +112,13 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go ${ARGS}
 
 .PHONY: docker-build
-docker-build: export CGO_ENABLED=0
-docker-build: export GOOS=linux
-docker-build: export GOARCH=amd64
+ocker-build: export CGO_ENABLED=0
 docker-build: export GO111MODULE=on
 docker-build: export LDFLAGS="-X main.ver=$(VERSION)"
 docker-build: export COMPOSE_LDFLAGS="-X main.ver=$(VERSION)"
 docker-build: test ## Build docker image with the manager.
-	go build -a -o bin/manager -ldflags=$(LDFLAGS) main.go
-	cd plugins/docker-compose && go build -a -o ../../bin/docker-compose-plugin -ldflags=$(COMPOSE_LDFLAGS) . && cd -
+	GOARCH=amd64 GOOS=linux go build -a -o bin/manager -ldflags=$(LDFLAGS) main.go
+	cd plugins/docker-compose && GOARCH=amd64 GOOS=linux go build -a -o ../../bin/docker-compose-plugin -ldflags=$(COMPOSE_LDFLAGS) . && cd -
 	docker build . \
 		--build-arg BIN=bin/manager \
 		--build-arg PLUGIN=bin/docker-compose-plugin \
@@ -175,6 +180,11 @@ undeploy-certmanager:
 .PHONY: undeploy
 undeploy: kustomize ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+
+deploy-velero:
+	kubectl apply -f config/velero/crd
+	kubectl apply -k config/velero
+	kubectl -n velero wait --for=condition=Ready pod -l app.kubernetes.io/instance=velero
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 .PHONY: controller-gen

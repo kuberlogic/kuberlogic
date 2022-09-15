@@ -30,9 +30,10 @@ var klConfigZipData []byte
 var (
 	kubectlBin = "kubectl"
 
-	errTokenEmpty       = errors.New("token can't be empty")
-	errSentryInvalidURI = errors.New("invalid uri")
-	errDirFound         = errors.New("text file required, directory found")
+	errTokenEmpty         = errors.New("token can't be empty")
+	errSentryInvalidURI   = errors.New("invalid uri")
+	errDirFound           = errors.New("text file required, directory found")
+	errVeleroNotAvailable = errors.New("velero resources are not available")
 )
 
 const (
@@ -82,6 +83,35 @@ func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
 // it then uses client-go to get some config values and viper to write config file to disk
 func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, args []string) error {
 	return func(command *cobra.Command, args []string) error {
+		command.Println("Checking available environment...")
+
+		// check if kubernetes is available
+		if _, err := k8sclient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{}); err != nil {
+			return err
+		}
+		if out, err := exec.Command(kubectlBin, "cluster-info").CombinedOutput(); err != nil {
+			command.Println(string(out))
+			return errors.New("kubernetes is not available via kubectl")
+		}
+
+		// collect storageClasses
+		storageClasses, err := k8sclient.StorageV1().StorageClasses().List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			return errors.Wrapf(err, "failed to list available storage classes")
+		}
+		if len(storageClasses.Items) == 0 {
+			return errors.New("storage classes not found")
+		}
+
+		// collect ingressClasses
+		ingressClasses, err := k8sclient.NetworkingV1().IngressClasses().List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			return errors.Wrap(err, "failed to list available ingress classes")
+		}
+		if len(ingressClasses.Items) == 0 {
+			return errors.New("ingress classes not found")
+		}
+
 		command.Println("Preparing KuberLogic configs...")
 		tmpdir, err := os.MkdirTemp("", "kuberlogic-install")
 		if err != nil {
@@ -142,6 +172,11 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		if backupsEnabled, err = getBoolPrompt(command, klParams.GetBool(installBackupsEnabledParam), installBackupsEnabledParam); err != nil {
 			return errors.Wrapf(err, "error processing %s flag", installBackupsEnabledParam)
 		} else if backupsEnabled {
+			// check velero
+			if err := exec.Command(kubectlBin, "get crd backups.velero.io").Run(); err != nil {
+				return errVeleroNotAvailable
+			}
+
 			snapshotsEnabled, err = getBoolPrompt(command, klParams.GetBool(installBackupsSnapshotsEnabledParam), installBackupsSnapshotsEnabledParam)
 			if err != nil {
 				return errors.Wrapf(err, "error processing %s flag", installBackupsSnapshotsEnabledParam)
@@ -203,10 +238,6 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		klParams.Set(installReportErrors, useKLSentry)
 		klParams.Set(installSentryDSNParam, sentrDSN)
 
-		ingressClasses, err := k8sclient.NetworkingV1().IngressClasses().List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			return errors.Wrap(err, "failed to list available ingress classes")
-		}
 		var availableIngressClasses []string
 		for _, ic := range ingressClasses.Items {
 			availableIngressClasses = append(availableIngressClasses, ic.GetName())
@@ -217,10 +248,6 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 			klParams.Set(installIngressClassName, ingressClass)
 		}
 
-		storageClasses, err := k8sclient.StorageV1().StorageClasses().List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			return errors.Wrapf(err, "failed to list available storage classes")
-		}
 		var availableStorageClasses []string
 		for _, sc := range storageClasses.Items {
 			availableStorageClasses = append(availableStorageClasses, sc.GetName())
@@ -239,15 +266,6 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		// copy cached configuration files to kustomize configs
 		if err := useCachedConfigFiles(cacheDir, kustomizeRootDir, command.Printf); err != nil {
 			return errors.Wrap(err, "failed to restore cached configs")
-		}
-
-		// check if kubernetes is available
-		if _, err := k8sclient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{}); err != nil {
-			return err
-		}
-		if out, err := exec.Command(kubectlBin, "cluster-info").CombinedOutput(); err != nil {
-			command.Println(string(out))
-			return errors.New("kubernetes is not available via kubectl")
 		}
 
 		// run kustomize via exec and apply manifests via kubectl
@@ -281,18 +299,25 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		}
 
 		command.Println("Fetching KuberLogic endpoint...")
-		endpoint, err := getKuberlogicEndpoint(k8sclient)
+		endpoint, err := getKuberlogicServiceEndpoint("kls-api-server", 60, k8sclient)
 		if err != nil {
 			return errors.Wrap(err, "failed to get KuberLogic api server host")
 		}
 		viper.Set(apiHostFlag, endpoint)
 
 		command.Println("Updating KuberLogic config file at " + viper.ConfigFileUsed())
-		err = viper.WriteConfig()
-		if errors.Is(err, os.ErrNotExist) {
-			err = viper.WriteConfigAs(viper.ConfigFileUsed())
+		if err = viper.WriteConfig(); err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				if err := viper.WriteConfigAs(viper.ConfigFileUsed()); err != nil {
+					return errors.Wrap(err, "failed to write KuberLogic config")
+				}
+			} else {
+				return errors.Wrap(err, "failed to write KuberLogic config")
+			}
 		}
-		return errors.Wrap(err, "failed to write KuberLogic config")
+
+		command.Printf("Installation completed successfully.\nRun `%s info` to see information about your Kuberlogic installation.", exeName)
+		return nil
 	}
 }
 
@@ -390,16 +415,16 @@ func cachedConfigOrEmpty(path string) string {
 	return path
 }
 
-func getKuberlogicEndpoint(c kubernetes.Interface) (string, error) {
+// getKuberlogicServiceEndpoint gets an access endpoint for a kuberlogic service named `name`
+func getKuberlogicServiceEndpoint(name string, maxLbWaitSec int, c kubernetes.Interface) (string, error) {
 	var endpoint string
-	var maxLBWaitSec = 60
 	var svc *corev1.Service
 	var err error
 
-	for ; maxLBWaitSec > 0; maxLBWaitSec -= 1 {
+	for ; maxLbWaitSec > 0; maxLbWaitSec -= 1 {
 		time.Sleep(time.Second)
 
-		svc, err = c.CoreV1().Services("kuberlogic").Get(context.TODO(), "kls-api-server", metav1.GetOptions{})
+		svc, err = c.CoreV1().Services("kuberlogic").Get(context.TODO(), name, metav1.GetOptions{})
 		if err != nil {
 			return "", errors.Wrap(err, "failed to get KuberLogic Service")
 		}

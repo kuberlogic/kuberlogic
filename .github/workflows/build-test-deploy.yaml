@@ -140,7 +140,7 @@ jobs:
       - name: Run the tests in cluster
         working-directory: ./modules/dynamic-operator
         run: |
-          USE_EXISTING_CLUSTER=true make test
+          make cluster-test
 
       - name: Collect diagnostic information
         if: ${{ always() }}
