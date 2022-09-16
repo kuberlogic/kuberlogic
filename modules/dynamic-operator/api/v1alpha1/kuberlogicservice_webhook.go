@@ -60,7 +60,7 @@ func (r *KuberLogicService) Default() {
 		r.Spec.Version = resp.Version
 	}
 	if r.Spec.Domain == "" {
-		r.Spec.Domain = fmt.Sprintf("%s.%s", r.Name, resp.Host)
+		r.Spec.Domain = resp.Host
 	}
 	if r.Spec.Replicas == 0 {
 		r.Spec.Replicas = resp.Replicas
@@ -240,13 +240,16 @@ func validateScheduleFormat(schedule string) error {
 }
 
 func validateDomain(domain string) error {
+	if domain == "" {
+		return nil
+	}
 	klsList := &KuberLogicServiceList{}
 	if err := k8sClient.List(context.TODO(), klsList); err != nil {
 		return err
 	}
 	for _, item := range klsList.Items {
 		if item.Spec.Domain == domain {
-			return errors.New(fmt.Sprintf("Domain %s conflicts with tenant: %s", domain, item.Name))
+			return fmt.Errorf("Domain %s already taken", domain)
 		}
 	}
 	return nil
