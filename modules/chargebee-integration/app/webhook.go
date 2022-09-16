@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	subscriptionModel "github.com/chargebee/chargebee-go/models/subscription"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
@@ -86,9 +87,18 @@ func handleSubscriptionCancelled(logger *zap.SugaredLogger, event map[string]int
 	}
 	logger = logger.With("subscription id", subscriptionId)
 	// Check if service exists
-	service, err := getServiceBySubscriptionId(logger, subscriptionId)
+	var service *models.Service
+	for i := 0; i < 5; i++ {
+		service, err = getServiceBySubscriptionId(logger, subscriptionId)
+		if err != nil {
+			logger.Error("Error getting service by subscription", err)
+		} else {
+			break
+		}
+		time.Sleep(time.Duration(i) * time.Second)
+	}
 	if err != nil {
-		logger.Error("Error getting service by subscription", err)
+		logger.Error("Retries exceeded while trying to get service by subscription", err)
 		return
 	}
 	// Take backup of the service
