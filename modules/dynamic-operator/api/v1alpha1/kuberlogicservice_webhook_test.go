@@ -46,7 +46,6 @@ var _ = Describe("KuberlogicService controller", func() {
 				Type:     "docker-compose",
 				Replicas: defaultReplicas,
 				Limits:   defaultLimits,
-				Domain:   "kls.com",
 			},
 		}
 
@@ -57,7 +56,6 @@ var _ = Describe("KuberlogicService controller", func() {
 			Spec: KuberLogicServiceSpec{
 				Type:     "docker-compose",
 				Replicas: defaultReplicas,
-				Domain:   "default-resources.com",
 			},
 		}
 
