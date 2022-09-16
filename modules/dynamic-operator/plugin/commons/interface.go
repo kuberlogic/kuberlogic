@@ -65,7 +65,8 @@ type PluginRequest struct {
 	Version string
 
 	// If a service should be exposed via TLS
-	TLSEnabled bool
+	Insecure bool
+
 	// TLSSecretName is a Kubernetes secret that contains tls.key / tls.crt fields. Must reside in the same namespace
 	TLSSecretName string
 
@@ -168,15 +169,15 @@ func (pl *PluginRequest) RenderTemplate(tpl string) (*TemplatedValue, error) {
 			return string(b)
 		},
 		"Endpoint": func(defaultValue string) string {
-			schema := "http"
-			if pl.TLSEnabled {
-				schema = "https"
+			proto := "https"
+			if pl.Insecure {
+				proto = "http"
 			}
 			host := defaultValue
 			if pl.Host != "" {
 				host = pl.Host
 			}
-			return fmt.Sprintf("%s://%s", schema, host)
+			return fmt.Sprintf("%s://%s", proto, host)
 		},
 	}).Parse(tpl)
 	if err != nil {
@@ -190,7 +191,7 @@ func (pl *PluginRequest) RenderTemplate(tpl string) (*TemplatedValue, error) {
 		Host       string
 		Replicas   int32
 		Version    string
-		TLSEnabled bool
+		Insecure   bool
 		Parameters map[string]interface{}
 	}{
 		Name:       pl.Name,
@@ -198,7 +199,7 @@ func (pl *PluginRequest) RenderTemplate(tpl string) (*TemplatedValue, error) {
 		Host:       pl.Host,
 		Replicas:   pl.Replicas,
 		Version:    pl.Version,
-		TLSEnabled: pl.TLSEnabled,
+		Insecure:   pl.Insecure,
 		Parameters: pl.Parameters,
 	})
 	v.Raw = data.String()

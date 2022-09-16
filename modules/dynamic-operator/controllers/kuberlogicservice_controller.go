@@ -167,7 +167,7 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		Namespace:     ns,
 		Replicas:      kls.Spec.Replicas,
 		Version:       kls.Spec.Version,
-		TLSEnabled:    kls.TLSEnabled(),
+		Insecure:      kls.Insecure(),
 		TLSSecretName: r.Cfg.SvcOpts.TLSSecretName,
 		Host:          kls.GetHost(),
 		Parameters:    spec,

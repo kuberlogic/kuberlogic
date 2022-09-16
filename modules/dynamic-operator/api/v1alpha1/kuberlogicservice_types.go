@@ -57,8 +57,8 @@ type KuberLogicServiceSpec struct {
 	Limits v1.ResourceList `json:"limits,omitempty"`
 
 	// +kubebuilder:validation:Pattern=[a-z]([-a-z0-9]*[a-z0-9])?
-	Domain     string `json:"domain,omitempty"`
-	TLSEnabled bool   `json:"TLSEnabled,omitempty"`
+	Domain   string `json:"domain,omitempty"`
+	Insecure bool   `json:"insecure,omitempty"`
 
 	// any advanced configuration is supported
 	Advanced v11.JSON `json:"advanced,omitempty"`
@@ -107,8 +107,8 @@ func (in *KuberLogicService) Paused() bool {
 	return in.Spec.Paused
 }
 
-func (in *KuberLogicService) TLSEnabled() bool {
-	return in.Spec.TLSEnabled
+func (in *KuberLogicService) Insecure() bool {
+	return in.Spec.Insecure
 }
 
 func (in *KuberLogicService) GetHost() string {
@@ -120,9 +120,9 @@ func (in *KuberLogicService) SetAccessEndpoint() {
 	if host == "" {
 		return
 	}
-	proto := "http://"
-	if in.Spec.TLSEnabled {
-		proto = "https://"
+	proto := "https://"
+	if in.Spec.Insecure {
+		proto = "http://"
 	}
 	in.Status.AccessEndpoint = proto + host
 }
