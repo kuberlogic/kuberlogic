@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
@@ -14,10 +15,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/xeipuuv/gojsonschema"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -55,6 +58,25 @@ const (
 	installReportErrors                 = "report_errors"
 	installSentryDSNParam               = "sentry_dsn"
 	installDeploymentId                 = "deployment_id"
+)
+
+var (
+	chargebeeMappingSchema = map[string]interface{}{
+		"type": "array",
+		"items": map[string]interface{}{
+			"type": "object",
+			"properties": map[string]interface{}{
+				"src": map[string]interface{}{
+					"type": "string",
+				},
+				"dst": map[string]interface{}{
+					"type": "string",
+				},
+			},
+			"required":             []string{"src", "dst"},
+			"additionalProperties": false,
+		},
+	}
 )
 
 func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
@@ -197,12 +219,14 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 			if err != nil {
 				return errors.Wrapf(err, "error processing %s flag", installChargebeeKeyParam)
 			}
-			cMappingFile, err = getStringPrompt(command, installChargebeeMappingParam, klParams.GetString(installChargebeeMappingParam), true, validateFileAvailable)
+			cMappingFile, err = getStringPrompt(command, installChargebeeMappingParam, klParams.GetString(installChargebeeMappingParam), true, validateChargebeeMappingfile)
 			if err != nil {
 				return errors.Wrapf(err, "error processing %s flag", installChargebeeMappingParam)
 			}
-			if err = cacheConfigFile(cMappingFile, cachedChargebeeMappingFile); err != nil {
-				return errors.Wrapf(err, "error caching %s config file", cachedChargebeeMappingFile)
+			if cMappingFile != "" {
+				if err = cacheConfigFile(cMappingFile, cachedChargebeeMappingFile); err != nil {
+					return errors.Wrapf(err, "error caching %s config file", cachedChargebeeMappingFile)
+				}
 			}
 		}
 		kuberlogicDomain, err = getStringPrompt(command, installKuberlogicDomainParam, klParams.GetString(installKuberlogicDomainParam), true, nil)
@@ -504,6 +528,34 @@ func validateFileAvailable(f string) error {
 	}
 	if fInfo.IsDir() {
 		return errDirFound
+	}
+	return nil
+}
+
+func validateChargebeeMappingfile(f string) error {
+	if f == "" {
+		return nil
+	}
+	if err := validateFileAvailable(f); err != nil {
+		return err
+	}
+	yamlFile, err := ioutil.ReadFile(f)
+	if err != nil {
+		return errors.Errorf("cannot read the file %s: #%v", f, err)
+	}
+	mapping := make([]map[string]string, 0)
+	err = yaml.Unmarshal(yamlFile, &mapping)
+	if err != nil {
+		return errors.Errorf("cannot parse the file %s: #%v", f, err)
+	}
+	schemaLoader := gojsonschema.NewGoLoader(chargebeeMappingSchema)
+	dataLoader := gojsonschema.NewGoLoader(mapping)
+	result, err := gojsonschema.Validate(schemaLoader, dataLoader)
+	if err != nil {
+		return err
+	}
+	if !result.Valid() {
+		return errors.Errorf("Invalid yaml schema: %v", result.Errors())
 	}
 	return nil
 }
