@@ -28,14 +28,13 @@ jobs:
       GOPATH: /tmp/go
     steps:
       - name: Checkout
-        if: github.event_name != 'pull_request'
         uses: actions/checkout@v2
         with:
           # 0 - all history, it uses in generating part of BUILD in version
           fetch-depth: 0
 
       - name: Checkout from PR
-        if: github.event_name == 'pull_request'
+        if: ${{ github.event.issue.pull_request }}
         uses: actions/checkout@v2
         with:
           # 0 - all history, it uses in generating part of BUILD in version
@@ -101,14 +100,13 @@ jobs:
           go-version: '1.16.0'
 
       - name: Checkout
-        if: github.event_name != 'pull_request'
         uses: actions/checkout@v2
         with:
           # 0 - all history, it uses in generating part of BUILD in version
           fetch-depth: 0
 
       - name: Checkout from PR
-        if: github.event_name == 'pull_request'
+        if: ${{ github.event.issue.pull_request }}
         uses: actions/checkout@v2
         with:
           # 0 - all history, it uses in generating part of BUILD in version
@@ -183,14 +181,13 @@ jobs:
       DEV_BUILD: ${{ inputs.DEV_BUILD }}
     steps:
       - name: Checkout
-        if: github.event_name != 'pull_request'
         uses: actions/checkout@v2
         with:
           # 0 - all history, it uses in generating part of BUILD in version
           fetch-depth: 0
 
       - name: Checkout from PR
-        if: github.event_name == 'pull_request'
+        if: ${{ github.event.issue.pull_request }}
         uses: actions/checkout@v2
         with:
           # 0 - all history, it uses in generating part of BUILD in version
