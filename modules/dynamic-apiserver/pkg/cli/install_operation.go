@@ -293,7 +293,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 			return err
 		}
 		command.Println("Waiting for Kuberlogic to be ready...")
-		cmd = fmt.Sprintf("%s -n kuberlogic wait --for=condition=ready pods --all --timeout=300s", kubectlBin)
+		cmd = fmt.Sprintf("%s -n kuberlogic wait --for=condition=ready pods --all --timeout=600s", kubectlBin)
 		if out, err := exec.Command("sh", "-c", cmd).CombinedOutput(); err != nil {
 			command.Println(string(out))
 			return errors.New("failed to install Kuberlogic")
