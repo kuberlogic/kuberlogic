@@ -36,6 +36,7 @@ require (
 	github.com/spf13/viper v1.12.0
 	github.com/vmware-tanzu/velero v1.8.1
 	github.com/vrischmann/envconfig v1.3.0
+	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/zalando/postgres-operator v1.7.1
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
