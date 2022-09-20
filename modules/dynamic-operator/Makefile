@@ -96,7 +96,7 @@ cluster-test: envtest deploy-velero
 	ACK_GINKGO_DEPRECATIONS=1.16.5 \
 	NAMESPACE=kuberlogic \
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" \
-	go test -v ./... -coverprofile cover.out ${ARGS}
+	go test -timeout 30m -v ./... -coverprofile cover.out ${ARGS}
 
 ##@ Build
 
@@ -184,7 +184,7 @@ undeploy: kustomize ## Undeploy controller from the K8s cluster specified in ~/.
 deploy-velero:
 	kubectl apply -f config/velero/crd
 	kubectl apply -k config/velero
-	kubectl -n velero wait --for=condition=Ready pod -l app.kubernetes.io/instance=velero
+	kubectl -n velero wait --timeout=120s --for=condition=Ready pod -l app.kubernetes.io/instance=velero
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 .PHONY: controller-gen
