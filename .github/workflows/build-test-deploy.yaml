@@ -55,7 +55,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./modules/dynamic-apiserver/bin
-          key: cli-${{ github.sha }}
+          key: cli-${{ github.run_id }}
 
       - name: Build CLI
         working-directory: ./modules/dynamic-apiserver
@@ -124,7 +124,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./modules/dynamic-apiserver/bin
-          key: cli-${{ github.sha }}
+          key: cli-${{ github.run_id }}
 
       - name: Restore cached images
         run: |
@@ -216,7 +216,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./modules/dynamic-apiserver/bin
-          key: cli-${{ github.sha }}
+          key: cli-${{ github.run_id }}
 
       - name: Release (dev)
         uses: marvinpinto/action-automatic-releases@v1.2.1
