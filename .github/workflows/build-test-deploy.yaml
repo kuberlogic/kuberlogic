@@ -140,9 +140,12 @@ jobs:
           make kustomize
           install -b bin/kustomize /usr/local/bin
 
+      - name: Install velero
+        working-directory: ./modules/dynamic-operator
+        run: make deploy-velero
+
       - name: Run the installer
         run: |
-          cd modules/dynamic-operator && make deploy-velero && cd -
           ./modules/dynamic-apiserver/bin/kuberlogic_x86_64_linux install \
           --non-interactive \
           --ingress_class=kong \
