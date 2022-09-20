@@ -1,4 +1,4 @@
-VERSION = 0.0.12
+VERSION = 0.0.14
 
 IMG_REPO = quay.io/kuberlogic
 IMG_LATEST_TAG=latest

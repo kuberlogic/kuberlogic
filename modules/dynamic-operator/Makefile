@@ -64,7 +64,7 @@ test: manifests generate fmt vet build-docker-compose-plugin envtest ## Run test
 	SERVICE_ACCOUNT="default" \
 	BACKUPS_ENABLED="true" \
 	KL_PLUGIN_DOCKER_COMPOSE_FILE="$(PROJECT_DIR)/config/manager/docker-compose.yaml" \
-	go test -v ./... -coverprofile cover.out ${ARGS}
+	go test -timeout 30m -v ./... -coverprofile cover.out ${ARGS}
 
 cluster-test: envtest deploy-velero
 	USE_EXISTING_CLUSTER=true \
@@ -132,7 +132,7 @@ undeploy: kustomize ## Undeploy controller from the K8s cluster specified in ~/.
 deploy-velero:
 	kubectl apply -f config/velero/crd
 	kubectl apply -k config/velero
-	kubectl -n velero wait --for=condition=Ready pod -l app.kubernetes.io/instance=velero
+	kubectl -n velero wait --timeout=120s --for=condition=Ready pod -l app.kubernetes.io/instance=velero
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 .PHONY: controller-gen
