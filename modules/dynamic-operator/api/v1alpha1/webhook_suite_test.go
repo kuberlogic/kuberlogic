@@ -190,3 +190,7 @@ var _ = AfterSuite(func() {
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })
+
+func useExistingCluster() bool {
+	return os.Getenv("USE_EXISTING_CLUSTER") == "true"
+}

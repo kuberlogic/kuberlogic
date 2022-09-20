@@ -31,13 +31,12 @@ var _ = Describe("KuberlogicBackupService controller", func() {
 	Context("When creating KuberlogicServiceBackup", func() {
 		kls := &KuberLogicService{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "test",
+				GenerateName: klbName,
 			},
 			Spec: KuberLogicServiceSpec{
 				Type:     "docker-compose",
 				Replicas: 1,
 				Limits:   defaultLimits,
-				Domain:   "backuptest.com",
 			},
 		}
 		klb := &KuberlogicServiceBackup{
@@ -50,7 +49,7 @@ var _ = Describe("KuberlogicBackupService controller", func() {
 		}
 		klbBroken := &KuberlogicServiceBackup{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: klbName + "-broken",
+				GenerateName: klbName,
 			},
 			Spec: KuberlogicServiceBackupSpec{
 				KuberlogicServiceName: kls.GetName(),
@@ -73,11 +72,14 @@ var _ = Describe("KuberlogicBackupService controller", func() {
 				interval,
 			).Should(Not(HaveOccurred()))
 		})
-		It("Should not create KuberLogicServiceBackup resource", func() {
-			By("Creating a new KuberLogicServiceBackup resource")
-			backupsEnabled = false
-			defer func() { backupsEnabled = true }()
-			Expect(testK8sClient.Create(ctx, klbBroken)).Should(Not(Succeed()))
-		})
+		// This test depends on variable shadowing, so it wont work on real cluster
+		if !useExistingCluster() {
+			It("Should not create KuberLogicServiceBackup resource", func() {
+				By("Creating a new KuberLogicServiceBackup resource")
+				backupsEnabled = false
+				defer func() { backupsEnabled = true }()
+				Expect(testK8sClient.Create(ctx, klbBroken)).Should(Not(Succeed()))
+			})
+		}
 	})
 })
