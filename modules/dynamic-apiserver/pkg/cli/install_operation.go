@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
@@ -14,10 +15,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/xeipuuv/gojsonschema"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -50,10 +53,30 @@ const (
 	installTLSCrtParam                  = "tls_crt"
 	installChargebeeSiteParam           = "chargebee_site"
 	installChargebeeKeyParam            = "chargebee_key"
+	installChargebeeMappingParam        = "chargebee_mapping"
 	installKuberlogicDomainParam        = "kuberlogic_domain"
 	installReportErrors                 = "report_errors"
 	installSentryDSNParam               = "sentry_dsn"
 	installDeploymentId                 = "deployment_id"
+)
+
+var (
+	chargebeeMappingSchema = map[string]interface{}{
+		"type": "array",
+		"items": map[string]interface{}{
+			"type": "object",
+			"properties": map[string]interface{}{
+				"src": map[string]interface{}{
+					"type": "string",
+				},
+				"dst": map[string]interface{}{
+					"type": "string",
+				},
+			},
+			"required":             []string{"src", "dst"},
+			"additionalProperties": false,
+		},
+	}
 )
 
 func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
@@ -73,6 +96,7 @@ func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
 	_ = cmd.PersistentFlags().String(installTLSKeyParam, "", "Specify path to TLS key to use for provisioned applications.")
 	_ = cmd.PersistentFlags().String(installChargebeeSiteParam, "", "Specify ChargeBee site name.\nFor more information, read https://kuberlogic.com/docs/configuring/billing page. You can skip this step by pressing 'Enter', and set up the integration later.")
 	_ = cmd.PersistentFlags().String(installChargebeeKeyParam, "", "Specify ChargeBee API key.\nFor more information, read https://apidocs.chargebee.com/docs/api/?prod_cat_ver=2 . API Key are used to configure Kuberlogic ChargeBee integration.")
+	_ = cmd.PersistentFlags().String(installChargebeeMappingParam, "", "Specify ChargeBee mapping file.\nFor more information, read https://kuberlogic.com/docs/configuring/billing/#mapping-custom-fields.")
 	_ = cmd.PersistentFlags().String(installKuberlogicDomainParam, "", "Specify “Domain name”.\nThis configuration setting is used by KuberLogic to create endpoints for application instances. (e.g. instance1.domainname.com).")
 	_ = cmd.PersistentFlags().Bool(installReportErrors, false, "Report errors to KuberLogic?\nChoose 'yes' if you want to help us improve KuberLogic, otherwise, select 'no'. Error reports will be generated and sent automatically, these reports contain only information about the errors and do not contain any user data. Let us receive errors at least from your test environments.")
 	_ = cmd.PersistentFlags().String(installSentryDSNParam, "", "Specify Sentry Data Source Name (DSN).\nFor more information, read https://docs.sentry.io/product/sentry-basics/dsn-explainer/ . (KuberLogic team will not be notified in case of errors).")
@@ -186,13 +210,23 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		klParams.Set(installBackupsEnabledParam, backupsEnabled)
 		klParams.Set(installBackupsSnapshotsEnabledParam, snapshotsEnabled)
 
-		var cSite, cKey, kuberlogicDomain string
+		var cSite, cKey, cMappingFile, kuberlogicDomain string
+		cachedChargebeeMappingFile := filepath.Join(cacheDir, "manager/mapping-fields.yaml")
 		if cSite, err = getStringPrompt(command, installChargebeeSiteParam, klParams.GetString(installChargebeeSiteParam), false, nil); err != nil {
 			return errors.Wrapf(err, "error processing %s flag", installChargebeeSiteParam)
 		} else if cSite != "" {
 			cKey, err = getStringPrompt(command, installChargebeeKeyParam, klParams.GetString(installChargebeeKeyParam), true, nil)
 			if err != nil {
 				return errors.Wrapf(err, "error processing %s flag", installChargebeeKeyParam)
+			}
+			cMappingFile, err = getStringPrompt(command, installChargebeeMappingParam, klParams.GetString(installChargebeeMappingParam), true, validateChargebeeMappingfile)
+			if err != nil {
+				return errors.Wrapf(err, "error processing %s flag", installChargebeeMappingParam)
+			}
+			if cMappingFile != "" {
+				if err = cacheConfigFile(cMappingFile, cachedChargebeeMappingFile); err != nil {
+					return errors.Wrapf(err, "error caching %s config file", cachedChargebeeMappingFile)
+				}
 			}
 		}
 		kuberlogicDomain, err = getStringPrompt(command, installKuberlogicDomainParam, klParams.GetString(installKuberlogicDomainParam), true, nil)
@@ -494,6 +528,34 @@ func validateFileAvailable(f string) error {
 	}
 	if fInfo.IsDir() {
 		return errDirFound
+	}
+	return nil
+}
+
+func validateChargebeeMappingfile(f string) error {
+	if f == "" {
+		return nil
+	}
+	if err := validateFileAvailable(f); err != nil {
+		return err
+	}
+	yamlFile, err := ioutil.ReadFile(f)
+	if err != nil {
+		return errors.Errorf("cannot read the file %s: #%v", f, err)
+	}
+	mapping := make([]map[string]string, 0)
+	err = yaml.Unmarshal(yamlFile, &mapping)
+	if err != nil {
+		return errors.Errorf("cannot parse the file %s: #%v", f, err)
+	}
+	schemaLoader := gojsonschema.NewGoLoader(chargebeeMappingSchema)
+	dataLoader := gojsonschema.NewGoLoader(mapping)
+	result, err := gojsonschema.Validate(schemaLoader, dataLoader)
+	if err != nil {
+		return err
+	}
+	if !result.Valid() {
+		return errors.Errorf("Invalid yaml schema: %v", result.Errors())
 	}
 	return nil
 }
