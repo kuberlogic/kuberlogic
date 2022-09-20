@@ -9,8 +9,10 @@ import (
 
 	itemPriceActions "github.com/chargebee/chargebee-go/actions/itemprice"
 	subscriptionActions "github.com/chargebee/chargebee-go/actions/subscription"
+	subscriptionEntitlementAction "github.com/chargebee/chargebee-go/actions/subscriptionentitlement"
 	itemPriceModel "github.com/chargebee/chargebee-go/models/itemprice"
 	subscriptionModel "github.com/chargebee/chargebee-go/models/subscription"
+	subscriptionEntitlementModel "github.com/chargebee/chargebee-go/models/subscriptionentitlement"
 	"github.com/pkg/errors"
 )
 
@@ -53,7 +55,7 @@ func GetSubscription(content map[string]interface{}) (*subscriptionModel.Subscri
 	}
 	subscription, err := retrieveSubscription(id)
 	if err != nil {
-		return nil, errors.Wrapf(err, "subscription is not retrived")
+		return nil, errors.Wrapf(err, "subscription is not retrived with id: %s", id)
 	}
 	return subscription, nil
 }
@@ -82,4 +84,20 @@ func GetItemPrice(id string) (*itemPriceModel.ItemPrice, error) {
 		return nil, err
 	}
 	return result.ItemPrice, nil
+}
+
+func retrieveSubscriptionEntitlements(id string) ([]*subscriptionEntitlementModel.SubscriptionEntitlement, error) {
+	includeDrafts := false
+	params := &subscriptionEntitlementModel.SubscriptionEntitlementsForSubscriptionRequestParams{
+		IncludeDrafts: &includeDrafts,
+	}
+	result, err := subscriptionEntitlementAction.SubscriptionEntitlementsForSubscription(id, params).ListRequest()
+	if err != nil {
+		return nil, err
+	}
+	entitlements := make([]*subscriptionEntitlementModel.SubscriptionEntitlement, 0)
+	for _, item := range result.List {
+		entitlements = append(entitlements, item.SubscriptionEntitlement)
+	}
+	return entitlements, nil
 }
