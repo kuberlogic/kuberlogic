@@ -77,10 +77,9 @@ var _ = BeforeSuite(func() {
 	err = corev1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	useExistingCluster := os.Getenv("USE_EXISTING_CLUSTER") == "true"
-	if useExistingCluster {
+	if existingCluster := useExistingCluster(); existingCluster {
 		testEnv = &envtest.Environment{
-			UseExistingCluster: &useExistingCluster,
+			UseExistingCluster: &existingCluster,
 		}
 		cfg, err := testEnv.Start()
 		Expect(err).NotTo(HaveOccurred())
