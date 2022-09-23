@@ -5,7 +5,6 @@
 package main
 
 import (
-	"chargebee_integration/app"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -18,10 +17,12 @@ import (
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/ghodss/yaml"
-	sentry2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+
+	"github.com/kuberlogic/kuberlogic/modules/chargebee-integration/app"
+	sentry2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
 )
 
 var (

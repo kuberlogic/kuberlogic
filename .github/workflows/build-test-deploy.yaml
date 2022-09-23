@@ -64,12 +64,7 @@ jobs:
 
       - name: Build images
         run: |
-          ls -la .
-          for module in dynamic-operator dynamic-apiserver chargebee-integration; do \
-            cd ./modules/${module}; \
-            make docker-build ;\
-            cd - ;\
-          done
+          make docker-build
 
       - name: Login to Docker Registry
         uses: docker/login-action@v1
@@ -80,11 +75,7 @@ jobs:
 
       - name: Save operator image's cache
         run: |
-          for module in dynamic-operator dynamic-apiserver chargebee-integration; do \
-            cd ./modules/${module}; \
-            make docker-push-cache ;\
-            cd - ;\
-          done
+          make docker-push-cache
 
   setup_and_test:
     name: Setup and test
@@ -128,11 +119,7 @@ jobs:
 
       - name: Restore cached images
         run: |
-          for module in dynamic-operator dynamic-apiserver chargebee-integration; do \
-            cd ./modules/${module}; \
-            make docker-restore-cache ;\
-            cd - ;\
-          done
+          make docker-restore-cache
 
       - name: Install kustomize
         working-directory: ./modules/dynamic-operator
@@ -198,21 +185,9 @@ jobs:
           username: ${{ secrets.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Restore cached images
+      - name: Restore cached images & push to the registry
         run: |
-          for module in dynamic-operator dynamic-apiserver chargebee-integration; do \
-            cd ./modules/${module}; \
-            make docker-restore-cache ;\
-            cd - ;\
-          done
-
-      - name: Push the new images
-        run: |
-          for module in dynamic-operator dynamic-apiserver chargebee-integration; do \
-            cd ./modules/${module}; \
-            make docker-push ;\
-            cd - ;\
-          done
+          make docker-restore-cache docker-push
 
       - name: Restore CLI
         id: cache-installer
