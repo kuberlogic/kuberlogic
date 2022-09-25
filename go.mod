@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.5
-	github.com/chargebee/chargebee-go v2.10.0+incompatible
+	github.com/chargebee/chargebee-go v2.12.0+incompatible
 	github.com/compose-spec/compose-go v1.2.4
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
 	github.com/getsentry/sentry-go v0.13.0

@@ -10,13 +10,12 @@ import (
 	"strings"
 	"time"
 
-	subscriptionModel "github.com/chargebee/chargebee-go/models/subscription"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
+	subscriptionEntitlementModel "github.com/chargebee/chargebee-go/models/subscriptionentitlement"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-)
 
-const ChargebeePrefixCustomField = "cf_"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
+)
 
 func WebhookHandler(baseLogger *zap.SugaredLogger, mapping []map[string]string) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -47,7 +46,7 @@ func WebhookHandler(baseLogger *zap.SugaredLogger, mapping []map[string]string) 
 	}
 }
 
-func handleSubscriptionCreated(logger *zap.SugaredLogger, event map[string]interface{}, mapping []map[string]string) int {
+func handleSubscriptionCreated(logger *zap.SugaredLogger, event map[string]interface{}, mapping []map[string]string) int { // int - http status
 	subscription, err := GetSubscription(event)
 	if err != nil {
 		logger.Error("error retrieving subscription", err)
@@ -60,9 +59,15 @@ func handleSubscriptionCreated(logger *zap.SugaredLogger, event map[string]inter
 	svc := createServiceItem()
 	svc.Subscription = subscription.Id
 
-	err = ApplyMapping(logger, subscription, mapping, svc)
+	entitlements, err := retrieveSubscriptionEntitlements(subscription.Id)
 	if err != nil {
-		logger.Error("error applying mapping", err)
+		logger.Error("error retrieving subscription entitlements", err)
+		return http.StatusBadRequest
+	}
+
+	err = ApplyMapping(logger, entitlements, mapping, svc)
+	if err != nil {
+		logger.Error("error applying mapping: ", err)
 		return http.StatusBadRequest
 	}
 
@@ -126,46 +131,36 @@ func handleSubscriptionCancelled(logger *zap.SugaredLogger, event map[string]int
 		}
 	}
 	// Delete the application
-	deleteService(logger, *service.ID)
+	_ = deleteService(logger, *service.ID)
 }
 
 func ApplyMapping(
 	logger *zap.SugaredLogger,
-	subscription *subscriptionModel.Subscription,
+	entitlements []*subscriptionEntitlementModel.SubscriptionEntitlement,
 	mapping []map[string]string,
 	svc *models.Service,
 ) error {
-	for _, v := range subscription.SubscriptionItems {
-		if v.ItemType == "plan" {
-			logger.Debugw("subscription item is plan", "item price id", v.ItemPriceId)
-			itemPrice, err := GetItemPrice(v.ItemPriceId)
+	// now supports only string fields as "src" in mapping
+	for _, elem := range entitlements {
+		logger.Debugf("found feature: %s = %v", elem.FeatureId, elem.Value)
+		if found := inMapping(mapping, elem.FeatureId); found != "" {
+			logger.Debugf("found feature in mapping: %s = %s", elem.FeatureId, found)
+
+			bytes, err := json.Marshal(unfold(found, elem.Value))
 			if err != nil {
-				return errors.Wrapf(err, "item price is not retrived: %v\n", err)
+				return errors.Wrapf(err, "unable to encode value: %s\n", found)
 			}
 
-			for field, value := range itemPrice.CustomField {
-				logger.Debugf("found custom field: %s = %v", field, value)
-				if found := inMapping(mapping, field); found != "" {
-					logger.Debugf("found cf in mapping: %s = %s", field, found)
-
-					bytes, err := json.Marshal(unfold(found, value))
-					if err != nil {
-						return errors.Wrapf(err, "unable to encode value: %s\n", found)
-					}
-
-					err = json.Unmarshal(bytes, svc)
-					if err != nil {
-						return errors.Wrapf(err, "unable to decode value: %s\n", found)
-					}
-				} else {
-					logger.Debug("not found in mapping ", field)
-					if svc.Advanced == nil {
-						svc.Advanced = make(map[string]interface{})
-					}
-					svc.Advanced[strings.TrimLeft(field, ChargebeePrefixCustomField)] = value
-				}
+			err = json.Unmarshal(bytes, svc)
+			if err != nil {
+				return errors.Wrapf(err, "unable to decode value: %s\n", found)
 			}
-			break
+		} else {
+			logger.Debug("not found in mapping ", elem.FeatureId)
+			if svc.Advanced == nil {
+				svc.Advanced = make(map[string]interface{})
+			}
+			svc.Advanced[elem.FeatureId] = elem.Value
 		}
 	}
 	return nil
@@ -173,7 +168,7 @@ func ApplyMapping(
 
 func inMapping(mapping []map[string]string, key string) string {
 	for _, v := range mapping {
-		if ChargebeePrefixCustomField+v["src"] == key {
+		if v["src"] == key {
 			return v["dst"]
 		}
 	}
