@@ -213,5 +213,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PRE_RELEASE: true
-          files: |
-            ./modules/dynamic-apiserver/bin/kuberlogic_*
+        with:
+          args: ./modules/dynamic-apiserver/bin/kuberlogic_*
