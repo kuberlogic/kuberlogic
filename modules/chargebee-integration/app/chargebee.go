@@ -18,6 +18,7 @@ import (
 
 const (
 	SubscriptionCreated   = "subscription_created"
+	SubscriptionChangeed  = "subscription_changed"
 	SubscriptionCancelled = "subscription_cancelled"
 )
 
