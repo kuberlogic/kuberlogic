@@ -441,7 +441,7 @@ var _ = Describe("docker-compose model", func() {
 					mReq := *requests
 					mReq.IngressClass = "default"
 					mReq.TLSSecretName = ""
-					mReq.TLSEnabled = false
+					mReq.Insecure = true
 
 					m := *testProject
 					m.Services[0].Ports = []types.ServicePortConfig{
@@ -481,7 +481,7 @@ var _ = Describe("docker-compose model", func() {
 				It("Should create an ingress with a valid HTTPS project", func() {
 					mReq := *requests
 					mReq.TLSSecretName = "demo"
-					mReq.TLSEnabled = true
+					mReq.Insecure = false
 
 					m := *testProject
 					m.Services[0].Ports = []types.ServicePortConfig{

@@ -12,8 +12,9 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/go-logr/zapr"
-	sentry2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
 	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
+
+	sentry2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
@@ -213,6 +214,10 @@ func main() {
 		}
 	} else {
 		setupLog.Info("Backups/Restores are disabled")
+	}
+	if err = (&kuberlogiccomv1alpha1.KuberlogicServiceBackup{}).SetupWebhookWithManager(mgr, cfg.Backups.Enabled); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "KuberlogicServiceBackup")
+		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
 

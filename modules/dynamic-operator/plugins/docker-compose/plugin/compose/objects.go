@@ -451,7 +451,7 @@ func (c *ComposeModel) setApplicationAccessObjects(req *commons.PluginRequest) e
 	}
 
 	// add TLS if specified
-	if req.TLSEnabled {
+	if !req.Insecure {
 		c.ingress.Spec.TLS = []networkingv1.IngressTLS{
 			{
 				Hosts:      []string{req.Host},

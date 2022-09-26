@@ -435,7 +435,7 @@ definitions:
         type: string
       version:
         type: string
-      tlsEnabled:
+      insecure:
         type: boolean
 
       replicas:

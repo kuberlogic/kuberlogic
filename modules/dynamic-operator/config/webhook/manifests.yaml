@@ -32,6 +32,26 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-kuberlogic-com-v1alpha1-kuberlogicservicebackup
+  failurePolicy: Fail
+  name: mkuberlogicservicebackup.kb.io
+  rules:
+  - apiGroups:
+    - kuberlogic.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - kuberlogicservicebackups
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-service-pod
   failurePolicy: Ignore
   name: mpod.kuberlogic.com
@@ -74,4 +94,25 @@ webhooks:
     - DELETE
     resources:
     - kuberlogicservices
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kuberlogic-com-v1alpha1-kuberlogicservicebackup
+  failurePolicy: Fail
+  name: vkuberlogicservicebackup.kb.io
+  rules:
+  - apiGroups:
+    - kuberlogic.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - kuberlogicservicebackups
   sideEffects: None

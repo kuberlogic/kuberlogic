@@ -1,25 +1,11 @@
 .EXPORT_ALL_VARIABLES:
 
-VERSION = 0.0.12
-
-IMG_REPO = quay.io/kuberlogic
-IMG_LATEST_TAG=latest
-
-APISERVER_NAME = dynamic-apiserver
-APISERVER_IMG = $(IMG_REPO)/$(APISERVER_NAME)
-
 KUBERLOGIC_APISERVER_TOKEN=8ZTjsD3t2Q3Yq-C4-hoahcFn
 KUBERLOGIC_SENTRY_DSN =
 KUBERLOGIC_DEBUG_LOGS = true
 KUBERLOGIC_DOMAIN = example.com
 
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
-
-ifeq ($(DEV_BUILD),true)
-	VERSION := $(VERSION)-$(shell git rev-list --count $(shell git rev-parse --abbrev-ref HEAD))
-endif
-COMMIT_SHA = $(shell git rev-parse HEAD)
-IMG_SHA_TAG ?= $(VERSION)-$(COMMIT_SHA)
 
 SWAGGER = $(shell pwd)/bin/swagger
 .PHONY: swagger
@@ -59,9 +45,8 @@ test: build-configs
 .PHONY: build-configs
 build-configs:
 	test -e pkg/cli/kustomize-configs.zip && rm -f pkg/cli/kustomize-configs.zip || echo "archive does not exist"
-	cd ../dynamic-operator/ && $(MAKE) set-version && \
-	zip -r ../dynamic-apiserver/pkg/cli/kustomize-configs.zip config/ && \
-	cd -
+	cd ../../ && $(MAKE) set-version
+	cd ../dynamic-operator/ && zip -r ../dynamic-apiserver/pkg/cli/kustomize-configs.zip config/
 
 .PHONY: build-cli
 build-cli: export CGO_ENABLED=0
@@ -74,44 +59,20 @@ build-cli: build-configs
 	test -e kuberlogic && rm kuberlogic || echo "link does not exist"
 	ln -s bin/kuberlogic_$(shell uname -m)_$(shell uname | tr '[:upper:]' '[:lower:]') kuberlogic
 
+.PHONY: build
+build: export CGO_ENABLED=0
+build: export GO111MODULE=on
+build: export GOOS=linux
+build: export GOARCH=amd64
+build:
+	go build -a -o bin/apiserver -ldflags=$(LDFLAGS) main.go
+
 .PHONY: run
 run:
 	go run main.go
 
 .PHONY: generate
 generate: generate-server generate-client
-
-.PHONY: docker-build
-docker-build: export LDFLAGS="-X github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/cmd.ver=$(VERSION)"
-docker-build:
-	CGO_ENABLED=0 \
-	GOOS=linux \
-	GOARCH=amd64 \
-	GO111MODULE=on \
-	go build -a -o bin/apiserver -ldflags=$(LDFLAGS) main.go
-	docker build . \
-		--build-arg BIN=bin/apiserver \
-		-t $(APISERVER_IMG):$(VERSION) \
-		-t $(APISERVER_IMG):$(IMG_LATEST_TAG) \
-		-t $(APISERVER_IMG):$(IMG_SHA_TAG)
-
-.PHONY: docker-push
-docker-push: ## Push docker image with the manager.
-	docker push $(APISERVER_IMG):$(VERSION)
-	docker push $(APISERVER_IMG):$(IMG_LATEST_TAG)
-
-.PHONY: docker-push-cache
-docker-push-cache:
-	docker push $(APISERVER_IMG):$(IMG_SHA_TAG)
-
-.PHONY: docker-pull-cache
-docker-pull-cache:
-	docker pull $(APISERVER_IMG):$(IMG_SHA_TAG)
-
-.PHONY: docker-restore-cache
-docker-restore-cache: docker-pull-cache
-	docker tag $(APISERVER_IMG):$(IMG_SHA_TAG) $(APISERVER_IMG):$(VERSION)
-	docker tag $(APISERVER_IMG):$(IMG_SHA_TAG) $(APISERVER_IMG):$(IMG_LATEST_TAG)
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 define go-get-tool

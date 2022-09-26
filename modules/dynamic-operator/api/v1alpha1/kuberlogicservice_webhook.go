@@ -240,13 +240,16 @@ func validateScheduleFormat(schedule string) error {
 }
 
 func validateDomain(domain string) error {
+	if domain == "" {
+		return nil
+	}
 	klsList := &KuberLogicServiceList{}
 	if err := k8sClient.List(context.TODO(), klsList); err != nil {
 		return err
 	}
 	for _, item := range klsList.Items {
 		if item.Spec.Domain == domain {
-			return errors.New(fmt.Sprintf("Domain %s conflicts with tenant: %s", domain, item.Name))
+			return fmt.Errorf("Domain %s already taken", domain)
 		}
 	}
 	return nil

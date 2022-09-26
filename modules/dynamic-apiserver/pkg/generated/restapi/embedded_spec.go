@@ -733,6 +733,9 @@ func init() {
           "minLength": 2,
           "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
         },
+        "insecure": {
+          "type": "boolean"
+        },
         "limits": {
           "$ref": "#/definitions/Limits"
         },
@@ -746,9 +749,6 @@ func init() {
         },
         "subscription": {
           "type": "string"
-        },
-        "tlsEnabled": {
-          "type": "boolean"
         },
         "type": {
           "type": "string"
@@ -1678,6 +1678,9 @@ func init() {
           "minLength": 2,
           "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
         },
+        "insecure": {
+          "type": "boolean"
+        },
         "limits": {
           "$ref": "#/definitions/Limits"
         },
@@ -1691,9 +1694,6 @@ func init() {
         },
         "subscription": {
           "type": "string"
-        },
-        "tlsEnabled": {
-          "type": "boolean"
         },
         "type": {
           "type": "string"

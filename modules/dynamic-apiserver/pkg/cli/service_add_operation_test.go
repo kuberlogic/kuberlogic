@@ -161,7 +161,7 @@ func TestCreateSuccessFormatStr(t *testing.T) {
 	cmd.SetArgs([]string{"service", "add",
 		"--id", "test",
 		"--type", "postgresql",
-		"--tls_enabled", "true",
+		"--insecure", "true",
 	})
 	err = cmd.Execute()
 	if err != nil {

@@ -11,14 +11,14 @@ make deploy
 
 ```shell
 # no need deployments for the local run
-kubectl delete deploy dynamic-operator-controller-manager
+kubectl delete deploy kls-controller-manager
 # ability to work webhook for local run
 make generate-local-webhook-certs patch-webhook-endpoint
 cd /modules/dynamic-operator
 # need to build plugin before running operator
-go build -o plugin/example-plugin/postgres plugin/example-plugin/main.go
+make build-docker-compose-plugin
 # export variable for the plugin enabling1
-export PLUGINS="{postgresql,$(pwd)/plugin/example-plugin/postgres}"
+export PLUGINS="{postgresql,$(pwd)/bin/docker-compose-plugin}"
 make run # or go run main.go 
 ```
 
@@ -27,7 +27,7 @@ make run # or go run main.go
 
 ```shell
 cd /modules/dynamic-operator
-go build -o plugin/example-plugin/postgres plugin/example-plugin/main.go
-export PLUGINS="{postgresql,$(pwd)/plugin/example-plugin/postgres}"
+make build-docker-compose-plugin
+export PLUGINS="{postgresql,$(pwd)/bin/docker-compose-plugin}"
 make test
 ```

@@ -6,12 +6,14 @@ package app
 
 import (
 	"encoding/json"
+	"net/http"
+	"strings"
+	"time"
+
 	subscriptionModel "github.com/chargebee/chargebee-go/models/subscription"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"net/http"
-	"strings"
 )
 
 const ChargebeePrefixCustomField = "cf_"
@@ -32,46 +34,99 @@ func WebhookHandler(baseLogger *zap.SugaredLogger, mapping []map[string]string) 
 		}
 
 		logger := baseLogger.With("event id", event["id"])
-		if event["event_type"] != SubscriptionCreated {
+		responseCode := http.StatusOK
+		switch event["event_type"] {
+		case SubscriptionCreated:
+			responseCode = handleSubscriptionCreated(logger, event, mapping)
+		case SubscriptionCancelled:
+			go handleSubscriptionCancelled(logger, event, mapping)
+		default:
 			logger.Errorf("event type is unsupported: %s\n", event["event_type"])
-			w.WriteHeader(http.StatusOK)
-			return
 		}
-
-		subscription, err := GetSubscription(event)
-		if err != nil {
-			logger.Error("error retrieving subscription", err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		logger = logger.With("subscription id", subscription.Id)
-		logger.Infof("subscription status: %s", subscription.Status)
-
-		svc := createServiceItem()
-		svc.Subscription = subscription.Id
-
-		err = ApplyMapping(logger, subscription, mapping, svc)
-		if err != nil {
-			logger.Error("error applying mapping", err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		err = createService(logger, svc)
-		if err != nil && checkAlreadyExists(err) {
-			logger.Error("service already exists", err)
-			// expected behavior due to prevent retries https://www.chargebee.com/docs/2.0/events_and_webhooks.html
-			w.WriteHeader(http.StatusOK)
-			return
-		} else if err != nil {
-			logger.Error("create operation error", err)
-			w.WriteHeader(http.StatusServiceUnavailable)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(responseCode)
 	}
+}
+
+func handleSubscriptionCreated(logger *zap.SugaredLogger, event map[string]interface{}, mapping []map[string]string) int {
+	subscription, err := GetSubscription(event)
+	if err != nil {
+		logger.Error("error retrieving subscription", err)
+		return http.StatusBadRequest
+	}
+
+	logger = logger.With("subscription id", subscription.Id)
+	logger.Infof("subscription status: %s", subscription.Status)
+
+	svc := createServiceItem()
+	svc.Subscription = subscription.Id
+
+	err = ApplyMapping(logger, subscription, mapping, svc)
+	if err != nil {
+		logger.Error("error applying mapping", err)
+		return http.StatusBadRequest
+	}
+
+	err = createService(logger, svc)
+	if err != nil && checkAlreadyExists(err) {
+		logger.Error("service already exists", err)
+		// expected behavior due to prevent retries https://www.chargebee.com/docs/2.0/events_and_webhooks.html
+		return http.StatusOK
+	} else if err != nil {
+		logger.Error("create operation error", err)
+		return http.StatusServiceUnavailable
+	}
+
+	return http.StatusOK
+}
+
+func handleSubscriptionCancelled(logger *zap.SugaredLogger, event map[string]interface{}, mapping []map[string]string) {
+	subscriptionId, err := GetSubscriptionId(event)
+	if err != nil {
+		logger.Error("Error extracting subscription from payload", err)
+		return
+	}
+	logger = logger.With("subscription id", subscriptionId)
+	// Check if service exists
+	var service *models.Service
+	for i := 0; i < 5; i++ {
+		service, err = getServiceBySubscriptionId(logger, subscriptionId)
+		if err != nil {
+			logger.Error("Error getting service by subscription", err)
+		} else {
+			break
+		}
+		time.Sleep(time.Duration(i) * time.Second)
+	}
+	if err != nil {
+		logger.Error("Retries exceeded while trying to get service by subscription", err)
+		return
+	}
+	// Take backup of the service
+	newBackup, err := addServiceBackup(logger, *service.ID)
+	if err != nil {
+		logger.Error("Error making service backup", err)
+	} else {
+		// Wait until backup is done
+		err = waitForBackup(logger, *service.ID, newBackup.ID)
+		// Delete all previous backups
+		backups, err := listServiceBackups(logger, *service.ID)
+		if err != nil {
+			logger.Error("Error listing service backup", err)
+			return
+		}
+		for _, backup := range backups {
+			if backup.ID == newBackup.ID {
+				continue
+			}
+			err = deleteServiceBackup(logger, backup.ID)
+			if err != nil {
+				logger.Error("Error deleting service backup", err)
+				return
+			}
+		}
+	}
+	// Delete the application
+	deleteService(logger, *service.ID)
 }
 
 func ApplyMapping(
