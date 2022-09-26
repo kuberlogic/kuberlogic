@@ -1,9 +1,12 @@
 ---
 version: '3'
+x-kuberlogic-secrets:
+  secret-key: "{{ GenerateKey 30 }}"
 
 services:
   planka:
     x-kuberlogic-set-credentials-cmd: "echo {{ .token }}"
+    x-kuberlogic-health-endpoint: "/"
     image: ghcr.io/plankanban/planka:{{ or .Version "latest" }}
     command: >
       bash -c
@@ -24,7 +27,7 @@ services:
       - BASE_URL={{ Endpoint "localhost:3000" }}
       - TRUST_PROXY=0
       - DATABASE_URL=postgresql://postgres@localhost/planka
-      - SECRET_KEY={{ GenerateKey 30 | PersistentSecret }}
+      - SECRET_KEY={{ Secret "secret-key" }}
     depends_on:
       - postgres
 
