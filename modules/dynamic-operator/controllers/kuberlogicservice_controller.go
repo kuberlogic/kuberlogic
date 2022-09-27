@@ -70,7 +70,7 @@ var (
 //+kubebuilder:rbac:groups="",resources=pods/exec,verbs=get;list;watch;create;update;patch;delete
 
 // compose plugin roles:
-//+kubebuilder:rbac:groups="",resources=serviceaccounts;services;persistentvolumeclaims;,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=serviceaccounts;services;persistentvolumeclaims;secrets;configmaps;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=deployments;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 
