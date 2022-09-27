@@ -29,7 +29,7 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.
 	_ = cmd.PersistentFlags().String("backup_schedule", "", "backup schedule in cron format")
 	_ = cmd.PersistentFlags().String("domain", "", "on which domain service will be available")
 	_ = cmd.PersistentFlags().Bool("insecure", false, "setup unsecure service with http, not https")
-	_ = cmd.PersistentFlags().Bool(subscriptionIdFlag, false, "")
+	_ = cmd.PersistentFlags().String(subscriptionIdFlag, "", "")
 
 	// limits
 	_ = cmd.PersistentFlags().String("limits.cpu", "", "cpu limits")
