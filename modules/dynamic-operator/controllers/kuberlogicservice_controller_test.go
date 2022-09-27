@@ -104,6 +104,14 @@ var _ = Describe("KuberlogicService controller", func() {
 			}, timeout, interval).Should(Not(HaveOccurred()))
 			Expect(cj.Spec.Schedule).Should(Equal(kls.Spec.BackupSchedule))
 
+			By("Checking file configs")
+			cm := &v1.ConfigMap{}
+			cm.SetName(kls.GetName())
+			cm.SetNamespace(kls.GetName())
+			Eventually(func() error {
+				return k8sClient.Get(ctx, client.ObjectKeyFromObject(cm), cm)
+			}, timeout, interval).Should(Succeed())
+
 			Expect(k8sClient.Delete(ctx, kls)).Should(Succeed())
 		})
 	})
