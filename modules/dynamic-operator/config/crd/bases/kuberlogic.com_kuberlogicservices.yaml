@@ -70,8 +70,6 @@ spec:
             type: object
           spec:
             properties:
-              TLSEnabled:
-                type: boolean
               advanced:
                 description: any advanced configuration is supported
                 x-kubernetes-preserve-unknown-fields: true
@@ -80,6 +78,8 @@ spec:
               domain:
                 pattern: '[a-z]([-a-z0-9]*[a-z0-9])?'
                 type: string
+              insecure:
+                type: boolean
               limits:
                 additionalProperties:
                   anyOf:
