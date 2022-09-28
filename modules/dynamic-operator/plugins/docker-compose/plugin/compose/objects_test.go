@@ -1,6 +1,8 @@
 package compose
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"github.com/compose-spec/compose-go/types"
 	"github.com/go-test/deep"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
@@ -762,8 +764,11 @@ var _ = Describe("docker-compose model", func() {
 			Expect(resp).ShouldNot(BeNil())
 			Expect(err).Should(BeNil())
 
+			md5Key := md5.Sum([]byte("/test"))
+			expectedKey := hex.EncodeToString(md5Key[:])
+
 			Expect(len(c.configmap.Data)).Should(Equal(1))
-			Expect(c.configmap.Data["/test"]).Should(Equal("app=demo-kls"))
+			Expect(c.configmap.Data[expectedKey]).Should(Equal("app=demo-kls"))
 			Expect(c.deployment.Spec.Template.Spec.Volumes[1].ConfigMap.Name).Should(Equal(c.configmap.GetName()))
 			Expect(c.deployment.Spec.Template.Spec.Volumes[1].Name).Should(Equal("file-configs"))
 			Expect(c.deployment.Spec.Template.Spec.Containers[0].VolumeMounts[1].Name).Should(Equal(c.deployment.Spec.Template.Spec.Volumes[1].Name))
@@ -785,8 +790,11 @@ var _ = Describe("docker-compose model", func() {
 			Expect(resp).ShouldNot(BeNil())
 			Expect(err).Should(BeNil())
 
+                        md5Key := md5.Sum([]byte("/test"))
+                        expectedKey := hex.EncodeToString(md5Key[:])
+
 			Expect(len(c.configmap.Data)).Should(Equal(1))
-			Expect(c.configmap.Data["/test"]).Should(MatchRegexp("app=[a-zA-Z]+"))
+			Expect(c.configmap.Data[expectedKey]).Should(MatchRegexp("app=[a-zA-Z]+"))
 		})
 	})
 })

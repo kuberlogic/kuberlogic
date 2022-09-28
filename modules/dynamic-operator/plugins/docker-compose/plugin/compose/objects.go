@@ -1,9 +1,10 @@
 package compose
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -617,16 +618,23 @@ func (c *ComposeModel) buildContainerVolumeMounts(s *types.ServiceConfig, req *c
 			}
 		}
 
-		c.deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
-			{
-				Name: c.persistentvolumeclaim.GetName(),
-				VolumeSource: corev1.VolumeSource{
-					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-						ClaimName: c.persistentvolumeclaim.GetName(),
-						ReadOnly:  false,
+		var found bool
+		for _, v := range c.deployment.Spec.Template.Spec.Volumes {
+			if v.Name == c.persistentvolumeclaim.GetName() {
+				found = true
+			}
+		}
+		if ! found {
+			c.deployment.Spec.Template.Spec.Volumes = append(c.deployment.Spec.Template.Spec.Volumes,
+				corev1.Volume{
+					Name: c.persistentvolumeclaim.GetName(),
+					VolumeSource: corev1.VolumeSource{
+						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+							ClaimName: c.persistentvolumeclaim.GetName(),
+							ReadOnly:  false,
+						},
 					},
-				},
-			},
+				})
 		}
 	}
 
@@ -641,18 +649,32 @@ func (c *ComposeModel) buildContainerVolumeMounts(s *types.ServiceConfig, req *c
 		c.configmap.SetNamespace(req.Namespace)
 		c.configmap.Data = make(map[string]string, 0)
 
+		if c.configmap.Annotations == nil {
+			c.configmap.Annotations = make(map[string]string, 0)
+		}
+
 		const configVolumeName = "file-configs"
-		c.deployment.Spec.Template.Spec.Volumes = append(c.deployment.Spec.Template.Spec.Volumes,
-			corev1.Volume{
-				Name: configVolumeName,
-				VolumeSource: corev1.VolumeSource{
-					ConfigMap: &corev1.ConfigMapVolumeSource{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: c.configmap.GetName(),
+		var found bool
+
+		for _, v := range c.deployment.Spec.Template.Spec.Volumes {
+			if v.Name == configVolumeName {
+				found = true
+			}
+		}
+
+		if ! found {
+			c.deployment.Spec.Template.Spec.Volumes = append(c.deployment.Spec.Template.Spec.Volumes,
+				corev1.Volume{
+					Name: configVolumeName,
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: c.configmap.GetName(),
+							},
 						},
 					},
-				},
-			})
+				})
+		}
 
 		for path, config := range configs {
 			var strVal string
@@ -665,12 +687,16 @@ func (c *ComposeModel) buildContainerVolumeMounts(s *types.ServiceConfig, req *c
 				return nil, errors.Wrapf(err, "failed to render config %s", path)
 			}
 
-			c.configmap.Data[path] = rendered.String()
+			md5Path := md5.Sum([]byte(path))
+			normalizedPath := hex.EncodeToString(md5Path[:])
+
+			c.configmap.Annotations[normalizedPath] = path
+			c.configmap.Data[normalizedPath] = rendered.String()
 
 			volumeMounts = append(volumeMounts, corev1.VolumeMount{
 				Name:      configVolumeName,
 				MountPath: path,
-				SubPath:   filepath.Base(path),
+				SubPath:   normalizedPath,
 			})
 		}
 	}
