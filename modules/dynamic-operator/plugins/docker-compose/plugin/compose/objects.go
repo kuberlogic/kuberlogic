@@ -624,7 +624,7 @@ func (c *ComposeModel) buildContainerVolumeMounts(s *types.ServiceConfig, req *c
 				found = true
 			}
 		}
-		if ! found {
+		if !found {
 			c.deployment.Spec.Template.Spec.Volumes = append(c.deployment.Spec.Template.Spec.Volumes,
 				corev1.Volume{
 					Name: c.persistentvolumeclaim.GetName(),
@@ -662,7 +662,7 @@ func (c *ComposeModel) buildContainerVolumeMounts(s *types.ServiceConfig, req *c
 			}
 		}
 
-		if ! found {
+		if !found {
 			c.deployment.Spec.Template.Spec.Volumes = append(c.deployment.Spec.Template.Spec.Volumes,
 				corev1.Volume{
 					Name: configVolumeName,

@@ -790,8 +790,8 @@ var _ = Describe("docker-compose model", func() {
 			Expect(resp).ShouldNot(BeNil())
 			Expect(err).Should(BeNil())
 
-                        md5Key := md5.Sum([]byte("/test"))
-                        expectedKey := hex.EncodeToString(md5Key[:])
+			md5Key := md5.Sum([]byte("/test"))
+			expectedKey := hex.EncodeToString(md5Key[:])
 
 			Expect(len(c.configmap.Data)).Should(Equal(1))
 			Expect(c.configmap.Data[expectedKey]).Should(MatchRegexp("app=[a-zA-Z]+"))

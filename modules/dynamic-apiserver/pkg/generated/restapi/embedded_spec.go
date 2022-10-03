@@ -564,6 +564,53 @@ func init() {
         }
       }
     },
+    "/services/{ServiceID}/archive": {
+      "post": {
+        "description": "archive service (for example, if user subscription got cancelled)",
+        "tags": [
+          "service"
+        ],
+        "summary": "archive service",
+        "operationId": "serviceArchive",
+        "parameters": [
+          {
+            "$ref": "#/parameters/ServiceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "service archived"
+          },
+          "400": {
+            "description": "invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "404": {
+            "description": "service not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "bad validation"
+          },
+          "503": {
+            "description": "internal service error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/services/{ServiceID}/credentials": {
       "post": {
         "description": "updates service credentials with passed data",
@@ -1490,6 +1537,60 @@ func init() {
           },
           "503": {
             "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/services/{ServiceID}/archive": {
+      "post": {
+        "description": "archive service (for example, if user subscription got cancelled)",
+        "tags": [
+          "service"
+        ],
+        "summary": "archive service",
+        "operationId": "serviceArchive",
+        "parameters": [
+          {
+            "maxLength": 20,
+            "minLength": 3,
+            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+            "type": "string",
+            "description": "service Resource ID",
+            "name": "ServiceID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "service archived"
+          },
+          "400": {
+            "description": "invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "404": {
+            "description": "service not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "bad validation"
+          },
+          "503": {
+            "description": "internal service error",
             "schema": {
               "$ref": "#/definitions/Error"
             }

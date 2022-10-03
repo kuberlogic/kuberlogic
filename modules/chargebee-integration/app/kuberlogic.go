@@ -12,7 +12,6 @@ import (
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	client2 "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/backup"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
@@ -39,20 +38,20 @@ func createService(logger *zap.SugaredLogger, svc *models.Service) error {
 	logger.Infof("service is created: %s, waiting ready status", svc.ID)
 
 	// checking the status asynchronously
-	// maxRetries == 1 2 4 8  16 32 64 128 256 512 1024 2048 4096
+	// maxRetries == 1 2 4 8 16 32 64 128 256 512 1024 2048 4096
 	go checkStatus(logger, *svc.ID, svc.Subscription, time.Second, 13)
 	return nil
 }
 
-func deleteService(logger *zap.SugaredLogger, serviceId string) error {
-	params := service.NewServiceDeleteParams()
+func archiveService(logger *zap.SugaredLogger, serviceId string) error {
+	params := service.NewServiceArchiveParams()
 	params.ServiceID = serviceId
 
 	apiClient, err := makeClient()
 	if err != nil {
 		return err
 	}
-	_, err = apiClient.Service.ServiceDelete(
+	_, err = apiClient.Service.ServiceArchive(
 		params,
 		httptransport.APIKeyAuth("X-Token", "header", viper.GetString("KUBERLOGIC_APISERVER_TOKEN")),
 	)
@@ -79,85 +78,6 @@ func getServiceBySubscriptionId(logger *zap.SugaredLogger, subscriptionId string
 		return response.Payload[0], nil
 	}
 	return nil, errors.Errorf("There is no service with subscription id: %s", subscriptionId)
-}
-
-func addServiceBackup(logger *zap.SugaredLogger, serviceID string) (*models.Backup, error) {
-	params := backup.NewBackupAddParams()
-	params.BackupItem = new(models.Backup)
-	params.BackupItem.ServiceID = serviceID
-
-	apiClient, err := makeClient()
-	if err != nil {
-		return nil, err
-	}
-	response, err := apiClient.Backup.BackupAdd(
-		params,
-		httptransport.APIKeyAuth("X-Token", "header", viper.GetString("KUBERLOGIC_APISERVER_TOKEN")),
-	)
-	if err != nil {
-		return nil, err
-	}
-	return response.Payload, nil
-}
-
-func listServiceBackups(logger *zap.SugaredLogger, serviceID string) (models.Backups, error) {
-	params := backup.NewBackupListParams()
-	params.ServiceID = &serviceID
-
-	apiClient, err := makeClient()
-	if err != nil {
-		return nil, err
-	}
-	response, err := apiClient.Backup.BackupList(
-		params,
-		httptransport.APIKeyAuth("X-Token", "header", viper.GetString("KUBERLOGIC_APISERVER_TOKEN")),
-	)
-	if err != nil {
-		return nil, err
-	}
-	return response.Payload, nil
-}
-
-func deleteServiceBackup(logger *zap.SugaredLogger, backupID string) error {
-	params := backup.NewBackupDeleteParams()
-	params.BackupID = backupID
-
-	apiClient, err := makeClient()
-	if err != nil {
-		return err
-	}
-	_, err = apiClient.Backup.BackupDelete(
-		params,
-		httptransport.APIKeyAuth("X-Token", "header", viper.GetString("KUBERLOGIC_APISERVER_TOKEN")),
-	)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func waitForBackup(logger *zap.SugaredLogger, serviceID string, backupID string) error {
-	timeout := time.Second
-	for i := 13; i > 0; i-- {
-		backups, err := listServiceBackups(logger, serviceID)
-		if err != nil {
-			return err
-		}
-		for _, backup := range backups {
-			if backup.ID == backupID {
-				switch backup.Status {
-				case v1alpha1.KlbSuccessfulCondType:
-					return nil
-				case v1alpha1.KlbFailedCondType:
-					return errors.New("Error occured while creating service backup")
-				}
-			}
-		}
-		timeout := timeout * 2
-		time.Sleep(timeout)
-		logger.Infof("backup is not ready, trying after %s. Left %d retries", timeout, i-1)
-	}
-	return errors.New("Retries exceeded, backup is not ready")
 }
 
 func checkStatus(logger *zap.SugaredLogger, name, subscriptionId string, timeout time.Duration, maxRetries int) {
