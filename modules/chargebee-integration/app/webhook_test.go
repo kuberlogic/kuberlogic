@@ -5,7 +5,7 @@
 package app
 
 import (
-	subscriptionModel "github.com/chargebee/chargebee-go/models/subscription"
+	subscriptionEntitlementModel "github.com/chargebee/chargebee-go/models/subscriptionentitlement"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	"go.uber.org/zap"
 	"reflect"
@@ -62,18 +62,18 @@ func TestUnfold(t *testing.T) {
 
 func TestInMapping(t *testing.T) {
 	actual := inMapping([]map[string]string{{
-		"src": "custom-field",
+		"src": "feature-B",
 		"dst": "result",
-	}}, "custom-field")
+	}}, "feature-A")
 	expected := ""
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("actual vs expected: %v vs %v", actual, expected)
 	}
 
 	actual = inMapping([]map[string]string{{
-		"src": "custom-field",
+		"src": "feature-A",
 		"dst": "result",
-	}}, ChargebeePrefixCustomField+"custom-field")
+	}}, "feature-A")
 	expected = "result"
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("actual vs expected: %v vs %v", actual, expected)
@@ -82,9 +82,11 @@ func TestInMapping(t *testing.T) {
 
 func TestApplyMappingEmptySubscriptionItems(t *testing.T) {
 	baseLogger, _ := zap.NewDevelopmentConfig().Build()
+
+	entitlements := make([]*subscriptionEntitlementModel.SubscriptionEntitlement, 0)
 	err := ApplyMapping(
 		baseLogger.Sugar(),
-		&subscriptionModel.Subscription{},
+		entitlements,
 		[]map[string]string{{
 			"src": "volumeSize",
 			"dst": "limits.volumeSize",
