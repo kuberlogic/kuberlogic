@@ -4,13 +4,14 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 )
 
 func makeDiagCmd() *cobra.Command {
@@ -55,7 +56,7 @@ func runDiag() func(command *cobra.Command, args []string) error {
 		}
 
 		command.Println("Gathering Kuberlogic resources status")
-		cmd = fmt.Sprintf("%s kuberlogic -o yaml", kubectlBin)
+		cmd = fmt.Sprintf("%s get kuberlogic -o yaml", kubectlBin)
 		if err := saveDiagInfo(cmd, "kuberlogic-resources.yaml", zipWriter); err != nil {
 			return errors.Wrapf(err, "failed to save %s info", cmd)
 		}

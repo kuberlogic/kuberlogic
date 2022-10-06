@@ -3,16 +3,19 @@ package compose
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"strconv"
+	"strings"
+
 	"github.com/compose-spec/compose-go/types"
 	"github.com/go-test/deep"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"strings"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 )
 
 var envVal = "val"
@@ -399,46 +402,6 @@ var _ = Describe("docker-compose model", func() {
 					Version:   "whatever",
 				}
 
-				It("Should exit with error when published ports are duplicates", func() {
-					m := *testProject
-					m.Services[0].Ports = []types.ServicePortConfig{
-						{
-							Target:    80,
-							Published: "8001",
-						},
-					}
-					m.Services[1].Ports = []types.ServicePortConfig{
-						{
-							Target:    90,
-							Published: "8001",
-						},
-					}
-
-					c := NewComposeModel(&m, zap.NewRaw().Sugar())
-					_, err := c.Reconcile(requests)
-					Expect(err).ShouldNot(BeNil())
-				})
-
-				It("Should exit with error when there are two published ports without access path extension", func() {
-					m := *testProject
-					m.Services[0].Ports = []types.ServicePortConfig{
-						{
-							Target:    80,
-							Published: "8001",
-						},
-					}
-					m.Services[1].Ports = []types.ServicePortConfig{
-						{
-							Target:    90,
-							Published: "8002",
-						},
-					}
-
-					c := NewComposeModel(&m, zap.NewRaw().Sugar())
-					_, err := c.Reconcile(requests)
-					Expect(err).ShouldNot(BeNil())
-				})
-
 				It("Should create an ingress with a valid HTTP project", func() {
 					mReq := *requests
 					mReq.IngressClass = "default"
@@ -671,17 +634,7 @@ var _ = Describe("docker-compose model", func() {
 			c := NewComposeModel(proj, zap.NewRaw().Sugar())
 			resp, err := c.GetCredentialsMethod(requests)
 			Expect(resp).Should(BeNil())
-			Expect(err).Should(Equal(errCredentialsCommandNotDefined))
-		})
-
-		It("Should fail when too many extensions are set", func() {
-			proj.Services[0].Extensions = map[string]interface{}{"x-kuberlogic-set-credentials-cmd": "echo"}
-			proj.Services[1].Extensions = map[string]interface{}{"x-kuberlogic-set-credentials-cmd": "echo"}
-
-			c := NewComposeModel(proj, zap.NewRaw().Sugar())
-			resp, err := c.GetCredentialsMethod(requests)
-			Expect(resp).Should(BeNil())
-			Expect(err).Should(Equal(errTooManyCredentialsCommands))
+			Expect(err).Should(Equal(ErrCredentialsCommandNotDefined))
 		})
 
 		It("Should render correct credentials command", func() {
@@ -743,16 +696,6 @@ var _ = Describe("docker-compose model", func() {
 			Name: "demo-kls",
 		}
 
-		It("Should fail when extension is set incorrectly", func() {
-			proj.Services[0].Extensions = map[string]interface{}{
-				"x-kuberlogic-file-configs": "nil",
-			}
-			c := NewComposeModel(proj, zap.NewRaw().Sugar())
-			resp, err := c.Reconcile(requests)
-			Expect(resp).Should(BeNil())
-			Expect(errors.Is(err, errConfigsDecodeFailed)).Should(BeTrue())
-		})
-
 		It("Should be mapped to container correctly", func() {
 			proj.Services[0].Extensions = map[string]interface{}{
 				"x-kuberlogic-file-configs": map[string]interface{}{
@@ -790,11 +733,181 @@ var _ = Describe("docker-compose model", func() {
 			Expect(resp).ShouldNot(BeNil())
 			Expect(err).Should(BeNil())
 
-                        md5Key := md5.Sum([]byte("/test"))
-                        expectedKey := hex.EncodeToString(md5Key[:])
+			md5Key := md5.Sum([]byte("/test"))
+			expectedKey := hex.EncodeToString(md5Key[:])
 
 			Expect(len(c.configmap.Data)).Should(Equal(1))
 			Expect(c.configmap.Data[expectedKey]).Should(MatchRegexp("app=[a-zA-Z]+"))
+		})
+	})
+
+	Context("validating docker-compose project", func() {
+		When("it is valid", func() {
+			It("Should succeed", func() {
+				p := &types.Project{
+					Name: "test",
+					Services: []types.ServiceConfig{
+						{
+							Name:  "demo",
+							Image: "demo",
+						},
+					},
+				}
+
+				Expect(ValidateComposeProject(p)).Should(BeNil())
+			})
+		})
+
+		When("it is not valid", func() {
+			It("should fail with incorrect secrets configuration", func() {
+				q := &types.Project{
+					Name: "test",
+					Extensions: map[string]interface{}{
+						"x-kuberlogic-secrets": "test",
+					},
+					Services: []types.ServiceConfig{
+						{
+							Name:  "demo",
+							Image: "demo",
+						},
+					},
+				}
+
+				Expect(errors.Is(ValidateComposeProject(q), ErrSecretsDecodeFailed)).Should(BeTrue())
+			})
+
+			It("should fail with incorrect configs", func() {
+				q := &types.Project{
+					Name: "test",
+					Services: []types.ServiceConfig{
+						{
+							Name:  "demo",
+							Image: "demo",
+							Extensions: map[string]interface{}{
+								"x-kuberlogic-file-configs": "demo",
+							},
+						},
+					},
+				}
+
+				Expect(errors.Is(ValidateComposeProject(q), ErrConfigsDecodeFailed))
+			})
+
+			It("should fail when two ports are published", func() {
+				q := &types.Project{
+					Name: "test",
+					Services: []types.ServiceConfig{
+						{
+							Name:  "demo",
+							Image: "demo",
+							Ports: []types.ServicePortConfig{
+								{
+									Published: "1",
+									Target:    1,
+								},
+								{
+									Published: "2",
+									Target:    2,
+								},
+							},
+						},
+					},
+				}
+
+				Expect(errors.Is(ValidateComposeProject(q), ErrTooManyAccessPorts)).Should(BeTrue())
+			})
+
+			It("should fail when two services expose the same port", func() {
+				port := 1
+
+				q := &types.Project{
+					Name: "test",
+					Services: []types.ServiceConfig{
+						{
+							Name:  "demo",
+							Image: "demo",
+							Ports: []types.ServicePortConfig{
+								{
+									Published: strconv.Itoa(port),
+									Target:    uint32(port),
+								},
+							},
+						},
+						{
+							Name:  "demo1",
+							Image: "demo1",
+							Ports: []types.ServicePortConfig{
+								{
+									Published: strconv.Itoa(port),
+									Target:    uint32(port),
+								},
+							},
+						},
+					},
+				}
+
+				Expect(errors.Is(ValidateComposeProject(q), ErrDuplicatePublishedPort)).Should(BeTrue())
+			})
+
+			It("should fail when two services share the same ingress path", func() {
+				q := &types.Project{
+					Name: "test",
+					Services: []types.ServiceConfig{
+						{
+							Name:  "demo",
+							Image: "demo",
+							Ports: []types.ServicePortConfig{
+								{
+									Published: "1",
+									Target:    1,
+								},
+							},
+						},
+						{
+							Name:  "demo1",
+							Image: "demo1",
+							Ports: []types.ServicePortConfig{
+								{
+									Published: "2",
+									Target:    2,
+								},
+							},
+						},
+					},
+				}
+
+				Expect(errors.Is(ValidateComposeProject(q), ErrDuplicateIngressPath)).Should(BeTrue())
+			})
+
+			It("should fail when two services have update-credentials-defined", func() {
+				q := &types.Project{
+					Name: "test",
+					Services: []types.ServiceConfig{
+						{
+							Name:  "demo",
+							Image: "demo",
+							Ports: []types.ServicePortConfig{
+								{
+									Published: "1",
+									Target:    1,
+								},
+							},
+							Extensions: map[string]interface{}{
+								"x-kuberlogic-set-credentials-cmd": "test",
+							},
+						},
+						{
+							Name:  "demo1",
+							Image: "demo1",
+							Extensions: map[string]interface{}{
+								"x-kuberlogic-set-credentials-cmd": "test",
+							},
+						},
+					},
+				}
+
+				Expect(errors.Is(ValidateComposeProject(q), ErrTooManyCredentialsCommands)).Should(BeTrue())
+			})
 		})
 	})
 })

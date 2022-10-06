@@ -4,13 +4,13 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"sort"
 	"strconv"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/api/resource"
+
 	"github.com/compose-spec/compose-go/types"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -21,14 +21,16 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 )
 
 const (
-	ingressPathExtension       = "x-kuberlogic-access-http-path"
-	healthEndpointExtension    = "x-kuberlogic-health-endpoint"
-	setCredentialsCmdExtension = "x-kuberlogic-set-credentials-cmd"
-	configsExtension           = "x-kuberlogic-file-configs"
-	secretsExtension           = "x-kuberlogic-secrets"
+	IngressPathExtension       = "x-kuberlogic-access-http-path"
+	HealthEndpointExtension    = "x-kuberlogic-health-endpoint"
+	SetCredentialsCmdExtension = "x-kuberlogic-set-credentials-cmd"
+	ConfigsExtension           = "x-kuberlogic-file-configs"
+	SecretsExtension           = "x-kuberlogic-secrets"
 )
 
 var (
@@ -68,17 +70,17 @@ var (
 )
 
 var (
-	errUnknownObject                = errors.New("unknown object kind")
-	errTooManyAccessPorts           = errors.New("too many access ports")
-	errParsingPublishedPort         = errors.New("can't parse published port")
-	errDuplicatePublishedPort       = errors.New("duplicate published port")
-	errIngressPathEmpty             = errors.New("HTTP access path is not found")
-	errDuplicateIngressPath         = errors.New("HTTP access path has been already used")
-	errTooManyCredentialsCommands   = errors.New("too many " + setCredentialsCmdExtension + " extensions")
-	errCredentialsCommandNotDefined = errors.New(setCredentialsCmdExtension + " extension not found")
-	errConfigsDecodeFailed          = errors.New(configsExtension + " must be of type map[string]string")
-	errSecretsDecodeFailed          = errors.New(secretsExtension + " must be of type map[string]string")
-	errStringConversionFailed       = errors.New("failed to read string")
+	ErrUnknownObject                = errors.New("unknown object kind")
+	ErrTooManyAccessPorts           = errors.New("only one exposed port is allowed")
+	ErrParsingPublishedPort         = errors.New("can't parse published port")
+	ErrDuplicatePublishedPort       = errors.New("duplicate published port")
+	ErrIngressPathEmpty             = errors.New("HTTP access path is not found")
+	ErrDuplicateIngressPath         = errors.New("HTTP access path has been already used")
+	ErrTooManyCredentialsCommands   = errors.New("too many " + SetCredentialsCmdExtension + " extensions")
+	ErrCredentialsCommandNotDefined = errors.New(SetCredentialsCmdExtension + " extension not found")
+	ErrConfigsDecodeFailed          = errors.New(ConfigsExtension + " must be of type map[string]string")
+	ErrSecretsDecodeFailed          = errors.New(SecretsExtension + " must be of type map[string]string")
+	ErrStringConversionFailed       = errors.New("failed to read string")
 )
 
 type ComposeModel struct {
@@ -214,7 +216,7 @@ func (c *ComposeModel) fromCluster(objects []*unstructured.Unstructured) error {
 		case "ConfigMap":
 			object = c.configmap
 		default:
-			return errUnknownObject
+			return ErrUnknownObject
 		}
 		if err := commons.FromUnstructured(obj.UnstructuredContent(), object); err != nil {
 			return errors.Wrapf(err, "error marshaling %s", obj.GetKind())
@@ -258,24 +260,14 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 		c.secret.Data = make(map[string][]byte, 0)
 	}
 	// now go and set secret data
-	if secrets, set := c.composeProject.Extensions[secretsExtension]; set {
-		var secretsMap map[string]interface{}
-		var converted bool
-		if secretsMap, converted = secrets.(map[string]interface{}); !converted {
-			return errSecretsDecodeFailed
-		}
-
-		for k, v := range secretsMap {
+	if secrets, set := c.composeProject.Extensions[SecretsExtension]; set {
+		for k, v := range secrets.(map[string]interface{}) {
 			if _, set := c.secret.Data[k]; set {
 				c.logger.Debug("secret %s is already set. skipping.", k)
 				continue
 			}
 
-			var strVal string
-			if strVal, converted = v.(string); !converted {
-				return errStringConversionFailed
-			}
-			value, err := req.RenderTemplate(strVal, c.secret.Data)
+			value, err := req.RenderTemplate(v.(string), c.secret.Data)
 			if err != nil {
 				return errors.Wrapf(err, "failed to generate secret %s", k)
 			}
@@ -351,7 +343,7 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 			container.Ports = append(container.Ports, port)
 
 			healthz := "/"
-			if customHealthz := composeService.Extensions[healthEndpointExtension]; customHealthz != nil {
+			if customHealthz := composeService.Extensions[HealthEndpointExtension]; customHealthz != nil {
 				healthz = customHealthz.(string)
 			}
 
@@ -404,18 +396,12 @@ func (c *ComposeModel) setApplicationAccessObjects(req *commons.PluginRequest) e
 		if svc.Ports == nil || len(svc.Ports) == 0 {
 			continue
 		}
-		if len(svc.Ports) > 1 {
-			return errors.Wrap(errTooManyAccessPorts, fmt.Sprintf("service %s must have only one published port", svc.Name))
-		}
 
 		published := svc.Ports[0]
 		targetPort := intstr.FromInt(int(published.Target))
 		publishedPort, err := strconv.Atoi(published.Published)
 		if err != nil {
-			return errors.Wrap(errParsingPublishedPort, fmt.Sprintf("can't render port %s", published.Published))
-		}
-		if _, found := svcPorts[int32(publishedPort)]; found {
-			return errors.Wrap(errDuplicatePublishedPort, fmt.Sprintf("port %d is already exposed", publishedPort))
+			return errors.Wrap(ErrParsingPublishedPort, fmt.Sprintf("can't render port %s", published.Published))
 		}
 
 		svcPort := corev1.ServicePort{
@@ -427,8 +413,8 @@ func (c *ComposeModel) setApplicationAccessObjects(req *commons.PluginRequest) e
 		c.service.Spec.Ports = append(c.service.Spec.Ports, svcPort)
 
 		path := "/"
-		if svc.Extensions != nil && svc.Extensions[ingressPathExtension] != nil {
-			path = svc.Extensions[ingressPathExtension].(string)
+		if svc.Extensions != nil && svc.Extensions[IngressPathExtension] != nil {
+			path = svc.Extensions[IngressPathExtension].(string)
 		}
 
 		svcPorts[svcPort.Port] = path
@@ -461,17 +447,12 @@ func (c *ComposeModel) setApplicationAccessObjects(req *commons.PluginRequest) e
 		}
 	}
 
-	ingressPaths := make(map[string]interface{}, 0)
 	paths := make([]networkingv1.HTTPIngressPath, 0)
 	pathType := networkingv1.PathTypePrefix
 	for _, port := range c.service.Spec.Ports {
 		path, found := svcPorts[port.Port]
 		if !found {
-			return errors.Wrap(errIngressPathEmpty, fmt.Sprintf("ingress path not found for port %s", port.Name))
-		}
-
-		if _, found := ingressPaths[path]; found {
-			return errors.Wrap(errDuplicateIngressPath, fmt.Sprintf("duplicate ingress path `%s`", path))
+			return errors.Wrap(ErrIngressPathEmpty, fmt.Sprintf("ingress path not found for port %s", port.Name))
 		}
 
 		ingressPath := networkingv1.HTTPIngressPath{
@@ -486,7 +467,6 @@ func (c *ComposeModel) setApplicationAccessObjects(req *commons.PluginRequest) e
 				},
 			},
 		}
-		ingressPaths[path] = nil
 		paths = append(paths, ingressPath)
 	}
 
@@ -507,16 +487,14 @@ func (c *ComposeModel) GetCredentialsMethod(req *commons.PluginRequestCredential
 	// search across services
 	var commandTemplate, container string
 	for _, svc := range c.composeProject.Services {
-		if cmdTmpl := svc.Extensions[setCredentialsCmdExtension]; cmdTmpl != nil {
-			if container != "" || commandTemplate != "" {
-				return nil, errTooManyCredentialsCommands
-			}
+		if cmdTmpl := svc.Extensions[SetCredentialsCmdExtension]; cmdTmpl != nil {
 			commandTemplate, container = cmdTmpl.(string), svc.Name
+			break
 		}
 	}
 
 	if container == "" || commandTemplate == "" {
-		return nil, errCredentialsCommandNotDefined
+		return nil, ErrCredentialsCommandNotDefined
 	}
 
 	v, err := req.RenderTemplate(commandTemplate)
@@ -624,7 +602,7 @@ func (c *ComposeModel) buildContainerVolumeMounts(s *types.ServiceConfig, req *c
 				found = true
 			}
 		}
-		if ! found {
+		if !found {
 			c.deployment.Spec.Template.Spec.Volumes = append(c.deployment.Spec.Template.Spec.Volumes,
 				corev1.Volume{
 					Name: c.persistentvolumeclaim.GetName(),
@@ -638,13 +616,7 @@ func (c *ComposeModel) buildContainerVolumeMounts(s *types.ServiceConfig, req *c
 		}
 	}
 
-	if configMap, set := s.Extensions[configsExtension]; set {
-		var configs map[string]interface{}
-		var converted bool
-		if configs, converted = configMap.(map[string]interface{}); !converted {
-			return nil, errConfigsDecodeFailed
-		}
-
+	if configMap, set := s.Extensions[ConfigsExtension]; set {
 		c.configmap.SetName(req.Name)
 		c.configmap.SetNamespace(req.Namespace)
 		c.configmap.Data = make(map[string]string, 0)
@@ -662,7 +634,7 @@ func (c *ComposeModel) buildContainerVolumeMounts(s *types.ServiceConfig, req *c
 			}
 		}
 
-		if ! found {
+		if !found {
 			c.deployment.Spec.Template.Spec.Volumes = append(c.deployment.Spec.Template.Spec.Volumes,
 				corev1.Volume{
 					Name: configVolumeName,
@@ -676,13 +648,8 @@ func (c *ComposeModel) buildContainerVolumeMounts(s *types.ServiceConfig, req *c
 				})
 		}
 
-		for path, config := range configs {
-			var strVal string
-			if strVal, converted = config.(string); !converted {
-				return nil, errStringConversionFailed
-			}
-
-			rendered, err := req.RenderTemplate(strVal, c.secret.Data)
+		for path, config := range configMap.(map[string]interface{}) {
+			rendered, err := req.RenderTemplate(config.(string), c.secret.Data)
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to render config %s", path)
 			}
@@ -713,4 +680,87 @@ func (c *ComposeModel) buildContainerVolumeMounts(s *types.ServiceConfig, req *c
 		return volumeMounts[i].Name < volumeMounts[j].Name
 	})
 	return volumeMounts, nil
+}
+
+// ValidateComposeProject reads docker-compose project p, checks it against Kuberlogic requirements and returns error when validation fails
+func ValidateComposeProject(p *types.Project) error {
+	// validate secrets extension
+	if secrets, set := p.Extensions[SecretsExtension]; set {
+		if _, converted := secrets.(map[string]interface{}); !converted {
+			return errors.Wrapf(ErrSecretsDecodeFailed, "failed to decode parameter %s", SecretsExtension)
+		}
+		for k, v := range secrets.(map[string]interface{}) {
+			if _, ok := v.(string); !ok {
+				return errors.Wrapf(ErrSecretsDecodeFailed, "it is expected that key `%s` value is string", k)
+			}
+		}
+	}
+
+	// validate configs
+	for _, svc := range p.Services {
+		if configs, set := svc.Extensions[ConfigsExtension]; set {
+			if _, converted := configs.(map[string]interface{}); !converted {
+				return errors.Wrapf(ErrConfigsDecodeFailed, "failed to decode parameter %s in service %s", ConfigsExtension, svc.Name)
+			}
+
+			for k, v := range configs.(map[string]interface{}) {
+				if _, ok := v.(string); !ok {
+					return errors.Wrapf(ErrConfigsDecodeFailed, " it is expected that key `%s` value is string", k)
+				}
+			}
+		}
+	}
+
+	// ingressPaths contains ingresses, we will check for duplicates
+	// svcPorts contains exposed ports, we will check for duplicates
+	ingressPaths := make(map[string]string, 0)
+	svcPorts := make(map[string]string, 0)
+	for _, svc := range p.Services {
+		// no ports found
+		if svc.Ports == nil || len(svc.Ports) == 0 {
+			continue
+		}
+
+		// too many ports found
+		if len(svc.Ports) != 1 {
+			return errors.Wrapf(ErrTooManyAccessPorts, "error in service `%s`", svc.Name)
+		}
+
+		port := svc.Ports[0]
+		if name, found := svcPorts[port.Published]; found {
+			return errors.Wrapf(ErrDuplicatePublishedPort,
+				"failed to expose service `%s` on port `%s`, it is already used by service `%s`", svc.Name, port.Published, name)
+		}
+		svcPorts[port.Published] = svc.Name
+
+		// check for ingress paths duplicates
+		path := "/"
+		if customPath, found := svc.Extensions[IngressPathExtension]; found {
+			var converted bool
+			if path, converted = customPath.(string); !converted {
+				return errors.Wrapf(ErrStringConversionFailed, "failed to decode parameter `%s` in service `%s`", IngressPathExtension, svc.Name)
+			}
+		}
+
+		if name, found := ingressPaths[path]; found {
+			return errors.Wrapf(ErrDuplicateIngressPath,
+				"failed to expose service `%s` on HTTP path `%s`, it is already used by service `%s`", svc.Name, path, name)
+		}
+		ingressPaths[path] = svc.Name
+	}
+
+	// check for update credentials method
+	var container, commandTemplate string
+	for _, svc := range p.Services {
+		if val := svc.Extensions[SetCredentialsCmdExtension]; val != nil {
+			if container != "" || commandTemplate != "" {
+				return errors.Wrapf(ErrTooManyCredentialsCommands, "only one service can have `%s` parameter set", SetCredentialsCmdExtension)
+			}
+			if _, ok := val.(string); !ok {
+				return errors.Wrapf(ErrStringConversionFailed, "failed to decode parameter `%s` in service `%s`", SetCredentialsCmdExtension, svc.Name)
+			}
+			container, commandTemplate = svc.Name, val.(string)
+		}
+	}
+	return nil
 }

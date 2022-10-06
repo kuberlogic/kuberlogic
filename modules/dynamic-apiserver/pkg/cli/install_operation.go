@@ -15,6 +15,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/compose-spec/compose-go/loader"
+	composeTypes "github.com/compose-spec/compose-go/types"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugins/docker-compose/plugin/compose"
+
 	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -184,7 +189,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		}
 
 		cachedDockerCompose := filepath.Join(cacheDir, "manager/docker-compose.yaml")
-		if value, err := getStringPrompt(command, installDockerComposeParam, cachedConfigOrEmpty(cachedDockerCompose), false, validateFileAvailable); err != nil {
+		if value, err := getStringPrompt(command, installDockerComposeParam, cachedConfigOrEmpty(cachedDockerCompose), false, validateDockerComposeFile); err != nil {
 			return errors.Wrapf(err, "error processing %s flag", installDockerComposeParam)
 		} else if value != "" {
 			if err := cacheConfigFile(value, cachedDockerCompose); err != nil {
@@ -312,11 +317,14 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		if err != nil {
 			return err
 		}
-		command.Println("Waiting for cert-manager to be ready...")
-		cmd = fmt.Sprintf("%s -n cert-manager wait --for=condition=ready pods --all --timeout=300s", kubectlBin)
-		if out, err := exec.Command("sh", "-c", cmd).CombinedOutput(); err != nil {
-			command.Println(string(out))
-			return errors.New("failed to install cert-manager")
+		command.Printf("Waiting for cert-manager to be ready...\n\n")
+
+		for _, deploy := range []string{"cert-manager-webhook", "cert-manager"} {
+			cmd = fmt.Sprintf("%s -n cert-manager wait --for=condition=available deployment/%s --timeout=300s", kubectlBin, deploy)
+			if out, err := exec.Command("sh", "-c", cmd).CombinedOutput(); err != nil {
+				command.Println(string(out))
+				return errors.New("failed to install cert-manager")
+			}
 		}
 
 		command.Println("Installing KuberLogic...")
@@ -327,11 +335,12 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 			return err
 		}
 		command.Println("Waiting for Kuberlogic to be ready...")
-		cmd = fmt.Sprintf("%s -n kuberlogic wait --for=condition=ready pods --all --timeout=300s", kubectlBin)
+		cmd = fmt.Sprintf("%s -n kuberlogic wait --for=condition=Available deployment/kls-controller-manager --timeout=300s", kubectlBin)
 		if out, err := exec.Command("sh", "-c", cmd).CombinedOutput(); err != nil {
 			command.Println(string(out))
 			return errors.New("failed to install Kuberlogic")
 		}
+		command.Printf("KuberLogic is ready.\n\n")
 
 		command.Println("Fetching KuberLogic endpoint...")
 		endpoint, err := getKuberlogicServiceEndpoint("kls-api-server", 60, k8sclient)
@@ -556,6 +565,34 @@ func validateChargebeeMappingfile(f string) error {
 	}
 	if !result.Valid() {
 		return errors.Errorf("Invalid yaml schema: %v", result.Errors())
+	}
+	return nil
+}
+
+func validateDockerComposeFile(f string) error {
+	if err := validateFileAvailable(f); err != nil {
+		return err
+	}
+
+	content, err := os.ReadFile(f)
+	if err != nil {
+		return errors.Wrap(err, "failed to read docker-compose file")
+	}
+
+	project, err := loader.Load(composeTypes.ConfigDetails{
+		WorkingDir: "/tmp",
+		ConfigFiles: []composeTypes.ConfigFile{
+			{
+				Filename: f,
+				Content:  content,
+			},
+		},
+	})
+	if err != nil {
+		return errors.Wrap(err, "failed to load provided docker-compose file")
+	}
+	if err := compose.ValidateComposeProject(project); err != nil {
+		return errors.Wrapf(err, "docker-compose validation has failed. Please see https://kuberlogic.com/docs/tags/docker-compose for the reference")
 	}
 	return nil
 }
