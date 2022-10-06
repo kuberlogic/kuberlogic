@@ -18,6 +18,10 @@ package kuberlogicservice_env
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+
 	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	config "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
 	"github.com/pkg/errors"
@@ -117,6 +121,53 @@ func (e *EnvironmentManager) SetupEnv(ctx context.Context) error {
 		}
 	}
 
+	registrySecret := &v1.Secret{
+		ObjectMeta: v12.ObjectMeta{
+			Name:      "docker-registry",
+			Namespace: ns.GetName(),
+		},
+	}
+	if e.cfg.DockerRegistry.Url != "" {
+		dockerConfigJson, err := dockerCredsToJson(
+			e.cfg.DockerRegistry.Url,
+			e.cfg.DockerRegistry.Username,
+			e.cfg.DockerRegistry.Password,
+		)
+		if err != nil {
+			return errors.Wrap(err, "error parsing docker-registry secret")
+		}
+		if _, err := controllerruntime.CreateOrUpdate(ctx, e.Client, registrySecret, func() error {
+			registrySecret.Type = v1.SecretTypeDockerConfigJson
+			registrySecret.Data = map[string][]byte{
+				".dockerconfigjson": dockerConfigJson,
+			}
+			return nil
+		}); err != nil {
+			return errors.Wrap(err, "error syncing docker-registry Secret")
+		}
+
+		serviceAccount := &v1.ServiceAccount{
+			ObjectMeta: v12.ObjectMeta{
+				Name:      "default",
+				Namespace: ns.GetName(),
+			},
+		}
+		if _, err := controllerruntime.CreateOrUpdate(ctx, e.Client, serviceAccount, func() error {
+			for _, secret := range serviceAccount.ImagePullSecrets {
+				if secret.Name == registrySecret.GetName() {
+					return nil
+				}
+			}
+			serviceAccount.ImagePullSecrets = append(
+				serviceAccount.ImagePullSecrets,
+				v1.LocalObjectReference{Name: registrySecret.GetName()},
+			)
+			return nil
+		}); err != nil {
+			return errors.Wrap(err, "error updating default service account")
+		}
+	}
+
 	klbs := &kuberlogiccomv1alpha1.KuberlogicServiceBackupSchedule{}
 	klbs.SetName(e.kls.GetName())
 	klbs.SetNamespace(e.cfg.Namespace)
@@ -176,4 +227,22 @@ func envLabels(kls *kuberlogiccomv1alpha1.KuberLogicService) map[string]string {
 	return map[string]string{
 		"kuberlogic.com/env": kls.Name,
 	}
+}
+
+func dockerCredsToJson(url, username, password string) ([]byte, error) {
+	type RegistryCredentials struct {
+		Auth string `json:"auth"`
+	}
+
+	type Auths struct {
+		Registries map[string]RegistryCredentials `json:"auths"`
+	}
+
+	return json.Marshal(Auths{
+		Registries: map[string]RegistryCredentials{
+			url: {
+				Auth: base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password))),
+			},
+		},
+	})
 }

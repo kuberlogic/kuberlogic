@@ -58,6 +58,10 @@ const (
 	installReportErrors                 = "report_errors"
 	installSentryDSNParam               = "sentry_dsn"
 	installDeploymentId                 = "deployment_id"
+	installUseCustomDockerRegistryParam = "use_custom_docker_registry"
+	installCustomDockerRegistryURL      = "custom_docker_registry_url"
+	installCustomDockerRegistryUsername = "custom_docker_registry_username"
+	installCustomDockerRegistryPassword = "custom_docker_registry_password"
 )
 
 var (
@@ -100,6 +104,10 @@ func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
 	_ = cmd.PersistentFlags().String(installKuberlogicDomainParam, "", "Specify “Domain name”.\nThis configuration setting is used by KuberLogic to create endpoints for application instances. (e.g. instance1.domainname.com).")
 	_ = cmd.PersistentFlags().Bool(installReportErrors, false, "Report errors to KuberLogic?\nChoose 'yes' if you want to help us improve KuberLogic, otherwise, select 'no'. Error reports will be generated and sent automatically, these reports contain only information about the errors and do not contain any user data. Let us receive errors at least from your test environments.")
 	_ = cmd.PersistentFlags().String(installSentryDSNParam, "", "Specify Sentry Data Source Name (DSN).\nFor more information, read https://docs.sentry.io/product/sentry-basics/dsn-explainer/ . (KuberLogic team will not be notified in case of errors).")
+	_ = cmd.PersistentFlags().Bool(installUseCustomDockerRegistryParam, false, "Add custom docker registry credentials? Choose 'yes' if your application consists of images in private docker-registry")
+	_ = cmd.PersistentFlags().String(installCustomDockerRegistryURL, "", "Specify private docker registry URL")
+	_ = cmd.PersistentFlags().String(installCustomDockerRegistryUsername, "", "Specify private docker registry username")
+	_ = cmd.PersistentFlags().String(installCustomDockerRegistryPassword, "", "Specify private docker registry password")
 	return cmd
 }
 
@@ -257,6 +265,27 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 				return errors.Wrap(err, "failed to cache tls.key")
 			}
 		}
+		var customDockerRegistry bool
+		var dockerRegistryUrl string
+		var dockerRegistryUsername string
+		var dockerRegistryPassword string
+		if customDockerRegistry, err = getBoolPrompt(command, false, installUseCustomDockerRegistryParam); err != nil {
+			return errors.Wrapf(err, "error processing %s flag", installUseCustomDockerRegistryParam)
+		}
+		if customDockerRegistry {
+			if dockerRegistryUrl, err = getStringPrompt(command, installCustomDockerRegistryURL, klParams.GetString(installCustomDockerRegistryURL), true, nil); err != nil {
+				return errors.Wrapf(err, "error processing %s flag", installCustomDockerRegistryURL)
+			}
+			if dockerRegistryUsername, err = getStringPrompt(command, installCustomDockerRegistryUsername, klParams.GetString(installCustomDockerRegistryUsername), true, nil); err != nil {
+				return errors.Wrapf(err, "error processing %s flag", installCustomDockerRegistryUsername)
+			}
+			if dockerRegistryPassword, err = getStringPrompt(command, installCustomDockerRegistryPassword, klParams.GetString(installCustomDockerRegistryPassword), true, nil); err != nil {
+				return errors.Wrapf(err, "error processing %s flag", installCustomDockerRegistryPassword)
+			}
+		}
+		klParams.Set(installCustomDockerRegistryURL, dockerRegistryUrl)
+		klParams.Set(installCustomDockerRegistryUsername, dockerRegistryUsername)
+		klParams.Set(installCustomDockerRegistryPassword, dockerRegistryPassword)
 
 		var useKLSentry bool
 		var sentrDSN string

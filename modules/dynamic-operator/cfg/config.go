@@ -17,6 +17,13 @@ type Config struct {
 	IngressClass string `envconfig:"optional"`
 	StorageClass string `envconfig:"optional"`
 
+	// Private container registry credentials
+	DockerRegistry struct {
+		Url      string
+		Username string
+		Password string
+	} `envconfig:"optional"`
+
 	Plugins []struct {
 		Name string
 		Path string

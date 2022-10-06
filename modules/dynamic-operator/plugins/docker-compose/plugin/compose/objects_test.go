@@ -3,6 +3,8 @@ package compose
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"strings"
+
 	"github.com/compose-spec/compose-go/types"
 	"github.com/go-test/deep"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
@@ -12,7 +14,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"strings"
 )
 
 var envVal = "val"
@@ -76,7 +77,7 @@ var _ = Describe("docker-compose model", func() {
 			By("Checking Reconcile return parameters")
 			objs, err := c.Reconcile(requests)
 			Expect(err).Should(BeNil())
-			Expect(len(objs)).Should(Equal(7))
+			Expect(len(objs)).Should(Equal(6))
 
 			By("Validating returned Deployment")
 			firstDeployment := *c.deployment
@@ -108,7 +109,7 @@ var _ = Describe("docker-compose model", func() {
 			By("Checking Reconcile result for the 2nd time")
 			secondRunObjs, secondErr := c.Reconcile(requests)
 			Expect(secondErr).Should(BeNil())
-			Expect(len(secondRunObjs)).Should(Equal(7))
+			Expect(len(secondRunObjs)).Should(Equal(6))
 
 			By("Validating returned Deployment")
 			secondDeployment := *c.deployment
@@ -580,7 +581,7 @@ var _ = Describe("docker-compose model", func() {
 			By("Checking Reconcile return parameters")
 			objs, err := c.Reconcile(requests)
 			Expect(err).Should(BeNil())
-			Expect(len(objs)).Should(Equal(7))
+			Expect(len(objs)).Should(Equal(6))
 
 			By("Validating returned Deployment")
 
@@ -790,8 +791,8 @@ var _ = Describe("docker-compose model", func() {
 			Expect(resp).ShouldNot(BeNil())
 			Expect(err).Should(BeNil())
 
-                        md5Key := md5.Sum([]byte("/test"))
-                        expectedKey := hex.EncodeToString(md5Key[:])
+			md5Key := md5.Sum([]byte("/test"))
+			expectedKey := hex.EncodeToString(md5Key[:])
 
 			Expect(len(c.configmap.Data)).Should(Equal(1))
 			Expect(c.configmap.Data[expectedKey]).Should(MatchRegexp("app=[a-zA-Z]+"))
