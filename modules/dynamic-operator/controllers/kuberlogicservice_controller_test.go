@@ -363,7 +363,7 @@ var _ = Describe("KuberlogicService controller", func() {
 			Expect(k8sClient.Delete(ctx, kls)).Should(Succeed())
 		})
 	})
-	FWhen("move kls to archive status", func() {
+	When("move kls to archive status", func() {
 		By("creating kls")
 		kls := &v1alpha1.KuberLogicService{
 			ObjectMeta: metav1.ObjectMeta{
