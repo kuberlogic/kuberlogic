@@ -182,6 +182,7 @@ func (srv *Service) WaitForServiceBackup(ctx context.Context, serviceId *string,
 	3. Remove the service itself
 */
 func (srv *Service) ArchiveKuberlogicService(serviceId *string) {
+	// how actually works this function, where is description?
 	ctx := context.Background()
 	// Take backup of the service
 	archive, err := srv.CreateKuberlogicServiceBackup(ctx, serviceId)
@@ -216,8 +217,6 @@ func (srv *Service) ArchiveKuberlogicService(serviceId *string) {
 		srv.log.Errorw(msg, "error", err)
 		return
 	}
-
-	// Delete service
 	err = srv.kuberlogicClient.Delete().
 		Resource(serviceK8sResource).
 		Name(*serviceId).

@@ -75,11 +75,10 @@ var _ = Describe("KuberlogicService controller", func() {
 			Expect(k8sClient.Create(ctx, kls)).Should(Succeed())
 
 			By("By checking a new KuberLogicService")
-			lookupKlsKey := client.ObjectKeyFromObject(kls)
 			createdKls := &v1alpha1.KuberLogicService{}
 
 			Eventually(func() error {
-				return k8sClient.Get(ctx, lookupKlsKey, createdKls)
+				return k8sClient.Get(ctx, client.ObjectKeyFromObject(kls), createdKls)
 			}, timeout, interval).Should(Not(HaveOccurred()))
 			Expect(createdKls.Spec.Type).Should(Equal("docker-compose"))
 
@@ -363,5 +362,63 @@ var _ = Describe("KuberlogicService controller", func() {
 
 			Expect(k8sClient.Delete(ctx, kls)).Should(Succeed())
 		})
+	})
+	When("move kls to archive status", func() {
+		By("creating kls")
+		kls := &v1alpha1.KuberLogicService{
+			ObjectMeta: metav1.ObjectMeta{
+				GenerateName: klsName,
+			},
+			Spec: v1alpha1.KuberLogicServiceSpec{
+				Type:     "docker-compose",
+				Replicas: defaultReplicas,
+			},
+		}
+		Expect(k8sClient.Create(ctx, kls)).Should(Succeed())
+
+		By("waiting until kls is ready")
+		Eventually(func() error {
+			if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(kls), kls); err != nil {
+				return err
+			}
+			if r, f, _ := kls.IsReady(); !r {
+				return errors.New("service is not ready, status: " + f)
+			}
+			return nil
+		}, timeout, interval).Should(Succeed())
+
+		By("setting kls to archive")
+		kls.Spec.Archived = true
+		Expect(k8sClient.Status().Update(ctx, kls)).Should(Succeed())
+
+		By("waiting until kls is archive state")
+		Eventually(func() error {
+			if err := k8sClient.Get(ctx, client.ObjectKeyFromObject(kls), kls); err != nil {
+				return err
+			}
+			if !kls.Archived() {
+				return errors.New("service is not in Archive state")
+			}
+			return nil
+		}, timeout, interval).Should(Succeed())
+
+		By("waiting the namespace is deleted")
+		Eventually(func() error {
+			ns := &v1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: kls.GetName(),
+				},
+			}
+			err := k8sClient.Get(ctx, client.ObjectKeyFromObject(ns), ns)
+			if !k8serrors.IsNotFound(err) {
+				return err
+			} else if err == nil {
+				return errors.New("namespace is not deleted")
+			}
+			return nil
+		}, timeout, interval).Should(Succeed())
+
+		By("cleanup kls")
+		Expect(k8sClient.Delete(ctx, kls)).Should(Succeed())
 	})
 })
