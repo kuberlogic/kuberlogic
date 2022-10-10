@@ -35,11 +35,31 @@ func createService(logger *zap.SugaredLogger, svc *models.Service) error {
 		return err
 	}
 
-	logger.Infof("service is created: %s, waiting ready status", svc.ID)
+	logger.Infof("service is created: %s, waiting ready status", *svc.ID)
 
 	// checking the status asynchronously
 	// maxRetries == 1 2 4 8 16 32 64 128 256 512 1024 2048 4096
 	go checkStatus(logger, *svc.ID, svc.Subscription, time.Second, 13)
+	return nil
+}
+
+func editService(logger *zap.SugaredLogger, svc *models.Service) error {
+	params := service.NewServiceEditParams()
+	params.ServiceItem = svc
+	params.ServiceID = *svc.ID
+
+	apiClient, err := makeClient()
+	if err != nil {
+		return err
+	}
+
+	_, err = apiClient.Service.ServiceEdit(params,
+		httptransport.APIKeyAuth("X-Token", "header", viper.GetString("KUBERLOGIC_APISERVER_TOKEN")))
+	if err != nil {
+		return err
+	}
+
+	logger.Infof("service is edited: %s", *svc.ID)
 	return nil
 }
 
@@ -145,5 +165,18 @@ func createServiceItem() *models.Service {
 	return &models.Service{
 		ID:   &name,
 		Type: &serviceType,
+	}
+}
+
+func copyServiceItem(svc *models.Service) *models.Service {
+	return &models.Service{
+		ID:             svc.ID,
+		Type:           svc.Type,
+		Advanced:       svc.Advanced,
+		BackupSchedule: svc.BackupSchedule,
+		Domain:         svc.Domain,
+		Insecure:       svc.Insecure,
+		Replicas:       svc.Replicas,
+		Version:        svc.Version,
 	}
 }
