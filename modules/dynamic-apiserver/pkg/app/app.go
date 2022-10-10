@@ -175,6 +175,12 @@ func (srv *Service) WaitForServiceBackup(ctx context.Context, serviceId *string,
 	return errors.New("Retries exceeded, backup is not ready")
 }
 
+/*
+	Archive service will:
+	1. Take new backup of a service (if backups enabled)
+	2. Remove all previous backups
+	3. Remove the service itself
+*/
 func (srv *Service) ArchiveKuberlogicService(serviceId *string) {
 	ctx := context.Background()
 	// Take backup of the service
@@ -208,6 +214,7 @@ func (srv *Service) ArchiveKuberlogicService(serviceId *string) {
 	} else {
 		msg := "error taking service backup"
 		srv.log.Errorw(msg, "error", err)
+		return
 	}
 
 	// Delete service

@@ -158,7 +158,7 @@ func (pl *PluginRequest) RenderTemplate(tpl string, secrets map[string][]byte) (
 			if pl.Insecure {
 				proto = "http"
 			}
-      
+
 			host := defaultValue
 			if pl.Host != "" {
 				host = pl.Host
