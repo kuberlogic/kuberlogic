@@ -141,7 +141,7 @@ func (e *EnvironmentManager) SetupEnv(ctx context.Context) error {
 			registrySecret.Data = map[string][]byte{
 				".dockerconfigjson": dockerConfigJson,
 			}
-			return nil
+			return controllerruntime.SetControllerReference(e.kls, registrySecret, e.Scheme())
 		}); err != nil {
 			return errors.Wrap(err, "error syncing docker-registry Secret")
 		}
