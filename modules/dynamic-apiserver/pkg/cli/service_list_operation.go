@@ -1,12 +1,13 @@
 package cli
 
 import (
+	"strconv"
+
 	client2 "github.com/go-openapi/runtime/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/service"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/viper"
-	"strconv"
 
 	"github.com/spf13/cobra"
 )
@@ -20,7 +21,7 @@ func makeServiceListCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra
 		RunE:    runServiceList(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(subscriptionIdFlag, "", "subscription id to filter by")
+	_ = cmd.PersistentFlags().String(subscriptionId, "", "subscription id to filter by")
 
 	return cmd
 }
