@@ -1,3 +1,8 @@
+## [0.0.15] - 2022-10-11
+- Support custom config files for managed applications
+- Validate docker-compose file before installation
+- Use ChargeBee features for managing applications feature based on subscriptions
+
 ## [0.0.14] - 2022-09-20
 - Using "insecure" mode instead of tls-enabled. It means TLS enabled by default
 
