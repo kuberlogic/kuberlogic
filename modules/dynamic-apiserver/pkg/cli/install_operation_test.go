@@ -176,6 +176,12 @@ func TestValidationSentryURI(t *testing.T) {
 
 func TestValidationDockerComposeProvided(t *testing.T) {
 	testFile, _ := os.CreateTemp(".", "docker-compose")
+	_, _ = testFile.WriteString(`---
+version: "3.8"
+services:
+  demo:
+    image: "demo:latest"
+`)
 	testFile.Close()
 	defer os.Remove(testFile.Name())
 
