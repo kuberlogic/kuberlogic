@@ -1,10 +1,10 @@
 package cli
 
 const (
-	idFlag             = "id"
-	serviceIdFlag      = "service_id"
-	backupIdFlag       = "backup_id"
-	subscriptionIdFlag = "subscription_id"
+	idFlag         = "id"
+	serviceIdFlag  = "service_id"
+	backupIdFlag   = "backup_id"
+	subscriptionId = "subscription_id"
 
 	tokenFlag   = "token"
 	apiHostFlag = "hostname"
