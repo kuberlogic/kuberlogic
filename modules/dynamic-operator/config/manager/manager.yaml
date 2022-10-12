@@ -93,17 +93,17 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: kuberlogic-config
-                  key: CUSTOM_DOCKER_REGISTRY_URL
+                  key: DOCKER_REGISTRY_URL
             - name: DOCKER_REGISTRY_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: kuberlogic-config
-                  key: CUSTOM_DOCKER_REGISTRY_USERNAME
+                  key: DOCKER_REGISTRY_USERNAME
             - name: DOCKER_REGISTRY_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: kuberlogic-config
-                  key: CUSTOM_DOCKER_REGISTRY_PASSWORD
+                  key: DOCKER_REGISTRY_PASSWORD
           args:
             - --manager-config=/etc/manager-config/controller_manager_config.yaml
           image: controller:latest
