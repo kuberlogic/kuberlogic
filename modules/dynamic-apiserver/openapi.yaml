@@ -402,6 +402,36 @@ paths:
           description: internal service error
           schema:
             $ref: "#/definitions/Error"
+  /services/{ServiceID}/archive:
+    post:
+      tags:
+        - service
+      summary: archive service
+      operationId: serviceArchive
+      description: archive service (for example, if user subscription got cancelled)
+      parameters:
+        - $ref: "#/parameters/ServiceID"
+      responses:
+        200:
+          description: service archived
+        400:
+          description: invalid input
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        404:
+          description: service not found
+          schema:
+            $ref: "#/definitions/Error"
+        422:
+          description: bad validation
+        503:
+          description: internal service error
+          schema:
+            $ref: "#/definitions/Error"
 
 
 definitions:

@@ -9,9 +9,12 @@ import (
 	"net/http"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
+	"go.uber.org/zap"
+)
+
+const (
+	MaxSubscriptionRetries = 5
 )
 
 func WebhookHandler(baseLogger *zap.SugaredLogger, mapping []map[string]string) func(w http.ResponseWriter, req *http.Request) {
@@ -138,7 +141,7 @@ func handleSubscriptionCancelled(logger *zap.SugaredLogger, event map[string]int
 	logger = logger.With("subscription id", subscriptionId)
 	// Check if service exists
 	var service *models.Service
-	for i := 0; i < 5; i++ {
+	for i := 0; i < MaxSubscriptionRetries; i++ {
 		service, err = getServiceBySubscriptionId(logger, subscriptionId)
 		if err != nil {
 			logger.Error("Error getting service by subscription: ", err)
@@ -151,30 +154,5 @@ func handleSubscriptionCancelled(logger *zap.SugaredLogger, event map[string]int
 		logger.Error("Retries exceeded while trying to get service by subscription: ", err)
 		return
 	}
-	// Take backup of the service
-	newBackup, err := addServiceBackup(logger, *service.ID)
-	if err != nil {
-		logger.Error("Error making service backup: ", err)
-	} else {
-		// Wait until backup is done
-		err = waitForBackup(logger, *service.ID, newBackup.ID)
-		// Delete all previous backups
-		backups, err := listServiceBackups(logger, *service.ID)
-		if err != nil {
-			logger.Error("Error listing service backup: ", err)
-			return
-		}
-		for _, backup := range backups {
-			if backup.ID == newBackup.ID {
-				continue
-			}
-			err = deleteServiceBackup(logger, backup.ID)
-			if err != nil {
-				logger.Error("Error deleting service backup: ", err)
-				return
-			}
-		}
-	}
-	// Delete the application
-	_ = deleteService(logger, *service.ID)
+	archiveService(logger, *service.ID)
 }

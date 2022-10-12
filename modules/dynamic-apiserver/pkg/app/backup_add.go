@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiBackup "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/backup"
@@ -10,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
 )
 
 func (srv *Service) BackupAddHandler(params apiBackup.BackupAddParams, _ *models.Principal) middleware.Responder {
@@ -44,14 +44,8 @@ func (srv *Service) BackupAddHandler(params apiBackup.BackupAddParams, _ *models
 		})
 	}
 
-	klb.SetName(fmt.Sprintf("%s-%d", kls.GetName(), time.Now().Unix()))
-
-	if err := srv.kuberlogicClient.Post().
-		Resource(backupK8sResource).
-		Name(klb.GetName()).
-		Body(klb).
-		Do(ctx).
-		Into(klb); k8serrors.IsAlreadyExists(err) {
+	klb, err = srv.CreateKuberlogicServiceBackup(ctx, &klb.Spec.KuberlogicServiceName)
+	if k8serrors.IsAlreadyExists(err) {
 		srv.log.Errorw("klb already exists", "name", klb.GetName())
 		return apiBackup.NewBackupAddConflict()
 	} else if err != nil {

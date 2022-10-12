@@ -32,6 +32,8 @@ type ClientOption func(*runtime.ClientOperation)
 type ClientService interface {
 	ServiceAdd(params *ServiceAddParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceAddCreated, error)
 
+	ServiceArchive(params *ServiceArchiveParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceArchiveOK, error)
+
 	ServiceCredentialsUpdate(params *ServiceCredentialsUpdateParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceCredentialsUpdateOK, error)
 
 	ServiceDelete(params *ServiceDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceDeleteOK, error)
@@ -84,6 +86,47 @@ func (a *Client) ServiceAdd(params *ServiceAddParams, authInfo runtime.ClientAut
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for serviceAdd: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  ServiceArchive archives service
+
+  archive service (for example, if user subscription got cancelled)
+*/
+func (a *Client) ServiceArchive(params *ServiceArchiveParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceArchiveOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewServiceArchiveParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "serviceArchive",
+		Method:             "POST",
+		PathPattern:        "/services/{ServiceID}/archive",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &ServiceArchiveReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*ServiceArchiveOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceArchive: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
