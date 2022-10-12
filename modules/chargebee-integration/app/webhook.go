@@ -14,8 +14,7 @@ import (
 )
 
 const (
-	ChargebeePrefixCustomField = "cf_"
-	MaxSubscriptionRetries     = 5
+	MaxSubscriptionRetries = 5
 )
 
 func WebhookHandler(baseLogger *zap.SugaredLogger, mapping []map[string]string) func(w http.ResponseWriter, req *http.Request) {
