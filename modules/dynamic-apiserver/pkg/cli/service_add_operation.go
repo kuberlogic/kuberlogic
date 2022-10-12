@@ -29,7 +29,7 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.
 	_ = cmd.PersistentFlags().String("backup_schedule", "", "backup schedule in cron format")
 	_ = cmd.PersistentFlags().String("domain", "", "on which domain service will be available")
 	_ = cmd.PersistentFlags().Bool("insecure", false, "setup unsecure service with http, not https")
-	_ = cmd.PersistentFlags().Bool(subscriptionIdFlag, false, "")
+	_ = cmd.PersistentFlags().String(subscriptionId, "", "")
 
 	// limits
 	_ = cmd.PersistentFlags().String("limits.cpu", "", "cpu limits")
@@ -98,7 +98,7 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 			svc.Domain = *value
 		}
 
-		if value, err := getString(cmd, subscriptionIdFlag); err != nil {
+		if value, err := getString(cmd, subscriptionId); err != nil {
 			return err
 		} else if value != nil {
 			svc.Subscription = *value
