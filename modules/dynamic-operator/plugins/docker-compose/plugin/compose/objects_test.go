@@ -14,7 +14,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 )
 
@@ -79,7 +78,7 @@ var _ = Describe("docker-compose model", func() {
 			By("Checking Reconcile return parameters")
 			objs, err := c.Reconcile(requests)
 			Expect(err).Should(BeNil())
-			Expect(len(objs)).Should(Equal(7))
+			Expect(len(objs)).Should(Equal(6))
 
 			By("Validating returned Deployment")
 			firstDeployment := *c.deployment
@@ -111,7 +110,7 @@ var _ = Describe("docker-compose model", func() {
 			By("Checking Reconcile result for the 2nd time")
 			secondRunObjs, secondErr := c.Reconcile(requests)
 			Expect(secondErr).Should(BeNil())
-			Expect(len(secondRunObjs)).Should(Equal(7))
+			Expect(len(secondRunObjs)).Should(Equal(6))
 
 			By("Validating returned Deployment")
 			secondDeployment := *c.deployment
@@ -543,7 +542,7 @@ var _ = Describe("docker-compose model", func() {
 			By("Checking Reconcile return parameters")
 			objs, err := c.Reconcile(requests)
 			Expect(err).Should(BeNil())
-			Expect(len(objs)).Should(Equal(7))
+			Expect(len(objs)).Should(Equal(6))
 
 			By("Validating returned Deployment")
 

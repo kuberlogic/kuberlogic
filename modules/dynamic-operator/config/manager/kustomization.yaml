@@ -30,10 +30,10 @@ patches:
 images:
 - name: apiserver
   newName: quay.io/kuberlogic/dynamic-apiserver
-  newTag: 0.0.12
+  newTag: 0.0.14
 - name: chargebee-integration
   newName: quay.io/kuberlogic/chargebee-integration
-  newTag: 0.0.12
+  newTag: 0.0.14
 - name: controller
   newName: quay.io/kuberlogic/dynamic-operator
-  newTag: 0.0.12
+  newTag: 0.0.14

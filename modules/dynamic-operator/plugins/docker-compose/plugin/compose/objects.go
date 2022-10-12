@@ -34,11 +34,6 @@ const (
 )
 
 var (
-	serviceAccountGVK = schema.GroupVersionKind{
-		Group:   "",
-		Version: "v1",
-		Kind:    "ServiceAccount",
-	}
 	serviceGVK = schema.GroupVersionKind{
 		Group:   "",
 		Version: "v1",
@@ -87,7 +82,6 @@ type ComposeModel struct {
 	composeProject *types.Project
 	logger         *zap.SugaredLogger
 
-	serviceaccount        *corev1.ServiceAccount
 	service               *corev1.Service
 	persistentvolumeclaim *corev1.PersistentVolumeClaim
 	deployment            *appsv1.Deployment
@@ -130,9 +124,6 @@ func (c *ComposeModel) Types() []map[schema.GroupVersionKind]client.Object {
 			serviceGVK: &corev1.Service{},
 		},
 		{
-			serviceAccountGVK: &corev1.ServiceAccount{},
-		},
-		{
 			pvcGVK: &corev1.PersistentVolumeClaim{},
 		},
 		{
@@ -159,7 +150,6 @@ func NewComposeModel(p *types.Project, l *zap.SugaredLogger) *ComposeModel {
 		composeProject: p,
 		logger:         l,
 
-		serviceaccount:        &corev1.ServiceAccount{},
 		service:               &corev1.Service{},
 		persistentvolumeclaim: &corev1.PersistentVolumeClaim{},
 		deployment:            &appsv1.Deployment{},
@@ -172,9 +162,6 @@ func NewComposeModel(p *types.Project, l *zap.SugaredLogger) *ComposeModel {
 // objectsWithGVK packs all compose service dependant object into a single slice with all their GVKs
 func (c *ComposeModel) objectsWithGVK() []map[schema.GroupVersionKind]client.Object {
 	return []map[schema.GroupVersionKind]client.Object{
-		{
-			serviceAccountGVK: c.serviceaccount,
-		},
 		{
 			serviceGVK: c.service,
 		},
@@ -201,8 +188,6 @@ func (c *ComposeModel) fromCluster(objects []*unstructured.Unstructured) error {
 	for _, obj := range objects {
 		var object client.Object
 		switch obj.GetKind() {
-		case "ServiceAccount":
-			object = c.serviceaccount
 		case "Service":
 			object = c.service
 		case "PersistentVolumeClaim":
@@ -239,7 +224,6 @@ func (c *ComposeModel) setObjects(req *commons.PluginRequest) error {
 	}
 	c.logger.Debug("set persistentvolumeclaim", "object", c.persistentvolumeclaim)
 	c.logger.Debug("set deployment", "object", c.deployment)
-	c.logger.Debug("set serviceaccount", "object", c.serviceaccount)
 	if err := c.setApplicationAccessObjects(req); err != nil {
 		return errors.Wrap(err, "failed to set application access objects")
 	}
@@ -249,9 +233,6 @@ func (c *ComposeModel) setObjects(req *commons.PluginRequest) error {
 }
 
 func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
-	c.serviceaccount.SetName(req.Name)
-	c.serviceaccount.SetNamespace(req.Namespace)
-	c.serviceaccount.ObjectMeta.SetLabels(labels(req.Name))
 
 	c.secret.SetName(req.Name)
 	c.secret.SetNamespace(req.Namespace)
@@ -285,7 +266,6 @@ func (c *ComposeModel) setApplicationObjects(req *commons.PluginRequest) error {
 		MatchLabels: labels(req.Name),
 	}
 	c.deployment.Spec.Template.SetLabels(labels(req.Name))
-	c.deployment.Spec.Template.Spec.ServiceAccountName = c.serviceaccount.GetName()
 	c.deployment.Spec.Template.Spec.RestartPolicy = corev1.RestartPolicyAlways
 	c.deployment.Spec.Template.Spec.Volumes = make([]corev1.Volume, 0)
 	c.deployment.Spec.Template.Spec.HostAliases = []corev1.HostAlias{

@@ -217,3 +217,45 @@ services:
 		})
 	}
 }
+
+func TestDockerRegistryProvided(t *testing.T) {
+	configDir, _ := os.MkdirTemp("", "install-test")
+	defer os.RemoveAll(configDir)
+
+	configFile := filepath.Join(configDir, "config.yaml")
+	kubectlBin = "echo"
+
+	cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dockerUrl := "test-docker.io"
+	dockerUsername := "docker"
+	dockerPassword := "password"
+	dockerArgs := []string{
+		"--use_docker_registry",
+		"--docker_registry_url", dockerUrl,
+		"--docker_registry_username", dockerUsername,
+		"--docker_registry_password", dockerPassword,
+	}
+	cmd.SetArgs(append([]string{"install", "--config", configFile}, append(defaultArgs, dockerArgs...)...))
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	// validate provided options
+	klParams := viper.New()
+	klParams.SetConfigFile(filepath.Join(configDir, "cache/config/manager/kuberlogic-config.env"))
+	if err := klParams.ReadInConfig(); err != nil {
+		t.Fatal(err)
+	}
+	if v := klParams.GetString("DOCKER_REGISTRY_URL"); v != dockerUrl {
+		t.Fatalf("incorrect docker registry url. expected %s, got %s", dockerUrl, v)
+	}
+	if v := klParams.GetString("DOCKER_REGISTRY_USERNAME"); v != dockerUsername {
+		t.Fatalf("incorrect docker registry url. expected %s, got %s", dockerUsername, v)
+	}
+	if v := klParams.GetString("DOCKER_REGISTRY_PASSWORD"); v != dockerPassword {
+		t.Fatalf("incorrect docker registry url. expected %s, got %s", dockerPassword, v)
+	}
+}
