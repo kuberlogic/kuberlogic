@@ -6,8 +6,10 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	config "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/controllers/backuprestore"
+	"github.com/pkg/errors"
 	velero "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -32,6 +34,8 @@ type KuberlogicServiceBackupReconciler struct {
 
 	mu sync.Mutex
 }
+
+const SpecAnnotation = "kuberlogic.com/kuberlogic-service-configuration-spec"
 
 //+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservicebackups,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservicebackups/status,verbs=get;update;patch
@@ -131,12 +135,37 @@ func (r *KuberlogicServiceBackupReconciler) Reconcile(ctx context.Context, req c
 			return ctrl.Result{}, err
 		}
 	} else if klb.IsRequested() {
+		// set spec to annotation for the further restoring
+		if err := r.SetAnnotation(ctx, kls, klb); err != nil {
+			return ctrl.Result{}, err
+		}
+
 		if err := backup.BackupRequest(ctx, klb); err != nil {
 			l.Error(err, "error planning backup")
 			return ctrl.Result{}, err
 		}
 	}
 	return ctrl.Result{}, nil
+}
+
+func (r *KuberlogicServiceBackupReconciler) SetAnnotation(
+	ctx context.Context,
+	kls *kuberlogiccomv1alpha1.KuberLogicService,
+	klb *kuberlogiccomv1alpha1.KuberlogicServiceBackup,
+) error {
+	if _, ok := klb.Annotations[SpecAnnotation]; !ok {
+		spec, err := json.Marshal(kls.Spec)
+		if err != nil {
+			return errors.Wrapf(err, "cannot marshaling the spec: %s", kls.GetName())
+		}
+		klb.Annotations[SpecAnnotation] = string(spec)
+
+		err = r.Update(ctx, klb)
+		if err != nil {
+			return errors.Wrapf(err, "cannot update kuberlogic backup object: %s", klb.GetName())
+		}
+	}
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
