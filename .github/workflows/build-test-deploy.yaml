@@ -58,7 +58,6 @@ jobs:
           key: cli-${{ github.run_id }}
 
       - name: Build CLI
-        working-directory: ./modules/dynamic-apiserver
         run: |
           make build-cli
 

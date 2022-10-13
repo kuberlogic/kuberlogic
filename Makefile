@@ -1,4 +1,4 @@
-VERSION = 0.0.15
+VERSION = 0.0.16
 
 IMG_REPO = quay.io/kuberlogic
 IMG_LATEST_TAG=latest
@@ -92,3 +92,8 @@ docker-restore-cache: docker-pull-cache
 	docker tag $(APISERVER_IMG):$(IMG_SHA_TAG) $(APISERVER_IMG):$(IMG_LATEST_TAG)
 	docker tag $(CHARGEBEE_INTEGRATION_IMG):$(IMG_SHA_TAG) $(CHARGEBEE_INTEGRATION_IMG):$(VERSION)
 	docker tag $(CHARGEBEE_INTEGRATION_IMG):$(IMG_SHA_TAG) $(CHARGEBEE_INTEGRATION_IMG):$(IMG_LATEST_TAG)
+
+.PHONY: build-cli
+build-cli:
+	cd modules/dynamic-apiserver && \
+	VERSION=$(VERSION) $(MAKE) build-cli
