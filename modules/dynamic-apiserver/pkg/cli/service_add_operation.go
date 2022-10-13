@@ -24,9 +24,9 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.
 	}
 
 	_ = cmd.PersistentFlags().String(idFlag, "", "Required. Service id")
-	cmd.MarkFlagRequired(idFlag)
+	_ = cmd.MarkFlagRequired(idFlag)
 	_ = cmd.PersistentFlags().String("type", "", "Required. Supported service type")
-	cmd.MarkFlagRequired("type")
+	_ = cmd.MarkFlagRequired("type")
 	_ = cmd.PersistentFlags().Int64("replicas", 1, "Service replicas count")
 	_ = cmd.PersistentFlags().String("version", "", "Service version")
 	_ = cmd.PersistentFlags().String("backup_schedule", "", "Backup schedule in cron format")

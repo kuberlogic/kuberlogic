@@ -23,7 +23,7 @@ func makeRestoreDeleteCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cob
 	}
 
 	_ = cmd.PersistentFlags().String(idFlag, "", "Required. Restore id")
-	cmd.MarkFlagRequired(idFlag)
+	_ = cmd.MarkFlagRequired(idFlag)
 
 	return cmd
 }

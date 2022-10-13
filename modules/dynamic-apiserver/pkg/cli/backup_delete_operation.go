@@ -23,7 +23,7 @@ func makeBackupDeleteCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobr
 	}
 
 	_ = cmd.PersistentFlags().String(idFlag, "", "Required. Backup ID.")
-	cmd.MarkFlagRequired(idFlag)
+	_ = cmd.MarkFlagRequired(idFlag)
 
 	return cmd
 }

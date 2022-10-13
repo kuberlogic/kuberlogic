@@ -24,7 +24,7 @@ func makeBackupRestoreCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cob
 	}
 
 	_ = cmd.PersistentFlags().String(backupIdFlag, "", "Required. Backup ID")
-	cmd.MarkFlagRequired(backupIdFlag)
+	_ = cmd.MarkFlagRequired(backupIdFlag)
 
 	return cmd
 }

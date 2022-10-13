@@ -30,7 +30,7 @@ func makeServiceCredentialsUpdateCmd(apiClientFunc func() (*client.ServiceAPI, e
 	}
 
 	_ = cmd.PersistentFlags().String(serviceIdFlag, "", "Required. Service id")
-	cmd.MarkFlagRequired(serviceIdFlag)
+	_ = cmd.MarkFlagRequired(serviceIdFlag)
 
 	return cmd
 }

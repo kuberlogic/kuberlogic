@@ -23,7 +23,7 @@ func makeServiceArchiveCmd(apiClientFunc func() (*client.ServiceAPI, error)) *co
 	}
 
 	_ = cmd.PersistentFlags().String(idFlag, "", "Required. Service id")
-	cmd.MarkFlagRequired(idFlag)
+	_ = cmd.MarkFlagRequired(idFlag)
 
 	return cmd
 }
