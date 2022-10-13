@@ -113,7 +113,6 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		kls.MarkArchived()
 		return ctrl.Result{}, r.Status().Update(ctx, kls)
 	} else if kls.UnarchiveRequested() {
-		log.Info("request to unarchive service")
 		log.Info("service unarchived successfully")
 		kls.MarkUnarchived()
 		return ctrl.Result{}, r.Status().Update(ctx, kls)

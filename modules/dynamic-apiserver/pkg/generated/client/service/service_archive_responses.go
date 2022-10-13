@@ -77,7 +77,7 @@ func NewServiceArchiveOK() *ServiceArchiveOK {
 
 /* ServiceArchiveOK describes a response with status code 200, with default header values.
 
-service archived
+service request to archive is sent
 */
 type ServiceArchiveOK struct {
 }

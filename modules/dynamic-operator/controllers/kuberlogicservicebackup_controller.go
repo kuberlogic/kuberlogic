@@ -158,6 +158,9 @@ func (r *KuberlogicServiceBackupReconciler) SetAnnotation(
 		if err != nil {
 			return errors.Wrapf(err, "cannot marshaling the spec: %s", kls.GetName())
 		}
+		if klb.Annotations == nil {
+			klb.Annotations = make(map[string]string)
+		}
 		klb.Annotations[SpecAnnotation] = string(spec)
 
 		err = r.Update(ctx, klb)

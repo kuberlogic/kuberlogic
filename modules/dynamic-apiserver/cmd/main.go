@@ -116,6 +116,7 @@ func Main(args []string) {
 	api.ServiceServiceEditHandler = apiService.ServiceEditHandlerFunc(srv.ServiceEditHandler)
 	api.ServiceServiceGetHandler = apiService.ServiceGetHandlerFunc(srv.ServiceGetHandler)
 	api.ServiceServiceListHandler = apiService.ServiceListHandlerFunc(srv.ServiceListHandler)
+	api.ServiceServiceUnarchiveHandler = apiService.ServiceUnarchiveHandlerFunc(srv.ServiceUnarchiveHandler)
 	//api.BearerAuth = srv.BearerAuthentication
 	api.Logger = logging.WithComponentLogger("api").Infof
 	api.ServerShutdown = srv.OnShutdown

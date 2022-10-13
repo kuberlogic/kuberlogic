@@ -216,7 +216,11 @@ func (e *EnvironmentManager) deleteNamespace(ctx context.Context) error {
 			Labels: envLabels(e.kls),
 		},
 	}
-	return e.Delete(ctx, ns)
+	err := e.Delete(ctx, ns)
+	if err != nil && errors2.IsNotFound(err) {
+		return nil
+	}
+	return err
 }
 
 func (e *EnvironmentManager) deleteAllServicePods(ctx context.Context) error {

@@ -16,7 +16,7 @@ import (
 // ServiceArchiveOKCode is the HTTP code returned for type ServiceArchiveOK
 const ServiceArchiveOKCode int = 200
 
-/*ServiceArchiveOK service archived
+/*ServiceArchiveOK service request to archive is sent
 
 swagger:response serviceArchiveOK
 */
