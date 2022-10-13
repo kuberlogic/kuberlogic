@@ -2,9 +2,11 @@ package cli
 
 import (
 	"fmt"
+
 	client2 "github.com/go-openapi/runtime/client"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 	"github.com/spf13/viper"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/restore"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
@@ -21,7 +23,8 @@ func makeBackupRestoreCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cob
 		RunE:    runBackupRestore(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(backupIdFlag, "", "backup id")
+	_ = cmd.PersistentFlags().String(backupIdFlag, "", "Required. Backup ID")
+	cmd.MarkFlagRequired(backupIdFlag)
 
 	return cmd
 }

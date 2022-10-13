@@ -1,12 +1,14 @@
 package cli
 
 import (
+	"strconv"
+
 	client2 "github.com/go-openapi/runtime/client"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/backup"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/viper"
-	"strconv"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/backup"
 
 	"github.com/spf13/cobra"
 )
@@ -20,7 +22,7 @@ func makeBackupListCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.
 		RunE:    runBackupList(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(serviceIdFlag, "", "service id to filter by")
+	_ = cmd.PersistentFlags().String(serviceIdFlag, "", "Service id to filter by")
 	return cmd
 }
 
