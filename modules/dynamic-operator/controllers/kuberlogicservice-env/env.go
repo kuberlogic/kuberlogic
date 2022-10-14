@@ -195,10 +195,6 @@ func (e *EnvironmentManager) ArchiveService(ctx context.Context) error {
 	return e.deleteNamespace(ctx)
 }
 
-func (e *EnvironmentManager) UnarchiveService(ctx context.Context) error {
-	return nil // TODO: need to implement logic
-}
-
 // PauseService deletes all pods in a service namespace.
 // In addition to this resourceQuota in SetupEnv sets the hard limit of non-exited pods to 0.
 func (e *EnvironmentManager) PauseService(ctx context.Context) error {

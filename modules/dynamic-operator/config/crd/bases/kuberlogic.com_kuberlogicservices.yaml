@@ -75,8 +75,7 @@ spec:
                 x-kubernetes-preserve-unknown-fields: true
               archived:
                 default: false
-                description: Archived field allows to remove namespace and all related
-                  resources
+                description: Service namespace is removed when it is archived
                 type: boolean
               backupSchedule:
                 type: string

@@ -20,7 +20,8 @@ func makeServiceUnarchiveCmd(apiClientFunc func() (*client.ServiceAPI, error)) *
 		RunE:    runServiceUnarchive(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(idFlag, "", "service id")
+	_ = cmd.PersistentFlags().String(idFlag, "", "Required. Service ID.")
+	_ = cmd.MarkFlagRequired(idFlag)
 	return cmd
 }
 

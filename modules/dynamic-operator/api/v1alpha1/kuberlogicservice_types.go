@@ -68,7 +68,7 @@ type KuberLogicServiceSpec struct {
 	// +kubebuilder:default=false
 	Paused bool `json:"paused,omitempty"`
 
-	// Archived field allows to remove namespace and all related resources
+	// Service namespace is removed when it is archived
 	// +kubebuilder:default=false
 	Archived bool `json:"archived,omitempty"`
 

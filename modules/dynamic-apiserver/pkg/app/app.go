@@ -178,31 +178,6 @@ func (srv *Service) WaitForServiceBackup(ctx context.Context, serviceId *string,
 	return errors.New("Retries exceeded, backup is not ready")
 }
 
-func (srv *Service) WaitForService(ctx context.Context, serviceId *string, maxRetries int) error {
-	timeout := time.Second
-	for i := maxRetries; i > 0; i-- {
-
-		result := new(kuberlogiccomv1alpha1.KuberLogicService)
-		err := srv.kuberlogicClient.Get().
-			Resource(serviceK8sResource).
-			Name(*serviceId).
-			Do(ctx).
-			Into(result)
-		if err != nil {
-			return errors.Wrap(err, "Error while getting service")
-		}
-
-		if ok, _, _ := result.IsReady(); ok {
-			return nil
-		}
-
-		timeout = timeout * 2
-		time.Sleep(timeout)
-		srv.log.Infof("service is not ready, trying after %s. Left %d retries", timeout, i-1)
-	}
-	return errors.New("Retries exceeded, service is not ready")
-}
-
 func (srv *Service) WaitForServiceRestore(ctx context.Context, restoreId string, maxRetries int) error {
 	timeout := time.Second
 	for i := maxRetries; i > 0; i-- {
@@ -283,7 +258,7 @@ func (srv *Service) ArchiveKuberlogicService(service *kuberlogiccomv1alpha1.Kube
 	return nil
 }
 
-func (srv *Service) FirstSuccessfulBackup(ctx context.Context, serviceId *string) (*kuberlogiccomv1alpha1.KuberlogicServiceBackup, error) {
+func (srv *Service) EarliestSuccessfulBackup(ctx context.Context, serviceId *string) (*kuberlogiccomv1alpha1.KuberlogicServiceBackup, error) {
 	backups, err := srv.ListKuberlogicServiceBackupsByService(ctx, serviceId)
 	if err != nil {
 		return nil, errors.Wrap(err, "error listing service backups")
@@ -310,7 +285,7 @@ func (srv *Service) UnarchiveKuberlogicService(service *kuberlogiccomv1alpha1.Ku
 	serviceId := &service.Name
 
 	srv.log.Infow("find successful backup", "serviceId", *serviceId)
-	backup, err := srv.FirstSuccessfulBackup(ctx, serviceId)
+	backup, err := srv.EarliestSuccessfulBackup(ctx, serviceId)
 	if err != nil {
 		return errors.Wrap(err, "error finding successful backup")
 	}
