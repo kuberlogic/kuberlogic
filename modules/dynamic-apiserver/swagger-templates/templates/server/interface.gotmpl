@@ -1,0 +1,16 @@
+package app
+
+import (
+	"github.com/go-openapi/runtime/middleware"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
+    {{range .Operations }}
+	api{{ pascalize .Package }} "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/{{ .Package }}"
+	{{- end}}
+)
+
+type Handlers interface {
+    OnShutdown()
+	{{range .Operations}}
+    {{ pascalize .Name }}Handler(params api{{ pascalize .Package }}.{{ pascalize .Name }}Params, _ *models.Principal) middleware.Responder
+    {{- end}}
+}

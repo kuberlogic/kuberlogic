@@ -2,29 +2,31 @@ package app
 
 import (
 	"fmt"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
-	apiBackup "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/backup"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
-	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
 	"net/http"
 	"testing"
 	"time"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/fake"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
+	apiBackup "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/backup"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
 
 func TestBackupListEmpty(t *testing.T) {
-	expectedObjects := &cloudlinuxv1alpha1.KuberlogicServiceBackupList{
-		Items: []cloudlinuxv1alpha1.KuberlogicServiceBackup{},
+	expectedObjects := &v1alpha1.KuberlogicServiceBackupList{
+		Items: []v1alpha1.KuberlogicServiceBackup{},
 	}
 
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 	}
 
 	params := apiBackup.BackupListParams{
@@ -36,27 +38,27 @@ func TestBackupListEmpty(t *testing.T) {
 }
 
 func TestBackupListMany(t *testing.T) {
-	expectedObjects := &cloudlinuxv1alpha1.KuberlogicServiceBackupList{
-		Items: []cloudlinuxv1alpha1.KuberlogicServiceBackup{
+	expectedObjects := &v1alpha1.KuberlogicServiceBackupList{
+		Items: []v1alpha1.KuberlogicServiceBackup{
 			{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: v1.ObjectMeta{
 					Name: fmt.Sprintf("%s-%d", "service1", time.Now().Unix()),
 				},
-				Spec: cloudlinuxv1alpha1.KuberlogicServiceBackupSpec{
+				Spec: v1alpha1.KuberlogicServiceBackupSpec{
 					KuberlogicServiceName: "service1",
 				},
-				Status: cloudlinuxv1alpha1.KuberlogicServiceBackupStatus{
+				Status: v1alpha1.KuberlogicServiceBackupStatus{
 					Phase: "Failed",
 				},
 			},
 			{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: v1.ObjectMeta{
 					Name: fmt.Sprintf("%s-%d", "service2", time.Now().Unix()),
 				},
-				Spec: cloudlinuxv1alpha1.KuberlogicServiceBackupSpec{
+				Spec: v1alpha1.KuberlogicServiceBackupSpec{
 					KuberlogicServiceName: "service2",
 				},
-				Status: cloudlinuxv1alpha1.KuberlogicServiceBackupStatus{
+				Status: v1alpha1.KuberlogicServiceBackupStatus{
 					Phase: "Successful",
 				},
 			},
@@ -66,10 +68,10 @@ func TestBackupListMany(t *testing.T) {
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 	}
 
 	backups := models.Backups{
@@ -94,19 +96,19 @@ func TestBackupListMany(t *testing.T) {
 }
 
 func TestBackupListWithServiceFilter(t *testing.T) {
-	expectedObjects := &cloudlinuxv1alpha1.KuberlogicServiceBackupList{
-		Items: []cloudlinuxv1alpha1.KuberlogicServiceBackup{
+	expectedObjects := &v1alpha1.KuberlogicServiceBackupList{
+		Items: []v1alpha1.KuberlogicServiceBackup{
 			{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: v1.ObjectMeta{
 					Name: fmt.Sprintf("%s-%d", "service1", time.Now().Unix()),
 					Labels: map[string]string{
 						"kls-id": "service1",
 					},
 				},
-				Spec: cloudlinuxv1alpha1.KuberlogicServiceBackupSpec{
+				Spec: v1alpha1.KuberlogicServiceBackupSpec{
 					KuberlogicServiceName: "service1",
 				},
-				Status: cloudlinuxv1alpha1.KuberlogicServiceBackupStatus{
+				Status: v1alpha1.KuberlogicServiceBackupStatus{
 					Phase: "Pending",
 				},
 			},
@@ -116,10 +118,10 @@ func TestBackupListWithServiceFilter(t *testing.T) {
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 	}
 
 	backups := models.Backups{

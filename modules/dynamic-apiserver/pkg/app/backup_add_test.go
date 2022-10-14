@@ -24,10 +24,10 @@ func TestBackupAdd(t *testing.T) {
 
 	tc := createTestClient(expectedKlb, 200, t)
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 	}
 
 	backup := &models.Backup{

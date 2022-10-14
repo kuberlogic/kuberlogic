@@ -1,28 +1,30 @@
 package app
 
 import (
+	"net/http"
+	"testing"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/fake"
+
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiRestore "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/restore"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
-	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
-	"net/http"
-	"testing"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
 
 func TestRestoreListEmpty(t *testing.T) {
-	expectedObjects := &cloudlinuxv1alpha1.KuberlogicServiceRestoreList{
-		Items: []cloudlinuxv1alpha1.KuberlogicServiceRestore{},
+	expectedObjects := &v1alpha1.KuberlogicServiceRestoreList{
+		Items: []v1alpha1.KuberlogicServiceRestore{},
 	}
 
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 	}
 
 	params := apiRestore.RestoreListParams{
@@ -34,27 +36,27 @@ func TestRestoreListEmpty(t *testing.T) {
 }
 
 func TestRestoreListMany(t *testing.T) {
-	expectedObjects := &cloudlinuxv1alpha1.KuberlogicServiceRestoreList{
-		Items: []cloudlinuxv1alpha1.KuberlogicServiceRestore{
+	expectedObjects := &v1alpha1.KuberlogicServiceRestoreList{
+		Items: []v1alpha1.KuberlogicServiceRestore{
 			{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: v1.ObjectMeta{
 					Name: "backup1",
 				},
-				Spec: cloudlinuxv1alpha1.KuberlogicServiceRestoreSpec{
+				Spec: v1alpha1.KuberlogicServiceRestoreSpec{
 					KuberlogicServiceBackup: "backup1",
 				},
-				Status: cloudlinuxv1alpha1.KuberlogicServiceRestoreStatus{
+				Status: v1alpha1.KuberlogicServiceRestoreStatus{
 					Phase: "Failed",
 				},
 			},
 			{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: v1.ObjectMeta{
 					Name: "backup2",
 				},
-				Spec: cloudlinuxv1alpha1.KuberlogicServiceRestoreSpec{
+				Spec: v1alpha1.KuberlogicServiceRestoreSpec{
 					KuberlogicServiceBackup: "backup2",
 				},
-				Status: cloudlinuxv1alpha1.KuberlogicServiceRestoreStatus{
+				Status: v1alpha1.KuberlogicServiceRestoreStatus{
 					Phase: "Successful",
 				},
 			},
@@ -64,10 +66,10 @@ func TestRestoreListMany(t *testing.T) {
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 	}
 
 	backups := models.Restores{
@@ -92,19 +94,19 @@ func TestRestoreListMany(t *testing.T) {
 }
 
 func TestRestoreListWithServiceFilter(t *testing.T) {
-	expectedObjects := &cloudlinuxv1alpha1.KuberlogicServiceRestoreList{
-		Items: []cloudlinuxv1alpha1.KuberlogicServiceRestore{
+	expectedObjects := &v1alpha1.KuberlogicServiceRestoreList{
+		Items: []v1alpha1.KuberlogicServiceRestore{
 			{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: v1.ObjectMeta{
 					Name: "backup1",
 					Labels: map[string]string{
 						"kls-id": "service1",
 					},
 				},
-				Spec: cloudlinuxv1alpha1.KuberlogicServiceRestoreSpec{
+				Spec: v1alpha1.KuberlogicServiceRestoreSpec{
 					KuberlogicServiceBackup: "backup1",
 				},
-				Status: cloudlinuxv1alpha1.KuberlogicServiceRestoreStatus{
+				Status: v1alpha1.KuberlogicServiceRestoreStatus{
 					Phase: "Pending",
 				},
 			},
@@ -114,10 +116,10 @@ func TestRestoreListWithServiceFilter(t *testing.T) {
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 	}
 
 	backups := models.Restores{

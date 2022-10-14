@@ -2,25 +2,27 @@ package app
 
 import (
 	"encoding/json"
+	"net/http"
+	"testing"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/fake"
+
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
-	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
-	"net/http"
-	"testing"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
 
 func TestServiceAddSimple(t *testing.T) {
-	expectedObj := &cloudlinuxv1alpha1.KuberLogicService{
-		ObjectMeta: metav1.ObjectMeta{
+	expectedObj := &v1alpha1.KuberLogicService{
+		ObjectMeta: v1.ObjectMeta{
 			Name: "simple",
 		},
-		Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
+		Spec: v1alpha1.KuberLogicServiceSpec{
 			Type:     "postgresql",
 			Replicas: 1,
 		},
@@ -29,10 +31,10 @@ func TestServiceAddSimple(t *testing.T) {
 	tc := createTestClient(expectedObj, 200, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 		config: &config.Config{
 			Domain: "example.com",
 		},
@@ -54,14 +56,14 @@ func TestServiceAddSimple(t *testing.T) {
 }
 
 func TestServiceAddExtended(t *testing.T) {
-	expectedObj := &cloudlinuxv1alpha1.KuberLogicService{
-		ObjectMeta: metav1.ObjectMeta{
+	expectedObj := &v1alpha1.KuberLogicService{
+		ObjectMeta: v1.ObjectMeta{
 			Name: "extended",
 		},
-		Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
+		Spec: v1alpha1.KuberLogicServiceSpec{
 			Type:     "postgresql",
 			Replicas: 1,
-			Limits: v1.ResourceList{
+			Limits: corev1.ResourceList{
 				"cpu":     resource.MustParse("10"),
 				"memory":  resource.MustParse("500"),
 				"storage": resource.MustParse("100Gi"),
@@ -75,10 +77,10 @@ func TestServiceAddExtended(t *testing.T) {
 	tc := createTestClient(expectedObj, 200, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 		config: &config.Config{
 			Domain: "example.com",
 		},
@@ -108,14 +110,14 @@ func TestServiceAddExtended(t *testing.T) {
 }
 
 func TestServiceAddAdvanced(t *testing.T) {
-	expectedObj := &cloudlinuxv1alpha1.KuberLogicService{
-		ObjectMeta: metav1.ObjectMeta{
+	expectedObj := &v1alpha1.KuberLogicService{
+		ObjectMeta: v1.ObjectMeta{
 			Name: "advanced",
 			Labels: map[string]string{
 				"subscription-id": "some-kind-of-subscription-id",
 			},
 		},
-		Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
+		Spec: v1alpha1.KuberLogicServiceSpec{
 			Type: "postgresql",
 		},
 	}
@@ -134,10 +136,10 @@ func TestServiceAddAdvanced(t *testing.T) {
 	tc := createTestClient(expectedObj, 200, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 		config: &config.Config{
 			Domain: "example.com",
 		},
@@ -161,16 +163,16 @@ func TestServiceAddAdvanced(t *testing.T) {
 }
 
 func TestServiceSubscriptionAlreadyExists(t *testing.T) {
-	expectedObjects := &cloudlinuxv1alpha1.KuberLogicServiceList{
-		Items: []cloudlinuxv1alpha1.KuberLogicService{
+	expectedObjects := &v1alpha1.KuberLogicServiceList{
+		Items: []v1alpha1.KuberLogicService{
 			{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: v1.ObjectMeta{
 					Name: "advanced",
 					Labels: map[string]string{
 						"subscription-id": "existing-subscription-id",
 					},
 				},
-				Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
+				Spec: v1alpha1.KuberLogicServiceSpec{
 					Type: "postgresql",
 				},
 			},
@@ -180,10 +182,10 @@ func TestServiceSubscriptionAlreadyExists(t *testing.T) {
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 		config: &config.Config{
 			Domain: "example.com",
 		},
@@ -203,7 +205,7 @@ func TestServiceSubscriptionAlreadyExists(t *testing.T) {
 	}
 
 	checkResponse(srv.ServiceAddHandler(params, nil), t, 400, &models.Error{
-		Message: "Service with subscription 'existing-subscription-id' already exist",
+		Message: "handlers with subscription 'existing-subscription-id' already exist",
 	})
 	tc.handler.ValidateRequestCount(t, 1)
 }

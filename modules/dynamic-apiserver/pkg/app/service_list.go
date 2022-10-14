@@ -7,25 +7,25 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
 )
 
-func (srv *Service) ServiceListHandler(params apiService.ServiceListParams, _ *models.Principal) middleware.Responder {
+func (h *handlers) ServiceListHandler(params apiService.ServiceListParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
 
-	res, err := srv.ListKuberlogicServicesBySubscription(ctx, params.SubscriptionID)
+	res, err := h.Services().ListByFieldLabel(ctx, util.SubscriptionField, params.SubscriptionID)
 	if err != nil {
 		msg := "error listing service"
-		srv.log.Errorw(msg)
+		h.log.Errorw(msg)
 		return apiService.NewServiceListServiceUnavailable().WithPayload(&models.Error{
 			Message: msg,
 		})
 	}
-	srv.log.Debugw("found kuberlogicservice objects", "length", len(res.Items), "objects", res)
+	h.log.Debugw("found kuberlogicservice objects", "length", len(res.Items), "objects", res)
 
 	var services []*models.Service
 	for _, r := range res.Items {
 		service, err := util.KuberlogicToService(&r)
 		if err != nil {
 			msg := "error converting service object"
-			srv.log.Errorw(msg)
+			h.log.Errorw(msg)
 			return apiService.NewServiceListServiceUnavailable().WithPayload(&models.Error{
 				Message: msg,
 			})

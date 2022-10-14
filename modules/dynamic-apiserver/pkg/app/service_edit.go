@@ -3,16 +3,18 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/go-openapi/runtime/middleware"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
-	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
-func (srv *Service) ServiceEditHandler(params apiService.ServiceEditParams, _ *models.Principal) middleware.Responder {
+func (h *handlers) ServiceEditHandler(params apiService.ServiceEditParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
 
 	if params.ServiceItem.Subscription != "" {
@@ -22,9 +24,9 @@ func (srv *Service) ServiceEditHandler(params apiService.ServiceEditParams, _ *m
 			})
 	}
 
-	c, err := util.ServiceToKuberlogic(params.ServiceItem, srv.config)
+	c, err := util.ServiceToKuberlogic(params.ServiceItem, h.config)
 	if err != nil {
-		srv.log.Errorw("error converting service model to kuberlogic", "error", err)
+		h.log.Errorw("error converting service model to kuberlogic", "error", err)
 		return apiService.NewServiceEditBadRequest().WithPayload(
 			&models.Error{
 				Message: err.Error(),
@@ -33,28 +35,21 @@ func (srv *Service) ServiceEditHandler(params apiService.ServiceEditParams, _ *m
 
 	patch, err := json.Marshal(c)
 	if err != nil {
-		srv.log.Errorw("service decode error", "error", err)
+		h.log.Errorw("service decode error", "error", err)
 		return apiService.NewServiceEditBadRequest().WithPayload(
 			&models.Error{
 				Message: err.Error(),
 			})
 	}
 
-	result := new(kuberlogiccomv1alpha1.KuberLogicService)
-	err = srv.kuberlogicClient.Patch(types.MergePatchType).
-		Resource(serviceK8sResource).
-		Name(*params.ServiceItem.ID).
-		Body(patch).
-		Do(ctx).
-		Into(result)
-	if err != nil && util.CheckStatus(err, v1.StatusReasonNotFound) {
+	if _, err = h.Services().Patch(ctx, c.GetName(), types.MergePatchType, patch, v1.PatchOptions{}); errors.IsNotFound(err) {
 		msg := fmt.Sprintf("kuberlogic service not found: %s", params.ServiceID)
-		srv.log.Warnw(msg, "error", err)
+		h.log.Warnw(msg, "error", err)
 		return apiService.NewServiceEditNotFound().WithPayload(&models.Error{
 			Message: msg,
 		})
 	} else if err != nil {
-		srv.log.Errorw("error creating kuberlogicservice", "error", err)
+		h.log.Errorw("error creating kuberlogicservice", "error", err)
 		return apiService.NewServiceEditBadRequest().WithPayload(
 			&models.Error{
 				Message: err.Error(),

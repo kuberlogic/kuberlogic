@@ -11,6 +11,11 @@ layout:
       target: "./cmd/"
       file_name: "main.go"
 
+    - name: interface
+      source: serverInterface
+      target: "./pkg/app"
+      file_name: "interface.go"
+
     - name: embedded_spec
       source: asset:swaggerJsonEmbed
       target: "{{ joinFilePath .Target .ServerPackage }}"

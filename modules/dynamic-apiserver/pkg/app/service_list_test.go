@@ -1,29 +1,31 @@
 package app
 
 import (
+	"net/http"
+	"testing"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/fake"
+
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
-	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
-	"net/http"
-	"testing"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
 
 func TestServiceListEmpty(t *testing.T) {
-	expectedObjects := &cloudlinuxv1alpha1.KuberLogicServiceList{
-		Items: []cloudlinuxv1alpha1.KuberLogicService{},
+	expectedObjects := &v1alpha1.KuberLogicServiceList{
+		Items: []v1alpha1.KuberLogicService{},
 	}
 
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 		config: &config.Config{
 			Domain: "example.com",
 		},
@@ -38,31 +40,31 @@ func TestServiceListEmpty(t *testing.T) {
 }
 
 func TestServiceListMany(t *testing.T) {
-	expectedObjects := &cloudlinuxv1alpha1.KuberLogicServiceList{
-		Items: []cloudlinuxv1alpha1.KuberLogicService{
+	expectedObjects := &v1alpha1.KuberLogicServiceList{
+		Items: []v1alpha1.KuberLogicService{
 			{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: v1.ObjectMeta{
 					Name: "one",
 				},
-				Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
+				Spec: v1alpha1.KuberLogicServiceSpec{
 					Type:     "postgresql",
 					Replicas: 1,
 					Domain:   "example.com",
 				},
-				Status: cloudlinuxv1alpha1.KuberLogicServiceStatus{
+				Status: v1alpha1.KuberLogicServiceStatus{
 					Phase: "Running",
 				},
 			},
 			{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: v1.ObjectMeta{
 					Name: "two",
 				},
-				Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
+				Spec: v1alpha1.KuberLogicServiceSpec{
 					Type:     "mysql",
 					Domain:   "example.com",
 					Replicas: 2,
 				},
-				Status: cloudlinuxv1alpha1.KuberLogicServiceStatus{
+				Status: v1alpha1.KuberLogicServiceStatus{
 					Phase: "Failed",
 				},
 			},
@@ -72,10 +74,10 @@ func TestServiceListMany(t *testing.T) {
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 		config: &config.Config{
 			Domain: "example.com",
 		},
@@ -107,21 +109,21 @@ func TestServiceListMany(t *testing.T) {
 }
 
 func TestServiceListWithSubscriptionFilter(t *testing.T) {
-	expectedObjects := &cloudlinuxv1alpha1.KuberLogicServiceList{
-		Items: []cloudlinuxv1alpha1.KuberLogicService{
+	expectedObjects := &v1alpha1.KuberLogicServiceList{
+		Items: []v1alpha1.KuberLogicService{
 			{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: v1.ObjectMeta{
 					Name: "one",
 					Labels: map[string]string{
 						"subscription-id": "some-kind-of-subscription-id",
 					},
 				},
-				Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
+				Spec: v1alpha1.KuberLogicServiceSpec{
 					Type:     "postgresql",
 					Replicas: 1,
 					Domain:   "example.com",
 				},
-				Status: cloudlinuxv1alpha1.KuberLogicServiceStatus{
+				Status: v1alpha1.KuberLogicServiceStatus{
 					Phase: "Running",
 				},
 			},
@@ -131,10 +133,10 @@ func TestServiceListWithSubscriptionFilter(t *testing.T) {
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 		config: &config.Config{
 			Domain: "example.com",
 		},

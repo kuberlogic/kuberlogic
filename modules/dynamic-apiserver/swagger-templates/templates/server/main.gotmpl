@@ -100,7 +100,7 @@ func Main(args []string) {
 		mainLog.Fatalw("could not get base client", "error", err)
 	}
 
-    srv := app.New(cfg, baseClient, crdClient, logging.WithComponentLogger("server"))
+    handlers := app.New(cfg, baseClient, crdClient, logging.WithComponentLogger("server"))
     api := operations.NewKuberlogicAPI(swaggerSpec)
     // Applies when the "x-token" header is set
     api.KeyAuth = func(token string) (*models.Principal, error) {
@@ -113,11 +113,11 @@ func Main(args []string) {
     }
 
 	{{range .Operations}}
-    api.{{ pascalize .Package }}{{ pascalize .Name }}Handler = api{{ pascalize .Package }}.{{ pascalize .Name }}HandlerFunc(srv.{{ pascalize .Name }}Handler)
+    api.{{ pascalize .Package }}{{ pascalize .Name }}Handler = api{{ pascalize .Package }}.{{ pascalize .Name }}HandlerFunc(handlers.{{ pascalize .Name }}Handler)
     {{- end}}
-   	//api.BearerAuth = srv.BearerAuthentication
+   	//api.BearerAuth = handlers.BearerAuthentication
    	api.Logger = logging.WithComponentLogger("api").Infof
-    api.ServerShutdown = srv.OnShutdown
+    api.ServerShutdown = handlers.OnShutdown
 	server := {{ .APIPackage }}.NewServer(api)
 	defer server.Shutdown()
 
