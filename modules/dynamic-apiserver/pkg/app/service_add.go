@@ -16,7 +16,8 @@ func (h *handlers) ServiceAddHandler(params apiService.ServiceAddParams, _ *mode
 	ctx := params.HTTPRequest.Context()
 
 	if params.ServiceItem.Subscription != "" {
-		if found, err := h.Services().IsSubscriptionAlreadyExist(ctx, &params.ServiceItem.Subscription); err != nil {
+		opts := h.ListOptionsByKeyValue(util.SubscriptionField, &params.ServiceItem.Subscription)
+		if found, err := h.Services().Exists(ctx, opts); err != nil {
 			return apiService.NewServiceAddServiceUnavailable().WithPayload(
 				&models.Error{
 					Message: err.Error(),

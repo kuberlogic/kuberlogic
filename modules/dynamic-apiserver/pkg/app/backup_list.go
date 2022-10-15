@@ -11,7 +11,7 @@ import (
 func (h *handlers) BackupListHandler(params apiBackup.BackupListParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
 
-	opts := h.ListOptionsByKeyValue(util.BackupRestoreServiceField, *params.ServiceID)
+	opts := h.ListOptionsByKeyValue(util.BackupRestoreServiceField, params.ServiceID)
 	r, err := h.Backups().List(ctx, opts)
 	if err != nil {
 		msg := "error listing backups"

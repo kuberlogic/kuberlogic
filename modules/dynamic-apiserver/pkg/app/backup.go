@@ -57,7 +57,6 @@ func (b *backups) CreateByServiceName(ctx context.Context, name string) (*v1alph
 			KuberlogicServiceName: name,
 		},
 	}
-
 	return b.Create(ctx, klb, v1.CreateOptions{})
 }
 

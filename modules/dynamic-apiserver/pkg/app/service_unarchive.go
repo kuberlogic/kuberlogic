@@ -65,7 +65,7 @@ func (h *handlers) UnarchiveKuberlogicService(serviceName string) error {
 	ctx := context.Background()
 
 	h.log.Infow("searching successful backup", "serviceName", serviceName)
-	opts := h.ListOptionsByKeyValue(util.BackupRestoreServiceField, serviceName)
+	opts := h.ListOptionsByKeyValue(util.BackupRestoreServiceField, &serviceName)
 	sortBy := func(backups []*v1alpha1.KuberlogicServiceBackup) sort.Interface {
 		return sort.Reverse(BackupsByCreation(backups)) // last backup first
 	}

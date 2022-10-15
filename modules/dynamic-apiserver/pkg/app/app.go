@@ -71,11 +71,15 @@ func (h *handlers) OnShutdown() {
 	}()
 }
 
-func (h *handlers) ListOptionsByKeyValue(key, value string) v1.ListOptions {
-	labelSelector := v1.LabelSelector{
-		MatchLabels: map[string]string{key: value},
+func (h *handlers) ListOptionsByKeyValue(key string, value *string) v1.ListOptions {
+	opts := v1.ListOptions{}
+	if value != nil {
+		labelSelector := v1.LabelSelector{
+			MatchLabels: map[string]string{key: *value},
+		}
+		opts = v1.ListOptions{
+			LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
+		}
 	}
-	return v1.ListOptions{
-		LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
-	}
+	return opts
 }

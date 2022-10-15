@@ -78,7 +78,7 @@ func (h *handlers) archiveService(serviceName string) error {
 	}
 
 	h.log.Infow("deleting previous backups", "serviceName", serviceName)
-	opts := h.ListOptionsByKeyValue(util.BackupRestoreServiceField, serviceName)
+	opts := h.ListOptionsByKeyValue(util.BackupRestoreServiceField, &serviceName)
 	r, err := h.Backups().List(ctx, opts)
 	if err != nil {
 		return errors.Wrap(err, "error listing service backups")

@@ -8,12 +8,9 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/api"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
 
 type ExtendedServiceGetter interface {
@@ -22,8 +19,7 @@ type ExtendedServiceGetter interface {
 
 type ExtendedServiceInterface interface {
 	api.ServiceInterface
-	ListByFieldLabel(ctx context.Context, field string, value *string) (*v1alpha1.KuberLogicServiceList, error)
-	IsSubscriptionAlreadyExist(ctx context.Context, subscriptionId *string) (bool, error)
+	Exists(ctx context.Context, opts v1.ListOptions) (bool, error)
 }
 
 type services struct {
@@ -38,21 +34,8 @@ func newServices(c rest.Interface) ExtendedServiceInterface {
 	return s
 }
 
-func (svc *services) ListByFieldLabel(ctx context.Context, field string, value *string) (*v1alpha1.KuberLogicServiceList, error) {
-	opts := v1.ListOptions{}
-	if value != nil {
-		labelSelector := v1.LabelSelector{
-			MatchLabels: map[string]string{field: *value},
-		}
-		opts = v1.ListOptions{
-			LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
-		}
-	}
-	return svc.List(ctx, opts)
-}
-
-func (svc *services) IsSubscriptionAlreadyExist(ctx context.Context, subscriptionId *string) (bool, error) {
-	r, err := svc.ListByFieldLabel(ctx, util.SubscriptionField, subscriptionId)
+func (svc *services) Exists(ctx context.Context, opts v1.ListOptions) (bool, error) {
+	r, err := svc.List(ctx, opts)
 	if err != nil {
 		return false, err
 	}

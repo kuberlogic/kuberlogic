@@ -10,7 +10,8 @@ import (
 func (h *handlers) ServiceListHandler(params apiService.ServiceListParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
 
-	res, err := h.Services().ListByFieldLabel(ctx, util.SubscriptionField, params.SubscriptionID)
+	opts := h.ListOptionsByKeyValue(util.SubscriptionField, params.SubscriptionID)
+	res, err := h.Services().List(ctx, opts)
 	if err != nil {
 		msg := "error listing service"
 		h.log.Errorw(msg)

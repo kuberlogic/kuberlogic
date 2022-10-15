@@ -11,7 +11,7 @@ import (
 func (h *handlers) RestoreListHandler(params apiRestore.RestoreListParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
 
-	opts := h.ListOptionsByKeyValue(util.BackupRestoreServiceField, *params.ServiceID)
+	opts := h.ListOptionsByKeyValue(util.BackupRestoreServiceField, params.ServiceID)
 	result, err := h.Restores().List(ctx, opts)
 	if err != nil {
 		msg := "error listing result"
