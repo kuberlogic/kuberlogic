@@ -7,15 +7,18 @@ package app
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
+	watchtools "k8s.io/client-go/tools/watch"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/api"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/logging"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
@@ -26,10 +29,9 @@ type ExtendedBackupGetter interface {
 
 type ExtendedBackupInterface interface {
 	api.BackupInterface
-	CreateBackupByServiceName(ctx context.Context, name string) (*v1alpha1.KuberlogicServiceBackup, error)
-	ListByServiceName(ctx context.Context, service *string) (*v1alpha1.KuberlogicServiceBackupList, error)
-	GetEarliestSuccessful(ctx context.Context, serviceId *string) (*v1alpha1.KuberlogicServiceBackup, error)
-	Wait(ctx context.Context, log logging.Logger, serviceName *string, backupName string, maxRetries int) error
+	CreateByServiceName(ctx context.Context, name string) (*v1alpha1.KuberlogicServiceBackup, error)
+	FirstSuccessful(ctx context.Context, opt v1.ListOptions, sortBy func([]*v1alpha1.KuberlogicServiceBackup) sort.Interface) (*v1alpha1.KuberlogicServiceBackup, error)
+	Wait(ctx context.Context, resource *v1alpha1.KuberlogicServiceBackup, condition func(event watch.Event) (bool, error), timeout time.Duration) (*v1alpha1.KuberlogicServiceBackup, error)
 }
 type backups struct {
 	api.BackupInterface
@@ -43,7 +45,7 @@ func newBackups(c rest.Interface) ExtendedBackupInterface {
 	return s
 }
 
-func (b *backups) CreateBackupByServiceName(ctx context.Context, name string) (*v1alpha1.KuberlogicServiceBackup, error) {
+func (b *backups) CreateByServiceName(ctx context.Context, name string) (*v1alpha1.KuberlogicServiceBackup, error) {
 	klb := &v1alpha1.KuberlogicServiceBackup{
 		ObjectMeta: v1.ObjectMeta{
 			Name: fmt.Sprintf("%s-%d", name, time.Now().Unix()),
@@ -59,53 +61,47 @@ func (b *backups) CreateBackupByServiceName(ctx context.Context, name string) (*
 	return b.Create(ctx, klb, v1.CreateOptions{})
 }
 
-func (b *backups) ListByServiceName(ctx context.Context, service *string) (*v1alpha1.KuberlogicServiceBackupList, error) {
-	opt := v1.ListOptions{}
-	if service != nil {
-		labelSelector := v1.LabelSelector{
-			MatchLabels: map[string]string{util.BackupRestoreServiceField: *service},
-		}
-		opt = v1.ListOptions{
-			LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
-		}
+func (b *backups) Wait(
+	ctx context.Context,
+	resource *v1alpha1.KuberlogicServiceBackup,
+	condition func(event watch.Event) (bool, error),
+	timeout time.Duration,
+) (*v1alpha1.KuberlogicServiceBackup, error) {
+	ctx, cancel := watchtools.ContextWithOptionalTimeout(ctx, timeout)
+	defer cancel()
+
+	event, err := watchtools.UntilWithSync(ctx, &cache.ListWatch{
+		ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
+			return b.List(ctx, options)
+		},
+		WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
+			return b.Watch(ctx, options)
+		},
+	}, resource, nil, condition)
+	if err != nil {
+		return nil, errors.Wrap(err, "error waiting condition")
 	}
-	return b.List(ctx, opt)
+	obj, ok := event.Object.(*v1alpha1.KuberlogicServiceBackup)
+	if !ok {
+		return nil, errors.Wrap(err, "error conversion for backup object")
+	}
+	return obj, nil
 }
 
-func (b *backups) Wait(ctx context.Context, log logging.Logger, serviceName *string, backupName string, maxRetries int) error {
-	timeout := time.Second
-	for i := maxRetries; i > 0; i-- {
-		r, err := b.ListByServiceName(ctx, serviceName)
-		if err != nil {
-			return err
-		}
-		for _, backup := range r.Items {
-			if backup.GetName() == backupName {
-				switch backup.Status.Phase {
-				case v1alpha1.KlbSuccessfulCondType:
-					return nil
-				case v1alpha1.KlbFailedCondType:
-					return errors.New("Error occurred while creating service backup")
-				}
-			}
-		}
-		timeout = timeout * 2
-		time.Sleep(timeout)
-		log.Infof("backup is not ready, trying after %s. Left %d retries", timeout, i-1)
-	}
-	return errors.New("Retries exceeded, backup is not ready")
-}
-
-func (b *backups) GetEarliestSuccessful(ctx context.Context, serviceId *string) (*v1alpha1.KuberlogicServiceBackup, error) {
-	r, err := b.ListByServiceName(ctx, serviceId)
+func (b *backups) FirstSuccessful(ctx context.Context, opt v1.ListOptions, sortBy func([]*v1alpha1.KuberlogicServiceBackup) sort.Interface) (*v1alpha1.KuberlogicServiceBackup, error) {
+	r, err := b.List(ctx, opt)
 	if err != nil {
 		return nil, errors.Wrap(err, "error listing service backups")
 	}
-
+	listOfBackups := make([]*v1alpha1.KuberlogicServiceBackup, 0)
 	for _, backup := range r.Items {
-		switch backup.Status.Phase {
-		case v1alpha1.KlbSuccessfulCondType:
-			return &backup, nil
+		listOfBackups = append(listOfBackups, &backup)
+	}
+	sort.Sort(sortBy(listOfBackups))
+
+	for _, backup := range listOfBackups {
+		if backup.IsSuccessful() {
+			return backup, nil
 		}
 	}
 	return nil, errors.New("No successful backup found")

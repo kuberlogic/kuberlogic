@@ -11,7 +11,8 @@ import (
 func (h *handlers) BackupListHandler(params apiBackup.BackupListParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
 
-	klbs, err := h.Backups().ListByServiceName(ctx, params.ServiceID)
+	opts := h.ListOptionsByKeyValue(util.BackupRestoreServiceField, *params.ServiceID)
+	r, err := h.Backups().List(ctx, opts)
 	if err != nil {
 		msg := "error listing backups"
 		h.log.Errorw(msg)
@@ -19,10 +20,10 @@ func (h *handlers) BackupListHandler(params apiBackup.BackupListParams, _ *model
 			Message: msg,
 		})
 	}
-	h.log.Debugw("found kuberlogicservicebackups objects", "count", len(klbs.Items), "objects", klbs)
+	h.log.Debugw("found kuberlogicservicebackups objects", "count", len(r.Items), "objects", r)
 
 	items := make([]*models.Backup, 0)
-	for _, klb := range klbs.Items {
+	for _, klb := range r.Items {
 		b, err := util.KuberlogicToBackup(&klb)
 		if err != nil {
 			h.log.Errorw("error converting klb to model", "error", err, "name", klb.GetName())

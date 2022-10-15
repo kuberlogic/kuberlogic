@@ -27,7 +27,7 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/logging"
 	apiserverMiddleware "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/net/middleware"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/util/k8s"
-	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	sentry2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
 	"k8s.io/client-go/kubernetes"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"
@@ -71,7 +71,7 @@ func Main(args []string) {
 		mainLog.Fatalw("swagger does not loaded", "error", err)
 	}
 
-	err = cloudlinuxv1alpha1.AddToScheme(k8scheme.Scheme)
+	err = v1alpha1.AddToScheme(k8scheme.Scheme)
 	if err != nil {
 		mainLog.Fatalw("could not add to scheme", "error", err)
 	}

@@ -36,7 +36,7 @@ func (h *handlers) BackupAddHandler(params apiBackup.BackupAddParams, _ *models.
 		})
 	}
 
-	klb, err = h.Backups().CreateBackupByServiceName(ctx, klb.Spec.KuberlogicServiceName)
+	klb, err = h.Backups().CreateByServiceName(ctx, klb.Spec.KuberlogicServiceName)
 	if k8serrors.IsAlreadyExists(err) {
 		h.log.Errorw("klb already exists", "name", klb.GetName())
 		return apiBackup.NewBackupAddConflict()

@@ -15,13 +15,11 @@ import (
 )
 
 func (h *handlers) ServiceCredentialsUpdateHandler(params apiService.ServiceCredentialsUpdateParams, _ *models.Principal) middleware.Responder {
+	ctx := params.HTTPRequest.Context()
+
 	// check for service existence
-	kls := new(v1alpha1.KuberLogicService)
-	if err := h.restClient.Get().
-		Name(params.ServiceID).
-		Resource("kuberlogicservices").
-		Do(params.HTTPRequest.Context()).
-		Into(kls); k8serrors.IsNotFound(err) {
+	kls, err := h.Services().Get(ctx, params.ServiceID, v1.GetOptions{})
+	if k8serrors.IsNotFound(err) {
 		return apiService.NewServiceCredentialsUpdateBadRequest().WithPayload(&models.Error{
 			Message: "service does not exist",
 		})
@@ -48,8 +46,8 @@ func (h *handlers) ServiceCredentialsUpdateHandler(params apiService.ServiceCred
 		},
 		StringData: params.ServiceCredentials,
 	}
-	credentialsUpdateRequest, err := h.clientset.CoreV1().Secrets(credentialsUpdateRequest.GetNamespace()).
-		Create(params.HTTPRequest.Context(), credentialsUpdateRequest, v1.CreateOptions{FieldManager: "kuberlogic"})
+	credentialsUpdateRequest, err = h.clientset.CoreV1().Secrets(credentialsUpdateRequest.GetNamespace()).
+		Create(ctx, credentialsUpdateRequest, v1.CreateOptions{FieldManager: "kuberlogic"})
 	if err != nil {
 		h.log.Errorw("failed to create a credentials update request secret", "error", err.Error())
 		return apiService.NewServiceCredentialsUpdateServiceUnavailable().WithPayload(&models.Error{
@@ -65,7 +63,7 @@ func (h *handlers) ServiceCredentialsUpdateHandler(params apiService.ServiceCred
 	for i := time.Duration(0); i < timeout; i += waitstep {
 		time.Sleep(waitstep)
 		if _, err := h.clientset.CoreV1().Secrets(credentialsUpdateRequest.GetNamespace()).
-			Get(params.HTTPRequest.Context(), credentialsUpdateRequest.GetName(), v1.GetOptions{}); k8serrors.IsNotFound(err) {
+			Get(ctx, credentialsUpdateRequest.GetName(), v1.GetOptions{}); k8serrors.IsNotFound(err) {
 			return apiService.NewServiceCredentialsUpdateOK()
 		} else if err != nil {
 			h.log.Errorw("failed to get credentials update request secret", "error", err.Error())
@@ -76,7 +74,7 @@ func (h *handlers) ServiceCredentialsUpdateHandler(params apiService.ServiceCred
 	}
 
 	if err := h.clientset.CoreV1().Secrets(credentialsUpdateRequest.GetNamespace()).
-		Delete(params.HTTPRequest.Context(), credentialsUpdateRequest.GetName(), v1.DeleteOptions{}); err != nil {
+		Delete(ctx, credentialsUpdateRequest.GetName(), v1.DeleteOptions{}); err != nil {
 		h.log.Errorw("failed to delete credentials update request secret", "error", err.Error())
 	}
 	return apiService.NewServiceCredentialsUpdateServiceUnavailable().WithPayload(&models.Error{

@@ -6,6 +6,8 @@ package api
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/watch"
+	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -25,12 +27,10 @@ type BackupGetter interface {
 type BackupInterface interface {
 	Create(ctx context.Context, backup *v1alpha1.KuberlogicServiceBackup, opts v1.CreateOptions) (*v1alpha1.KuberlogicServiceBackup, error)
 	Update(ctx context.Context, backup *v1alpha1.KuberlogicServiceBackup, opts v1.UpdateOptions) (*v1alpha1.KuberlogicServiceBackup, error)
-	//UpdateStatus(ctx context.Context, backups *v1alpha1.KuberlogicServiceBackup, opts v1.UpdateOptions) (*v1alpha1.KuberlogicServiceBackup, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
-	//DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.KuberlogicServiceBackup, error)
 	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.KuberlogicServiceBackupList, error)
-	//Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.KuberlogicServiceBackup, err error)
 }
 
@@ -49,9 +49,9 @@ func NewBackups(c rest.Interface) BackupInterface {
 	}
 }
 
-func (svc *backups) Create(ctx context.Context, backup *v1alpha1.KuberlogicServiceBackup, opts v1.CreateOptions) (*v1alpha1.KuberlogicServiceBackup, error) {
+func (b *backups) Create(ctx context.Context, backup *v1alpha1.KuberlogicServiceBackup, opts v1.CreateOptions) (*v1alpha1.KuberlogicServiceBackup, error) {
 	result := &v1alpha1.KuberlogicServiceBackup{}
-	err := svc.restClient.Post().
+	err := b.restClient.Post().
 		Resource(backupK8sResource).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(backup).
@@ -60,9 +60,9 @@ func (svc *backups) Create(ctx context.Context, backup *v1alpha1.KuberlogicServi
 	return result, err
 }
 
-func (svc *backups) Update(ctx context.Context, backup *v1alpha1.KuberlogicServiceBackup, opts v1.UpdateOptions) (*v1alpha1.KuberlogicServiceBackup, error) {
+func (b *backups) Update(ctx context.Context, backup *v1alpha1.KuberlogicServiceBackup, opts v1.UpdateOptions) (*v1alpha1.KuberlogicServiceBackup, error) {
 	result := &v1alpha1.KuberlogicServiceBackup{}
-	err := svc.restClient.Put().
+	err := b.restClient.Put().
 		Resource(backupK8sResource).
 		Name(backup.Name).
 		VersionedParams(&opts, scheme.ParameterCodec).
@@ -72,9 +72,9 @@ func (svc *backups) Update(ctx context.Context, backup *v1alpha1.KuberlogicServi
 	return result, err
 }
 
-func (svc *backups) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (*v1alpha1.KuberlogicServiceBackup, error) {
+func (b *backups) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (*v1alpha1.KuberlogicServiceBackup, error) {
 	result := &v1alpha1.KuberlogicServiceBackup{}
-	err := svc.restClient.Patch(pt).
+	err := b.restClient.Patch(pt).
 		Resource(backupK8sResource).
 		Name(name).
 		SubResource(subresources...).
@@ -85,8 +85,8 @@ func (svc *backups) Patch(ctx context.Context, name string, pt types.PatchType, 
 	return result, err
 }
 
-func (svc *backups) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	return svc.restClient.Delete().
+func (b *backups) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
+	return b.restClient.Delete().
 		Resource(backupK8sResource).
 		Name(name).
 		Body(&opts).
@@ -94,9 +94,9 @@ func (svc *backups) Delete(ctx context.Context, name string, opts v1.DeleteOptio
 		Error()
 }
 
-func (svc *backups) Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.KuberlogicServiceBackup, error) {
+func (b *backups) Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.KuberlogicServiceBackup, error) {
 	result := &v1alpha1.KuberlogicServiceBackup{}
-	err := svc.restClient.Get().
+	err := b.restClient.Get().
 		Resource(backupK8sResource).
 		Name(name).
 		VersionedParams(&opts, scheme.ParameterCodec).
@@ -104,12 +104,26 @@ func (svc *backups) Get(ctx context.Context, name string, opts v1.GetOptions) (*
 		Into(result)
 	return result, err
 }
-func (svc *backups) List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.KuberlogicServiceBackupList, error) {
+func (b *backups) List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.KuberlogicServiceBackupList, error) {
 	result := &v1alpha1.KuberlogicServiceBackupList{}
-	err := svc.restClient.Get().
+	err := b.restClient.Get().
 		Resource(backupK8sResource).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Do(ctx).
 		Into(result)
 	return result, err
+}
+
+// Watch returns a watch.Interface that watches the requested backups.
+func (b *backups) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
+	opts.Watch = true
+	return b.restClient.Get().
+		Resource(backupK8sResource).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
+		Watch(ctx)
 }

@@ -6,15 +6,18 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
+	watchtools "k8s.io/client-go/tools/watch"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/api"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/logging"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
@@ -25,8 +28,8 @@ type ExtendedRestoreGetter interface {
 
 type ExtendedRestoreInterface interface {
 	api.RestoreInterface
-	ListByServiceName(ctx context.Context, service *string) (*v1alpha1.KuberlogicServiceRestoreList, error)
-	Wait(ctx context.Context, log logging.Logger, restoreId string, maxRetries int) error
+	CreateByBackupName(ctx context.Context, name string) (*v1alpha1.KuberlogicServiceRestore, error)
+	Wait(ctx context.Context, resource *v1alpha1.KuberlogicServiceRestore, condition func(event watch.Event) (bool, error), timeout time.Duration) (*v1alpha1.KuberlogicServiceRestore, error)
 }
 
 type restores struct {
@@ -41,34 +44,44 @@ func newRestores(c rest.Interface) ExtendedRestoreInterface {
 	return s
 }
 
-func (r *restores) ListByServiceName(ctx context.Context, service *string) (*v1alpha1.KuberlogicServiceRestoreList, error) {
-	opts := v1.ListOptions{}
-	if service != nil {
-		labelSelector := v1.LabelSelector{
-			MatchLabels: map[string]string{util.BackupRestoreServiceField: *service},
-		}
-		opts = v1.ListOptions{
-			LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
-		}
+func (r *restores) CreateByBackupName(ctx context.Context, name string) (*v1alpha1.KuberlogicServiceRestore, error) {
+	restore := &v1alpha1.KuberlogicServiceRestore{
+		ObjectMeta: v1.ObjectMeta{
+			Name: fmt.Sprintf("%s-%d", name, time.Now().Unix()),
+			Labels: map[string]string{
+				util.BackupRestoreServiceField: name,
+			},
+		},
+		Spec: v1alpha1.KuberlogicServiceRestoreSpec{
+			KuberlogicServiceBackup: name,
+		},
 	}
-	return r.List(ctx, opts)
+	return r.Create(ctx, restore, v1.CreateOptions{})
 }
 
-func (r *restores) Wait(ctx context.Context, log logging.Logger, restoreId string, maxRetries int) error {
-	timeout := time.Second
-	for i := maxRetries; i > 0; i-- {
-		result, err := r.Get(ctx, restoreId, v1.GetOptions{})
-		if err != nil {
-			return errors.Wrap(err, "Error while getting service restore")
-		}
+func (r *restores) Wait(
+	ctx context.Context,
+	resource *v1alpha1.KuberlogicServiceRestore,
+	condition func(event watch.Event) (bool, error),
+	timeout time.Duration,
+) (*v1alpha1.KuberlogicServiceRestore, error) {
+	ctx, cancel := watchtools.ContextWithOptionalTimeout(ctx, timeout)
+	defer cancel()
 
-		if ok := result.IsSuccessful(); ok {
-			return nil
-		}
-
-		timeout = timeout * 2
-		time.Sleep(timeout)
-		log.Infof("restore is not successful, trying after %s. Left %d retries", timeout, i-1)
+	event, err := watchtools.UntilWithSync(ctx, &cache.ListWatch{
+		ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
+			return r.List(ctx, options)
+		},
+		WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
+			return r.Watch(ctx, options)
+		},
+	}, resource, nil, condition)
+	if err != nil {
+		return nil, errors.Wrap(err, "error waiting condition")
 	}
-	return errors.New("Retries exceeded, restore is not successful")
+	obj, ok := event.Object.(*v1alpha1.KuberlogicServiceRestore)
+	if !ok {
+		return nil, errors.Wrap(err, "error conversion for backup object")
+	}
+	return obj, nil
 }

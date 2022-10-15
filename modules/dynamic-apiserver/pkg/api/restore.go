@@ -6,9 +6,11 @@ package api
 
 import (
 	"context"
+	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 
@@ -21,37 +23,35 @@ type RestoreGetter interface {
 	Restores() RestoreInterface
 }
 
-// RestoreInterface has methods to work with Kuberlogic Restores resources.
+// RestoreInterface has methods to work with Kuberlogic restores resources.
 type RestoreInterface interface {
 	Create(ctx context.Context, obj *v1alpha1.KuberlogicServiceRestore, opts v1.CreateOptions) (*v1alpha1.KuberlogicServiceRestore, error)
 	Update(ctx context.Context, obj *v1alpha1.KuberlogicServiceRestore, opts v1.UpdateOptions) (*v1alpha1.KuberlogicServiceRestore, error)
-	//UpdateStatus(ctx context.Context, Restores *v1alpha1.KuberlogicServiceRestore, opts v1.UpdateOptions) (*v1alpha1.KuberlogicServiceRestore, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
-	//DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.KuberlogicServiceRestore, error)
 	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.KuberlogicServiceRestoreList, error)
-	//Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.KuberlogicServiceRestore, err error)
 }
 
 const restoreK8sResource = "kuberlogicservicerestores"
 
-type Restores struct {
+type restores struct {
 	restClient rest.Interface
 }
 
-var _ RestoreInterface = &Restores{}
+var _ RestoreInterface = &restores{}
 
-// NewRestores returns a Restores
+// NewRestores returns a restores
 func NewRestores(c rest.Interface) RestoreInterface {
-	return &Restores{
+	return &restores{
 		restClient: c,
 	}
 }
 
-func (svc *Restores) Create(ctx context.Context, obj *v1alpha1.KuberlogicServiceRestore, opts v1.CreateOptions) (*v1alpha1.KuberlogicServiceRestore, error) {
+func (r *restores) Create(ctx context.Context, obj *v1alpha1.KuberlogicServiceRestore, opts v1.CreateOptions) (*v1alpha1.KuberlogicServiceRestore, error) {
 	result := &v1alpha1.KuberlogicServiceRestore{}
-	err := svc.restClient.Post().
+	err := r.restClient.Post().
 		Resource(restoreK8sResource).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(obj).
@@ -60,9 +60,9 @@ func (svc *Restores) Create(ctx context.Context, obj *v1alpha1.KuberlogicService
 	return result, err
 }
 
-func (svc *Restores) Update(ctx context.Context, obj *v1alpha1.KuberlogicServiceRestore, opts v1.UpdateOptions) (*v1alpha1.KuberlogicServiceRestore, error) {
+func (r *restores) Update(ctx context.Context, obj *v1alpha1.KuberlogicServiceRestore, opts v1.UpdateOptions) (*v1alpha1.KuberlogicServiceRestore, error) {
 	result := &v1alpha1.KuberlogicServiceRestore{}
-	err := svc.restClient.Put().
+	err := r.restClient.Put().
 		Resource(restoreK8sResource).
 		Name(obj.Name).
 		VersionedParams(&opts, scheme.ParameterCodec).
@@ -72,9 +72,9 @@ func (svc *Restores) Update(ctx context.Context, obj *v1alpha1.KuberlogicService
 	return result, err
 }
 
-func (svc *Restores) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (*v1alpha1.KuberlogicServiceRestore, error) {
+func (r *restores) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (*v1alpha1.KuberlogicServiceRestore, error) {
 	result := &v1alpha1.KuberlogicServiceRestore{}
-	err := svc.restClient.Patch(pt).
+	err := r.restClient.Patch(pt).
 		Resource(restoreK8sResource).
 		Name(name).
 		SubResource(subresources...).
@@ -85,8 +85,8 @@ func (svc *Restores) Patch(ctx context.Context, name string, pt types.PatchType,
 	return result, err
 }
 
-func (svc *Restores) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	return svc.restClient.Delete().
+func (r *restores) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
+	return r.restClient.Delete().
 		Resource(restoreK8sResource).
 		Name(name).
 		Body(&opts).
@@ -94,9 +94,9 @@ func (svc *Restores) Delete(ctx context.Context, name string, opts v1.DeleteOpti
 		Error()
 }
 
-func (svc *Restores) Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.KuberlogicServiceRestore, error) {
+func (r *restores) Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.KuberlogicServiceRestore, error) {
 	result := &v1alpha1.KuberlogicServiceRestore{}
-	err := svc.restClient.Get().
+	err := r.restClient.Get().
 		Resource(restoreK8sResource).
 		Name(name).
 		VersionedParams(&opts, scheme.ParameterCodec).
@@ -104,12 +104,26 @@ func (svc *Restores) Get(ctx context.Context, name string, opts v1.GetOptions) (
 		Into(result)
 	return result, err
 }
-func (svc *Restores) List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.KuberlogicServiceRestoreList, error) {
+func (r *restores) List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.KuberlogicServiceRestoreList, error) {
 	result := &v1alpha1.KuberlogicServiceRestoreList{}
-	err := svc.restClient.Get().
+	err := r.restClient.Get().
 		Resource(restoreK8sResource).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Do(ctx).
 		Into(result)
 	return result, err
+}
+
+// Watch returns a watch.Interface that watches the requested backups.
+func (r *restores) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
+	opts.Watch = true
+	return r.restClient.Get().
+		Resource(restoreK8sResource).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
+		Watch(ctx)
 }

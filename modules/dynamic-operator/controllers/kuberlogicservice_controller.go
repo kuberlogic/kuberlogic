@@ -98,6 +98,10 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if kls.Archived() {
 		// exit from reconciliation
 		log.Info("service is archived")
+		if kls.Status.Phase != "Archived" {
+			kls.Status.Phase = "Archived"
+			return ctrl.Result{}, r.Status().Update(ctx, kls)
+		}
 		return ctrl.Result{}, nil
 	}
 

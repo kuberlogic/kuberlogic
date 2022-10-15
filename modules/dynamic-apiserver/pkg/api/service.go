@@ -25,12 +25,9 @@ type ServiceGetter interface {
 type ServiceInterface interface {
 	Create(ctx context.Context, service *v1alpha1.KuberLogicService, opts v1.CreateOptions) (*v1alpha1.KuberLogicService, error)
 	Update(ctx context.Context, service *v1alpha1.KuberLogicService, opts v1.UpdateOptions) (*v1alpha1.KuberLogicService, error)
-	//UpdateStatus(ctx context.Context, services *v1alpha1.KuberLogicService, opts v1.UpdateOptions) (*v1alpha1.KuberLogicService, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
-	//DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.KuberLogicService, error)
 	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.KuberLogicServiceList, error)
-	//Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.KuberLogicService, err error)
 }
 

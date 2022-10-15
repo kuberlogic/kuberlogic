@@ -17,6 +17,8 @@
 package app
 
 import (
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
@@ -67,4 +69,13 @@ func (h *handlers) OnShutdown() {
 	defer func() {
 		_ = h.log.Sync()
 	}()
+}
+
+func (h *handlers) ListOptionsByKeyValue(key, value string) v1.ListOptions {
+	labelSelector := v1.LabelSelector{
+		MatchLabels: map[string]string{key: value},
+	}
+	return v1.ListOptions{
+		LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
+	}
 }
