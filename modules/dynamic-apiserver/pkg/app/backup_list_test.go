@@ -29,10 +29,9 @@ func TestBackupListEmpty(t *testing.T) {
 		restClient: tc.client,
 	}
 
-	svc := "tested-service"
 	params := apiBackup.BackupListParams{
 		HTTPRequest: &http.Request{},
-		ServiceID:   &svc,
+		ServiceID:   util.StrAsPointer("test-service"),
 	}
 
 	checkResponse(srv.BackupListHandler(params, nil), t, 200, models.Backups{})
@@ -91,6 +90,7 @@ func TestBackupListMany(t *testing.T) {
 
 	params := apiBackup.BackupListParams{
 		HTTPRequest: &http.Request{},
+		ServiceID:   util.StrAsPointer("test-service"),
 	}
 
 	checkResponse(srv.BackupListHandler(params, nil), t, 200, backups)

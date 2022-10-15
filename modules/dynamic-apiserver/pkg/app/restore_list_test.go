@@ -29,6 +29,7 @@ func TestRestoreListEmpty(t *testing.T) {
 
 	params := apiRestore.RestoreListParams{
 		HTTPRequest: &http.Request{},
+		ServiceID:   util.StrAsPointer("test-service"),
 	}
 
 	checkResponse(srv.RestoreListHandler(params, nil), t, 200, models.Restores{})
@@ -87,6 +88,7 @@ func TestRestoreListMany(t *testing.T) {
 
 	params := apiRestore.RestoreListParams{
 		HTTPRequest: &http.Request{},
+		ServiceID:   util.StrAsPointer("test-service"),
 	}
 
 	checkResponse(srv.RestoreListHandler(params, nil), t, 200, backups)
