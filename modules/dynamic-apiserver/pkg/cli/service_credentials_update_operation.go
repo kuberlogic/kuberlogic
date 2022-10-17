@@ -2,12 +2,14 @@ package cli
 
 import (
 	"fmt"
+	"strings"
+
 	openapiClient "github.com/go-openapi/runtime/client"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/service"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-	"strings"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/service"
 
 	"github.com/spf13/cobra"
 )
@@ -27,7 +29,8 @@ func makeServiceCredentialsUpdateCmd(apiClientFunc func() (*client.ServiceAPI, e
 		RunE:    runServiceCredentialsUpdate(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(serviceIdFlag, "", "service id")
+	_ = cmd.PersistentFlags().String(serviceIdFlag, "", "Required. Service id")
+	_ = cmd.MarkFlagRequired(serviceIdFlag)
 
 	return cmd
 }

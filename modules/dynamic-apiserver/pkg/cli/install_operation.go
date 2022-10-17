@@ -56,6 +56,7 @@ const (
 	installBackupsSnapshotsEnabledParam = "backups_snapshots_enabled"
 	installTLSKeyParam                  = "tls_key"
 	installTLSCrtParam                  = "tls_crt"
+	installBillingProvider              = "billing_provider"
 	installChargebeeSiteParam           = "chargebee_site"
 	installChargebeeKeyParam            = "chargebee_key"
 	installChargebeeMappingParam        = "chargebee_mapping"
@@ -67,6 +68,9 @@ const (
 	installDockerRegistryURL            = "docker_registry_url"
 	installDockerRegistryUsername       = "docker_registry_username"
 	installDockerRegistryPassword       = "docker_registry_password"
+
+	chargebeeBillingProvider = "chargebee"
+	noneBillingProvider      = "none"
 )
 
 var (
@@ -90,9 +94,10 @@ var (
 
 func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "install",
-		Short: "Installs KuberLogic to Kubernetes cluster",
-		RunE:  runInstall(k8sclient),
+		Use:          "install",
+		Short:        "Installs KuberLogic to Kubernetes cluster",
+		RunE:         runInstall(k8sclient),
+		SilenceUsage: true,
 	}
 
 	_ = cmd.PersistentFlags().Bool("non-interactive", false, "Do not enter interactive mode")
@@ -103,9 +108,10 @@ func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
 	_ = cmd.PersistentFlags().Bool(installBackupsSnapshotsEnabledParam, false, "Enable volume snapshot backups (Must be supported by the Velero provider plugin).")
 	_ = cmd.PersistentFlags().String(installTLSCrtParam, "", "Specify path to the TLS certificate.\nIt is assumed that the TLS certificate will be a wildcard certificate. All applications managed by Kuberlogic share the same certificate by sharing the same ingress controller. You can skip this step by pressing 'Enter', In this case, a self-signed (demo) certificate will be used.")
 	_ = cmd.PersistentFlags().String(installTLSKeyParam, "", "Specify path to TLS key to use for provisioned applications.")
+	_ = cmd.PersistentFlags().String(installBillingProvider, "", "Choose supported billing provider to enable integration.")
 	_ = cmd.PersistentFlags().String(installChargebeeSiteParam, "", "Specify ChargeBee site name.\nFor more information, read https://kuberlogic.com/docs/configuring/billing page. You can skip this step by pressing 'Enter', and set up the integration later.")
 	_ = cmd.PersistentFlags().String(installChargebeeKeyParam, "", "Specify ChargeBee API key.\nFor more information, read https://apidocs.chargebee.com/docs/api/?prod_cat_ver=2 . API Key are used to configure Kuberlogic ChargeBee integration.")
-	_ = cmd.PersistentFlags().String(installChargebeeMappingParam, "", "Specify ChargeBee mapping file.\nFor more information, read https://kuberlogic.com/docs/configuring/billing/#mapping-custom-fields.")
+	_ = cmd.PersistentFlags().String(installChargebeeMappingParam, "", "Specify ChargeBee mapping file.\nFor more information, read https://kuberlogic.com/docs/configuring/billing/#mapping-custom-fields .")
 	_ = cmd.PersistentFlags().String(installKuberlogicDomainParam, "", "Specify “Domain name”.\nThis configuration setting is used by KuberLogic to create endpoints for application instances. (e.g. instance1.domainname.com).")
 	_ = cmd.PersistentFlags().Bool(installReportErrors, false, "Report errors to KuberLogic?\nChoose 'yes' if you want to help us improve KuberLogic, otherwise, select 'no'. Error reports will be generated and sent automatically, these reports contain only information about the errors and do not contain any user data. Let us receive errors at least from your test environments.")
 	_ = cmd.PersistentFlags().String(installSentryDSNParam, "", "Specify Sentry Data Source Name (DSN).\nFor more information, read https://docs.sentry.io/product/sentry-basics/dsn-explainer/ . (KuberLogic team will not be notified in case of errors).")
@@ -223,34 +229,40 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		klParams.Set(installBackupsEnabledParam, backupsEnabled)
 		klParams.Set(installBackupsSnapshotsEnabledParam, snapshotsEnabled)
 
-		var cSite, cKey, cMappingFile, kuberlogicDomain string
-		cachedChargebeeMappingFile := filepath.Join(cacheDir, "manager/mapping-fields.yaml")
-		if cSite, err = getStringPrompt(command, installChargebeeSiteParam, klParams.GetString(installChargebeeSiteParam), false, nil); err != nil {
-			return errors.Wrapf(err, "error processing %s flag", installChargebeeSiteParam)
-		} else if cSite != "" {
-			cKey, err = getStringPrompt(command, installChargebeeKeyParam, klParams.GetString(installChargebeeKeyParam), true, nil)
-			if err != nil {
-				return errors.Wrapf(err, "error processing %s flag", installChargebeeKeyParam)
-			}
-			cMappingFile, err = getStringPrompt(command, installChargebeeMappingParam, klParams.GetString(installChargebeeMappingParam), true, validateChargebeeMappingfile)
-			if err != nil {
-				return errors.Wrapf(err, "error processing %s flag", installChargebeeMappingParam)
-			}
-			if cMappingFile != "" {
-				if err = cacheConfigFile(cMappingFile, cachedChargebeeMappingFile); err != nil {
-					return errors.Wrapf(err, "error caching %s config file", cachedChargebeeMappingFile)
+		if billingProvider, err := getSelectPrompt(command, installBillingProvider, klParams.GetString(installBillingProvider), []string{noneBillingProvider, chargebeeBillingProvider}); err != nil {
+			return errors.Wrapf(err, "error processing %s flag", installBillingProvider)
+		} else if billingProvider == chargebeeBillingProvider {
+			var cSite, cKey, cMappingFile string
+			cachedChargebeeMappingFile := filepath.Join(cacheDir, "manager/mapping-fields.yaml")
+			if cSite, err = getStringPrompt(command, installChargebeeSiteParam, klParams.GetString(installChargebeeSiteParam), true, nil); err != nil {
+				return errors.Wrapf(err, "error processing %s flag", installChargebeeSiteParam)
+			} else if cSite != "" {
+				cKey, err = getStringPrompt(command, installChargebeeKeyParam, klParams.GetString(installChargebeeKeyParam), true, nil)
+				if err != nil {
+					return errors.Wrapf(err, "error processing %s flag", installChargebeeKeyParam)
+				}
+				cMappingFile, err = getStringPrompt(command, installChargebeeMappingParam, klParams.GetString(installChargebeeMappingParam), false, validateChargebeeMappingfile)
+				if err != nil {
+					return errors.Wrapf(err, "error processing %s flag", installChargebeeMappingParam)
+				}
+				if cMappingFile != "" {
+					if err = cacheConfigFile(cMappingFile, cachedChargebeeMappingFile); err != nil {
+						return errors.Wrapf(err, "error caching %s config file", cachedChargebeeMappingFile)
+					}
 				}
 			}
+
+			klParams.Set(installChargebeeSiteParam, cSite)
+			klParams.Set(installChargebeeKeyParam, cKey)
 		}
-		kuberlogicDomain, err = getStringPrompt(command, installKuberlogicDomainParam, klParams.GetString(installKuberlogicDomainParam), true, nil)
+
+		kuberlogicDomain, err := getStringPrompt(command, installKuberlogicDomainParam, klParams.GetString(installKuberlogicDomainParam), true, nil)
 		if err != nil {
 			return errors.Wrapf(err, "error processing %s flag", installKuberlogicDomainParam)
 		} else if kuberlogicDomain == "" {
 			return errors.New("kuberlogic domain cannot be empty")
 		}
 
-		klParams.Set(installChargebeeSiteParam, cSite)
-		klParams.Set(installChargebeeKeyParam, cKey)
 		klParams.Set(installKuberlogicDomainParam, kuberlogicDomain)
 
 		cachedTlsCrt := filepath.Join(cacheDir, "certificate/tls.crt")

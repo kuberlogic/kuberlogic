@@ -7,20 +7,23 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/AlecAivazis/survey/v2"
-	"github.com/AlecAivazis/survey/v2/terminal"
-	"github.com/ghodss/yaml"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 	"os"
 	"reflect"
 	"strings"
+
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/terminal"
+	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 )
 
 var (
-	errRequiredValue   = errors.New("value can't be empty")
-	errPointerExpected = errors.New("pointer type expected")
+	errRequiredValue     = errors.New("value can't be empty")
+	errValueNotAvailable = errors.New("value is not available")
+	errPointerExpected   = errors.New("pointer type expected")
 )
 
 type WithPayload interface {
@@ -108,6 +111,21 @@ func getSelectPrompt(cmd *cobra.Command, parameter, defaultValue string, items [
 	if err != nil {
 		return "", err
 	}
+
+	if defaultValue == "" {
+		defaultValue = items[0]
+	} else {
+		var inTheList bool
+		for _, v := range items {
+			if v == defaultValue {
+				inTheList = true
+			}
+		}
+		if !inTheList {
+			return "", errors.Wrapf(errValueNotAvailable, "%s is not available. Available: %s", defaultValue, strings.Join(items, ","))
+		}
+	}
+
 	if nonInteractive == nil {
 		p := &survey.Select{
 			Message: flag.Usage,

@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	client2 "github.com/go-openapi/runtime/client"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 	"github.com/spf13/viper"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
@@ -22,19 +23,21 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.
 		RunE:    runServiceAdd(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(idFlag, "", "service id")
-	_ = cmd.PersistentFlags().String("type", "", "type of service")
-	_ = cmd.PersistentFlags().Int64("replicas", 1, "how many replicas need for service")
-	_ = cmd.PersistentFlags().String("version", "", "what the version of service")
-	_ = cmd.PersistentFlags().String("backup_schedule", "", "backup schedule in cron format")
-	_ = cmd.PersistentFlags().String("domain", "", "on which domain service will be available")
-	_ = cmd.PersistentFlags().Bool("insecure", false, "setup unsecure service with http, not https")
-	_ = cmd.PersistentFlags().String(subscriptionId, "", "")
+	_ = cmd.PersistentFlags().String(idFlag, "", "Required. Service id")
+	_ = cmd.MarkFlagRequired(idFlag)
+	_ = cmd.PersistentFlags().String("type", "", "Required. Supported service type")
+	_ = cmd.MarkFlagRequired("type")
+	_ = cmd.PersistentFlags().Int64("replicas", 1, "Service replicas count")
+	_ = cmd.PersistentFlags().String("version", "", "Service version")
+	_ = cmd.PersistentFlags().String("backup_schedule", "", "Backup schedule in cron format")
+	_ = cmd.PersistentFlags().String("domain", "", "Custom domain for a service")
+	_ = cmd.PersistentFlags().Bool("insecure", false, "Use HTTP protocol instead of HTTPS")
+	_ = cmd.PersistentFlags().String(subscriptionId, "", "Subscription ID")
 
 	// limits
-	_ = cmd.PersistentFlags().String("limits.cpu", "", "cpu limits")
-	_ = cmd.PersistentFlags().String("limits.memory", "", "memory limits")
-	_ = cmd.PersistentFlags().String("limits.storage", "", "storage limits")
+	_ = cmd.PersistentFlags().String("limits.cpu", "", "CPU limits")
+	_ = cmd.PersistentFlags().String("limits.memory", "", "Memory limits")
+	_ = cmd.PersistentFlags().String("limits.storage", "", "Storage limits")
 
 	// advanced conf
 
