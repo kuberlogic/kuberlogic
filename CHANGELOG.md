@@ -1,3 +1,8 @@
+## [0.0.16] - 2022-10-13
+- Support private container registry for service images
+- Add `archive` REST API operation for managed services
+- Improve installation flow
+
 ## [0.0.15] - 2022-10-11
 - Support custom config files for managed applications
 - Validate docker-compose file before installation

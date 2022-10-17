@@ -2,12 +2,15 @@ package cli
 
 import (
 	"fmt"
+
 	client2 "github.com/go-openapi/runtime/client"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 	"github.com/spf13/viper"
 
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/backup"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
+
 	"github.com/spf13/cobra"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/backup"
 )
 
 // makeBackupDeleteCmd returns a cmd to handle operation backupDelete
@@ -19,7 +22,8 @@ func makeBackupDeleteCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobr
 		RunE:    runBackupDelete(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(idFlag, "", "backup id")
+	_ = cmd.PersistentFlags().String(idFlag, "", "Required. Backup ID.")
+	_ = cmd.MarkFlagRequired(idFlag)
 
 	return cmd
 }

@@ -5,10 +5,12 @@ package cli
 
 import (
 	"fmt"
+
 	client2 "github.com/go-openapi/runtime/client"
+	"github.com/spf13/viper"
+
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/service"
-	"github.com/spf13/viper"
 
 	"github.com/spf13/cobra"
 )
@@ -22,7 +24,8 @@ func makeServiceDeleteCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cob
 		RunE:    runServiceDelete(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(idFlag, "", "service id")
+	_ = cmd.PersistentFlags().String(idFlag, "", "Required. Service id")
+	_ = cmd.MarkFlagRequired(idFlag)
 
 	return cmd
 }

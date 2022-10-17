@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	client2 "github.com/go-openapi/runtime/client"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 	"github.com/spf13/viper"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/service"
 
@@ -21,7 +22,9 @@ func makeServiceArchiveCmd(apiClientFunc func() (*client.ServiceAPI, error)) *co
 		RunE:    runServiceArchive(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(idFlag, "", "service id")
+	_ = cmd.PersistentFlags().String(idFlag, "", "Required. Service id")
+	_ = cmd.MarkFlagRequired(idFlag)
+
 	return cmd
 }
 
