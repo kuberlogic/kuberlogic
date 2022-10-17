@@ -2,12 +2,15 @@ package cli
 
 import (
 	"fmt"
+
 	client2 "github.com/go-openapi/runtime/client"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 	"github.com/spf13/viper"
 
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/restore"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
+
 	"github.com/spf13/cobra"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/restore"
 )
 
 // makeRestoreDeleteCmd returns a cmd to handle operation restoreDelete
@@ -19,7 +22,8 @@ func makeRestoreDeleteCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cob
 		RunE:    runRestoreDelete(apiClientFunc),
 	}
 
-	_ = cmd.PersistentFlags().String(idFlag, "", "restore id")
+	_ = cmd.PersistentFlags().String(idFlag, "", "Required. Restore id")
+	_ = cmd.MarkFlagRequired(idFlag)
 
 	return cmd
 }
