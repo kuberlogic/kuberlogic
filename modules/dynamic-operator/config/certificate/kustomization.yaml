@@ -9,3 +9,23 @@ secretGenerator:
     files:
       - tls.key
       - tls.crt
+
+configMapGenerator:
+- env: config.properties
+  name: runtime-secrets
+
+vars:
+- name: ADMIN_EMAIL
+  objref:
+    kind: ConfigMap
+    name: runtime-secrets
+    apiVersion: v1
+  fieldref:
+    fieldpath: data.ADMIN_EMAIL
+- name: INGRESS_CLASS
+  objref:
+    kind: ConfigMap
+    name: runtime-secrets
+    apiVersion: v1
+  fieldref:
+    fieldpath: data.INGRESS_CLASS

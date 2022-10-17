@@ -69,6 +69,13 @@ func ServiceToKuberlogic(svc *models.Service, cfg *config.Config) (*kuberlogicco
 	}
 	c.Spec.Insecure = svc.Insecure
 
+	if svc.UseLetsencrypt {
+		if svc.Insecure {
+			return nil, errors2.New("cannot use letsencrypt with insecure flag")
+		}
+		c.Spec.UseLetsencrypt = svc.UseLetsencrypt
+	}
+
 	if svc.Advanced != nil {
 		data, err := json.Marshal(svc.Advanced)
 		if err != nil {
@@ -123,6 +130,7 @@ func KuberlogicToService(kls *kuberlogiccomv1alpha1.KuberLogicService) (*models.
 	ret.Status = kls.Status.Phase
 	ret.Endpoint = kls.Status.AccessEndpoint
 	ret.Insecure = kls.Spec.Insecure
+	ret.UseLetsencrypt = kls.Spec.UseLetsencrypt
 
 	if kls.Spec.Advanced.Raw != nil {
 		if err := json.Unmarshal(kls.Spec.Advanced.Raw, &ret.Advanced); err != nil {

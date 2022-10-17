@@ -67,6 +67,7 @@ const (
 	installDockerRegistryURL            = "docker_registry_url"
 	installDockerRegistryUsername       = "docker_registry_username"
 	installDockerRegistryPassword       = "docker_registry_password"
+	installAdminEmailParam              = "admin_email"
 )
 
 var (
@@ -113,6 +114,7 @@ func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
 	_ = cmd.PersistentFlags().String(installDockerRegistryURL, "", "Specify private docker registry URL")
 	_ = cmd.PersistentFlags().String(installDockerRegistryUsername, "", "Specify private docker registry username")
 	_ = cmd.PersistentFlags().String(installDockerRegistryPassword, "", "Specify private docker registry password")
+	_ = cmd.PersistentFlags().String(installAdminEmailParam, "", "Specify admin email (only for letsencrypt usage)")
 	return cmd
 }
 
@@ -307,11 +309,18 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		klParams.Set(installReportErrors, useKLSentry)
 		klParams.Set(installSentryDSNParam, sentrDSN)
 
+		var adminEmail string
+		if adminEmail, err = getStringPrompt(command, installAdminEmailParam, klParams.GetString(installAdminEmailParam), true, nil); err != nil {
+			return errors.Wrapf(err, "error processing %s flag", installAdminEmailParam)
+		}
+		klParams.Set(installAdminEmailParam, adminEmail)
+
 		var availableIngressClasses []string
 		for _, ic := range ingressClasses.Items {
 			availableIngressClasses = append(availableIngressClasses, ic.GetName())
 		}
-		if ingressClass, err := getSelectPrompt(command, installIngressClassName, klParams.GetString(installIngressClassName), availableIngressClasses); err != nil {
+		var ingressClass string
+		if ingressClass, err = getSelectPrompt(command, installIngressClassName, klParams.GetString(installIngressClassName), availableIngressClasses); err != nil {
 			return errors.Wrapf(err, "error processing %s flag", installIngressClassName)
 		} else {
 			klParams.Set(installIngressClassName, ingressClass)
@@ -357,6 +366,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		}
 
 		command.Println("Installing KuberLogic...")
+		usePropertyFiles(kustomizeRootDir, adminEmail, ingressClass)
 		cmd = fmt.Sprintf("%s apply --kustomize %s/default", kubectlBin, kustomizeRootDir)
 		out, err = exec.Command("sh", "-c", cmd).CombinedOutput()
 		command.Println(string(out))
@@ -468,6 +478,18 @@ func useCachedConfigFiles(configCacheDir, configDir string, printf func(f string
 		printf("Using data `%s` as %s\n", string(data), relative)
 		return nil
 	})
+}
+
+func usePropertyFiles(kustomizeRootDir, adminEmail, ingressClass string) {
+	propertiesPaths := []string{
+		"certificate/config.properties",
+		"certmanager/config.properties",
+	}
+	data := []byte(fmt.Sprintf("ADMIN_EMAIL=%s\nINGRESS_CLASS=%s\n", adminEmail, ingressClass))
+	for _, propSuffix := range propertiesPaths {
+		target := filepath.Join(kustomizeRootDir, propSuffix)
+		os.WriteFile(target, data, os.ModePerm)
+	}
 }
 
 func cacheConfigFile(src, name string) error {

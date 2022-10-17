@@ -14,3 +14,9 @@ varReference:
 - kind: Certificate
   group: cert-manager.io
   path: spec/dnsNames
+- kind: ClusterIssuer
+  group: cert-manager.io
+  path: spec/acme/email
+- kind: ClusterIssuer
+  group: cert-manager.io
+  path: spec/acme/solvers/http01/ingress/class

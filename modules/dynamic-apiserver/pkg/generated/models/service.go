@@ -64,6 +64,9 @@ type Service struct {
 	// Required: true
 	Type *string `json:"type"`
 
+	// use letsencrypt
+	UseLetsencrypt bool `json:"use_letsencrypt,omitempty"`
+
 	// version
 	Version string `json:"version,omitempty"`
 }

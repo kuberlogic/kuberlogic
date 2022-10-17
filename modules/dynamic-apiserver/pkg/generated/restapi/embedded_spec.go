@@ -800,6 +800,9 @@ func init() {
         "type": {
           "type": "string"
         },
+        "use_letsencrypt": {
+          "type": "boolean"
+        },
         "version": {
           "type": "string"
         }
@@ -1798,6 +1801,9 @@ func init() {
         },
         "type": {
           "type": "string"
+        },
+        "use_letsencrypt": {
+          "type": "boolean"
         },
         "version": {
           "type": "string"

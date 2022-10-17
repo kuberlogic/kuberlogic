@@ -29,6 +29,7 @@ func makeServiceAddCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.
 	_ = cmd.PersistentFlags().String("backup_schedule", "", "backup schedule in cron format")
 	_ = cmd.PersistentFlags().String("domain", "", "on which domain service will be available")
 	_ = cmd.PersistentFlags().Bool("insecure", false, "setup unsecure service with http, not https")
+	_ = cmd.PersistentFlags().Bool("use_letsencrypt", false, "use Let's Encrypt for service as TLS certificate issuer")
 	_ = cmd.PersistentFlags().String(subscriptionId, "", "")
 
 	// limits
@@ -90,6 +91,12 @@ func runServiceAdd(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *c
 			return err
 		} else if value != nil {
 			svc.Insecure = *value
+		}
+
+		if value, err := getBool(cmd, "use_letsencrypt"); err != nil {
+			return err
+		} else if value != nil {
+			svc.UseLetsencrypt = *value
 		}
 
 		if value, err := getString(cmd, "domain"); err != nil {

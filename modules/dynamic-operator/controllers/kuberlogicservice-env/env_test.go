@@ -3,6 +3,7 @@ package kuberlogicservice_env
 import (
 	"context"
 
+	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	cfg2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
 	. "github.com/onsi/ginkgo"
@@ -21,6 +22,7 @@ var _ = Describe("KuberlogicserviceEnv Manager", func() {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
+	utilruntime.Must(certmanagerv1.AddToScheme(scheme))
 
 	b := fake.NewClientBuilder()
 
