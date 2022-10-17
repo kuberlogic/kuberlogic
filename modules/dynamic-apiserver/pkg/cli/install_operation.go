@@ -378,7 +378,9 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		}
 
 		command.Println("Installing KuberLogic...")
-		usePropertyFiles(kustomizeRootDir, adminEmail, ingressClass)
+		if err = usePropertyFiles(kustomizeRootDir, adminEmail, ingressClass); err != nil {
+			return err
+		}
 		cmd = fmt.Sprintf("%s apply --kustomize %s/default", kubectlBin, kustomizeRootDir)
 		out, err = exec.Command("sh", "-c", cmd).CombinedOutput()
 		command.Println(string(out))
@@ -492,7 +494,7 @@ func useCachedConfigFiles(configCacheDir, configDir string, printf func(f string
 	})
 }
 
-func usePropertyFiles(kustomizeRootDir, adminEmail, ingressClass string) {
+func usePropertyFiles(kustomizeRootDir, adminEmail, ingressClass string) error {
 	propertiesPaths := []string{
 		"certificate/config.properties",
 		"certmanager/config.properties",
@@ -500,8 +502,11 @@ func usePropertyFiles(kustomizeRootDir, adminEmail, ingressClass string) {
 	data := []byte(fmt.Sprintf("ADMIN_EMAIL=%s\nINGRESS_CLASS=%s\n", adminEmail, ingressClass))
 	for _, propSuffix := range propertiesPaths {
 		target := filepath.Join(kustomizeRootDir, propSuffix)
-		os.WriteFile(target, data, os.ModePerm)
+		if err := os.WriteFile(target, data, os.ModePerm); err != nil {
+			return errors.Wrap(err, fmt.Sprintf("failed to write config file %s", target))
+		}
 	}
+	return nil
 }
 
 func cacheConfigFile(src, name string) error {
