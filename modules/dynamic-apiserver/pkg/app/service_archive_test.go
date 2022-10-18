@@ -136,6 +136,9 @@ func markBackupAsSuccessful(args ...interface{}) error {
 	if err != nil {
 		return err
 	}
+	if len(r.Items) == 0 {
+		return errors.New("successful backup is not found")
+	}
 	for _, b := range r.Items {
 		t.Logf("mark backup %s as successful", b.GetName())
 		b.MarkSuccessful()
@@ -144,9 +147,8 @@ func markBackupAsSuccessful(args ...interface{}) error {
 		if err != nil {
 			return err
 		}
-		return nil
 	}
-	return errors.New("successful backup is not found")
+	return nil
 }
 
 func checkServiceIsArchived(args ...interface{}) error {

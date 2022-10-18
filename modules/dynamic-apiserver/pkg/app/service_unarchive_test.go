@@ -179,6 +179,9 @@ func markRestoreAsSuccessful(args ...interface{}) error {
 	if err != nil {
 		return err
 	}
+	if len(r.Items) == 0 {
+		return errors.New("successful restore object is not found")
+	}
 	for _, b := range r.Items {
 		backupName := b.Spec.KuberlogicServiceBackup
 		if backupName != "target" {
@@ -192,9 +195,8 @@ func markRestoreAsSuccessful(args ...interface{}) error {
 		if err != nil {
 			return err
 		}
-		return nil
 	}
-	return errors.New("successful restore object is not found")
+	return nil
 }
 
 func checkServiceIsNotArchived(args ...interface{}) error {
