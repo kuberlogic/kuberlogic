@@ -1,6 +1,7 @@
 package app
 
 import (
+	fake2 "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/app/fake"
 	"net/http"
 	"testing"
 
@@ -159,4 +160,50 @@ func TestServiceListWithSubscriptionFilter(t *testing.T) {
 
 	checkResponse(srv.ServiceListHandler(params, nil), t, 200, services)
 	tc.handler.ValidateRequestCount(t, 1)
+}
+
+func TestServiceListWithClient(t *testing.T) {
+	expectedObjects := &v1alpha1.KuberLogicServiceList{
+		Items: []v1alpha1.KuberLogicService{
+			{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "one",
+					Labels: map[string]string{
+						"subscription-id": "some-kind-of-subscription-id",
+					},
+				},
+				Spec: v1alpha1.KuberLogicServiceSpec{
+					Type:     "postgresql",
+					Replicas: 1,
+					Domain:   "example.com",
+				},
+				Status: v1alpha1.KuberLogicServiceStatus{
+					Phase: "Running",
+				},
+			},
+		},
+	}
+	hh := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  nil,
+		restClient: nil,
+		config:     nil,
+	}
+
+	h := fake2.NewSimpleClient(hh, expectedObjects)
+	s := models.Services{
+		{
+			ID:           util.StrAsPointer("one"),
+			Type:         util.StrAsPointer("postgresql"),
+			Replicas:     util.Int64AsPointer(1),
+			Status:       "Running",
+			Subscription: "some-kind-of-subscription-id",
+			Domain:       "example.com",
+		},
+	}
+
+	params := apiService.ServiceListParams{
+		HTTPRequest: &http.Request{},
+	}
+	checkResponse(h.ServiceListHandler(params, nil), t, 200, s)
 }

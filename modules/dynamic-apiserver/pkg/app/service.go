@@ -22,19 +22,19 @@ type ExtendedServiceInterface interface {
 	Exists(ctx context.Context, opts v1.ListOptions) (bool, error)
 }
 
-type services struct {
+type Services struct {
 	api.ServiceInterface
 }
 
-var _ ExtendedServiceInterface = &services{}
+var _ ExtendedServiceInterface = &Services{}
 
 func newServices(c rest.Interface) ExtendedServiceInterface {
-	s := &services{}
+	s := &Services{}
 	s.ServiceInterface = api.NewServices(c)
 	return s
 }
 
-func (svc *services) Exists(ctx context.Context, opts v1.ListOptions) (bool, error) {
+func (svc *Services) Exists(ctx context.Context, opts v1.ListOptions) (bool, error) {
 	r, err := svc.List(ctx, opts)
 	if err != nil {
 		return false, err

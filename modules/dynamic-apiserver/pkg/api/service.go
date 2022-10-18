@@ -24,7 +24,6 @@ type ServiceGetter interface {
 // ServiceInterface has methods to work with Kuberlogic services resources.
 type ServiceInterface interface {
 	Create(ctx context.Context, service *v1alpha1.KuberLogicService, opts v1.CreateOptions) (*v1alpha1.KuberLogicService, error)
-	Update(ctx context.Context, service *v1alpha1.KuberLogicService, opts v1.UpdateOptions) (*v1alpha1.KuberLogicService, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.KuberLogicService, error)
 	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.KuberLogicServiceList, error)
@@ -50,18 +49,6 @@ func (svc *services) Create(ctx context.Context, service *v1alpha1.KuberLogicSer
 	result := &v1alpha1.KuberLogicService{}
 	err := svc.restClient.Post().
 		Resource(serviceK8sResource).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(service).
-		Do(ctx).
-		Into(result)
-	return result, err
-}
-
-func (svc *services) Update(ctx context.Context, service *v1alpha1.KuberLogicService, opts v1.UpdateOptions) (*v1alpha1.KuberLogicService, error) {
-	result := &v1alpha1.KuberLogicService{}
-	err := svc.restClient.Put().
-		Resource(serviceK8sResource).
-		Name(service.Name).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(service).
 		Do(ctx).

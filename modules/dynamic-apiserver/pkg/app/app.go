@@ -31,6 +31,8 @@ type handlers struct {
 	restClient rest.Interface
 	log        logging.Logger
 	config     *config.Config
+
+	services ExtendedServiceInterface
 }
 
 var (
@@ -50,11 +52,12 @@ func New(cfg *config.Config, clientset kubernetes.Interface, client rest.Interfa
 		restClient: client,
 		log:        log,
 		config:     cfg,
+		services:   newServices(client),
 	}
 }
 
 func (h *handlers) Services() ExtendedServiceInterface {
-	return newServices(h.restClient)
+	return h.services
 }
 
 func (h *handlers) Backups() ExtendedBackupInterface {
