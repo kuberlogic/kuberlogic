@@ -5,7 +5,7 @@ configurations:
 - kustomizeconfig.yaml
 
 configMapGenerator:
-- env: config.properties
+- env: config.env
   name: runtime-secrets
 
 vars:

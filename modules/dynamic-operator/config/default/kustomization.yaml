@@ -82,3 +82,9 @@ vars:
     kind: Secret
     name: tls-secret
     apiVersion: v1
+- name: CLUSTER_ISSUER_NAME
+  objref:
+    kind: ClusterIssuer
+    group: cert-manager.io
+    version: v1
+    name: letsencrypt-issuer

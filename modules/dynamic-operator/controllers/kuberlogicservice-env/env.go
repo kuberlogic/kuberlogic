@@ -110,7 +110,7 @@ func (e *EnvironmentManager) SetupEnv(ctx context.Context) error {
 		if e.kls.Spec.UseLetsencrypt {
 			letsencryptIssuer := &certmanagerv1.ClusterIssuer{
 				ObjectMeta: v12.ObjectMeta{
-					Name: "kls-letsencrypt-issuer",
+					Name: e.cfg.ClusterIssuerName,
 				},
 			}
 			if err := e.Get(ctx, client.ObjectKeyFromObject(letsencryptIssuer), letsencryptIssuer); err != nil {

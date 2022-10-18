@@ -11,7 +11,7 @@ secretGenerator:
       - tls.crt
 
 configMapGenerator:
-- env: config.properties
+- env: config.env
   name: runtime-secrets
 
 vars:
