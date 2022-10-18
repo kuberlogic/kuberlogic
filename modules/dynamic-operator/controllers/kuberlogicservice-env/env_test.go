@@ -125,4 +125,52 @@ var _ = Describe("KuberlogicserviceEnv Manager", func() {
 			}))
 		})
 	})
+
+	Context("When creating Kuberlogicservice with letsencrypt certificate", func() {
+		client := b.WithScheme(scheme).Build()
+		cfg := &cfg2.Config{
+			Namespace:         "kuberlogic",
+			ClusterIssuerName: "kls-letsencrypt-issuer",
+			SvcOpts: struct {
+				TLSSecretName string `envconfig:"optional"`
+			}{
+				TLSSecretName: "secret",
+			},
+		}
+
+		kls := &v1alpha1.KuberLogicService{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "letsencrypt-demo",
+			},
+			Spec: v1alpha1.KuberLogicServiceSpec{
+				UseLetsencrypt: true,
+			},
+			Status: v1alpha1.KuberLogicServiceStatus{},
+		}
+
+		clusterIssuer := &certmanagerv1.ClusterIssuer{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: cfg.ClusterIssuerName,
+			},
+		}
+
+		It("Should prepare environment", func() {
+			Expect(client.Create(context.TODO(), clusterIssuer)).Should(Succeed())
+			envMgr := New(client, kls, cfg)
+			err := envMgr.SetupEnv(context.TODO())
+			Expect(err).Should(BeNil())
+			Expect(envMgr.NamespaceName).Should(Equal(kls.Name))
+
+			By("Checking created objects")
+			ns := &v1.Namespace{}
+			err = client.Get(context.TODO(), types.NamespacedName{Name: envMgr.NamespaceName}, ns)
+			Expect(err).Should(BeNil())
+			Expect(ns.GetName()).Should(Equal(envMgr.NamespaceName))
+
+			netpol := &v12.NetworkPolicyList{}
+			err = client.List(context.TODO(), netpol)
+			Expect(err).Should(BeNil())
+			Expect(len(netpol.Items)).Should(Equal(1))
+		})
+	})
 })

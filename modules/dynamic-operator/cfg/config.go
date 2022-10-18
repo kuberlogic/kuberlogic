@@ -17,7 +17,7 @@ type Config struct {
 	IngressClass string `envconfig:"optional"`
 	StorageClass string `envconfig:"optional"`
 	// Let's encrypt ClusterIssuer name
-	ClusterIssuerName string `envconfig:""`
+	ClusterIssuerName string `envconfig:"optional"`
 	// Private container registry credentials
 	DockerRegistry struct {
 		Url      string
