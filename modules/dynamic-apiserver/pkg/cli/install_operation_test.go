@@ -259,3 +259,35 @@ func TestDockerRegistryProvided(t *testing.T) {
 		t.Fatalf("incorrect docker registry url. expected %s, got %s", dockerPassword, v)
 	}
 }
+
+func TestLetsencryptUsage(t *testing.T) {
+	configDir, _ := os.MkdirTemp("", "install-test")
+	defer os.RemoveAll(configDir)
+
+	configFile := filepath.Join(configDir, "config.yaml")
+	kubectlBin = "echo"
+
+	cmd, err := MakeRootCmd(nil, k8stesting.NewSimpleClientset(fakeClusterResources...))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	adminEmail := "admin@admin.com"
+	dockerArgs := []string{
+		"--use_letsencrypt",
+		"--admin_email", adminEmail,
+	}
+	cmd.SetArgs(append([]string{"install", "--config", configFile}, append(defaultArgs, dockerArgs...)...))
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	// validate provided options
+	klParams := viper.New()
+	klParams.SetConfigFile(filepath.Join(configDir, "cache/config/manager/kuberlogic-config.env"))
+	if err := klParams.ReadInConfig(); err != nil {
+		t.Fatal(err)
+	}
+	if v := klParams.GetString("ADMIN_EMAIL"); v != adminEmail {
+		t.Fatalf("incorrect docker registry url. expected %s, got %s", adminEmail, v)
+	}
+}
