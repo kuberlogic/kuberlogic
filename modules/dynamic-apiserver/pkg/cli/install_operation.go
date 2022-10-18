@@ -251,7 +251,6 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 					}
 				}
 			}
-
 		}
 		klParams.Set(installChargebeeSiteParam, cSite)
 		klParams.Set(installChargebeeKeyParam, cKey)
