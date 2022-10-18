@@ -579,7 +579,7 @@ func init() {
         ],
         "responses": {
           "200": {
-            "description": "service archived"
+            "description": "service request to archive is sent"
           },
           "400": {
             "description": "invalid input",
@@ -642,6 +642,53 @@ func init() {
           },
           "403": {
             "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation"
+          },
+          "503": {
+            "description": "internal service error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/services/{ServiceID}/unarchive": {
+      "post": {
+        "description": "unarchive service (for example, if user subscription resumed from canceled state)",
+        "tags": [
+          "service"
+        ],
+        "summary": "unarchive service",
+        "operationId": "serviceUnarchive",
+        "parameters": [
+          {
+            "$ref": "#/parameters/ServiceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "service request to unarchive is sent"
+          },
+          "400": {
+            "description": "invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "404": {
+            "description": "service not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "422": {
             "description": "bad validation"
@@ -1569,7 +1616,7 @@ func init() {
         ],
         "responses": {
           "200": {
-            "description": "service archived"
+            "description": "service request to archive is sent"
           },
           "400": {
             "description": "invalid input",
@@ -1644,6 +1691,60 @@ func init() {
           },
           "403": {
             "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation"
+          },
+          "503": {
+            "description": "internal service error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/services/{ServiceID}/unarchive": {
+      "post": {
+        "description": "unarchive service (for example, if user subscription resumed from canceled state)",
+        "tags": [
+          "service"
+        ],
+        "summary": "unarchive service",
+        "operationId": "serviceUnarchive",
+        "parameters": [
+          {
+            "maxLength": 20,
+            "minLength": 3,
+            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+            "type": "string",
+            "description": "service Resource ID",
+            "name": "ServiceID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "service request to unarchive is sent"
+          },
+          "400": {
+            "description": "invalid input",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "404": {
+            "description": "service not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "422": {
             "description": "bad validation"

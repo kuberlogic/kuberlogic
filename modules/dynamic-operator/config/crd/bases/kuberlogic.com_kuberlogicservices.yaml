@@ -73,6 +73,10 @@ spec:
               advanced:
                 description: any advanced configuration is supported
                 x-kubernetes-preserve-unknown-fields: true
+              archived:
+                default: false
+                description: Service namespace is removed when it is archived
+                type: boolean
               backupSchedule:
                 type: string
               domain:

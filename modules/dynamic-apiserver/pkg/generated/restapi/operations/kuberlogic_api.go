@@ -86,6 +86,9 @@ func NewKuberlogicAPI(spec *loads.Document) *KuberlogicAPI {
 		ServiceServiceListHandler: service.ServiceListHandlerFunc(func(params service.ServiceListParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceList has not yet been implemented")
 		}),
+		ServiceServiceUnarchiveHandler: service.ServiceUnarchiveHandlerFunc(func(params service.ServiceUnarchiveParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation service.ServiceUnarchive has not yet been implemented")
+		}),
 
 		// Applies when the "x-token" header is set
 		KeyAuth: func(token string) (*models.Principal, error) {
@@ -162,6 +165,8 @@ type KuberlogicAPI struct {
 	ServiceServiceGetHandler service.ServiceGetHandler
 	// ServiceServiceListHandler sets the operation handler for the service list operation
 	ServiceServiceListHandler service.ServiceListHandler
+	// ServiceServiceUnarchiveHandler sets the operation handler for the service unarchive operation
+	ServiceServiceUnarchiveHandler service.ServiceUnarchiveHandler
 
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
@@ -281,6 +286,9 @@ func (o *KuberlogicAPI) Validate() error {
 	}
 	if o.ServiceServiceListHandler == nil {
 		unregistered = append(unregistered, "service.ServiceListHandler")
+	}
+	if o.ServiceServiceUnarchiveHandler == nil {
+		unregistered = append(unregistered, "service.ServiceUnarchiveHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -433,6 +441,10 @@ func (o *KuberlogicAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/services"] = service.NewServiceList(o.context, o.ServiceServiceListHandler)
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/services/{ServiceID}/unarchive"] = service.NewServiceUnarchive(o.context, o.ServiceServiceUnarchiveHandler)
 }
 
 // Serve creates a http handler to serve the API over HTTP

@@ -17,214 +17,69 @@
 package app
 
 import (
-	"context"
-	"fmt"
-	"time"
-
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/logging"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
-	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
-	"github.com/pkg/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/logging"
 )
 
-const (
-	serviceK8sResource = "kuberlogicservices"
-	backupK8sResource  = "kuberlogicservicebackups"
-	restoreK8sResource = "kuberlogicservicerestores"
+type handlers struct {
+	clientset  kubernetes.Interface
+	restClient rest.Interface
+	log        logging.Logger
+	config     *config.Config
+}
+
+var (
+	_ Handlers              = &handlers{}
+	_ ExtendedServiceGetter = &handlers{}
+	_ ExtendedRestoreGetter = &handlers{}
+	_ ExtendedBackupGetter  = &handlers{}
 )
 
-type Service struct {
-	clientset        kubernetes.Interface
-	kuberlogicClient rest.Interface
-	log              logging.Logger
-	config           *config.Config
+func (h *handlers) GetLogger() logging.Logger {
+	return h.log
 }
 
-func (srv *Service) GetLogger() logging.Logger {
-	return srv.log
-}
-
-func New(cfg *config.Config, clientset kubernetes.Interface, client rest.Interface, log logging.Logger) *Service {
-	return &Service{
-		clientset:        clientset,
-		kuberlogicClient: client,
-		log:              log,
-		config:           cfg,
+func New(cfg *config.Config, clientset kubernetes.Interface, client rest.Interface, log logging.Logger) Handlers {
+	return &handlers{
+		clientset:  clientset,
+		restClient: client,
+		log:        log,
+		config:     cfg,
 	}
 }
 
-func (srv *Service) OnShutdown() {
+func (h *handlers) Services() ExtendedServiceInterface {
+	return newServices(h.restClient)
+}
+
+func (h *handlers) Backups() ExtendedBackupInterface {
+	return newBackups(h.restClient)
+}
+
+func (h *handlers) Restores() ExtendedRestoreInterface {
+	return newRestores(h.restClient)
+}
+
+func (h *handlers) OnShutdown() {
 	defer func() {
-		_ = srv.log.Sync()
+		_ = h.log.Sync()
 	}()
 }
 
-func (srv *Service) ListKuberlogicServiceBackupsByService(ctx context.Context, service *string) (*kuberlogiccomv1alpha1.KuberlogicServiceBackupList, error) {
-	res := new(kuberlogiccomv1alpha1.KuberlogicServiceBackupList)
-
-	req := srv.kuberlogicClient.Get().Resource(backupK8sResource)
-	if service != nil {
-		labelSelector := metav1.LabelSelector{
-			MatchLabels: map[string]string{util.BackupRestoreServiceField: *service},
+func (h *handlers) ListOptionsByKeyValue(key string, value *string) v1.ListOptions {
+	opts := v1.ListOptions{}
+	if value != nil {
+		labelSelector := v1.LabelSelector{
+			MatchLabels: map[string]string{key: *value},
 		}
-		req = req.VersionedParams(&metav1.ListOptions{
+		opts = v1.ListOptions{
 			LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
-		}, scheme.ParameterCodec)
-	}
-	err := req.Do(ctx).Into(res)
-	return res, err
-}
-
-func (srv *Service) ListKuberlogicServiceRestoresByService(ctx context.Context, service *string) (*kuberlogiccomv1alpha1.KuberlogicServiceRestoreList, error) {
-	res := new(kuberlogiccomv1alpha1.KuberlogicServiceRestoreList)
-
-	req := srv.kuberlogicClient.Get().Resource(restoreK8sResource)
-	if service != nil {
-		labelSelector := metav1.LabelSelector{
-			MatchLabels: map[string]string{util.BackupRestoreServiceField: *service},
 		}
-		req = req.VersionedParams(&metav1.ListOptions{
-			LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
-		}, scheme.ParameterCodec)
 	}
-	err := req.Do(ctx).Into(res)
-	return res, err
-}
-
-func (srv *Service) ListKuberlogicServicesBySubscription(ctx context.Context, subscriptionId *string) (*kuberlogiccomv1alpha1.KuberLogicServiceList, error) {
-	res := new(kuberlogiccomv1alpha1.KuberLogicServiceList)
-
-	req := srv.kuberlogicClient.Get().Resource(serviceK8sResource)
-	if subscriptionId != nil {
-		labelSelector := metav1.LabelSelector{
-			MatchLabels: map[string]string{util.SubscriptionField: *subscriptionId},
-		}
-		req = req.VersionedParams(&metav1.ListOptions{
-			LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
-		}, scheme.ParameterCodec)
-	}
-	err := req.Do(ctx).Into(res)
-	return res, err
-}
-
-func (srv *Service) SubscriptionAlreadyExist(ctx context.Context, subscriptionId *string) (bool, error) {
-	services, err := srv.ListKuberlogicServicesBySubscription(ctx, subscriptionId)
-	if err != nil {
-		return false, err
-	}
-	return len(services.Items) > 0, nil
-}
-
-func (srv *Service) CreateKuberlogicServiceBackup(ctx context.Context, serviceId *string) (*kuberlogiccomv1alpha1.KuberlogicServiceBackup, error) {
-	klb := &kuberlogiccomv1alpha1.KuberlogicServiceBackup{
-		ObjectMeta: v1.ObjectMeta{
-			Name: fmt.Sprintf("%s-%d", *serviceId, time.Now().Unix()),
-			Labels: map[string]string{
-				util.BackupRestoreServiceField: *serviceId,
-			},
-		},
-		Spec: kuberlogiccomv1alpha1.KuberlogicServiceBackupSpec{
-			KuberlogicServiceName: *serviceId,
-		},
-	}
-	err := srv.kuberlogicClient.Post().
-		Resource(backupK8sResource).
-		Name(klb.GetName()).
-		Body(klb).
-		Do(ctx).
-		Into(klb)
-	return klb, err
-}
-
-func (srv *Service) DeleteKuberlogicServiceBackup(ctx context.Context, backupId *string) error {
-	return srv.kuberlogicClient.Delete().
-		Resource(backupK8sResource).
-		Name(*backupId).
-		Do(ctx).
-		Error()
-}
-
-func (srv *Service) WaitForServiceBackup(ctx context.Context, serviceId *string, backupId *string, maxRetries int) error {
-	timeout := time.Second
-	for i := maxRetries; i > 0; i-- {
-		backups, err := srv.ListKuberlogicServiceBackupsByService(ctx, serviceId)
-		if err != nil {
-			return err
-		}
-		for _, backup := range backups.Items {
-			if backup.GetName() == *backupId {
-				switch backup.Status.Phase {
-				case kuberlogiccomv1alpha1.KlbSuccessfulCondType:
-					return nil
-				case kuberlogiccomv1alpha1.KlbFailedCondType:
-					return errors.New("Error occured while creating service backup")
-				}
-			}
-		}
-		timeout = timeout * 2
-		time.Sleep(timeout)
-		srv.log.Infof("backup is not ready, trying after %s. Left %d retries", timeout, i-1)
-	}
-	return errors.New("Retries exceeded, backup is not ready")
-}
-
-/*
-	Archive service will:
-	1. Take new backup of a service (if backups enabled)
-	2. Remove all previous backups
-	3. Remove the service itself
-*/
-func (srv *Service) ArchiveKuberlogicService(serviceId *string) {
-	ctx := context.Background()
-	// Take backup of the service
-	archive, err := srv.CreateKuberlogicServiceBackup(ctx, serviceId)
-	if err == nil {
-		// Wait until backup is done
-		archiveID := archive.GetName()
-		// maxRetries == 1 2 4 8 16 32 64 128 256 512 1024 2048 4096
-		err = srv.WaitForServiceBackup(ctx, serviceId, &archiveID, 13)
-		if err != nil {
-			msg := "error waiting for service backup"
-			srv.log.Errorw(msg, "error", err)
-		}
-
-		// Delete all previous backups
-		backups, err := srv.ListKuberlogicServiceBackupsByService(ctx, serviceId)
-		if err != nil {
-			msg := "error listing service backups"
-			srv.log.Errorw(msg, "error", err)
-		}
-		for _, backup := range backups.Items {
-			if backup.GetName() == archiveID {
-				continue
-			}
-			err = srv.DeleteKuberlogicServiceBackup(ctx, &backup.Name)
-			if err != nil {
-				msg := "error deleting service backup"
-				srv.log.Errorw(msg, "error", err)
-			}
-		}
-	} else {
-		msg := "error taking service backup"
-		srv.log.Errorw(msg, "error", err)
-		return
-	}
-
-	// Delete service
-	err = srv.kuberlogicClient.Delete().
-		Resource(serviceK8sResource).
-		Name(*serviceId).
-		Do(ctx).
-		Error()
-	if err != nil {
-		msg := "error deleting service"
-		srv.log.Errorw(msg, "error", err)
-	}
+	return opts
 }

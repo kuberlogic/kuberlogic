@@ -27,7 +27,7 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/logging"
 	apiserverMiddleware "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/net/middleware"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/util/k8s"
-	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	sentry2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
 	"k8s.io/client-go/kubernetes"
 	k8scheme "k8s.io/client-go/kubernetes/scheme"
@@ -71,7 +71,7 @@ func Main(args []string) {
 		mainLog.Fatalw("swagger does not loaded", "error", err)
 	}
 
-	err = cloudlinuxv1alpha1.AddToScheme(k8scheme.Scheme)
+	err = v1alpha1.AddToScheme(k8scheme.Scheme)
 	if err != nil {
 		mainLog.Fatalw("could not add to scheme", "error", err)
 	}
@@ -91,7 +91,7 @@ func Main(args []string) {
 		mainLog.Fatalw("could not get base client", "error", err)
 	}
 
-	srv := app.New(cfg, baseClient, crdClient, logging.WithComponentLogger("server"))
+	handlers := app.New(cfg, baseClient, crdClient, logging.WithComponentLogger("server"))
 	api := operations.NewKuberlogicAPI(swaggerSpec)
 	// Applies when the "x-token" header is set
 	api.KeyAuth = func(token string) (*models.Principal, error) {
@@ -103,22 +103,23 @@ func Main(args []string) {
 		return nil, errors.New(401, "incorrect api key auth")
 	}
 
-	api.BackupBackupAddHandler = apiBackup.BackupAddHandlerFunc(srv.BackupAddHandler)
-	api.BackupBackupDeleteHandler = apiBackup.BackupDeleteHandlerFunc(srv.BackupDeleteHandler)
-	api.BackupBackupListHandler = apiBackup.BackupListHandlerFunc(srv.BackupListHandler)
-	api.RestoreRestoreAddHandler = apiRestore.RestoreAddHandlerFunc(srv.RestoreAddHandler)
-	api.RestoreRestoreDeleteHandler = apiRestore.RestoreDeleteHandlerFunc(srv.RestoreDeleteHandler)
-	api.RestoreRestoreListHandler = apiRestore.RestoreListHandlerFunc(srv.RestoreListHandler)
-	api.ServiceServiceAddHandler = apiService.ServiceAddHandlerFunc(srv.ServiceAddHandler)
-	api.ServiceServiceArchiveHandler = apiService.ServiceArchiveHandlerFunc(srv.ServiceArchiveHandler)
-	api.ServiceServiceCredentialsUpdateHandler = apiService.ServiceCredentialsUpdateHandlerFunc(srv.ServiceCredentialsUpdateHandler)
-	api.ServiceServiceDeleteHandler = apiService.ServiceDeleteHandlerFunc(srv.ServiceDeleteHandler)
-	api.ServiceServiceEditHandler = apiService.ServiceEditHandlerFunc(srv.ServiceEditHandler)
-	api.ServiceServiceGetHandler = apiService.ServiceGetHandlerFunc(srv.ServiceGetHandler)
-	api.ServiceServiceListHandler = apiService.ServiceListHandlerFunc(srv.ServiceListHandler)
-	//api.BearerAuth = srv.BearerAuthentication
+	api.BackupBackupAddHandler = apiBackup.BackupAddHandlerFunc(handlers.BackupAddHandler)
+	api.BackupBackupDeleteHandler = apiBackup.BackupDeleteHandlerFunc(handlers.BackupDeleteHandler)
+	api.BackupBackupListHandler = apiBackup.BackupListHandlerFunc(handlers.BackupListHandler)
+	api.RestoreRestoreAddHandler = apiRestore.RestoreAddHandlerFunc(handlers.RestoreAddHandler)
+	api.RestoreRestoreDeleteHandler = apiRestore.RestoreDeleteHandlerFunc(handlers.RestoreDeleteHandler)
+	api.RestoreRestoreListHandler = apiRestore.RestoreListHandlerFunc(handlers.RestoreListHandler)
+	api.ServiceServiceAddHandler = apiService.ServiceAddHandlerFunc(handlers.ServiceAddHandler)
+	api.ServiceServiceArchiveHandler = apiService.ServiceArchiveHandlerFunc(handlers.ServiceArchiveHandler)
+	api.ServiceServiceCredentialsUpdateHandler = apiService.ServiceCredentialsUpdateHandlerFunc(handlers.ServiceCredentialsUpdateHandler)
+	api.ServiceServiceDeleteHandler = apiService.ServiceDeleteHandlerFunc(handlers.ServiceDeleteHandler)
+	api.ServiceServiceEditHandler = apiService.ServiceEditHandlerFunc(handlers.ServiceEditHandler)
+	api.ServiceServiceGetHandler = apiService.ServiceGetHandlerFunc(handlers.ServiceGetHandler)
+	api.ServiceServiceListHandler = apiService.ServiceListHandlerFunc(handlers.ServiceListHandler)
+	api.ServiceServiceUnarchiveHandler = apiService.ServiceUnarchiveHandlerFunc(handlers.ServiceUnarchiveHandler)
+	//api.BearerAuth = handlers.BearerAuthentication
 	api.Logger = logging.WithComponentLogger("api").Infof
-	api.ServerShutdown = srv.OnShutdown
+	api.ServerShutdown = handlers.OnShutdown
 	server := restapi.NewServer(api)
 	defer server.Shutdown()
 

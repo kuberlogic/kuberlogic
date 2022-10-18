@@ -1,28 +1,30 @@
 package app
 
 import (
+	"net/http"
+	"testing"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/fake"
+
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
-	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
-	"net/http"
-	"testing"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
 
 func TestServiceGetNotFound(t *testing.T) {
-	expectedObject := &cloudlinuxv1alpha1.KuberLogicService{}
+	expectedObject := &v1alpha1.KuberLogicService{}
 
 	tc := createTestClient(expectedObject, 404, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 	}
 
 	params := apiService.ServiceGetParams{
@@ -37,18 +39,18 @@ func TestServiceGetNotFound(t *testing.T) {
 }
 
 func TestServiceGetSuccess(t *testing.T) {
-	expectedObject := &cloudlinuxv1alpha1.KuberLogicService{
-		ObjectMeta: metav1.ObjectMeta{
+	expectedObject := &v1alpha1.KuberLogicService{
+		ObjectMeta: v1.ObjectMeta{
 			Name: "one",
 		},
-		Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
+		Spec: v1alpha1.KuberLogicServiceSpec{
 			Type:     "postgresql",
 			Replicas: 1,
-			Limits: v1.ResourceList{
-				v1.ResourceStorage: resource.MustParse("2Gi"),
+			Limits: corev1.ResourceList{
+				corev1.ResourceStorage: resource.MustParse("2Gi"),
 			},
 		},
-		Status: cloudlinuxv1alpha1.KuberLogicServiceStatus{
+		Status: v1alpha1.KuberLogicServiceStatus{
 			Phase: "Unknown",
 		},
 	}
@@ -56,10 +58,10 @@ func TestServiceGetSuccess(t *testing.T) {
 	tc := createTestClient(expectedObject, 200, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 	}
 
 	service := &models.Service{

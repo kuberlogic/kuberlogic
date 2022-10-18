@@ -44,6 +44,8 @@ type ClientService interface {
 
 	ServiceList(params *ServiceListParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceListOK, error)
 
+	ServiceUnarchive(params *ServiceUnarchiveParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceUnarchiveOK, error)
+
 	SetTransport(transport runtime.ClientTransport)
 }
 
@@ -336,6 +338,47 @@ func (a *Client) ServiceList(params *ServiceListParams, authInfo runtime.ClientA
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for serviceList: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  ServiceUnarchive unarchives service
+
+  unarchive service (for example, if user subscription resumed from canceled state)
+*/
+func (a *Client) ServiceUnarchive(params *ServiceUnarchiveParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceUnarchiveOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewServiceUnarchiveParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "serviceUnarchive",
+		Method:             "POST",
+		PathPattern:        "/services/{ServiceID}/unarchive",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &ServiceUnarchiveReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*ServiceUnarchiveOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for serviceUnarchive: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

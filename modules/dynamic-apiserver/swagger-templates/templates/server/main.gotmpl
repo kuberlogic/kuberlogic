@@ -35,7 +35,7 @@ import (
 	apiserverMiddleware "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/net/middleware"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/security"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/util/k8s"
-	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
   sentry2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/util/k8s"
 	"k8s.io/client-go/kubernetes"
@@ -80,7 +80,7 @@ func Main(args []string) {
         mainLog.Fatalw("swagger does not loaded", "error", err)
     }
 
-	err = cloudlinuxv1alpha1.AddToScheme(k8scheme.Scheme)
+	err = v1alpha1.AddToScheme(k8scheme.Scheme)
 	if err != nil {
 		mainLog.Fatalw("could not add to scheme", "error", err)
 	}
@@ -100,7 +100,7 @@ func Main(args []string) {
 		mainLog.Fatalw("could not get base client", "error", err)
 	}
 
-    srv := app.New(cfg, baseClient, crdClient, logging.WithComponentLogger("server"))
+    handlers := app.New(cfg, baseClient, crdClient, logging.WithComponentLogger("server"))
     api := operations.NewKuberlogicAPI(swaggerSpec)
     // Applies when the "x-token" header is set
     api.KeyAuth = func(token string) (*models.Principal, error) {
@@ -113,11 +113,11 @@ func Main(args []string) {
     }
 
 	{{range .Operations}}
-    api.{{ pascalize .Package }}{{ pascalize .Name }}Handler = api{{ pascalize .Package }}.{{ pascalize .Name }}HandlerFunc(srv.{{ pascalize .Name }}Handler)
+    api.{{ pascalize .Package }}{{ pascalize .Name }}Handler = api{{ pascalize .Package }}.{{ pascalize .Name }}HandlerFunc(handlers.{{ pascalize .Name }}Handler)
     {{- end}}
-   	//api.BearerAuth = srv.BearerAuthentication
+   	//api.BearerAuth = handlers.BearerAuthentication
    	api.Logger = logging.WithComponentLogger("api").Infof
-    api.ServerShutdown = srv.OnShutdown
+    api.ServerShutdown = handlers.OnShutdown
 	server := {{ .APIPackage }}.NewServer(api)
 	defer server.Shutdown()
 

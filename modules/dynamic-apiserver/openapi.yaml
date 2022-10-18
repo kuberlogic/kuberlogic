@@ -413,7 +413,7 @@ paths:
         - $ref: "#/parameters/ServiceID"
       responses:
         200:
-          description: service archived
+          description: service request to archive is sent
         400:
           description: invalid input
           schema:
@@ -433,6 +433,36 @@ paths:
           schema:
             $ref: "#/definitions/Error"
 
+  /services/{ServiceID}/unarchive:
+    post:
+      tags:
+        - service
+      summary: unarchive service
+      operationId: serviceUnarchive
+      description: unarchive service (for example, if user subscription resumed from canceled state)
+      parameters:
+        - $ref: "#/parameters/ServiceID"
+      responses:
+        200:
+          description: service request to unarchive is sent
+        400:
+          description: invalid input
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        404:
+          description: service not found
+          schema:
+            $ref: "#/definitions/Error"
+        422:
+          description: bad validation
+        503:
+          description: internal service error
+          schema:
+            $ref: "#/definitions/Error"
 
 definitions:
   Advanced:
