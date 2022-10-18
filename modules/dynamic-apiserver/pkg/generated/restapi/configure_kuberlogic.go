@@ -119,6 +119,11 @@ func configureAPI(api *operations.KuberlogicAPI) http.Handler {
 			return middleware.NotImplemented("operation service.ServiceList has not yet been implemented")
 		})
 	}
+	if api.ServiceServiceSecretsListHandler == nil {
+		api.ServiceServiceSecretsListHandler = service.ServiceSecretsListHandlerFunc(func(params service.ServiceSecretsListParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation service.ServiceSecretsList has not yet been implemented")
+		})
+	}
 	if api.ServiceServiceUnarchiveHandler == nil {
 		api.ServiceServiceUnarchiveHandler = service.ServiceUnarchiveHandlerFunc(func(params service.ServiceUnarchiveParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceUnarchive has not yet been implemented")

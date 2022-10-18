@@ -116,6 +116,7 @@ func Main(args []string) {
 	api.ServiceServiceEditHandler = apiService.ServiceEditHandlerFunc(handlers.ServiceEditHandler)
 	api.ServiceServiceGetHandler = apiService.ServiceGetHandlerFunc(handlers.ServiceGetHandler)
 	api.ServiceServiceListHandler = apiService.ServiceListHandlerFunc(handlers.ServiceListHandler)
+	api.ServiceServiceSecretsListHandler = apiService.ServiceSecretsListHandlerFunc(handlers.ServiceSecretsListHandler)
 	api.ServiceServiceUnarchiveHandler = apiService.ServiceUnarchiveHandlerFunc(handlers.ServiceUnarchiveHandler)
 	//api.BearerAuth = handlers.BearerAuthentication
 	api.Logger = logging.WithComponentLogger("api").Infof

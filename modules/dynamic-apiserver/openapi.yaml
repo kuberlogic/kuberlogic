@@ -375,6 +375,32 @@ paths:
           description: internal server error
           schema:
             $ref: "#/definitions/Error"
+  /services/{ServiceID}/secrets:
+    get:
+      tags:
+        - service
+      summary: retrieves service secrets
+      operationId: serviceSecretsList
+      description: retrieves service secrets
+      parameters:
+        - $ref: "#/parameters/ServiceID"
+      responses:
+        200:
+          description: service secrets
+          schema:
+            $ref: "#/definitions/ServiceSecrets"
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        503:
+          description: internal service error
+          schema:
+            $ref: "#/definitions/Error"
   /services/{ServiceID}/credentials:
     post:
       tags:
@@ -532,6 +558,26 @@ definitions:
     type: array
     items:
       $ref: "#/definitions/Service"
+
+  ServiceSecret:
+    description: service secret
+    type: object
+    properties:
+      id:
+        type: string
+        pattern: "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+        readOnly: true
+        minLength: 1
+      value:
+        type: string
+        readOnly: true
+        minLength: 1
+
+  ServiceSecrets:
+    description: service secrets
+    type: array
+    items:
+      $ref: "#/definitions/ServiceSecret"
 
   ServiceCredentials:
     description: service credentials
