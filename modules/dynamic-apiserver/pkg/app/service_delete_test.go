@@ -1,22 +1,24 @@
 package app
 
 import (
+	"net/http"
+	"testing"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/fake"
+
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
-	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
-	"net/http"
-	"testing"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
 
 func TestServiceDeleteOK(t *testing.T) {
-	expectedObj := &cloudlinuxv1alpha1.KuberLogicService{
-		ObjectMeta: metav1.ObjectMeta{
+	expectedObj := &v1alpha1.KuberLogicService{
+		ObjectMeta: v1.ObjectMeta{
 			Name: "simple1",
 		},
-		Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
+		Spec: v1alpha1.KuberLogicServiceSpec{
 			Type:     "postgresql",
 			Replicas: 1,
 		},
@@ -25,10 +27,10 @@ func TestServiceDeleteOK(t *testing.T) {
 	tc := createTestClient(expectedObj, 200, t)
 	defer tc.server.Close()
 
-	srv := &Service{
-		log:              &TestLog{t: t},
-		clientset:        fake.NewSimpleClientset(),
-		kuberlogicClient: tc.client,
+	srv := &handlers{
+		log:        &TestLog{t: t},
+		clientset:  fake.NewSimpleClientset(),
+		restClient: tc.client,
 	}
 
 	service := &models.Service{
