@@ -229,10 +229,10 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		klParams.Set(installBackupsEnabledParam, backupsEnabled)
 		klParams.Set(installBackupsSnapshotsEnabledParam, snapshotsEnabled)
 
+		var cSite, cKey, cMappingFile string
 		if billingProvider, err := getSelectPrompt(command, installBillingProvider, klParams.GetString(installBillingProvider), []string{noneBillingProvider, chargebeeBillingProvider}); err != nil {
 			return errors.Wrapf(err, "error processing %s flag", installBillingProvider)
 		} else if billingProvider == chargebeeBillingProvider {
-			var cSite, cKey, cMappingFile string
 			cachedChargebeeMappingFile := filepath.Join(cacheDir, "manager/mapping-fields.yaml")
 			if cSite, err = getStringPrompt(command, installChargebeeSiteParam, klParams.GetString(installChargebeeSiteParam), true, nil); err != nil {
 				return errors.Wrapf(err, "error processing %s flag", installChargebeeSiteParam)
@@ -252,9 +252,9 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 				}
 			}
 
-			klParams.Set(installChargebeeSiteParam, cSite)
-			klParams.Set(installChargebeeKeyParam, cKey)
 		}
+		klParams.Set(installChargebeeSiteParam, cSite)
+		klParams.Set(installChargebeeKeyParam, cKey)
 
 		kuberlogicDomain, err := getStringPrompt(command, installKuberlogicDomainParam, klParams.GetString(installKuberlogicDomainParam), true, nil)
 		if err != nil {
