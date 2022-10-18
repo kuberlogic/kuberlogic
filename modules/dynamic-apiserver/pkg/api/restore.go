@@ -26,7 +26,6 @@ type RestoreGetter interface {
 // RestoreInterface has methods to work with Kuberlogic restores resources.
 type RestoreInterface interface {
 	Create(ctx context.Context, obj *v1alpha1.KuberlogicServiceRestore, opts v1.CreateOptions) (*v1alpha1.KuberlogicServiceRestore, error)
-	Update(ctx context.Context, obj *v1alpha1.KuberlogicServiceRestore, opts v1.UpdateOptions) (*v1alpha1.KuberlogicServiceRestore, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.KuberlogicServiceRestore, error)
 	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.KuberlogicServiceRestoreList, error)
@@ -53,18 +52,6 @@ func (r *restores) Create(ctx context.Context, obj *v1alpha1.KuberlogicServiceRe
 	result := &v1alpha1.KuberlogicServiceRestore{}
 	err := r.restClient.Post().
 		Resource(restoreK8sResource).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(obj).
-		Do(ctx).
-		Into(result)
-	return result, err
-}
-
-func (r *restores) Update(ctx context.Context, obj *v1alpha1.KuberlogicServiceRestore, opts v1.UpdateOptions) (*v1alpha1.KuberlogicServiceRestore, error) {
-	result := &v1alpha1.KuberlogicServiceRestore{}
-	err := r.restClient.Put().
-		Resource(restoreK8sResource).
-		Name(obj.Name).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(obj).
 		Do(ctx).

@@ -26,11 +26,7 @@ func TestServiceCredentialsUpdateOK(t *testing.T) {
 	defer tc.server.Close()
 
 	fakeclientset := fake.NewSimpleClientset()
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fakeclientset,
-		restClient: tc.client,
-	}
+	srv := New(nil, fakeclientset, tc.client, &TestLog{t: t})
 
 	params := apiService.ServiceCredentialsUpdateParams{
 		HTTPRequest: &http.Request{},
@@ -60,11 +56,7 @@ func TestServiceCredentialsUpdateFailed(t *testing.T) {
 	defer tc.server.Close()
 
 	fakeclientset := fake.NewSimpleClientset()
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fakeclientset,
-		restClient: tc.client,
-	}
+	srv := New(nil, fakeclientset, tc.client, &TestLog{t: t})
 
 	params := apiService.ServiceCredentialsUpdateParams{
 		HTTPRequest: &http.Request{},

@@ -23,11 +23,7 @@ func TestBackupListEmpty(t *testing.T) {
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(),
-		restClient: tc.client,
-	}
+	srv := New(nil, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
 
 	params := apiBackup.BackupListParams{
 		HTTPRequest: &http.Request{},
@@ -69,11 +65,7 @@ func TestBackupListMany(t *testing.T) {
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(),
-		restClient: tc.client,
-	}
+	srv := New(nil, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
 
 	backups := models.Backups{
 		{
@@ -120,11 +112,7 @@ func TestBackupListWithServiceFilter(t *testing.T) {
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(),
-		restClient: tc.client,
-	}
+	srv := New(nil, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
 
 	backups := models.Backups{
 		{

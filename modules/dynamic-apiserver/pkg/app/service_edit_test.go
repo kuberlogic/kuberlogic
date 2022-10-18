@@ -30,14 +30,9 @@ func TestServiceEditNotFound(t *testing.T) {
 	tc := createTestClient(expectedObject, 404, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(),
-		restClient: tc.client,
-		config: &config.Config{
-			Domain: "example.com",
-		},
-	}
+	srv := New(&config.Config{
+		Domain: "example.com",
+	}, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
 
 	params := apiService.ServiceEditParams{
 		HTTPRequest: &http.Request{},
@@ -73,14 +68,9 @@ func TestServiceEditSuccess(t *testing.T) {
 	tc := createTestClient(expectedObject, 200, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(),
-		restClient: tc.client,
-		config: &config.Config{
-			Domain: "example.com",
-		},
-	}
+	srv := New(&config.Config{
+		Domain: "example.com",
+	}, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
 
 	service := &models.Service{
 		ID:       util.StrAsPointer("one"),
@@ -119,14 +109,9 @@ func TestServiceEditForbidSetSubscription(t *testing.T) {
 	tc := createTestClient(expectedObject, 404, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(),
-		restClient: tc.client,
-		config: &config.Config{
-			Domain: "example.com",
-		},
-	}
+	srv := New(&config.Config{
+		Domain: "example.com",
+	}, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
 
 	params := apiService.ServiceEditParams{
 		HTTPRequest: &http.Request{},

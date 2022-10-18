@@ -21,11 +21,7 @@ func TestServiceGetNotFound(t *testing.T) {
 	tc := createTestClient(expectedObject, 404, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(),
-		restClient: tc.client,
-	}
+	srv := New(nil, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
 
 	params := apiService.ServiceGetParams{
 		HTTPRequest: &http.Request{},
@@ -58,11 +54,7 @@ func TestServiceGetSuccess(t *testing.T) {
 	tc := createTestClient(expectedObject, 200, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(),
-		restClient: tc.client,
-	}
+	srv := New(nil, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
 
 	service := &models.Service{
 		ID:       util.StrAsPointer("one"),

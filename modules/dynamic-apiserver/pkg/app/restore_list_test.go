@@ -21,11 +21,7 @@ func TestRestoreListEmpty(t *testing.T) {
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(),
-		restClient: tc.client,
-	}
+	srv := New(nil, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
 
 	params := apiRestore.RestoreListParams{
 		HTTPRequest: &http.Request{},
@@ -67,11 +63,7 @@ func TestRestoreListMany(t *testing.T) {
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(),
-		restClient: tc.client,
-	}
+	srv := New(nil, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
 
 	backups := models.Restores{
 		{
@@ -118,11 +110,7 @@ func TestRestoreListWithServiceFilter(t *testing.T) {
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(),
-		restClient: tc.client,
-	}
+	srv := New(nil, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
 
 	backups := models.Restores{
 		{

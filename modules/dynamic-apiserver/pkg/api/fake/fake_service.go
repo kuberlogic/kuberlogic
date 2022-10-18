@@ -24,7 +24,7 @@ type FakeServices struct {
 
 var (
 	serviceResource = schema.GroupVersionResource{Group: "kuberlogic.com", Version: "v1alpha1", Resource: "kuberlogicservices"}
-	serviceKind     = schema.GroupVersionKind{Group: "kuberlogic.com", Version: "v1alpha1", Kind: "KuberlogicService"}
+	serviceKind     = schema.GroupVersionKind{Group: "kuberlogic.com", Version: "v1alpha1", Kind: "KuberLogicService"}
 
 	_ api.ServiceInterface = &FakeServices{}
 )

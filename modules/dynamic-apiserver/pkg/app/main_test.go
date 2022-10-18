@@ -3,19 +3,32 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-openapi/runtime/middleware"
-	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	"io"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
-	utiltesting "k8s.io/client-go/util/testing"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/go-openapi/runtime/middleware"
+	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
+	fakediscovery "k8s.io/client-go/discovery/fake"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
+	clienttesting "k8s.io/client-go/testing"
+	utiltesting "k8s.io/client-go/util/testing"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/api/fake"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+)
+
+var (
+	//scheme = runtime.NewScheme()
+	//codecs = serializer.NewCodecFactory(scheme)
+
+	_ clienttesting.FakeClient = &FakeHandlers{}
 )
 
 type TestLog struct {
@@ -113,7 +126,7 @@ func (tl *TestLog) Sync() error {
 }
 
 func createTestClient(obj runtime.Object, status int, t *testing.T) TestClient {
-	body := runtime.EncodeOrDie(scheme.Codecs.LegacyCodec(cloudlinuxv1alpha1.GroupVersion), obj)
+	body := runtime.EncodeOrDie(scheme.Codecs.LegacyCodec(v1alpha1.GroupVersion), obj)
 	handler := &utiltesting.FakeHandler{
 		StatusCode:   status,
 		ResponseBody: body,
@@ -146,7 +159,7 @@ func restClient(testServer *httptest.Server) (*rest.RESTClient, error) {
 }
 
 func setup() error {
-	err := cloudlinuxv1alpha1.AddToScheme(scheme.Scheme)
+	err := v1alpha1.AddToScheme(scheme.Scheme)
 	return err
 }
 
@@ -163,4 +176,90 @@ func TestMain(m *testing.M) {
 		tearDown()
 	}
 	os.Exit(code)
+}
+
+//------------------------------------------------------------------------------
+// mocking based on operation (get, list, create, delete, watch, patch, etc.) of services/backups/restores
+
+type FakeHandlers struct {
+	clienttesting.Fake
+	Handlers
+	discovery *fakediscovery.FakeDiscovery
+	tracker   clienttesting.ObjectTracker
+}
+
+func (h *FakeHandlers) Tracker() clienttesting.ObjectTracker {
+	return h.tracker
+}
+
+func (h *FakeHandlers) Services() ExtendedServiceInterface {
+	s := &services{}
+	s.ServiceInterface = &fake.FakeServices{Fake: &h.Fake}
+	return s
+}
+
+func (h *FakeHandlers) Backups() ExtendedBackupInterface {
+	b := &backups{}
+	b.BackupInterface = &fake.FakeBackup{Fake: &h.Fake}
+	return b
+}
+
+func (h *FakeHandlers) Restores() ExtendedRestoreInterface {
+	r := &restores{}
+	r.RestoreInterface = &fake.FakeRestores{Fake: &h.Fake}
+	return r
+}
+
+func newSimpleClient(objects ...runtime.Object) *FakeHandlers {
+	// can not using runtime.NewScheme()
+	// need guaranty only tracking passing objects
+	// i.e each test case should have its own scheme and unique objects
+	//newScheme := runtime.NewScheme()
+	//newCodec := serializer.NewCodecFactory(newScheme)
+	//err := v1alpha1.AddToScheme(newScheme)
+	//if err != nil {
+	//	panic(err)
+	//}
+
+	o := clienttesting.NewObjectTracker(scheme.Scheme, scheme.Codecs.UniversalDecoder())
+	for _, obj := range objects {
+		if err := o.Add(obj); err != nil {
+			panic(err)
+		}
+	}
+
+	h := &FakeHandlers{tracker: o}
+	h.discovery = &fakediscovery.FakeDiscovery{Fake: &h.Fake}
+	h.AddReactor("*", "*", clienttesting.ObjectReaction(o))
+	h.AddWatchReactor("*", func(action clienttesting.Action) (handled bool, ret watch.Interface, err error) {
+		gvr := action.GetResource()
+		ns := action.GetNamespace()
+		w, err := o.Watch(gvr, ns)
+		if err != nil {
+			return false, nil, err
+		}
+		return true, w, nil
+	})
+	return h
+}
+
+func newFakeHandlers(t *testing.T, objects ...runtime.Object) *FakeHandlers {
+	baseHandlers := &handlers{
+		log: &TestLog{t: t},
+	}
+	client := newSimpleClient(objects...)
+	baseHandlers.services = client.Services() // override services with fake
+	baseHandlers.backups = client.Backups()   // override backups with fake
+	baseHandlers.restores = client.Restores() // override restores with fake
+	client.Handlers = baseHandlers            // set actual handlers
+	return client
+}
+
+type testCase struct {
+	name    string
+	objects []runtime.Object
+	result  interface{}
+	status  int
+	params  interface{}
+	helpers []func(args ...interface{}) error
 }

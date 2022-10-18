@@ -10,6 +10,7 @@ import (
 
 type Handlers interface {
     OnShutdown()
+    ListOptionsByKeyValue(key string, value *string) v1.ListOptions
 	{{range .Operations}}
     {{ pascalize .Name }}Handler(params api{{ pascalize .Package }}.{{ pascalize .Name }}Params, _ *models.Principal) middleware.Responder
     {{- end}}

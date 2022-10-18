@@ -31,14 +31,9 @@ func TestServiceAddSimple(t *testing.T) {
 	tc := createTestClient(expectedObj, 200, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(),
-		restClient: tc.client,
-		config: &config.Config{
-			Domain: "example.com",
-		},
-	}
+	srv := New(&config.Config{
+		Domain: "example.com",
+	}, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
 
 	service := &models.Service{
 		ID:       util.StrAsPointer("simple"),
@@ -77,14 +72,9 @@ func TestServiceAddExtended(t *testing.T) {
 	tc := createTestClient(expectedObj, 200, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(),
-		restClient: tc.client,
-		config: &config.Config{
-			Domain: "example.com",
-		},
-	}
+	srv := New(&config.Config{
+		Domain: "example.com",
+	}, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
 
 	service := &models.Service{
 		ID:       util.StrAsPointer("extended"),
@@ -136,14 +126,9 @@ func TestServiceAddAdvanced(t *testing.T) {
 	tc := createTestClient(expectedObj, 200, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(),
-		restClient: tc.client,
-		config: &config.Config{
-			Domain: "example.com",
-		},
-	}
+	srv := New(&config.Config{
+		Domain: "example.com",
+	}, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
 
 	service := &models.Service{
 		ID:           util.StrAsPointer("advanced"),
@@ -182,14 +167,9 @@ func TestServiceSubscriptionAlreadyExists(t *testing.T) {
 	tc := createTestClient(expectedObjects, 200, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(),
-		restClient: tc.client,
-		config: &config.Config{
-			Domain: "example.com",
-		},
-	}
+	srv := New(&config.Config{
+		Domain: "example.com",
+	}, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
 
 	service := &models.Service{
 		ID:           util.StrAsPointer("advanced"),
