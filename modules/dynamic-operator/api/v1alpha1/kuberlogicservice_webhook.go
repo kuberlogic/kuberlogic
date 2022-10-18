@@ -166,7 +166,7 @@ func (r *KuberLogicService) ValidateUpdate(old runtime.Object) error {
 
 	plugin, ok := pluginInstances[r.Spec.Type]
 	if !ok {
-		err := errors.New("Plugin is not loaded")
+		err := errors.Errorf("Plugin is not loaded: %s", r.Spec.Type)
 		log.Info(err.Error(), "type", r.Spec.Type)
 		return err
 	}

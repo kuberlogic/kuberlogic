@@ -95,6 +95,29 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
+	if kls.Archived() {
+		// exit from reconciliation
+		log.Info("service is archived")
+		return ctrl.Result{}, nil
+	}
+
+	env := kuberlogicserviceenv.New(r.Client, kls, r.Cfg)
+
+	// archive service when requested
+	if kls.ArchiveRequested() {
+		log.Info("request to archive service")
+		if err := env.ArchiveService(ctx); err != nil {
+			return ctrl.Result{}, errors.Wrap(err, "error archived service")
+		}
+		log.Info("service archived successfully")
+		kls.MarkArchived()
+		return ctrl.Result{}, r.Status().Update(ctx, kls)
+	} else if kls.UnarchiveRequested() {
+		log.Info("service unarchived successfully")
+		kls.MarkUnarchived()
+		return ctrl.Result{}, r.Status().Update(ctx, kls)
+	}
+
 	if backupRunning, backupName := kls.BackupRunning(); backupRunning {
 		klb := &kuberlogiccomv1alpha1.KuberlogicServiceBackup{}
 		klb.SetName(backupName)
@@ -126,7 +149,6 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{RequeueAfter: backupRestoreRequeueAfter}, nil
 	}
 
-	env := kuberlogicserviceenv.New(r.Client, kls, r.Cfg)
 	if err := env.SetupEnv(ctx); err != nil {
 		kls.ConfigurationFailed("KuberlogicService environment")
 		_ = r.Status().Update(ctx, kls)
@@ -220,7 +242,6 @@ func (r *KuberLogicServiceReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		log.Error(resp.Error(), "error from rpc call 'Convert'", "plugin request", pluginRequest)
 		return ctrl.Result{}, resp.Error()
 	}
-	log.Info("=========", "plugin response", resp, "plugin request", pluginRequest)
 
 	// now create or update objects in cluster
 	for _, o := range resp.Objects {

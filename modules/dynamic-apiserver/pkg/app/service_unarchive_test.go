@@ -11,8 +11,8 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-func TestServiceArchive(t *testing.T) {
-	t.Skip("Skipping test due to fail gorotine under the ArchiveKuberlogicService")
+func TestServiceUnarchive(t *testing.T) {
+	t.Skip("Skipping test due to fail gorotine under the UnarchiveKuberlogicService")
 
 	serviceID := "archived_service"
 	expectedObj := &cloudlinuxv1alpha1.KuberLogicService{
@@ -22,8 +22,10 @@ func TestServiceArchive(t *testing.T) {
 		Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
 			Type:     "docker-compose",
 			Replicas: 1,
+			Archived: true,
 		},
 	}
+	expectedObj.MarkArchived()
 
 	tc := createTestClient(expectedObj, 200, t)
 	defer tc.server.Close()
@@ -37,11 +39,11 @@ func TestServiceArchive(t *testing.T) {
 		},
 	}
 
-	archiveParams := apiService.ServiceArchiveParams{
+	unarchiveParams := apiService.ServiceUnarchiveParams{
 		HTTPRequest: &http.Request{},
 		ServiceID:   serviceID,
 	}
 
-	checkResponse(srv.ServiceArchiveHandler(archiveParams, nil), t, 200, struct{}{})
+	checkResponse(srv.ServiceUnarchiveHandler(unarchiveParams, nil), t, 200, struct{}{})
 	tc.handler.ValidateRequestCount(t, 1)
 }

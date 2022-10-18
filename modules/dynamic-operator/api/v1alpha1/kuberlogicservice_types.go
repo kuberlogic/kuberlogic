@@ -24,6 +24,7 @@ const (
 	backupRunningCondType      = "BackupRunning"
 	restoreRunningCondType     = "RestoreRunning"
 	ReadyCondType              = "Ready"
+	archivedCondType           = "Archived"
 )
 
 // KuberLogicServiceStatus defines the observed state of KuberLogicService
@@ -67,6 +68,10 @@ type KuberLogicServiceSpec struct {
 	// +kubebuilder:default=false
 	Paused bool `json:"paused,omitempty"`
 
+	// Service namespace is removed when it is archived
+	// +kubebuilder:default=false
+	Archived bool `json:"archived,omitempty"`
+
 	BackupSchedule string `json:"backupSchedule,omitempty"`
 }
 
@@ -105,6 +110,14 @@ func (in *KuberLogicService) setConditionStatus(cond string, status bool, msg, r
 
 func (in *KuberLogicService) Paused() bool {
 	return in.Spec.Paused
+}
+
+func (in *KuberLogicService) Archived() bool {
+	c := meta.FindStatusCondition(in.Status.Conditions, archivedCondType)
+	if c == nil {
+		return false
+	}
+	return in.Spec.Archived && c.Status == metav1.ConditionTrue
 }
 
 func (in *KuberLogicService) Insecure() bool {
@@ -175,6 +188,30 @@ func (in *KuberLogicService) Resumed() bool {
 		return false
 	}
 	return c.Status == metav1.ConditionTrue && !in.Spec.Paused
+}
+
+func (in *KuberLogicService) MarkArchived() {
+	in.Status.Phase = "Archived"
+	in.setConditionStatus(archivedCondType, true, archivedCondType, archivedCondType)
+}
+
+func (in *KuberLogicService) MarkUnarchived() {
+	in.setConditionStatus(archivedCondType, false, archivedCondType, archivedCondType)
+}
+
+// ArchiveRequested indicates that a kls archive is requested
+func (in *KuberLogicService) ArchiveRequested() bool {
+	c := meta.FindStatusCondition(in.Status.Conditions, archivedCondType)
+	return in.Spec.Archived && (c == nil || c.Status == metav1.ConditionFalse)
+}
+
+// UnarchiveRequested indicates that a kls was archived and now is unarchive by setting in.Spec.Archive false
+func (in *KuberLogicService) UnarchiveRequested() bool {
+	c := meta.FindStatusCondition(in.Status.Conditions, archivedCondType)
+	if c == nil {
+		return false
+	}
+	return c.Status == metav1.ConditionTrue && !in.Spec.Archived
 }
 
 func (in *KuberLogicService) RestoreRunning() (bool, string) {

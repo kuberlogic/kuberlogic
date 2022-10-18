@@ -19,6 +19,9 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	"time"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
@@ -175,56 +178,155 @@ func (srv *Service) WaitForServiceBackup(ctx context.Context, serviceId *string,
 	return errors.New("Retries exceeded, backup is not ready")
 }
 
+func (srv *Service) WaitForServiceRestore(ctx context.Context, restoreId string, maxRetries int) error {
+	timeout := time.Second
+	for i := maxRetries; i > 0; i-- {
+
+		result := new(kuberlogiccomv1alpha1.KuberlogicServiceRestore)
+		err := srv.kuberlogicClient.Get().
+			Resource(restoreK8sResource).
+			Name(restoreId).
+			Do(ctx).
+			Into(result)
+		if err != nil {
+			return errors.Wrap(err, "Error while getting service restore")
+		}
+
+		if ok := result.IsSuccessful(); ok {
+			return nil
+		}
+
+		timeout = timeout * 2
+		time.Sleep(timeout)
+		srv.log.Infof("restore is not successful, trying after %s. Left %d retries", timeout, i-1)
+	}
+	return errors.New("Retries exceeded, restore is not successful")
+}
+
 /*
 	Archive service will:
 	1. Take new backup of a service (if backups enabled)
-	2. Remove all previous backups
-	3. Remove the service itself
+	2. Waiting the backup is done
+	3. Remove all previous backups
+	4. Set "Archive" for the service
 */
-func (srv *Service) ArchiveKuberlogicService(serviceId *string) {
+func (srv *Service) ArchiveKuberlogicService(service *kuberlogiccomv1alpha1.KuberLogicService) error {
 	ctx := context.Background()
-	// Take backup of the service
-	archive, err := srv.CreateKuberlogicServiceBackup(ctx, serviceId)
-	if err == nil {
-		// Wait until backup is done
-		archiveID := archive.GetName()
-		// maxRetries == 1 2 4 8 16 32 64 128 256 512 1024 2048 4096
-		err = srv.WaitForServiceBackup(ctx, serviceId, &archiveID, 13)
-		if err != nil {
-			msg := "error waiting for service backup"
-			srv.log.Errorw(msg, "error", err)
-		}
+	serviceId := &service.Name
 
-		// Delete all previous backups
-		backups, err := srv.ListKuberlogicServiceBackupsByService(ctx, serviceId)
-		if err != nil {
-			msg := "error listing service backups"
-			srv.log.Errorw(msg, "error", err)
-		}
-		for _, backup := range backups.Items {
-			if backup.GetName() == archiveID {
-				continue
-			}
-			err = srv.DeleteKuberlogicServiceBackup(ctx, &backup.Name)
-			if err != nil {
-				msg := "error deleting service backup"
-				srv.log.Errorw(msg, "error", err)
-			}
-		}
-	} else {
-		msg := "error taking service backup"
-		srv.log.Errorw(msg, "error", err)
-		return
+	srv.log.Infow("Taking backup of the service", "serviceId", *serviceId)
+	archive, err := srv.CreateKuberlogicServiceBackup(ctx, serviceId)
+	if err != nil {
+		return errors.Wrap(err, "error creating service backup")
 	}
 
-	// Delete service
-	err = srv.kuberlogicClient.Delete().
+	archiveID := archive.GetName()
+	maxRetries := 13 // equals 1 2 4 8 16 32 64 128 256 512 1024 2048 4096
+	srv.log.Infow("Waiting for backup to be ready", "serviceId", *serviceId, "backupId", archiveID)
+	err = srv.WaitForServiceBackup(ctx, serviceId, &archiveID, maxRetries)
+	if err != nil {
+		return errors.Wrap(err, "error waiting for service backup")
+	}
+
+	srv.log.Infow("Deleting previous backups", "serviceId", *serviceId)
+	backups, err := srv.ListKuberlogicServiceBackupsByService(ctx, serviceId)
+	if err != nil {
+		return errors.Wrap(err, "error listing service backups")
+	}
+	for _, backup := range backups.Items {
+		if backup.GetName() == archiveID {
+			continue
+		}
+		srv.log.Infow("Deleting backup", "serviceId", *serviceId, "backupId", backup.GetName())
+		err = srv.DeleteKuberlogicServiceBackup(ctx, &backup.Name)
+		if err != nil {
+			return errors.Wrap(err, "error deleting service backup")
+		}
+	}
+
+	srv.log.Infow("Archive service", "serviceId", *serviceId)
+	result := new(kuberlogiccomv1alpha1.KuberLogicService)
+	err = srv.kuberlogicClient.Patch(types.MergePatchType).
 		Resource(serviceK8sResource).
 		Name(*serviceId).
+		Body([]byte(`{"spec":{"archived":true}}`)). // FIXME: find the better way to do it
 		Do(ctx).
-		Error()
+		Into(result)
 	if err != nil {
-		msg := "error deleting service"
-		srv.log.Errorw(msg, "error", err)
+		return errors.Wrap(err, "error set archive to service")
 	}
+	return nil
+}
+
+func (srv *Service) EarliestSuccessfulBackup(ctx context.Context, serviceId *string) (*kuberlogiccomv1alpha1.KuberlogicServiceBackup, error) {
+	backups, err := srv.ListKuberlogicServiceBackupsByService(ctx, serviceId)
+	if err != nil {
+		return nil, errors.Wrap(err, "error listing service backups")
+	}
+
+	for _, backup := range backups.Items {
+		switch backup.Status.Phase {
+		case kuberlogiccomv1alpha1.KlbSuccessfulCondType:
+			return &backup, nil
+		}
+	}
+	return nil, errors.New("No successful backup found")
+}
+
+/*
+	Unarchive service will:
+	1. Find the latest backup
+	2. Restoring from the backup
+	3. Waiting when the restore completed
+	4. Unset "Archive" for the service
+*/
+func (srv *Service) UnarchiveKuberlogicService(service *kuberlogiccomv1alpha1.KuberLogicService) error {
+	ctx := context.Background()
+	serviceId := &service.Name
+
+	srv.log.Infow("find successful backup", "serviceId", *serviceId)
+	backup, err := srv.EarliestSuccessfulBackup(ctx, serviceId)
+	if err != nil {
+		return errors.Wrap(err, "error finding successful backup")
+	}
+
+	klr, err := util.RestoreToKuberlogic(&models.Restore{
+		ID:       fmt.Sprintf("%s-%d", backup.GetName(), time.Now().Unix()),
+		BackupID: backup.GetName(),
+	}, backup)
+	if err != nil {
+		return errors.Wrap(err, "error creating restore object")
+	}
+
+	srv.log.Infow("restore from backup", "serviceId", *serviceId, "backupId", backup.GetName())
+	if err := srv.kuberlogicClient.Post().
+		Resource(restoreK8sResource).
+		Name(klr.GetName()).
+		Body(klr).
+		Do(ctx).
+		Into(klr); k8serrors.IsAlreadyExists(err) {
+		return errors.Wrap(err, "restore already exists")
+	} else if err != nil {
+		return errors.Wrap(err, "error creating restore")
+	}
+
+	maxRetries := 13 // equals 1 2 4 8 16 32 64 128 256 512 1024 2048 4096
+	srv.log.Infow("Waiting for restore is successful", "serviceId", *serviceId, "restoreId", klr.GetName())
+	err = srv.WaitForServiceRestore(ctx, klr.GetName(), maxRetries)
+	if err != nil {
+		return errors.Wrap(err, "error waiting for service backup")
+	}
+
+	srv.log.Infow("unarchive service", "serviceId", *serviceId)
+	result := new(kuberlogiccomv1alpha1.KuberLogicService)
+	err = srv.kuberlogicClient.Patch(types.MergePatchType).
+		Resource(serviceK8sResource).
+		Name(*serviceId).
+		Body([]byte(`{"spec":{"archived":false}}`)). // FIXME: find the better way to do it
+		Do(ctx).
+		Into(result)
+	if err != nil {
+		return errors.Wrap(err, "error set archive to service")
+	}
+	return nil
 }
