@@ -37,14 +37,9 @@ func TestServiceSecretsListEmpty(t *testing.T) {
 	tc := createTestClient(expectedObject, 200, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(expectedSecret),
-		restClient: tc.client,
-		config: &config.Config{
-			Domain: "example.com",
-		},
-	}
+	srv := New(&config.Config{
+		Domain: "example.com",
+	}, fake.NewSimpleClientset(expectedSecret), tc.client, &TestLog{t: t})
 
 	params := apiService.ServiceSecretsListParams{
 		HTTPRequest: &http.Request{},
@@ -81,14 +76,9 @@ func TestServiceSecretsListMany(t *testing.T) {
 	tc := createTestClient(expectedObject, 200, t)
 	defer tc.server.Close()
 
-	srv := &handlers{
-		log:        &TestLog{t: t},
-		clientset:  fake.NewSimpleClientset(expectedSecret),
-		restClient: tc.client,
-		config: &config.Config{
-			Domain: "example.com",
-		},
-	}
+	srv := New(&config.Config{
+		Domain: "example.com",
+	}, fake.NewSimpleClientset(expectedSecret), tc.client, &TestLog{t: t})
 
 	params := apiService.ServiceSecretsListParams{
 		HTTPRequest: &http.Request{},
