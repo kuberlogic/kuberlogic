@@ -49,6 +49,8 @@ spec:
           env:
             - name: SVC_OPTS_TLS_SECRET_NAME
               value: $(TLS_SECRET_NAME)
+            - name: CLUSTER_ISSUER_NAME
+              value: $(CLUSTER_ISSUER_NAME)
             - name: PLUGINS
               value: "{docker-compose,/docker-compose-plugin}"
             - name: KL_PLUGIN_DOCKER_COMPOSE_FILE

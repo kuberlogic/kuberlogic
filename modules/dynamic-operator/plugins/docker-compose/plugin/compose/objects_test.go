@@ -8,13 +8,13 @@ import (
 
 	"github.com/compose-spec/compose-go/types"
 	"github.com/go-test/deep"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/plugin/commons"
 )
 
 var envVal = "val"

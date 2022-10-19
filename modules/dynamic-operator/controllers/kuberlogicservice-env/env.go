@@ -22,6 +22,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
+	certmanagerv12 "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	config "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/cfg"
 	"github.com/pkg/errors"
@@ -43,6 +45,7 @@ type EnvironmentManager struct {
 }
 
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=cert-manager.io,resources=clusterissuers;certificates,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=namespaces;services;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=resourcequotas;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=secrets;,verbs=get;list;watch;create;update;patch;delete
@@ -104,20 +107,50 @@ func (e *EnvironmentManager) SetupEnv(ctx context.Context) error {
 	}
 
 	if e.cfg.SvcOpts.TLSSecretName != "" {
-		if _, err := controllerruntime.CreateOrUpdate(ctx, e.Client, tlsSecret, func() error {
-			srcSecret := &v1.Secret{
+		if e.kls.Spec.UseLetsencrypt {
+			letsencryptIssuer := &certmanagerv1.ClusterIssuer{
 				ObjectMeta: v12.ObjectMeta{
-					Name:      e.cfg.SvcOpts.TLSSecretName,
-					Namespace: e.cfg.Namespace,
+					Name: e.cfg.ClusterIssuerName,
 				},
 			}
-			if err := e.Get(ctx, client.ObjectKeyFromObject(srcSecret), srcSecret); err != nil {
-				return errors.Wrap(err, "error getting source TLS secret")
+			if err := e.Get(ctx, client.ObjectKeyFromObject(letsencryptIssuer), letsencryptIssuer); err != nil {
+				return errors.Wrap(err, "error getting letsencrypt-issuer")
 			}
-			tlsSecret.Data = srcSecret.Data
-			return controllerruntime.SetControllerReference(e.kls, tlsSecret, e.Scheme())
-		}); err != nil {
-			return errors.Wrap(err, "error syncing TLS Secret")
+			tlsCertificate := &certmanagerv1.Certificate{
+				ObjectMeta: v12.ObjectMeta{
+					Name:      "letsencrypt",
+					Namespace: ns.GetName(),
+				},
+			}
+			if _, err := controllerruntime.CreateOrUpdate(ctx, e.Client, tlsCertificate, func() error {
+				tlsCertificate.Spec = certmanagerv1.CertificateSpec{
+					DNSNames:   []string{e.kls.Spec.Domain},
+					SecretName: e.cfg.SvcOpts.TLSSecretName,
+					IssuerRef: certmanagerv12.ObjectReference{
+						Kind: letsencryptIssuer.Kind,
+						Name: letsencryptIssuer.GetName(),
+					},
+				}
+				return controllerruntime.SetControllerReference(e.kls, tlsCertificate, e.Scheme())
+			}); err != nil {
+				return errors.Wrap(err, "error syncing TLS Secret")
+			}
+		} else {
+			if _, err := controllerruntime.CreateOrUpdate(ctx, e.Client, tlsSecret, func() error {
+				srcSecret := &v1.Secret{
+					ObjectMeta: v12.ObjectMeta{
+						Name:      e.cfg.SvcOpts.TLSSecretName,
+						Namespace: e.cfg.Namespace,
+					},
+				}
+				if err := e.Get(ctx, client.ObjectKeyFromObject(srcSecret), srcSecret); err != nil {
+					return errors.Wrap(err, "error getting source TLS secret")
+				}
+				tlsSecret.Data = srcSecret.Data
+				return controllerruntime.SetControllerReference(e.kls, tlsSecret, e.Scheme())
+			}); err != nil {
+				return errors.Wrap(err, "error syncing TLS Secret")
+			}
 		}
 	}
 

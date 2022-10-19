@@ -523,6 +523,8 @@ definitions:
         type: string
       insecure:
         type: boolean
+      use_letsencrypt:
+        type: boolean
 
       replicas:
         # https://goswagger.io/faq/faq_model.html#non-required-or-nullable-property

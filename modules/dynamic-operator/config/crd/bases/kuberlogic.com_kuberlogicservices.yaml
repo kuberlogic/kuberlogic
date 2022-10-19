@@ -105,6 +105,8 @@ spec:
               type:
                 description: Type of the cluster
                 type: string
+              useLetsencrypt:
+                type: boolean
               version:
                 description: '2 or 3 digits: 5 or 5.7 or 5.7.31'
                 pattern: ^\d+[\.\d+]*$

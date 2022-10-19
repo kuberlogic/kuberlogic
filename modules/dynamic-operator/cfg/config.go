@@ -16,7 +16,8 @@ type Config struct {
 	// Provisioned services will use this IngressClass / StorageClass or default (if empty)
 	IngressClass string `envconfig:"optional"`
 	StorageClass string `envconfig:"optional"`
-
+	// Let's encrypt ClusterIssuer name
+	ClusterIssuerName string `envconfig:"optional"`
 	// Private container registry credentials
 	DockerRegistry struct {
 		Url      string

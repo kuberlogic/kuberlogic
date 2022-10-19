@@ -58,8 +58,9 @@ type KuberLogicServiceSpec struct {
 	Limits v1.ResourceList `json:"limits,omitempty"`
 
 	// +kubebuilder:validation:Pattern=[a-z]([-a-z0-9]*[a-z0-9])?
-	Domain   string `json:"domain,omitempty"`
-	Insecure bool   `json:"insecure,omitempty"`
+	Domain         string `json:"domain,omitempty"`
+	Insecure       bool   `json:"insecure,omitempty"`
+	UseLetsencrypt bool   `json:"useLetsencrypt,omitempty"`
 
 	// any advanced configuration is supported
 	Advanced v11.JSON `json:"advanced,omitempty"`

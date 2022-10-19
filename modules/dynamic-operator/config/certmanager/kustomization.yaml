@@ -3,3 +3,23 @@ resources:
 
 configurations:
 - kustomizeconfig.yaml
+
+configMapGenerator:
+- env: config.env
+  name: runtime-secrets
+
+vars:
+- name: ADMIN_EMAIL
+  objref:
+    kind: ConfigMap
+    name: runtime-secrets
+    apiVersion: v1
+  fieldref:
+    fieldpath: data.ADMIN_EMAIL
+- name: INGRESS_CLASS
+  objref:
+    kind: ConfigMap
+    name: runtime-secrets
+    apiVersion: v1
+  fieldref:
+    fieldpath: data.INGRESS_CLASS
