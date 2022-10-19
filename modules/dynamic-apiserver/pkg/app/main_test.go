@@ -2,46 +2,29 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
-	"net/http/httptest"
-	"os"
 	"reflect"
 	"testing"
 
 	"github.com/go-openapi/runtime/middleware"
-	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	fakediscovery "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/kubernetes"
 	fake2 "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
 	clienttesting "k8s.io/client-go/testing"
-	utiltesting "k8s.io/client-go/util/testing"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/api/fake"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
 
-var (
-	//scheme = runtime.NewScheme()
-	//codecs = serializer.NewCodecFactory(scheme)
-
-	_ clienttesting.FakeClient = &FakeHandlers{}
-)
+var _ clienttesting.FakeClient = &FakeHandlers{}
 
 type TestLog struct {
 	t *testing.T
-}
-
-type TestClient struct {
-	client  *rest.RESTClient
-	server  *httptest.Server
-	handler *utiltesting.FakeHandler
 }
 
 type Writer struct {
@@ -73,8 +56,6 @@ func prettyPrint(i interface{}) string {
 }
 
 func (w *Producer) Produce(_ io.Writer, payload interface{}) error {
-	//w.t.Log(payload, w.check) -- for debug only
-
 	switch w.check.(type) {
 	case func(interface{}):
 		w.check.(func(interface{}))(payload)
@@ -86,7 +67,6 @@ func (w *Producer) Produce(_ io.Writer, payload interface{}) error {
 				prettyPrint(w.check))
 		}
 	}
-
 	return nil
 }
 
@@ -128,56 +108,8 @@ func (tl *TestLog) Sync() error {
 	return nil
 }
 
-func createTestClient(obj runtime.Object, status int, t *testing.T) TestClient {
-	body := runtime.EncodeOrDie(scheme.Codecs.LegacyCodec(v1alpha1.GroupVersion), obj)
-	handler := &utiltesting.FakeHandler{
-		StatusCode:   status,
-		ResponseBody: body,
-		T:            t,
-	}
-
-	testServer := httptest.NewServer(handler)
-	c, err := restClient(testServer)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	return TestClient{
-		client:  c,
-		server:  testServer,
-		handler: handler,
-	}
-}
-
-func restClient(testServer *httptest.Server) (*rest.RESTClient, error) {
-	c, err := rest.RESTClientFor(&rest.Config{
-		Host: testServer.URL,
-		ContentConfig: rest.ContentConfig{
-			GroupVersion:         &v1.SchemeGroupVersion,
-			NegotiatedSerializer: scheme.Codecs.WithoutConversion(),
-		},
-		Username: "user",
-		Password: "pass",
-	})
-	return c, err
-}
-
-func setup() error {
-	return v1alpha1.AddToScheme(scheme.Scheme)
-}
-
-func tearDown() {}
-
-func TestMain(m *testing.M) {
-	if err := setup(); err != nil {
-		fmt.Printf("setup test failure: %s\n", err)
-		os.Exit(1)
-	}
-	code := m.Run()
-	if code == 0 {
-		// no need destroy if the tests are failed
-		tearDown()
-	}
-	os.Exit(code)
+func init() {
+	_ = v1alpha1.AddToScheme(scheme.Scheme)
 }
 
 //------------------------------------------------------------------------------
