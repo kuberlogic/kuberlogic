@@ -655,6 +655,47 @@ func init() {
         }
       }
     },
+    "/services/{ServiceID}/secrets": {
+      "get": {
+        "description": "retrieves service secrets",
+        "tags": [
+          "service"
+        ],
+        "summary": "retrieves service secrets",
+        "operationId": "serviceSecretsList",
+        "parameters": [
+          {
+            "$ref": "#/parameters/ServiceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "service secrets",
+            "schema": {
+              "$ref": "#/definitions/ServiceSecrets"
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "503": {
+            "description": "internal service error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/services/{ServiceID}/unarchive": {
       "post": {
         "description": "unarchive service (for example, if user subscription resumed from canceled state)",
@@ -857,6 +898,30 @@ func init() {
       "type": "object",
       "additionalProperties": {
         "type": "string"
+      }
+    },
+    "ServiceSecret": {
+      "description": "service secret",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+          "readOnly": true
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "readOnly": true
+        }
+      }
+    },
+    "ServiceSecrets": {
+      "description": "service secrets",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ServiceSecret"
       }
     },
     "Services": {
@@ -1701,6 +1766,54 @@ func init() {
         }
       }
     },
+    "/services/{ServiceID}/secrets": {
+      "get": {
+        "description": "retrieves service secrets",
+        "tags": [
+          "service"
+        ],
+        "summary": "retrieves service secrets",
+        "operationId": "serviceSecretsList",
+        "parameters": [
+          {
+            "maxLength": 20,
+            "minLength": 3,
+            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+            "type": "string",
+            "description": "service Resource ID",
+            "name": "ServiceID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "service secrets",
+            "schema": {
+              "$ref": "#/definitions/ServiceSecrets"
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "503": {
+            "description": "internal service error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/services/{ServiceID}/unarchive": {
       "post": {
         "description": "unarchive service (for example, if user subscription resumed from canceled state)",
@@ -1910,6 +2023,30 @@ func init() {
       "type": "object",
       "additionalProperties": {
         "type": "string"
+      }
+    },
+    "ServiceSecret": {
+      "description": "service secret",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+          "readOnly": true
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "readOnly": true
+        }
+      }
+    },
+    "ServiceSecrets": {
+      "description": "service secrets",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ServiceSecret"
       }
     },
     "Services": {

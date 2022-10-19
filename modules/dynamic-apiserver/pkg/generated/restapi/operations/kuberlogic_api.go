@@ -86,6 +86,9 @@ func NewKuberlogicAPI(spec *loads.Document) *KuberlogicAPI {
 		ServiceServiceListHandler: service.ServiceListHandlerFunc(func(params service.ServiceListParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceList has not yet been implemented")
 		}),
+		ServiceServiceSecretsListHandler: service.ServiceSecretsListHandlerFunc(func(params service.ServiceSecretsListParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation service.ServiceSecretsList has not yet been implemented")
+		}),
 		ServiceServiceUnarchiveHandler: service.ServiceUnarchiveHandlerFunc(func(params service.ServiceUnarchiveParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceUnarchive has not yet been implemented")
 		}),
@@ -165,6 +168,8 @@ type KuberlogicAPI struct {
 	ServiceServiceGetHandler service.ServiceGetHandler
 	// ServiceServiceListHandler sets the operation handler for the service list operation
 	ServiceServiceListHandler service.ServiceListHandler
+	// ServiceServiceSecretsListHandler sets the operation handler for the service secrets list operation
+	ServiceServiceSecretsListHandler service.ServiceSecretsListHandler
 	// ServiceServiceUnarchiveHandler sets the operation handler for the service unarchive operation
 	ServiceServiceUnarchiveHandler service.ServiceUnarchiveHandler
 
@@ -286,6 +291,9 @@ func (o *KuberlogicAPI) Validate() error {
 	}
 	if o.ServiceServiceListHandler == nil {
 		unregistered = append(unregistered, "service.ServiceListHandler")
+	}
+	if o.ServiceServiceSecretsListHandler == nil {
+		unregistered = append(unregistered, "service.ServiceSecretsListHandler")
 	}
 	if o.ServiceServiceUnarchiveHandler == nil {
 		unregistered = append(unregistered, "service.ServiceUnarchiveHandler")
@@ -441,6 +449,10 @@ func (o *KuberlogicAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/services"] = service.NewServiceList(o.context, o.ServiceServiceListHandler)
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/services/{ServiceID}/secrets"] = service.NewServiceSecretsList(o.context, o.ServiceServiceSecretsListHandler)
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}

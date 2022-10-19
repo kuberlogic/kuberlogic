@@ -8,9 +8,10 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/homedir"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 
 	"github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
@@ -142,6 +143,7 @@ func makeServiceCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Com
 		makeServiceListCmd(apiClientFunc),
 		makeServiceBackupCmd(apiClientFunc),
 		makeServiceCredentialsUpdateCmd(apiClientFunc),
+		makeServiceSecretsListCmd(apiClientFunc),
 		makeServiceArchiveCmd(apiClientFunc),
 		makeServiceUnarchiveCmd(apiClientFunc),
 	)
