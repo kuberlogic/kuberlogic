@@ -26,6 +26,36 @@ securityDefinitions:
 security:
   - key: [ ]
 paths:
+  /logs/:
+    get:
+      tags:
+        - logs
+      summary: list kuberlogic logs
+      description: List kuberlogic pod logs
+      operationId: logList
+      parameters:
+        - $ref: "#/parameters/ContainerName"
+      responses:
+        200:
+          description: search results matching criteria
+          schema:
+            $ref: "#/definitions/Logs"
+        400:
+          description: bad input parameter
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        422:
+          description: bad validation
+          schema:
+            $ref: "#/definitions/Error"
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
   /backups/:
     get:
       tags:
@@ -639,6 +669,21 @@ definitions:
     items:
       $ref: "#/definitions/Restore"
 
+  Logs:
+    type: array
+    items:
+      $ref: "#/definitions/Log"
+
+  Log:
+    type: object
+    properties:
+      container_name:
+        type: string
+        readOnly: true
+      logs:
+        type: string
+        readOnly: true
+
   Error:
     type: object
     properties:
@@ -725,3 +770,11 @@ parameters:
     description: subscription ID
     required: false
     type: "string"
+
+  ContainerName:
+    name: ContainerName
+    in: query
+    description: kuberlogic pod container name to query logs by
+    type: "string"
+    required: false
+    enum: [manager, kube-rbac-proxy, apiserver, chargebee-integration]

@@ -109,6 +109,7 @@ func MakeRootCmd(httpClient *http.Client, k8sclient kubernetes.Interface) (*cobr
 
 		makeInstallCmd(k8sclient),
 		makeDiagCmd(),
+		makeLogsCmd(makeClientClosure(httpClient)),
 		makeVersionCmd(k8sclient),
 		makeInfoCmd(k8sclient, makeClientClosure(httpClient)),
 	)

@@ -5,6 +5,7 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 
 	apiBackup "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/backup"
+	apiLogs "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/logs"
 	apiRestore "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/restore"
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 )
@@ -15,6 +16,7 @@ type Handlers interface {
 	BackupAddHandler(params apiBackup.BackupAddParams, _ *models.Principal) middleware.Responder
 	BackupDeleteHandler(params apiBackup.BackupDeleteParams, _ *models.Principal) middleware.Responder
 	BackupListHandler(params apiBackup.BackupListParams, _ *models.Principal) middleware.Responder
+	LogListHandler(params apiLogs.LogListParams, _ *models.Principal) middleware.Responder
 	RestoreAddHandler(params apiRestore.RestoreAddParams, _ *models.Principal) middleware.Responder
 	RestoreDeleteHandler(params apiRestore.RestoreDeleteParams, _ *models.Principal) middleware.Responder
 	RestoreListHandler(params apiRestore.RestoreListParams, _ *models.Principal) middleware.Responder

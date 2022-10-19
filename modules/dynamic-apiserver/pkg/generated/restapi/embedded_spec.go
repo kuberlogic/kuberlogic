@@ -178,6 +178,53 @@ func init() {
         }
       }
     },
+    "/logs/": {
+      "get": {
+        "description": "List kuberlogic pod logs",
+        "tags": [
+          "logs"
+        ],
+        "summary": "list kuberlogic logs",
+        "operationId": "logList",
+        "parameters": [
+          {
+            "$ref": "#/parameters/ContainerName"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "search results matching criteria",
+            "schema": {
+              "$ref": "#/definitions/Logs"
+            }
+          },
+          "400": {
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/restores/": {
       "get": {
         "description": "List restore objects",
@@ -805,6 +852,25 @@ func init() {
         }
       }
     },
+    "Log": {
+      "type": "object",
+      "properties": {
+        "container_name": {
+          "type": "string",
+          "readOnly": true
+        },
+        "logs": {
+          "type": "string",
+          "readOnly": true
+        }
+      }
+    },
+    "Logs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Log"
+      }
+    },
     "Restore": {
       "type": "object",
       "properties": {
@@ -964,6 +1030,18 @@ func init() {
       "type": "string",
       "description": "service Resource ID to query backups/restores by",
       "name": "ServiceID",
+      "in": "query"
+    },
+    "ContainerName": {
+      "enum": [
+        "manager",
+        "kube-rbac-proxy",
+        "apiserver",
+        "chargebee-integration"
+      ],
+      "type": "string",
+      "description": "kuberlogic pod container name to query logs by",
+      "name": "ContainerName",
       "in": "query"
     },
     "RestoreID": {
@@ -1208,6 +1286,62 @@ func init() {
           },
           "422": {
             "description": "bad validation"
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/logs/": {
+      "get": {
+        "description": "List kuberlogic pod logs",
+        "tags": [
+          "logs"
+        ],
+        "summary": "list kuberlogic logs",
+        "operationId": "logList",
+        "parameters": [
+          {
+            "enum": [
+              "manager",
+              "kube-rbac-proxy",
+              "apiserver",
+              "chargebee-integration"
+            ],
+            "type": "string",
+            "description": "kuberlogic pod container name to query logs by",
+            "name": "ContainerName",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "search results matching criteria",
+            "schema": {
+              "$ref": "#/definitions/Logs"
+            }
+          },
+          "400": {
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "503": {
             "description": "internal server error",
@@ -1933,6 +2067,25 @@ func init() {
         }
       }
     },
+    "Log": {
+      "type": "object",
+      "properties": {
+        "container_name": {
+          "type": "string",
+          "readOnly": true
+        },
+        "logs": {
+          "type": "string",
+          "readOnly": true
+        }
+      }
+    },
+    "Logs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Log"
+      }
+    },
     "Restore": {
       "type": "object",
       "properties": {
@@ -2092,6 +2245,18 @@ func init() {
       "type": "string",
       "description": "service Resource ID to query backups/restores by",
       "name": "ServiceID",
+      "in": "query"
+    },
+    "ContainerName": {
+      "enum": [
+        "manager",
+        "kube-rbac-proxy",
+        "apiserver",
+        "chargebee-integration"
+      ],
+      "type": "string",
+      "description": "kuberlogic pod container name to query logs by",
+      "name": "ContainerName",
       "in": "query"
     },
     "RestoreID": {

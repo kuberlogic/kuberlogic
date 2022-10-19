@@ -13,6 +13,7 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/backup"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/logs"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/restore"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 )
@@ -67,6 +68,11 @@ func configureAPI(api *operations.KuberlogicAPI) http.Handler {
 	if api.BackupBackupListHandler == nil {
 		api.BackupBackupListHandler = backup.BackupListHandlerFunc(func(params backup.BackupListParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation backup.BackupList has not yet been implemented")
+		})
+	}
+	if api.LogsLogListHandler == nil {
+		api.LogsLogListHandler = logs.LogListHandlerFunc(func(params logs.LogListParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation logs.LogList has not yet been implemented")
 		})
 	}
 	if api.RestoreRestoreAddHandler == nil {

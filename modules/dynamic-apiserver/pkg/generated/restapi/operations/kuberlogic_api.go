@@ -21,6 +21,7 @@ import (
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/backup"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/logs"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/restore"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 )
@@ -55,6 +56,9 @@ func NewKuberlogicAPI(spec *loads.Document) *KuberlogicAPI {
 		}),
 		BackupBackupListHandler: backup.BackupListHandlerFunc(func(params backup.BackupListParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation backup.BackupList has not yet been implemented")
+		}),
+		LogsLogListHandler: logs.LogListHandlerFunc(func(params logs.LogListParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation logs.LogList has not yet been implemented")
 		}),
 		RestoreRestoreAddHandler: restore.RestoreAddHandlerFunc(func(params restore.RestoreAddParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation restore.RestoreAdd has not yet been implemented")
@@ -148,6 +152,8 @@ type KuberlogicAPI struct {
 	BackupBackupDeleteHandler backup.BackupDeleteHandler
 	// BackupBackupListHandler sets the operation handler for the backup list operation
 	BackupBackupListHandler backup.BackupListHandler
+	// LogsLogListHandler sets the operation handler for the log list operation
+	LogsLogListHandler logs.LogListHandler
 	// RestoreRestoreAddHandler sets the operation handler for the restore add operation
 	RestoreRestoreAddHandler restore.RestoreAddHandler
 	// RestoreRestoreDeleteHandler sets the operation handler for the restore delete operation
@@ -261,6 +267,9 @@ func (o *KuberlogicAPI) Validate() error {
 	}
 	if o.BackupBackupListHandler == nil {
 		unregistered = append(unregistered, "backup.BackupListHandler")
+	}
+	if o.LogsLogListHandler == nil {
+		unregistered = append(unregistered, "logs.LogListHandler")
 	}
 	if o.RestoreRestoreAddHandler == nil {
 		unregistered = append(unregistered, "restore.RestoreAddHandler")
@@ -409,6 +418,10 @@ func (o *KuberlogicAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/backups"] = backup.NewBackupList(o.context, o.BackupBackupListHandler)
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/logs"] = logs.NewLogList(o.context, o.LogsLogListHandler)
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}

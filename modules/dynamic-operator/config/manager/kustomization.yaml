@@ -37,4 +37,3 @@ images:
 - name: controller
   newName: quay.io/kuberlogic/dynamic-operator
   newTag: 0.0.16
-  

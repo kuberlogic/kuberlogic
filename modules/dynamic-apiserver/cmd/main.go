@@ -21,6 +21,8 @@ import (
 
 	apiBackup "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/backup"
 
+	apiLogs "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/logs"
+
 	apiRestore "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/restore"
 
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
@@ -106,6 +108,7 @@ func Main(args []string) {
 	api.BackupBackupAddHandler = apiBackup.BackupAddHandlerFunc(handlers.BackupAddHandler)
 	api.BackupBackupDeleteHandler = apiBackup.BackupDeleteHandlerFunc(handlers.BackupDeleteHandler)
 	api.BackupBackupListHandler = apiBackup.BackupListHandlerFunc(handlers.BackupListHandler)
+	api.LogsLogListHandler = apiLogs.LogListHandlerFunc(handlers.LogListHandler)
 	api.RestoreRestoreAddHandler = apiRestore.RestoreAddHandlerFunc(handlers.RestoreAddHandler)
 	api.RestoreRestoreDeleteHandler = apiRestore.RestoreDeleteHandlerFunc(handlers.RestoreDeleteHandler)
 	api.RestoreRestoreListHandler = apiRestore.RestoreListHandlerFunc(handlers.RestoreListHandler)
