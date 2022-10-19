@@ -15,12 +15,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	fakediscovery "k8s.io/client-go/discovery/fake"
+	"k8s.io/client-go/kubernetes"
+	fake2 "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	clienttesting "k8s.io/client-go/testing"
 	utiltesting "k8s.io/client-go/util/testing"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/api/fake"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
 
@@ -70,7 +73,7 @@ func prettyPrint(i interface{}) string {
 }
 
 func (w *Producer) Produce(_ io.Writer, payload interface{}) error {
-	w.t.Log(payload, w.check)
+	//w.t.Log(payload, w.check) -- for debug only
 
 	switch w.check.(type) {
 	case func(interface{}):
@@ -159,8 +162,7 @@ func restClient(testServer *httptest.Server) (*rest.RESTClient, error) {
 }
 
 func setup() error {
-	err := v1alpha1.AddToScheme(scheme.Scheme)
-	return err
+	return v1alpha1.AddToScheme(scheme.Scheme)
 }
 
 func tearDown() {}
@@ -211,16 +213,6 @@ func (h *FakeHandlers) Restores() ExtendedRestoreInterface {
 }
 
 func newSimpleClient(objects ...runtime.Object) *FakeHandlers {
-	// can not using runtime.NewScheme()
-	// need guaranty only tracking passing objects
-	// i.e each test case should have its own scheme and unique objects
-	//newScheme := runtime.NewScheme()
-	//newCodec := serializer.NewCodecFactory(newScheme)
-	//err := v1alpha1.AddToScheme(newScheme)
-	//if err != nil {
-	//	panic(err)
-	//}
-
 	o := clienttesting.NewObjectTracker(scheme.Scheme, scheme.Codecs.UniversalDecoder())
 	for _, obj := range objects {
 		if err := o.Add(obj); err != nil {
@@ -244,8 +236,18 @@ func newSimpleClient(objects ...runtime.Object) *FakeHandlers {
 }
 
 func newFakeHandlers(t *testing.T, objects ...runtime.Object) *FakeHandlers {
+	internalObjects, customObjects := splitObjects(objects)
+	clientset := fake2.NewSimpleClientset(internalObjects...)
+	return newFakeHandlersWithClientset(t, clientset, customObjects...)
+}
+
+func newFakeHandlersWithClientset(t *testing.T, clientset kubernetes.Interface, objects ...runtime.Object) *FakeHandlers {
 	baseHandlers := &handlers{
 		log: &TestLog{t: t},
+		config: &config.Config{
+			Domain: "kuberlogic.local",
+		},
+		clientset: clientset,
 	}
 	client := newSimpleClient(objects...)
 	baseHandlers.services = client.Services() // override services with fake
@@ -253,6 +255,21 @@ func newFakeHandlers(t *testing.T, objects ...runtime.Object) *FakeHandlers {
 	baseHandlers.restores = client.Restores() // override restores with fake
 	client.Handlers = baseHandlers            // set actual handlers
 	return client
+}
+
+func splitObjects(objects []runtime.Object) ([]runtime.Object, []runtime.Object) {
+	customObjects, internalObjects := make([]runtime.Object, 0), make([]runtime.Object, 0)
+	for _, obj := range objects {
+		switch obj.(type) {
+		case *v1alpha1.KuberLogicService, *v1alpha1.KuberLogicServiceList,
+			*v1alpha1.KuberlogicServiceBackup, *v1alpha1.KuberlogicServiceBackupList,
+			*v1alpha1.KuberlogicServiceRestore, *v1alpha1.KuberlogicServiceRestoreList:
+			customObjects = append(customObjects, obj)
+		default:
+			internalObjects = append(internalObjects, obj)
+		}
+	}
+	return internalObjects, customObjects
 }
 
 type testCase struct {

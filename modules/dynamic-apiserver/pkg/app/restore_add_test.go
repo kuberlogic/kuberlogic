@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiRestore "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/restore"
@@ -13,33 +13,78 @@ import (
 )
 
 func TestRestoreAdd(t *testing.T) {
-	expectedKlr := &v1alpha1.KuberlogicServiceRestore{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "test",
+	cases := []testCase{
+		{
+			name:   "ok",
+			status: 201,
+			objects: []runtime.Object{
+				&v1alpha1.KuberlogicServiceBackup{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "existing-backup",
+					},
+					Spec: v1alpha1.KuberlogicServiceBackupSpec{
+						KuberlogicServiceName: "test",
+					},
+				},
+			},
+			result: &models.Restore{
+				BackupID: "existing-backup",
+				ID:       "existing-backup",
+			},
+			params: apiRestore.RestoreAddParams{
+				HTTPRequest: &http.Request{},
+				RestoreItem: &models.Restore{
+					BackupID: "existing-backup",
+				},
+			},
 		},
-		Spec: v1alpha1.KuberlogicServiceRestoreSpec{
-			KuberlogicServiceBackup: "test",
+		{
+			name:   "already-exists",
+			status: 409,
+			objects: []runtime.Object{
+				&v1alpha1.KuberlogicServiceBackup{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "existing-backup",
+					},
+					Spec: v1alpha1.KuberlogicServiceBackupSpec{
+						KuberlogicServiceName: "test",
+					},
+				},
+				&v1alpha1.KuberlogicServiceRestore{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "existing-backup",
+					},
+					Spec: v1alpha1.KuberlogicServiceRestoreSpec{
+						KuberlogicServiceBackup: "existing-backup",
+					},
+				},
+			},
+			result: nil,
+			params: apiRestore.RestoreAddParams{
+				HTTPRequest: &http.Request{},
+				RestoreItem: &models.Restore{
+					BackupID: "existing-backup",
+				},
+			},
+		},
+		{
+			name:    "backup-not-found",
+			status:  400,
+			objects: []runtime.Object{},
+			result: &models.Error{
+				Message: "backup `existing-backup` not found",
+			},
+			params: apiRestore.RestoreAddParams{
+				HTTPRequest: &http.Request{},
+				RestoreItem: &models.Restore{
+					BackupID: "existing-backup",
+				},
+			},
 		},
 	}
-
-	tc := createTestClient(expectedKlr, 200, t)
-
-	srv := New(nil, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
-
-	restore := &models.Restore{
-		BackupID: expectedKlr.Spec.KuberlogicServiceBackup,
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			checkResponse(newFakeHandlers(t, tc.objects...).RestoreAddHandler(tc.params.(apiRestore.RestoreAddParams), nil), t, tc.status, tc.result)
+		})
 	}
-
-	params := apiRestore.RestoreAddParams{
-		HTTPRequest: &http.Request{},
-		RestoreItem: restore,
-	}
-
-	expectedRestore := &models.Restore{
-		BackupID: expectedKlr.Spec.KuberlogicServiceBackup,
-		ID:       expectedKlr.Spec.KuberlogicServiceBackup,
-	}
-
-	checkResponse(srv.RestoreAddHandler(params, nil), t, 201, expectedRestore)
-	tc.handler.ValidateRequestCount(t, 2)
 }

@@ -24,14 +24,7 @@ func (h *handlers) RestoreListHandler(params apiRestore.RestoreListParams, _ *mo
 
 	items := make([]*models.Restore, 0)
 	for _, klr := range result.Items {
-		b, err := util.KuberlogicToRestore(&klr)
-		if err != nil {
-			h.log.Errorw("error converting klr to model", "error", err, "name", klr.GetName())
-			return apiRestore.NewRestoreListServiceUnavailable().WithPayload(&models.Error{
-				Message: "error converting restore object to model",
-			})
-		}
-		items = append(items, b)
+		items = append(items, util.KuberlogicToRestore(&klr))
 	}
 	return apiRestore.NewRestoreListOK().WithPayload(items)
 }

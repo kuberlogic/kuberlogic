@@ -167,7 +167,7 @@ func KuberlogicToBackup(backup *kuberlogiccomv1alpha1.KuberlogicServiceBackup) *
 	}
 }
 
-func RestoreToKuberlogic(restore *models.Restore, klb *kuberlogiccomv1alpha1.KuberlogicServiceBackup) (*kuberlogiccomv1alpha1.KuberlogicServiceRestore, error) {
+func RestoreToKuberlogic(restore *models.Restore, klb *kuberlogiccomv1alpha1.KuberlogicServiceBackup) *kuberlogiccomv1alpha1.KuberlogicServiceRestore {
 	return &kuberlogiccomv1alpha1.KuberlogicServiceRestore{
 		ObjectMeta: v1.ObjectMeta{
 			Name: restore.ID,
@@ -178,16 +178,16 @@ func RestoreToKuberlogic(restore *models.Restore, klb *kuberlogiccomv1alpha1.Kub
 		Spec: kuberlogiccomv1alpha1.KuberlogicServiceRestoreSpec{
 			KuberlogicServiceBackup: restore.BackupID,
 		},
-	}, nil
+	}
 }
 
-func KuberlogicToRestore(restore *kuberlogiccomv1alpha1.KuberlogicServiceRestore) (*models.Restore, error) {
+func KuberlogicToRestore(restore *kuberlogiccomv1alpha1.KuberlogicServiceRestore) *models.Restore {
 	return &models.Restore{
 		BackupID:  restore.Spec.KuberlogicServiceBackup,
 		ID:        restore.GetName(),
 		Status:    restore.Status.Phase,
 		CreatedAt: strfmt.DateTime(restore.GetCreationTimestamp().Time),
-	}, nil
+	}
 }
 
 func Int64AsPointer(x int64) *int64 {
@@ -195,9 +195,5 @@ func Int64AsPointer(x int64) *int64 {
 }
 
 func StrAsPointer(x string) *string {
-	return &x
-}
-
-func BoolAsPointer(x bool) *bool {
 	return &x
 }

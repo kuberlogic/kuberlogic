@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiBackup "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/backup"
@@ -15,118 +15,158 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
 
-func TestBackupListEmpty(t *testing.T) {
-	expectedObjects := &v1alpha1.KuberlogicServiceBackupList{
-		Items: []v1alpha1.KuberlogicServiceBackup{},
-	}
-
-	tc := createTestClient(expectedObjects, 200, t)
-	defer tc.server.Close()
-
-	srv := New(nil, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
-
-	params := apiBackup.BackupListParams{
-		HTTPRequest: &http.Request{},
-		ServiceID:   util.StrAsPointer("test-service"),
-	}
-
-	checkResponse(srv.BackupListHandler(params, nil), t, 200, models.Backups{})
-	tc.handler.ValidateRequestCount(t, 1)
-}
-
-func TestBackupListMany(t *testing.T) {
-	expectedObjects := &v1alpha1.KuberlogicServiceBackupList{
-		Items: []v1alpha1.KuberlogicServiceBackup{
-			{
-				ObjectMeta: v1.ObjectMeta{
-					Name: fmt.Sprintf("%s-%d", "service1", time.Now().Unix()),
-				},
-				Spec: v1alpha1.KuberlogicServiceBackupSpec{
-					KuberlogicServiceName: "service1",
-				},
-				Status: v1alpha1.KuberlogicServiceBackupStatus{
-					Phase: "Failed",
+func TestBackupList(t *testing.T) {
+	cases := []testCase{
+		{
+			name:   "empty",
+			status: 200,
+			objects: []runtime.Object{
+				&v1alpha1.KuberlogicServiceBackupList{
+					Items: []v1alpha1.KuberlogicServiceBackup{},
 				},
 			},
-			{
-				ObjectMeta: v1.ObjectMeta{
-					Name: fmt.Sprintf("%s-%d", "service2", time.Now().Unix()),
-				},
-				Spec: v1alpha1.KuberlogicServiceBackupSpec{
-					KuberlogicServiceName: "service2",
-				},
-				Status: v1alpha1.KuberlogicServiceBackupStatus{
-					Phase: "Successful",
-				},
+			result: models.Backups{},
+			params: apiBackup.BackupListParams{
+				HTTPRequest: &http.Request{},
+				ServiceID:   util.StrAsPointer("test-service"),
 			},
 		},
-	}
-
-	tc := createTestClient(expectedObjects, 200, t)
-	defer tc.server.Close()
-
-	srv := New(nil, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
-
-	backups := models.Backups{
 		{
-			ID:        fmt.Sprintf("%s-%d", "service1", time.Now().Unix()),
-			ServiceID: "service1",
-			Status:    "Failed",
-		},
-		{
-			ID:        fmt.Sprintf("%s-%d", "service2", time.Now().Unix()),
-			ServiceID: "service2",
-			Status:    "Successful",
-		},
-	}
-
-	params := apiBackup.BackupListParams{
-		HTTPRequest: &http.Request{},
-		ServiceID:   util.StrAsPointer("test-service"),
-	}
-
-	checkResponse(srv.BackupListHandler(params, nil), t, 200, backups)
-	tc.handler.ValidateRequestCount(t, 1)
-}
-
-func TestBackupListWithServiceFilter(t *testing.T) {
-	expectedObjects := &v1alpha1.KuberlogicServiceBackupList{
-		Items: []v1alpha1.KuberlogicServiceBackup{
-			{
-				ObjectMeta: v1.ObjectMeta{
-					Name: fmt.Sprintf("%s-%d", "service1", time.Now().Unix()),
-					Labels: map[string]string{
-						"kls-id": "service1",
+			name:   "many",
+			status: 200,
+			objects: []runtime.Object{
+				&v1alpha1.KuberlogicServiceBackup{
+					ObjectMeta: v1.ObjectMeta{
+						Name: fmt.Sprintf("%s-%d", "service1", time.Now().Unix()),
+						Labels: map[string]string{
+							util.BackupRestoreServiceField: "target-service",
+						},
+					},
+					Spec: v1alpha1.KuberlogicServiceBackupSpec{
+						KuberlogicServiceName: "target-service",
+					},
+					Status: v1alpha1.KuberlogicServiceBackupStatus{
+						Phase: "Failed",
 					},
 				},
-				Spec: v1alpha1.KuberlogicServiceBackupSpec{
-					KuberlogicServiceName: "service1",
+				&v1alpha1.KuberlogicServiceBackup{
+					ObjectMeta: v1.ObjectMeta{
+						Name: fmt.Sprintf("%s-%d", "service2", time.Now().Unix()),
+						Labels: map[string]string{
+							util.BackupRestoreServiceField: "another-service",
+						},
+					},
+					Spec: v1alpha1.KuberlogicServiceBackupSpec{
+						KuberlogicServiceName: "another-service",
+					},
+					Status: v1alpha1.KuberlogicServiceBackupStatus{
+						Phase: "Successful",
+					},
 				},
-				Status: v1alpha1.KuberlogicServiceBackupStatus{
-					Phase: "Pending",
+				&v1alpha1.KuberlogicServiceBackup{
+					ObjectMeta: v1.ObjectMeta{
+						Name: fmt.Sprintf("%s-%d", "service3", time.Now().Unix()),
+						Labels: map[string]string{
+							util.BackupRestoreServiceField: "target-service",
+						},
+					},
+					Spec: v1alpha1.KuberlogicServiceBackupSpec{
+						KuberlogicServiceName: "target-service",
+					},
+					Status: v1alpha1.KuberlogicServiceBackupStatus{
+						Phase: "Successful",
+					},
 				},
+			},
+			result: models.Backups{
+				{
+					ID:        fmt.Sprintf("%s-%d", "service1", time.Now().Unix()),
+					ServiceID: "target-service",
+					Status:    "Failed",
+				},
+				{
+					ID:        fmt.Sprintf("%s-%d", "service2", time.Now().Unix()),
+					ServiceID: "another-service",
+					Status:    "Successful",
+				},
+				{
+					ID:        fmt.Sprintf("%s-%d", "service3", time.Now().Unix()),
+					ServiceID: "target-service",
+					Status:    "Successful",
+				},
+			},
+			params: apiBackup.BackupListParams{
+				HTTPRequest: &http.Request{},
+			},
+		},
+		{
+			name:   "filtered-many",
+			status: 200,
+			objects: []runtime.Object{
+				&v1alpha1.KuberlogicServiceBackup{
+					ObjectMeta: v1.ObjectMeta{
+						Name: fmt.Sprintf("%s-%d", "service1", time.Now().Unix()),
+						Labels: map[string]string{
+							util.BackupRestoreServiceField: "target-service",
+						},
+					},
+					Spec: v1alpha1.KuberlogicServiceBackupSpec{
+						KuberlogicServiceName: "target-service",
+					},
+					Status: v1alpha1.KuberlogicServiceBackupStatus{
+						Phase: "Failed",
+					},
+				},
+				&v1alpha1.KuberlogicServiceBackup{
+					ObjectMeta: v1.ObjectMeta{
+						Name: fmt.Sprintf("%s-%d", "service2", time.Now().Unix()),
+						Labels: map[string]string{
+							util.BackupRestoreServiceField: "another-service",
+						},
+					},
+					Spec: v1alpha1.KuberlogicServiceBackupSpec{
+						KuberlogicServiceName: "another-service",
+					},
+					Status: v1alpha1.KuberlogicServiceBackupStatus{
+						Phase: "Successful",
+					},
+				},
+				&v1alpha1.KuberlogicServiceBackup{
+					ObjectMeta: v1.ObjectMeta{
+						Name: fmt.Sprintf("%s-%d", "service3", time.Now().Unix()),
+						Labels: map[string]string{
+							util.BackupRestoreServiceField: "target-service",
+						},
+					},
+					Spec: v1alpha1.KuberlogicServiceBackupSpec{
+						KuberlogicServiceName: "target-service",
+					},
+					Status: v1alpha1.KuberlogicServiceBackupStatus{
+						Phase: "Successful",
+					},
+				},
+			},
+			result: models.Backups{
+				{
+					ID:        fmt.Sprintf("%s-%d", "service1", time.Now().Unix()),
+					ServiceID: "target-service",
+					Status:    "Failed",
+				},
+				{
+					ID:        fmt.Sprintf("%s-%d", "service3", time.Now().Unix()),
+					ServiceID: "target-service",
+					Status:    "Successful",
+				},
+			},
+			params: apiBackup.BackupListParams{
+				HTTPRequest: &http.Request{},
+				ServiceID:   util.StrAsPointer("target-service"),
 			},
 		},
 	}
-
-	tc := createTestClient(expectedObjects, 200, t)
-	defer tc.server.Close()
-
-	srv := New(nil, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
-
-	backups := models.Backups{
-		{
-			ID:        fmt.Sprintf("%s-%d", "service1", time.Now().Unix()),
-			ServiceID: "service1",
-			Status:    "Pending",
-		},
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			checkResponse(newFakeHandlers(t, tc.objects...).BackupListHandler(tc.params.(apiBackup.BackupListParams), nil), t, tc.status, tc.result)
+		})
 	}
-
-	params := apiBackup.BackupListParams{
-		HTTPRequest: &http.Request{},
-		ServiceID:   util.StrAsPointer("service1"),
-	}
-
-	checkResponse(srv.BackupListHandler(params, nil), t, 200, backups)
-	tc.handler.ValidateRequestCount(t, 1)
 }

@@ -7,70 +7,93 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	v11 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
-func TestServiceGetNotFound(t *testing.T) {
-	expectedObject := &v1alpha1.KuberLogicService{}
-
-	tc := createTestClient(expectedObject, 404, t)
-	defer tc.server.Close()
-
-	srv := New(nil, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
-
-	params := apiService.ServiceGetParams{
-		HTTPRequest: &http.Request{},
-		ServiceID:   "not-found-id",
-	}
-
-	checkResponse(srv.ServiceGetHandler(params, nil), t, 404, &models.Error{
-		Message: "kuberlogic service not found: not-found-id",
-	})
-	tc.handler.ValidateRequestCount(t, 1)
-}
-
-func TestServiceGetSuccess(t *testing.T) {
-	expectedObject := &v1alpha1.KuberLogicService{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "one",
-		},
-		Spec: v1alpha1.KuberLogicServiceSpec{
-			Type:     "postgresql",
-			Replicas: 1,
-			Limits: corev1.ResourceList{
-				corev1.ResourceStorage: resource.MustParse("2Gi"),
+func TestServiceGet(t *testing.T) {
+	cases := []testCase{
+		{
+			name:   "ok",
+			status: 200,
+			objects: []runtime.Object{
+				&v1alpha1.KuberLogicService{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "one",
+					},
+					Spec: v1alpha1.KuberLogicServiceSpec{
+						Type:     "postgresql",
+						Replicas: 1,
+						Limits: corev1.ResourceList{
+							corev1.ResourceStorage: resource.MustParse("2Gi"),
+						},
+					},
+					Status: v1alpha1.KuberLogicServiceStatus{
+						Phase: "Unknown",
+					},
+				},
+			},
+			result: &models.Service{
+				ID:       util.StrAsPointer("one"),
+				Type:     util.StrAsPointer("postgresql"),
+				Replicas: util.Int64AsPointer(1),
+				Limits: &models.Limits{
+					Storage: "2Gi",
+				},
+				Status: "Unknown",
+			},
+			params: apiService.ServiceGetParams{
+				HTTPRequest: &http.Request{},
+				ServiceID:   "one",
+			},
+		}, {
+			name:   "not-found",
+			status: 404,
+			result: &models.Error{
+				Message: "kuberlogic service not found: one",
+			},
+			params: apiService.ServiceGetParams{
+				HTTPRequest: &http.Request{},
+				ServiceID:   "one",
+			},
+		}, {
+			name:   "converting-error",
+			status: 503,
+			objects: []runtime.Object{
+				&v1alpha1.KuberLogicService{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "one",
+					},
+					Spec: v1alpha1.KuberLogicServiceSpec{
+						Type:     "postgresql",
+						Replicas: 1,
+						Limits: corev1.ResourceList{
+							corev1.ResourceStorage: resource.MustParse("2Gi"),
+						},
+						Advanced: v11.JSON{Raw: []byte(`{"some": "invalid-json")}`)},
+					},
+					Status: v1alpha1.KuberLogicServiceStatus{
+						Phase: "Unknown",
+					},
+				},
+			},
+			result: &models.Error{
+				Message: "error converting kuberlogicservice: invalid character ')' after object key:value pair",
+			},
+			params: apiService.ServiceGetParams{
+				HTTPRequest: &http.Request{},
+				ServiceID:   "one",
 			},
 		},
-		Status: v1alpha1.KuberLogicServiceStatus{
-			Phase: "Unknown",
-		},
 	}
-
-	tc := createTestClient(expectedObject, 200, t)
-	defer tc.server.Close()
-
-	srv := New(nil, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
-
-	service := &models.Service{
-		ID:       util.StrAsPointer("one"),
-		Type:     util.StrAsPointer("postgresql"),
-		Replicas: util.Int64AsPointer(1),
-		Limits: &models.Limits{
-			Storage: "2Gi",
-		},
-		Status: "Unknown",
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			checkResponse(newFakeHandlers(t, tc.objects...).ServiceGetHandler(tc.params.(apiService.ServiceGetParams), nil), t, tc.status, tc.result)
+		})
 	}
-
-	params := apiService.ServiceGetParams{
-		HTTPRequest: &http.Request{},
-		ServiceID:   "one",
-	}
-
-	checkResponse(srv.ServiceGetHandler(params, nil), t, 200, service)
-	tc.handler.ValidateRequestCount(t, 1)
 }

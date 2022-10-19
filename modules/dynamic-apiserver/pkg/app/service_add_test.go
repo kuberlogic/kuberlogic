@@ -1,191 +1,166 @@
 package app
 
 import (
-	"encoding/json"
 	"net/http"
 	"testing"
 
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
 
-func TestServiceAddSimple(t *testing.T) {
-	expectedObj := &v1alpha1.KuberLogicService{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "simple",
-		},
-		Spec: v1alpha1.KuberLogicServiceSpec{
-			Type:     "postgresql",
-			Replicas: 1,
-		},
-	}
-
-	tc := createTestClient(expectedObj, 200, t)
-	defer tc.server.Close()
-
-	srv := New(&config.Config{
-		Domain: "example.com",
-	}, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
-
-	service := &models.Service{
-		ID:       util.StrAsPointer("simple"),
-		Replicas: util.Int64AsPointer(1),
-		Type:     util.StrAsPointer("postgresql"),
-	}
-
-	params := apiService.ServiceAddParams{
-		HTTPRequest: &http.Request{},
-		ServiceItem: service,
-	}
-
-	checkResponse(srv.ServiceAddHandler(params, nil), t, 201, service)
-	tc.handler.ValidateRequestCount(t, 1)
-}
-
-func TestServiceAddExtended(t *testing.T) {
-	expectedObj := &v1alpha1.KuberLogicService{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "extended",
-		},
-		Spec: v1alpha1.KuberLogicServiceSpec{
-			Type:     "postgresql",
-			Replicas: 1,
-			Limits: corev1.ResourceList{
-				"cpu":     resource.MustParse("10"),
-				"memory":  resource.MustParse("500"),
-				"storage": resource.MustParse("100Gi"),
+func TestServiceAdd(t *testing.T) {
+	cases := []testCase{
+		{
+			name:    "ok-minimal",
+			status:  201,
+			objects: []runtime.Object{},
+			result: &models.Service{
+				ID:       util.StrAsPointer("simple"),
+				Replicas: util.Int64AsPointer(1),
+				Type:     util.StrAsPointer("postgresql"),
+				Domain:   "simple.kuberlogic.local",
 			},
-			Version:        "13",
-			BackupSchedule: "*/10 * * * *",
-		},
-	}
-	expectedObj.MarkReady("Ready")
-
-	tc := createTestClient(expectedObj, 200, t)
-	defer tc.server.Close()
-
-	srv := New(&config.Config{
-		Domain: "example.com",
-	}, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
-
-	service := &models.Service{
-		ID:       util.StrAsPointer("extended"),
-		Replicas: util.Int64AsPointer(1),
-		Type:     util.StrAsPointer("postgresql"),
-		Limits: &models.Limits{
-			CPU:     "10",
-			Memory:  "500",
-			Storage: "100Gi",
-		},
-		Version:        "13",
-		Status:         "Ready",
-		BackupSchedule: "*/10 * * * *",
-	}
-
-	params := apiService.ServiceAddParams{
-		HTTPRequest: &http.Request{},
-		ServiceItem: service,
-	}
-
-	checkResponse(srv.ServiceAddHandler(params, nil), t, 201, service)
-	tc.handler.ValidateRequestCount(t, 1)
-}
-
-func TestServiceAddAdvanced(t *testing.T) {
-	expectedObj := &v1alpha1.KuberLogicService{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "advanced",
-			Labels: map[string]string{
-				"subscription-id": "some-kind-of-subscription-id",
+			params: apiService.ServiceAddParams{
+				HTTPRequest: &http.Request{},
+				ServiceItem: &models.Service{
+					ID:       util.StrAsPointer("simple"),
+					Replicas: util.Int64AsPointer(1),
+					Type:     util.StrAsPointer("postgresql"),
+				},
 			},
 		},
-		Spec: v1alpha1.KuberLogicServiceSpec{
-			Type: "postgresql",
-		},
-	}
-
-	advanced := map[string]interface{}{
-		"one": "1",
-		"two": float64(2),
-		"free": map[string]interface{}{
-			"bool": true,
-		},
-	}
-
-	bytes, _ := json.Marshal(advanced)
-	expectedObj.Spec.Advanced.Raw = bytes
-
-	tc := createTestClient(expectedObj, 200, t)
-	defer tc.server.Close()
-
-	srv := New(&config.Config{
-		Domain: "example.com",
-	}, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
-
-	service := &models.Service{
-		ID:           util.StrAsPointer("advanced"),
-		Type:         util.StrAsPointer("postgresql"),
-		Replicas:     util.Int64AsPointer(0),
-		Advanced:     advanced,
-		Subscription: "some-kind-of-subscription-id",
-	}
-
-	params := apiService.ServiceAddParams{
-		HTTPRequest: &http.Request{},
-		ServiceItem: service,
-	}
-
-	checkResponse(srv.ServiceAddHandler(params, nil), t, 201, service)
-	tc.handler.ValidateRequestCount(t, 2)
-}
-
-func TestServiceSubscriptionAlreadyExists(t *testing.T) {
-	expectedObjects := &v1alpha1.KuberLogicServiceList{
-		Items: []v1alpha1.KuberLogicService{
-			{
-				ObjectMeta: v1.ObjectMeta{
-					Name: "advanced",
-					Labels: map[string]string{
-						"subscription-id": "existing-subscription-id",
+		{
+			name:    "ok-all-fields",
+			status:  201,
+			objects: []runtime.Object{},
+			result: &models.Service{
+				ID:             util.StrAsPointer("simple"),
+				Replicas:       util.Int64AsPointer(1),
+				Version:        "13",
+				Type:           util.StrAsPointer("postgresql"),
+				Domain:         "my-custom-domain.com",
+				BackupSchedule: "7 * * * *",
+				Limits: &models.Limits{
+					CPU:     "250m",
+					Memory:  "128Mi",
+					Storage: "2Gi",
+				},
+				Insecure: true,
+				Advanced: models.Advanced{
+					"one": "1",
+					"two": float64(2),
+					"free": map[string]interface{}{
+						"bool": true,
 					},
 				},
-				Spec: v1alpha1.KuberLogicServiceSpec{
-					Type: "postgresql",
+				Subscription: "some-kind-of-subscription-id",
+			},
+			params: apiService.ServiceAddParams{
+				HTTPRequest: &http.Request{},
+				ServiceItem: &models.Service{
+					ID:             util.StrAsPointer("simple"),
+					Replicas:       util.Int64AsPointer(1),
+					Type:           util.StrAsPointer("postgresql"),
+					Version:        "13",
+					BackupSchedule: "7 * * * *",
+					Domain:         "my-custom-domain.com",
+					Limits: &models.Limits{
+						CPU:     "250m",
+						Memory:  "128Mi",
+						Storage: "2Gi",
+					},
+					Insecure: true,
+					Advanced: models.Advanced{
+						"one": "1",
+						"two": float64(2),
+						"free": map[string]interface{}{
+							"bool": true,
+						},
+					},
+					Subscription: "some-kind-of-subscription-id",
+				},
+			},
+		},
+		{
+			name:   "subscription-already-exists",
+			status: 400,
+			objects: []runtime.Object{
+				&v1alpha1.KuberLogicService{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "existing",
+						Labels: map[string]string{
+							"subscription-id": "already-exists",
+						},
+					},
+					Spec: v1alpha1.KuberLogicServiceSpec{
+						Type: "postgresql",
+					},
+				},
+			},
+			result: &models.Error{
+				Message: "service with subscription 'already-exists' already exist",
+			},
+			params: apiService.ServiceAddParams{
+				HTTPRequest: &http.Request{},
+				ServiceItem: &models.Service{
+					ID:           util.StrAsPointer("new-service"),
+					Replicas:     util.Int64AsPointer(1),
+					Type:         util.StrAsPointer("postgresql"),
+					Subscription: "already-exists",
+				},
+			},
+		}, {
+			name:   "to-model-converting-error",
+			status: 400,
+			result: &models.Error{
+				Message: "cannot deserialize advanced parameter: json: unsupported type: func()",
+			},
+			params: apiService.ServiceAddParams{
+				HTTPRequest: &http.Request{},
+				ServiceItem: &models.Service{
+					ID:           util.StrAsPointer("simple"),
+					Replicas:     util.Int64AsPointer(1),
+					Type:         util.StrAsPointer("postgresql"),
+					Subscription: "already-exists",
+					Advanced: models.Advanced{
+						"key": func() {},
+					},
+				},
+			},
+		}, {
+			name:   "already-exists",
+			status: 409,
+			objects: []runtime.Object{
+				&v1alpha1.KuberLogicService{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "simple",
+					},
+					Spec: v1alpha1.KuberLogicServiceSpec{
+						Type: "postgresql",
+					},
+				},
+			},
+			result: &models.Error{
+				Message: "kuberlogic service already exists: simple",
+			},
+			params: apiService.ServiceAddParams{
+				HTTPRequest: &http.Request{},
+				ServiceItem: &models.Service{
+					ID:       util.StrAsPointer("simple"),
+					Replicas: util.Int64AsPointer(1),
+					Type:     util.StrAsPointer("postgresql"),
 				},
 			},
 		},
 	}
-
-	tc := createTestClient(expectedObjects, 200, t)
-	defer tc.server.Close()
-
-	srv := New(&config.Config{
-		Domain: "example.com",
-	}, fake.NewSimpleClientset(), tc.client, &TestLog{t: t})
-
-	service := &models.Service{
-		ID:           util.StrAsPointer("advanced"),
-		Type:         util.StrAsPointer("postgresql"),
-		Replicas:     util.Int64AsPointer(0),
-		Status:       "Unknown",
-		Subscription: "existing-subscription-id",
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			checkResponse(newFakeHandlers(t, tc.objects...).ServiceAddHandler(tc.params.(apiService.ServiceAddParams), nil), t, tc.status, tc.result)
+		})
 	}
-
-	params := apiService.ServiceAddParams{
-		HTTPRequest: &http.Request{},
-		ServiceItem: service,
-	}
-
-	checkResponse(srv.ServiceAddHandler(params, nil), t, 400, &models.Error{
-		Message: "handlers with subscription 'existing-subscription-id' already exist",
-	})
-	tc.handler.ValidateRequestCount(t, 1)
 }

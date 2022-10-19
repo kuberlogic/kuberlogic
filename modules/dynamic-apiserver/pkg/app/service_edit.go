@@ -17,6 +17,8 @@ import (
 func (h *handlers) ServiceEditHandler(params apiService.ServiceEditParams, _ *models.Principal) middleware.Responder {
 	ctx := params.HTTPRequest.Context()
 
+	// TODO: check if service exists by params.ServiceID
+
 	if params.ServiceItem.Subscription != "" {
 		return apiService.NewServiceEditBadRequest().WithPayload(
 			&models.Error{
