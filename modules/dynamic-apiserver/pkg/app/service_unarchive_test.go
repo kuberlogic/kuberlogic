@@ -2,18 +2,20 @@ package app
 
 import (
 	"context"
-	"github.com/go-errors/errors"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
-	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/http"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
+	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
 
 func TestServiceUnarchive(t *testing.T) {
