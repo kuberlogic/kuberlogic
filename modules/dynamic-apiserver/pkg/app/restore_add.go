@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/go-openapi/runtime/middleware"
-	"github.com/pkg/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -29,13 +28,7 @@ func (h *handlers) RestoreAddHandler(params apiRestore.RestoreAddParams, _ *mode
 		})
 	}
 
-	klr, err := util.RestoreToKuberlogic(params.RestoreItem, klb)
-	if err != nil {
-		h.log.Errorw("error converting restore to kuberlogic object", "error", err)
-		return apiRestore.NewRestoreAddBadRequest().WithPayload(&models.Error{
-			Message: errors.Wrap(err, "error converting backup to kuberlogic object").Error(),
-		})
-	}
+	klr := util.RestoreToKuberlogic(params.RestoreItem, klb)
 	klr.SetName(klb.GetName())
 
 	result, err := h.Restores().Create(ctx, klr, v1.CreateOptions{})
@@ -48,13 +41,5 @@ func (h *handlers) RestoreAddHandler(params apiRestore.RestoreAddParams, _ *mode
 			Message: err.Error(),
 		})
 	}
-
-	created, err := util.KuberlogicToRestore(result)
-	if err != nil {
-		h.log.Errorw("error converting klr to models.Restore", "error", err)
-		return apiRestore.NewRestoreAddServiceUnavailable().WithPayload(&models.Error{
-			Message: "error converting created restore",
-		})
-	}
-	return apiRestore.NewRestoreAddCreated().WithPayload(created)
+	return apiRestore.NewRestoreAddCreated().WithPayload(util.KuberlogicToRestore(result))
 }

@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	apiBackup "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/backup"
 	apiLogs "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/logs"
@@ -12,6 +13,7 @@ import (
 
 type Handlers interface {
 	OnShutdown()
+	ListOptionsByKeyValue(key string, value *string) v1.ListOptions
 
 	BackupAddHandler(params apiBackup.BackupAddParams, _ *models.Principal) middleware.Responder
 	BackupDeleteHandler(params apiBackup.BackupDeleteParams, _ *models.Principal) middleware.Responder

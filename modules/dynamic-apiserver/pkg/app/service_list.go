@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/go-openapi/runtime/middleware"
+
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/util"
@@ -21,7 +22,7 @@ func (h *handlers) ServiceListHandler(params apiService.ServiceListParams, _ *mo
 	}
 	h.log.Debugw("found kuberlogicservice objects", "length", len(res.Items), "objects", res)
 
-	var services []*models.Service
+	var result []*models.Service
 	for _, r := range res.Items {
 		service, err := util.KuberlogicToService(&r)
 		if err != nil {
@@ -31,8 +32,8 @@ func (h *handlers) ServiceListHandler(params apiService.ServiceListParams, _ *mo
 				Message: msg,
 			})
 		}
-		services = append(services, service)
+		result = append(result, service)
 	}
 
-	return apiService.NewServiceListOK().WithPayload(services)
+	return apiService.NewServiceListOK().WithPayload(result)
 }

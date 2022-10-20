@@ -24,14 +24,7 @@ func (h *handlers) BackupListHandler(params apiBackup.BackupListParams, _ *model
 
 	items := make([]*models.Backup, 0)
 	for _, klb := range r.Items {
-		b, err := util.KuberlogicToBackup(&klb)
-		if err != nil {
-			h.log.Errorw("error converting klb to model", "error", err, "name", klb.GetName())
-			return apiBackup.NewBackupListServiceUnavailable().WithPayload(&models.Error{
-				Message: "error converting backup object to model",
-			})
-		}
-		items = append(items, b)
+		items = append(items, util.KuberlogicToBackup(&klb))
 	}
 	return apiBackup.NewBackupListOK().WithPayload(items)
 }

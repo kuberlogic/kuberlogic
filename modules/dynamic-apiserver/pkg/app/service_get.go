@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	errors2 "github.com/pkg/errors"
 
 	"github.com/go-openapi/runtime/middleware"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -32,10 +33,11 @@ func (h *handlers) ServiceGetHandler(params apiService.ServiceGetParams, _ *mode
 
 	service, err := util.KuberlogicToService(result)
 	if err != nil {
-		h.log.Errorw("error converting kuberlogicservice", "error", err)
+		msg := "error converting kuberlogicservice"
+		h.log.Errorw(msg, "error", err)
 		return apiService.NewServiceGetServiceUnavailable().WithPayload(
 			&models.Error{
-				Message: err.Error(),
+				Message: errors2.Wrap(err, msg).Error(),
 			})
 	}
 

@@ -2,30 +2,29 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
-	"github.com/go-openapi/runtime/middleware"
-	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	"io"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
-	utiltesting "k8s.io/client-go/util/testing"
 	"net/http"
-	"net/http/httptest"
-	"os"
 	"reflect"
 	"testing"
+
+	"github.com/go-openapi/runtime/middleware"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
+	fakediscovery "k8s.io/client-go/discovery/fake"
+	"k8s.io/client-go/kubernetes"
+	fake2 "k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/kubernetes/scheme"
+	clienttesting "k8s.io/client-go/testing"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/api/fake"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/config"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
+
+var _ clienttesting.FakeClient = &FakeHandlers{}
 
 type TestLog struct {
 	t *testing.T
-}
-
-type TestClient struct {
-	client  *rest.RESTClient
-	server  *httptest.Server
-	handler *utiltesting.FakeHandler
 }
 
 type Writer struct {
@@ -57,8 +56,6 @@ func prettyPrint(i interface{}) string {
 }
 
 func (w *Producer) Produce(_ io.Writer, payload interface{}) error {
-	w.t.Log(payload, w.check)
-
 	switch w.check.(type) {
 	case func(interface{}):
 		w.check.(func(interface{}))(payload)
@@ -70,7 +67,6 @@ func (w *Producer) Produce(_ io.Writer, payload interface{}) error {
 				prettyPrint(w.check))
 		}
 	}
-
 	return nil
 }
 
@@ -112,55 +108,107 @@ func (tl *TestLog) Sync() error {
 	return nil
 }
 
-func createTestClient(obj runtime.Object, status int, t *testing.T) TestClient {
-	body := runtime.EncodeOrDie(scheme.Codecs.LegacyCodec(cloudlinuxv1alpha1.GroupVersion), obj)
-	handler := &utiltesting.FakeHandler{
-		StatusCode:   status,
-		ResponseBody: body,
-		T:            t,
-	}
-
-	testServer := httptest.NewServer(handler)
-	c, err := restClient(testServer)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	return TestClient{
-		client:  c,
-		server:  testServer,
-		handler: handler,
-	}
+func init() {
+	_ = v1alpha1.AddToScheme(scheme.Scheme)
 }
 
-func restClient(testServer *httptest.Server) (*rest.RESTClient, error) {
-	c, err := rest.RESTClientFor(&rest.Config{
-		Host: testServer.URL,
-		ContentConfig: rest.ContentConfig{
-			GroupVersion:         &v1.SchemeGroupVersion,
-			NegotiatedSerializer: scheme.Codecs.WithoutConversion(),
-		},
-		Username: "user",
-		Password: "pass",
+//------------------------------------------------------------------------------
+// mocking based on operation (get, list, create, delete, watch, patch, etc.) of services/backups/restores
+
+type FakeHandlers struct {
+	clienttesting.Fake
+	Handlers
+	discovery *fakediscovery.FakeDiscovery
+	tracker   clienttesting.ObjectTracker
+}
+
+func (h *FakeHandlers) Tracker() clienttesting.ObjectTracker {
+	return h.tracker
+}
+
+func (h *FakeHandlers) Services() ExtendedServiceInterface {
+	s := &services{}
+	s.ServiceInterface = &fake.FakeServices{Fake: &h.Fake}
+	return s
+}
+
+func (h *FakeHandlers) Backups() ExtendedBackupInterface {
+	b := &backups{}
+	b.BackupInterface = &fake.FakeBackup{Fake: &h.Fake}
+	return b
+}
+
+func (h *FakeHandlers) Restores() ExtendedRestoreInterface {
+	r := &restores{}
+	r.RestoreInterface = &fake.FakeRestores{Fake: &h.Fake}
+	return r
+}
+
+func newSimpleClient(objects ...runtime.Object) *FakeHandlers {
+	o := clienttesting.NewObjectTracker(scheme.Scheme, scheme.Codecs.UniversalDecoder())
+	for _, obj := range objects {
+		if err := o.Add(obj); err != nil {
+			panic(err)
+		}
+	}
+
+	h := &FakeHandlers{tracker: o}
+	h.discovery = &fakediscovery.FakeDiscovery{Fake: &h.Fake}
+	h.AddReactor("*", "*", clienttesting.ObjectReaction(o))
+	h.AddWatchReactor("*", func(action clienttesting.Action) (handled bool, ret watch.Interface, err error) {
+		gvr := action.GetResource()
+		ns := action.GetNamespace()
+		w, err := o.Watch(gvr, ns)
+		if err != nil {
+			return false, nil, err
+		}
+		return true, w, nil
 	})
-	return c, err
+	return h
 }
 
-func setup() error {
-	err := cloudlinuxv1alpha1.AddToScheme(scheme.Scheme)
-	return err
+func newFakeHandlers(t *testing.T, objects ...runtime.Object) *FakeHandlers {
+	internalObjects, customObjects := splitObjects(objects)
+	clientset := fake2.NewSimpleClientset(internalObjects...)
+	return newFakeHandlersWithClientset(t, clientset, customObjects...)
 }
 
-func tearDown() {}
+func newFakeHandlersWithClientset(t *testing.T, clientset kubernetes.Interface, objects ...runtime.Object) *FakeHandlers {
+	baseHandlers := &handlers{
+		log: &TestLog{t: t},
+		config: &config.Config{
+			Domain: "kuberlogic.local",
+		},
+		clientset: clientset,
+	}
+	client := newSimpleClient(objects...)
+	baseHandlers.services = client.Services() // override services with fake
+	baseHandlers.backups = client.Backups()   // override backups with fake
+	baseHandlers.restores = client.Restores() // override restores with fake
+	client.Handlers = baseHandlers            // set actual handlers
+	return client
+}
 
-func TestMain(m *testing.M) {
-	if err := setup(); err != nil {
-		fmt.Printf("setup test failure: %s\n", err)
-		os.Exit(1)
+func splitObjects(objects []runtime.Object) ([]runtime.Object, []runtime.Object) {
+	customObjects, internalObjects := make([]runtime.Object, 0), make([]runtime.Object, 0)
+	for _, obj := range objects {
+		switch obj.(type) {
+		case *v1alpha1.KuberLogicService, *v1alpha1.KuberLogicServiceList,
+			*v1alpha1.KuberlogicServiceBackup, *v1alpha1.KuberlogicServiceBackupList,
+			*v1alpha1.KuberlogicServiceRestore, *v1alpha1.KuberlogicServiceRestoreList:
+			customObjects = append(customObjects, obj)
+		default:
+			internalObjects = append(internalObjects, obj)
+		}
 	}
-	code := m.Run()
-	if code == 0 {
-		// no need destroy if the tests are failed
-		tearDown()
-	}
-	os.Exit(code)
+	return internalObjects, customObjects
+}
+
+type testCase struct {
+	name    string
+	objects []runtime.Object
+	result  interface{}
+	status  int
+	params  interface{}
+	helpers []func(args ...interface{}) error
 }
