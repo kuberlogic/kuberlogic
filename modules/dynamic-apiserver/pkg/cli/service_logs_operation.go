@@ -5,11 +5,11 @@ import (
 	"strings"
 
 	client2 "github.com/go-openapi/runtime/client"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
-
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/logs"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/service"
 
 	"github.com/spf13/cobra"
 )
@@ -18,19 +18,22 @@ const (
 	containerNameFlag = "container"
 )
 
-// makeLogsCmd returns a cmd to handle operation logArchive
-func makeLogsCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
+// makeServiceLogsCmd returns a cmd to handle operation serviceLogs
+func makeServiceLogsCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "logs",
-		Short: `Show kuberlogic logs`,
-		RunE:  runLogsList(apiClientFunc),
+		Use:     "serviceLogs",
+		Short:   `Show service pod logs`,
+		Aliases: []string{"logs"},
+		RunE:    runServiceLogsList(apiClientFunc),
 	}
+	_ = cmd.PersistentFlags().String(serviceIdFlag, "", "Required. Service id")
+	_ = cmd.MarkFlagRequired(serviceIdFlag)
 	_ = cmd.PersistentFlags().String(containerNameFlag, "", "List logs only for specified container")
 	return cmd
 }
 
-// runLogsList uses cmd flags to call endpoint api
-func runLogsList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *cobra.Command, args []string) error {
+// runServiceLogsList uses cmd flags to call endpoint api
+func runServiceLogsList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		var err error
 
@@ -39,7 +42,16 @@ func runLogsList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *cob
 			return err
 		}
 
-		params := logs.NewLogListParams()
+		params := service.NewServiceLogsListParams()
+
+		if value, err := getString(cmd, serviceIdFlag); err != nil {
+			return err
+		} else if value != nil {
+			params.ServiceID = *value
+		} else {
+			return errors.New("Service id is required")
+		}
+
 		if value, err := getString(cmd, containerNameFlag); err != nil {
 			return err
 		} else if value != nil {
@@ -53,7 +65,7 @@ func runLogsList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *cob
 		}
 
 		// make request and then print result
-		response, err := apiClient.Logs.LogList(params,
+		response, err := apiClient.Service.ServiceLogsList(params,
 			client2.APIKeyAuth("X-Token", "header", viper.GetString(tokenFlag)))
 		if err != nil {
 			return humanizeError(err)

@@ -11,7 +11,6 @@ import (
 	"github.com/go-openapi/strfmt"
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/backup"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/logs"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/restore"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/service"
 )
@@ -59,7 +58,6 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *ServiceAPI
 	cli := new(ServiceAPI)
 	cli.Transport = transport
 	cli.Backup = backup.New(transport, formats)
-	cli.Logs = logs.New(transport, formats)
 	cli.Restore = restore.New(transport, formats)
 	cli.Service = service.New(transport, formats)
 	return cli
@@ -108,8 +106,6 @@ func (cfg *TransportConfig) WithSchemes(schemes []string) *TransportConfig {
 type ServiceAPI struct {
 	Backup backup.ClientService
 
-	Logs logs.ClientService
-
 	Restore restore.ClientService
 
 	Service service.ClientService
@@ -121,7 +117,6 @@ type ServiceAPI struct {
 func (c *ServiceAPI) SetTransport(transport runtime.ClientTransport) {
 	c.Transport = transport
 	c.Backup.SetTransport(transport)
-	c.Logs.SetTransport(transport)
 	c.Restore.SetTransport(transport)
 	c.Service.SetTransport(transport)
 }

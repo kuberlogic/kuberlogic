@@ -26,36 +26,6 @@ securityDefinitions:
 security:
   - key: [ ]
 paths:
-  /logs/:
-    get:
-      tags:
-        - logs
-      summary: list kuberlogic logs
-      description: List kuberlogic pod logs
-      operationId: logList
-      parameters:
-        - $ref: "#/parameters/ContainerName"
-      responses:
-        200:
-          description: search results matching criteria
-          schema:
-            $ref: "#/definitions/Logs"
-        400:
-          description: bad input parameter
-          schema:
-            $ref: "#/definitions/Error"
-        401:
-          description: bad authentication
-        403:
-          description: bad permissions
-        422:
-          description: bad validation
-          schema:
-            $ref: "#/definitions/Error"
-        503:
-          description: internal server error
-          schema:
-            $ref: "#/definitions/Error"
   /backups/:
     get:
       tags:
@@ -431,6 +401,37 @@ paths:
           description: internal service error
           schema:
             $ref: "#/definitions/Error"
+  /services/{ServiceID}/logs:
+    get:
+      tags:
+        - service
+      summary: list service logs
+      description: List service pod logs
+      operationId: serviceLogsList
+      parameters:
+        - $ref: "#/parameters/ServiceID"
+        - $ref: "#/parameters/ContainerName"
+      responses:
+        200:
+          description: kuberlogic service logs
+          schema:
+            $ref: "#/definitions/Logs"
+        400:
+          description: bad input parameter
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        422:
+          description: bad validation
+          schema:
+            $ref: "#/definitions/Error"
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
   /services/{ServiceID}/credentials:
     post:
       tags:
@@ -774,7 +775,6 @@ parameters:
   ContainerName:
     name: ContainerName
     in: query
-    description: kuberlogic pod container name to query logs by
+    description: service pod container name to query logs by
     type: "string"
     required: false
-    enum: [manager, kube-rbac-proxy, apiserver, chargebee-integration]

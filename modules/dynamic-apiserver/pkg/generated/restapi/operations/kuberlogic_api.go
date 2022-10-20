@@ -21,7 +21,6 @@ import (
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/backup"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/logs"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/restore"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 )
@@ -57,9 +56,6 @@ func NewKuberlogicAPI(spec *loads.Document) *KuberlogicAPI {
 		BackupBackupListHandler: backup.BackupListHandlerFunc(func(params backup.BackupListParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation backup.BackupList has not yet been implemented")
 		}),
-		LogsLogListHandler: logs.LogListHandlerFunc(func(params logs.LogListParams, principal *models.Principal) middleware.Responder {
-			return middleware.NotImplemented("operation logs.LogList has not yet been implemented")
-		}),
 		RestoreRestoreAddHandler: restore.RestoreAddHandlerFunc(func(params restore.RestoreAddParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation restore.RestoreAdd has not yet been implemented")
 		}),
@@ -89,6 +85,9 @@ func NewKuberlogicAPI(spec *loads.Document) *KuberlogicAPI {
 		}),
 		ServiceServiceListHandler: service.ServiceListHandlerFunc(func(params service.ServiceListParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceList has not yet been implemented")
+		}),
+		ServiceServiceLogsListHandler: service.ServiceLogsListHandlerFunc(func(params service.ServiceLogsListParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation service.ServiceLogsList has not yet been implemented")
 		}),
 		ServiceServiceSecretsListHandler: service.ServiceSecretsListHandlerFunc(func(params service.ServiceSecretsListParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceSecretsList has not yet been implemented")
@@ -152,8 +151,6 @@ type KuberlogicAPI struct {
 	BackupBackupDeleteHandler backup.BackupDeleteHandler
 	// BackupBackupListHandler sets the operation handler for the backup list operation
 	BackupBackupListHandler backup.BackupListHandler
-	// LogsLogListHandler sets the operation handler for the log list operation
-	LogsLogListHandler logs.LogListHandler
 	// RestoreRestoreAddHandler sets the operation handler for the restore add operation
 	RestoreRestoreAddHandler restore.RestoreAddHandler
 	// RestoreRestoreDeleteHandler sets the operation handler for the restore delete operation
@@ -174,6 +171,8 @@ type KuberlogicAPI struct {
 	ServiceServiceGetHandler service.ServiceGetHandler
 	// ServiceServiceListHandler sets the operation handler for the service list operation
 	ServiceServiceListHandler service.ServiceListHandler
+	// ServiceServiceLogsListHandler sets the operation handler for the service logs list operation
+	ServiceServiceLogsListHandler service.ServiceLogsListHandler
 	// ServiceServiceSecretsListHandler sets the operation handler for the service secrets list operation
 	ServiceServiceSecretsListHandler service.ServiceSecretsListHandler
 	// ServiceServiceUnarchiveHandler sets the operation handler for the service unarchive operation
@@ -268,9 +267,6 @@ func (o *KuberlogicAPI) Validate() error {
 	if o.BackupBackupListHandler == nil {
 		unregistered = append(unregistered, "backup.BackupListHandler")
 	}
-	if o.LogsLogListHandler == nil {
-		unregistered = append(unregistered, "logs.LogListHandler")
-	}
 	if o.RestoreRestoreAddHandler == nil {
 		unregistered = append(unregistered, "restore.RestoreAddHandler")
 	}
@@ -300,6 +296,9 @@ func (o *KuberlogicAPI) Validate() error {
 	}
 	if o.ServiceServiceListHandler == nil {
 		unregistered = append(unregistered, "service.ServiceListHandler")
+	}
+	if o.ServiceServiceLogsListHandler == nil {
+		unregistered = append(unregistered, "service.ServiceLogsListHandler")
 	}
 	if o.ServiceServiceSecretsListHandler == nil {
 		unregistered = append(unregistered, "service.ServiceSecretsListHandler")
@@ -418,10 +417,6 @@ func (o *KuberlogicAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/backups"] = backup.NewBackupList(o.context, o.BackupBackupListHandler)
-	if o.handlers["GET"] == nil {
-		o.handlers["GET"] = make(map[string]http.Handler)
-	}
-	o.handlers["GET"]["/logs"] = logs.NewLogList(o.context, o.LogsLogListHandler)
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
@@ -462,6 +457,10 @@ func (o *KuberlogicAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/services"] = service.NewServiceList(o.context, o.ServiceServiceListHandler)
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/services/{ServiceID}/logs"] = service.NewServiceLogsList(o.context, o.ServiceServiceLogsListHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}

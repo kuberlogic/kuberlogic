@@ -178,53 +178,6 @@ func init() {
         }
       }
     },
-    "/logs/": {
-      "get": {
-        "description": "List kuberlogic pod logs",
-        "tags": [
-          "logs"
-        ],
-        "summary": "list kuberlogic logs",
-        "operationId": "logList",
-        "parameters": [
-          {
-            "$ref": "#/parameters/ContainerName"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "search results matching criteria",
-            "schema": {
-              "$ref": "#/definitions/Logs"
-            }
-          },
-          "400": {
-            "description": "bad input parameter",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "bad authentication"
-          },
-          "403": {
-            "description": "bad permissions"
-          },
-          "422": {
-            "description": "bad validation",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "503": {
-            "description": "internal server error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
     "/restores/": {
       "get": {
         "description": "List restore objects",
@@ -702,6 +655,56 @@ func init() {
         }
       }
     },
+    "/services/{ServiceID}/logs": {
+      "get": {
+        "description": "List service pod logs",
+        "tags": [
+          "service"
+        ],
+        "summary": "list service logs",
+        "operationId": "serviceLogsList",
+        "parameters": [
+          {
+            "$ref": "#/parameters/ServiceID"
+          },
+          {
+            "$ref": "#/parameters/ContainerName"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "kuberlogic service logs",
+            "schema": {
+              "$ref": "#/definitions/Logs"
+            }
+          },
+          "400": {
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/services/{ServiceID}/secrets": {
       "get": {
         "description": "retrieves service secrets",
@@ -1033,14 +1036,8 @@ func init() {
       "in": "query"
     },
     "ContainerName": {
-      "enum": [
-        "manager",
-        "kube-rbac-proxy",
-        "apiserver",
-        "chargebee-integration"
-      ],
       "type": "string",
-      "description": "kuberlogic pod container name to query logs by",
+      "description": "service pod container name to query logs by",
       "name": "ContainerName",
       "in": "query"
     },
@@ -1286,62 +1283,6 @@ func init() {
           },
           "422": {
             "description": "bad validation"
-          },
-          "503": {
-            "description": "internal server error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/logs/": {
-      "get": {
-        "description": "List kuberlogic pod logs",
-        "tags": [
-          "logs"
-        ],
-        "summary": "list kuberlogic logs",
-        "operationId": "logList",
-        "parameters": [
-          {
-            "enum": [
-              "manager",
-              "kube-rbac-proxy",
-              "apiserver",
-              "chargebee-integration"
-            ],
-            "type": "string",
-            "description": "kuberlogic pod container name to query logs by",
-            "name": "ContainerName",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "search results matching criteria",
-            "schema": {
-              "$ref": "#/definitions/Logs"
-            }
-          },
-          "400": {
-            "description": "bad input parameter",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "bad authentication"
-          },
-          "403": {
-            "description": "bad permissions"
-          },
-          "422": {
-            "description": "bad validation",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
           },
           "503": {
             "description": "internal server error",
@@ -1903,6 +1844,66 @@ func init() {
         }
       }
     },
+    "/services/{ServiceID}/logs": {
+      "get": {
+        "description": "List service pod logs",
+        "tags": [
+          "service"
+        ],
+        "summary": "list service logs",
+        "operationId": "serviceLogsList",
+        "parameters": [
+          {
+            "maxLength": 20,
+            "minLength": 3,
+            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+            "type": "string",
+            "description": "service Resource ID",
+            "name": "ServiceID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "service pod container name to query logs by",
+            "name": "ContainerName",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "kuberlogic service logs",
+            "schema": {
+              "$ref": "#/definitions/Logs"
+            }
+          },
+          "400": {
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/services/{ServiceID}/secrets": {
       "get": {
         "description": "retrieves service secrets",
@@ -2248,14 +2249,8 @@ func init() {
       "in": "query"
     },
     "ContainerName": {
-      "enum": [
-        "manager",
-        "kube-rbac-proxy",
-        "apiserver",
-        "chargebee-integration"
-      ],
       "type": "string",
-      "description": "kuberlogic pod container name to query logs by",
+      "description": "service pod container name to query logs by",
       "name": "ContainerName",
       "in": "query"
     },

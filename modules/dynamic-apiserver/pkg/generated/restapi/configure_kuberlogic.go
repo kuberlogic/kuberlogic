@@ -13,7 +13,6 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/backup"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/logs"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/restore"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
 )
@@ -70,11 +69,6 @@ func configureAPI(api *operations.KuberlogicAPI) http.Handler {
 			return middleware.NotImplemented("operation backup.BackupList has not yet been implemented")
 		})
 	}
-	if api.LogsLogListHandler == nil {
-		api.LogsLogListHandler = logs.LogListHandlerFunc(func(params logs.LogListParams, principal *models.Principal) middleware.Responder {
-			return middleware.NotImplemented("operation logs.LogList has not yet been implemented")
-		})
-	}
 	if api.RestoreRestoreAddHandler == nil {
 		api.RestoreRestoreAddHandler = restore.RestoreAddHandlerFunc(func(params restore.RestoreAddParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation restore.RestoreAdd has not yet been implemented")
@@ -123,6 +117,11 @@ func configureAPI(api *operations.KuberlogicAPI) http.Handler {
 	if api.ServiceServiceListHandler == nil {
 		api.ServiceServiceListHandler = service.ServiceListHandlerFunc(func(params service.ServiceListParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceList has not yet been implemented")
+		})
+	}
+	if api.ServiceServiceLogsListHandler == nil {
+		api.ServiceServiceLogsListHandler = service.ServiceLogsListHandlerFunc(func(params service.ServiceLogsListParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation service.ServiceLogsList has not yet been implemented")
 		})
 	}
 	if api.ServiceServiceSecretsListHandler == nil {
