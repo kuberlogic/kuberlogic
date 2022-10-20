@@ -25,7 +25,7 @@ func (h *handlers) ServiceAddHandler(params apiService.ServiceAddParams, _ *mode
 		} else if found {
 			return apiService.NewServiceAddBadRequest().WithPayload(
 				&models.Error{
-					Message: fmt.Sprintf("handlers with subscription '%s' already exist", params.ServiceItem.Subscription),
+					Message: fmt.Sprintf("service with subscription '%s' already exist", params.ServiceItem.Subscription),
 				})
 		}
 	}

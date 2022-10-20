@@ -14,7 +14,6 @@ import (
 	kuberlogiccomv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 	errors2 "github.com/pkg/errors"
 	v12 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -146,10 +145,9 @@ func KuberlogicToService(kls *kuberlogiccomv1alpha1.KuberLogicService) (*models.
 	return ret, nil
 }
 
-func BackupToKuberlogic(backup *models.Backup) (*kuberlogiccomv1alpha1.KuberlogicServiceBackup, error) {
+func BackupToKuberlogic(backup *models.Backup) *kuberlogiccomv1alpha1.KuberlogicServiceBackup {
 	return &kuberlogiccomv1alpha1.KuberlogicServiceBackup{
 		ObjectMeta: v1.ObjectMeta{
-			Name: backup.ID,
 			Labels: map[string]string{
 				BackupRestoreServiceField: backup.ServiceID,
 			},
@@ -157,19 +155,19 @@ func BackupToKuberlogic(backup *models.Backup) (*kuberlogiccomv1alpha1.Kuberlogi
 		Spec: kuberlogiccomv1alpha1.KuberlogicServiceBackupSpec{
 			KuberlogicServiceName: backup.ServiceID,
 		},
-	}, nil
+	}
 }
 
-func KuberlogicToBackup(backup *kuberlogiccomv1alpha1.KuberlogicServiceBackup) (*models.Backup, error) {
+func KuberlogicToBackup(backup *kuberlogiccomv1alpha1.KuberlogicServiceBackup) *models.Backup {
 	return &models.Backup{
 		CreatedAt: strfmt.DateTime(backup.GetCreationTimestamp().Time),
 		ID:        backup.GetName(),
 		ServiceID: backup.Spec.KuberlogicServiceName,
 		Status:    backup.Status.Phase,
-	}, nil
+	}
 }
 
-func RestoreToKuberlogic(restore *models.Restore, klb *kuberlogiccomv1alpha1.KuberlogicServiceBackup) (*kuberlogiccomv1alpha1.KuberlogicServiceRestore, error) {
+func RestoreToKuberlogic(restore *models.Restore, klb *kuberlogiccomv1alpha1.KuberlogicServiceBackup) *kuberlogiccomv1alpha1.KuberlogicServiceRestore {
 	return &kuberlogiccomv1alpha1.KuberlogicServiceRestore{
 		ObjectMeta: v1.ObjectMeta{
 			Name: restore.ID,
@@ -180,16 +178,16 @@ func RestoreToKuberlogic(restore *models.Restore, klb *kuberlogiccomv1alpha1.Kub
 		Spec: kuberlogiccomv1alpha1.KuberlogicServiceRestoreSpec{
 			KuberlogicServiceBackup: restore.BackupID,
 		},
-	}, nil
+	}
 }
 
-func KuberlogicToRestore(restore *kuberlogiccomv1alpha1.KuberlogicServiceRestore) (*models.Restore, error) {
+func KuberlogicToRestore(restore *kuberlogiccomv1alpha1.KuberlogicServiceRestore) *models.Restore {
 	return &models.Restore{
 		BackupID:  restore.Spec.KuberlogicServiceBackup,
 		ID:        restore.GetName(),
 		Status:    restore.Status.Phase,
 		CreatedAt: strfmt.DateTime(restore.GetCreationTimestamp().Time),
-	}, nil
+	}
 }
 
 func Int64AsPointer(x int64) *int64 {
@@ -198,9 +196,4 @@ func Int64AsPointer(x int64) *int64 {
 
 func StrAsPointer(x string) *string {
 	return &x
-}
-
-func CheckStatus(err error, reason v1.StatusReason) bool {
-	statusError, ok := err.(*errors.StatusError)
-	return ok && statusError.Status().Reason == reason
 }

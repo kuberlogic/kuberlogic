@@ -26,7 +26,6 @@ type BackupGetter interface {
 // BackupInterface has methods to work with Kuberlogic backups resources.
 type BackupInterface interface {
 	Create(ctx context.Context, backup *v1alpha1.KuberlogicServiceBackup, opts v1.CreateOptions) (*v1alpha1.KuberlogicServiceBackup, error)
-	Update(ctx context.Context, backup *v1alpha1.KuberlogicServiceBackup, opts v1.UpdateOptions) (*v1alpha1.KuberlogicServiceBackup, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.KuberlogicServiceBackup, error)
 	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.KuberlogicServiceBackupList, error)
@@ -53,18 +52,6 @@ func (b *backups) Create(ctx context.Context, backup *v1alpha1.KuberlogicService
 	result := &v1alpha1.KuberlogicServiceBackup{}
 	err := b.restClient.Post().
 		Resource(backupK8sResource).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(backup).
-		Do(ctx).
-		Into(result)
-	return result, err
-}
-
-func (b *backups) Update(ctx context.Context, backup *v1alpha1.KuberlogicServiceBackup, opts v1.UpdateOptions) (*v1alpha1.KuberlogicServiceBackup, error) {
-	result := &v1alpha1.KuberlogicServiceBackup{}
-	err := b.restClient.Put().
-		Resource(backupK8sResource).
-		Name(backup.Name).
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(backup).
 		Do(ctx).
