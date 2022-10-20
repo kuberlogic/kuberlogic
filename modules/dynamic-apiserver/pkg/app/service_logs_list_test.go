@@ -71,6 +71,7 @@ func TestServiceLogsList(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-pod",
 						Namespace: "secrets-test",
+						Labels:    map[string]string{"docker-compose.service/name": "logs-test"},
 					},
 					Spec: v1.PodSpec{
 						Containers: []v1.Container{
@@ -109,6 +110,7 @@ func TestServiceLogsList(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-pod",
 						Namespace: "secrets-test",
+						Labels:    map[string]string{"docker-compose.service/name": "logs-test"},
 					},
 					Spec: v1.PodSpec{
 						Containers: []v1.Container{

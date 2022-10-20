@@ -8,6 +8,7 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,12 +29,13 @@ func (h *handlers) ServiceLogsListHandler(params apiService.ServiceLogsListParam
 		})
 	}
 
-	pods, err := h.clientset.CoreV1().Pods(kls.Status.Namespace).List(ctx, metav1.ListOptions{})
+	listOptions := h.ListOptionsByKeyValue("docker-compose.service/name", &params.ServiceID)
+	pods, err := h.clientset.CoreV1().Pods(kls.Status.Namespace).List(ctx, listOptions)
 	if err != nil {
-		msg := "error listing kuberlogic service pods"
+		msg := "error getting service pods"
 		h.log.Errorw(msg)
 		return apiService.NewServiceLogsListServiceUnavailable().WithPayload(&models.Error{
-			Message: msg,
+			Message: errors.Wrap(err, msg).Error(),
 		})
 	}
 	if len(pods.Items) < 1 {
@@ -56,9 +58,8 @@ func (h *handlers) ServiceLogsListHandler(params apiService.ServiceLogsListParam
 		if err != nil {
 			msg := fmt.Sprintf("error listing container '%s' logs", container.Name)
 			h.log.Errorw(msg)
-			h.log.Errorw(err.Error())
 			return apiService.NewServiceLogsListServiceUnavailable().WithPayload(&models.Error{
-				Message: msg,
+				Message: errors.Wrap(err, msg).Error(),
 			})
 		}
 		defer podLogs.Close()
@@ -68,7 +69,7 @@ func (h *handlers) ServiceLogsListHandler(params apiService.ServiceLogsListParam
 			msg := fmt.Sprintf("error obtaining container '%s' logs", container.Name)
 			h.log.Errorw(msg)
 			return apiService.NewServiceLogsListServiceUnavailable().WithPayload(&models.Error{
-				Message: msg,
+				Message: errors.Wrap(err, msg).Error(),
 			})
 		}
 		response = append(response, &models.Log{ContainerName: container.Name, Logs: buf.String()})
