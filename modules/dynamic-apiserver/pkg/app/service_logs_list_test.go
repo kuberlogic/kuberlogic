@@ -29,7 +29,7 @@ func TestServiceLogsList(t *testing.T) {
 			},
 		},
 		{
-			name:   "pod not found",
+			name:   "pod-not-found",
 			status: 503,
 			objects: []runtime.Object{
 				&cloudlinuxv1alpha1.KuberLogicService{
@@ -53,7 +53,7 @@ func TestServiceLogsList(t *testing.T) {
 			},
 		},
 		{
-			name:   "all containers",
+			name:   "all-containers",
 			status: 200,
 			objects: []runtime.Object{
 				&cloudlinuxv1alpha1.KuberLogicService{
@@ -91,7 +91,7 @@ func TestServiceLogsList(t *testing.T) {
 			},
 		},
 		{
-			name:   "single container",
+			name:   "single-container",
 			status: 200,
 			objects: []runtime.Object{
 				&cloudlinuxv1alpha1.KuberLogicService{
