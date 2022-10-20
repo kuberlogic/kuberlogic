@@ -18,7 +18,7 @@ func (h *handlers) ServiceLogsListHandler(params apiService.ServiceLogsListParam
 
 	kls, err := h.Services().Get(ctx, params.ServiceID, metav1.GetOptions{})
 	if k8serrors.IsNotFound(err) {
-		return apiService.NewServiceSecretsListBadRequest().WithPayload(&models.Error{
+		return apiService.NewServiceLogsListBadRequest().WithPayload(&models.Error{
 			Message: "service does not exist",
 		})
 	} else if err != nil {
