@@ -401,6 +401,37 @@ paths:
           description: internal service error
           schema:
             $ref: "#/definitions/Error"
+  /services/{ServiceID}/logs:
+    get:
+      tags:
+        - service
+      summary: list service logs
+      description: List service pod logs
+      operationId: serviceLogsList
+      parameters:
+        - $ref: "#/parameters/ServiceID"
+        - $ref: "#/parameters/ContainerName"
+      responses:
+        200:
+          description: kuberlogic service logs
+          schema:
+            $ref: "#/definitions/Logs"
+        400:
+          description: bad input parameter
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        422:
+          description: bad validation
+          schema:
+            $ref: "#/definitions/Error"
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
   /services/{ServiceID}/credentials:
     post:
       tags:
@@ -639,6 +670,21 @@ definitions:
     items:
       $ref: "#/definitions/Restore"
 
+  Logs:
+    type: array
+    items:
+      $ref: "#/definitions/Log"
+
+  Log:
+    type: object
+    properties:
+      container_name:
+        type: string
+        readOnly: true
+      logs:
+        type: string
+        readOnly: true
+
   Error:
     type: object
     properties:
@@ -725,3 +771,10 @@ parameters:
     description: subscription ID
     required: false
     type: "string"
+
+  ContainerName:
+    name: ContainerName
+    in: query
+    description: service pod container name to query logs by
+    type: "string"
+    required: false

@@ -50,6 +50,7 @@ type EnvironmentManager struct {
 //+kubebuilder:rbac:groups="",resources=resourcequotas;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=secrets;,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=pods;,verbs=deletecollection
+//+kubebuilder:rbac:groups="",resources=pods/log,verbs=get;list
 //+kubebuilder:rbac:groups=kuberlogic.com,resources=kuberlogicservicebackupschedules,verbs=get;list;watch;create;update;patch;delete
 
 // SetupEnv checks if KLS environment is present and creates it if it is not

@@ -27,6 +27,7 @@ type Handlers interface {
 	ServiceEditHandler(params apiService.ServiceEditParams, _ *models.Principal) middleware.Responder
 	ServiceGetHandler(params apiService.ServiceGetParams, _ *models.Principal) middleware.Responder
 	ServiceListHandler(params apiService.ServiceListParams, _ *models.Principal) middleware.Responder
+	ServiceLogsListHandler(params apiService.ServiceLogsListParams, _ *models.Principal) middleware.Responder
 	ServiceSecretsListHandler(params apiService.ServiceSecretsListParams, _ *models.Principal) middleware.Responder
 	ServiceUnarchiveHandler(params apiService.ServiceUnarchiveParams, _ *models.Principal) middleware.Responder
 }

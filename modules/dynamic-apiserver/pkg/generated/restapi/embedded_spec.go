@@ -655,6 +655,56 @@ func init() {
         }
       }
     },
+    "/services/{ServiceID}/logs": {
+      "get": {
+        "description": "List service pod logs",
+        "tags": [
+          "service"
+        ],
+        "summary": "list service logs",
+        "operationId": "serviceLogsList",
+        "parameters": [
+          {
+            "$ref": "#/parameters/ServiceID"
+          },
+          {
+            "$ref": "#/parameters/ContainerName"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "kuberlogic service logs",
+            "schema": {
+              "$ref": "#/definitions/Logs"
+            }
+          },
+          "400": {
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/services/{ServiceID}/secrets": {
       "get": {
         "description": "retrieves service secrets",
@@ -803,6 +853,25 @@ func init() {
         "storage": {
           "type": "string"
         }
+      }
+    },
+    "Log": {
+      "type": "object",
+      "properties": {
+        "container_name": {
+          "type": "string",
+          "readOnly": true
+        },
+        "logs": {
+          "type": "string",
+          "readOnly": true
+        }
+      }
+    },
+    "Logs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Log"
       }
     },
     "Restore": {
@@ -964,6 +1033,12 @@ func init() {
       "type": "string",
       "description": "service Resource ID to query backups/restores by",
       "name": "ServiceID",
+      "in": "query"
+    },
+    "ContainerName": {
+      "type": "string",
+      "description": "service pod container name to query logs by",
+      "name": "ContainerName",
       "in": "query"
     },
     "RestoreID": {
@@ -1769,6 +1844,66 @@ func init() {
         }
       }
     },
+    "/services/{ServiceID}/logs": {
+      "get": {
+        "description": "List service pod logs",
+        "tags": [
+          "service"
+        ],
+        "summary": "list service logs",
+        "operationId": "serviceLogsList",
+        "parameters": [
+          {
+            "maxLength": 20,
+            "minLength": 3,
+            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+            "type": "string",
+            "description": "service Resource ID",
+            "name": "ServiceID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "service pod container name to query logs by",
+            "name": "ContainerName",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "kuberlogic service logs",
+            "schema": {
+              "$ref": "#/definitions/Logs"
+            }
+          },
+          "400": {
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/services/{ServiceID}/secrets": {
       "get": {
         "description": "retrieves service secrets",
@@ -1933,6 +2068,25 @@ func init() {
         }
       }
     },
+    "Log": {
+      "type": "object",
+      "properties": {
+        "container_name": {
+          "type": "string",
+          "readOnly": true
+        },
+        "logs": {
+          "type": "string",
+          "readOnly": true
+        }
+      }
+    },
+    "Logs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Log"
+      }
+    },
     "Restore": {
       "type": "object",
       "properties": {
@@ -2092,6 +2246,12 @@ func init() {
       "type": "string",
       "description": "service Resource ID to query backups/restores by",
       "name": "ServiceID",
+      "in": "query"
+    },
+    "ContainerName": {
+      "type": "string",
+      "description": "service pod container name to query logs by",
+      "name": "ContainerName",
       "in": "query"
     },
     "RestoreID": {
