@@ -109,6 +109,7 @@ spec:
           args:
             - --manager-config=/etc/manager-config/controller_manager_config.yaml
           image: controller:latest
+          imagePullPolicy: IfNotPresent
           name: manager
           securityContext:
             allowPrivilegeEscalation: false
@@ -138,6 +139,7 @@ spec:
           args:
             - --scheme=http
           image: apiserver:latest
+          imagePullPolicy: IfNotPresent
           name: apiserver
           env:
             - name: KUBERLOGIC_APISERVER_TOKEN
@@ -174,6 +176,7 @@ spec:
           args:
             - --mapping=/etc/mapping/mapping-fields.yaml
           image: chargebee-integration:latest
+          imagePullPolicy: IfNotPresent
           name: chargebee-integration
           volumeMounts:
             - name: mapping-fields
@@ -210,6 +213,16 @@ spec:
                 secretKeyRef:
                   name: kuberlogic-config
                   key: DEPLOYMENT_ID
+            - name: CHARGEBEE_WEBHOOK_USER
+              valueFrom:
+                secretKeyRef:
+                  name: kuberlogic-config
+                  key: CHARGEBEE_WEBHOOK_USER
+            - name: CHARGEBEE_WEBHOOK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: CHARGEBEE_WEBHOOK_PASSWORD
+                  name: kuberlogic-config
           ports:
             - containerPort: 4242
           resources:

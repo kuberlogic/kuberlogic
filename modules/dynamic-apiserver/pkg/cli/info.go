@@ -6,14 +6,17 @@ package cli
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
+
 	client2 "github.com/go-openapi/runtime/client"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
-	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/service"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"net/http"
+
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/service"
 )
 
 func makeInfoCmd(k8sclient kubernetes.Interface, apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Command {
@@ -44,14 +47,14 @@ func runInfo(k8sclient kubernetes.Interface, apiClientFunc func() (*client.Servi
 			globalStatus = false
 		}
 
-		list, err := k8sclient.CoreV1().Pods("kuberlogic").List(ctx, v1.ListOptions{
+		klPods, err := k8sclient.CoreV1().Pods("kuberlogic").List(ctx, v1.ListOptions{
 			LabelSelector: "control-plane=controller-manager",
 		})
 		if err != nil {
 			return err
 		}
 
-		for _, pod := range list.Items {
+		for _, pod := range klPods.Items {
 			for _, status := range pod.Status.ContainerStatuses {
 				containerStatus := "Ready"
 				if !status.Ready {
@@ -84,6 +87,25 @@ func runInfo(k8sclient kubernetes.Interface, apiClientFunc func() (*client.Servi
 		} else {
 			command.Printf("ChargeBee integration service is NOT running at %s\n", fullChargebeeEndpoint)
 		}
+
+		var klSecretConfigName string
+		for _, pod := range klPods.Items {
+			for _, c := range pod.Spec.Containers {
+				if c.Name == "chargebee-integration" {
+					for _, e := range c.Env {
+						if e.Name == strings.ToUpper(installChargebeeIntegrationUser) {
+							klSecretConfigName = e.ValueFrom.SecretKeyRef.Name
+						}
+					}
+				}
+			}
+		}
+		klSecretConfig, err := k8sclient.CoreV1().Secrets("kuberlogic").Get(ctx, klSecretConfigName, v1.GetOptions{})
+		if err != nil {
+			command.Println("Error retrieving Kuberlogic config: " + err.Error())
+		}
+		command.Println("ChargeBee webhook user: ", klSecretConfig.Data[strings.ToUpper(installChargebeeIntegrationUser)])
+		command.Println("ChargeBee webhook password: ", klSecretConfig.Data[strings.ToUpper(installChargebeeIntegrationPassword)])
 
 		command.Println()
 		if globalStatus {

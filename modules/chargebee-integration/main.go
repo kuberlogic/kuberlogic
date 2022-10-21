@@ -22,6 +22,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/kuberlogic/kuberlogic/modules/chargebee-integration/app"
+	"github.com/kuberlogic/kuberlogic/modules/chargebee-integration/cfg"
 	sentry2 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/sentry"
 )
 
@@ -34,26 +35,29 @@ func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	rawLogger := initLogger()
+
 	for _, value := range []string{
-		"KUBERLOGIC_APISERVER_HOST",
-		"KUBERLOGIC_APISERVER_SCHEME",
-		"KUBERLOGIC_APISERVER_TOKEN",
-		"CHARGEBEE_SITE",
-		"CHARGEBEE_KEY",
-		"KUBERLOGIC_TYPE",
-		"SENTRY_DSN",
-		"KUBERLOGIC_DEPLOYMENT_ID",
+		cfg.KlApiserverHostParam,
+		cfg.KlApiserverSchemeParam,
+		cfg.KlApiserverTokenParam,
+		cfg.ChargebeeSiteParam,
+		cfg.ChargebeeKeyParam,
+		cfg.KlTypeParam,
+		cfg.SentryDsnParam,
+		cfg.KlDeploymentIDParam,
+		cfg.AuthUserParam,
+		cfg.AuthPasswordParam,
 	} {
-		if err := initEnv(value); err != nil {
+		if err := cfg.InitEnv(value); err != nil {
 			rawLogger.Warn(err.Error())
 		} else {
 			rawLogger.Debug("env", zap.String(value, viper.GetString(value)))
 		}
 	}
-	deploymentId := viper.GetString("KUBERLOGIC_DEPLOYMENT_ID")
+	deploymentId := viper.GetString(cfg.KlDeploymentIDParam)
 
 	// init sentry
-	if dsn := viper.GetString("SENTRY_DSN"); dsn != "" {
+	if dsn := viper.GetString(cfg.SentryDsnParam); dsn != "" {
 		sentryTags := &sentry2.SentryTags{
 			Component:    "chargebee-integration",
 			Version:      ver,
@@ -81,14 +85,14 @@ func main() {
 	}
 	logger.Debug("mapping is configured: ", mapping)
 
-	if viper.GetString("CHARGEBEE_SITE") != "" {
-		chargebee.Configure(viper.GetString("CHARGEBEE_KEY"), viper.GetString("CHARGEBEE_SITE"))
+	if viper.GetString(cfg.ChargebeeSiteParam) != "" {
+		chargebee.Configure(viper.GetString(cfg.ChargebeeKeyParam), viper.GetString(cfg.ChargebeeSiteParam))
 		sentryHandler := sentryhttp.New(sentryhttp.Options{
 			Repanic:         true,
 			WaitForDelivery: true,
 			Timeout:         5 * time.Second,
 		})
-		http.HandleFunc("/chargebee-webhook", sentryHandler.HandleFunc(app.WebhookHandler(logger, mapping)))
+		http.HandleFunc("/chargebee-webhook", newAuthenticationHandler(logger)(sentryHandler.HandleFunc(app.WebhookHandler(logger, mapping))))
 		logger.Info("webhook handler is initialized")
 	} else {
 		logger.Warn("ChargeBee site is not set. Requests will not be handled.")
@@ -97,15 +101,6 @@ func main() {
 	addr := "0.0.0.0:4242"
 	logger.Infof("Listening on %s\n", addr)
 	logger.Fatal(http.ListenAndServe(addr, nil))
-}
-
-func initEnv(param string) error {
-	_ = viper.BindEnv(param)
-	value := viper.GetString(param)
-	if value == "" {
-		return fmt.Errorf("%s is not set", param)
-	}
-	return nil
 }
 
 func initLogger() *zap.Logger {
@@ -134,4 +129,17 @@ func readMapping() ([]map[string]string, error) {
 		}
 	}
 	return mapping, nil
+}
+
+func newAuthenticationHandler(log *zap.SugaredLogger) func(h http.HandlerFunc) http.HandlerFunc {
+	return func(h http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			username, password, ok := r.BasicAuth()
+
+			if !ok || username != viper.GetString(cfg.AuthUserParam) || password != viper.GetString(cfg.AuthPasswordParam) {
+				log.Warn("Authentication failed", username, ":", password, " ", viper.GetString(cfg.AuthUserParam), ":", viper.GetString(cfg.AuthPasswordParam))
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			}
+		}
+	}
 }
