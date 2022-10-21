@@ -14,11 +14,11 @@ Follow [Installing KuberLogic](https://kuberlogic.com/docs/getting-started) to
 
 ### Features
 
-- Application instance (Tenant) orchestration (list/provision/delete)
-- Scheduled and Instant backups
+- Application instance (Tenant) orchestration (list/provision/delete/edit)
+- Scheduled and Instant backups with Verero
 - Custom domain (subdomain) support
 - SSL support
-- Integration with billing provider (Chargebee) via webhooks
+- Integration with billing providers via webhooks
 - Application (Tenant) isolation
 - Application instance updates
 - RESTful API and CLI for service management
@@ -26,7 +26,7 @@ Follow [Installing KuberLogic](https://kuberlogic.com/docs/getting-started) to
 
 ### Coming soon
 
-[You can check our Roadmap here](https://kuberlogic.clearflask.com/roadmap)
+[You can check our Roadmap here](https://roadmap.kuberlogic.com/)
 
 ----
 
@@ -46,13 +46,13 @@ Kubernetes cluster 1.20-1.23
 
 ### Documentation
 
-Please refer to the official docs at [kuberlogic.com](https://docs.kuberlogic.com/)
+Please refer to the official docs at [kuberlogic.com](https://kuberlogic.com/docs/intro)
 
 ### Getting involved
 
 Feel free to open an [issue](https://github.com/kuberlogic/kuberlogic/issues) if you need any help.
 
-You can see the roadmap/announcements and leave your feedback [here](https://kuberlogic.clearflask.com/).
+You can see the roadmap/announcements and leave your feedback [here](https://roadmap.kuberlogic.com/).
 
 You can also reach out to us at [info@kuberlogic.com](mailto:info@kuberlogic.com)
  or join our [Slack community](https://join.slack.com/t/kuberlogic/shared_invite/zt-x845lggh-lne0taYmwLFgQ6XZEiTJoA)
