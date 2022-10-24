@@ -60,6 +60,8 @@ const (
 	installChargebeeSiteParam           = "chargebee_site"
 	installChargebeeKeyParam            = "chargebee_key"
 	installChargebeeMappingParam        = "chargebee_mapping"
+	installChargebeeIntegrationUser     = "chargebee_webhook_user"
+	installChargebeeIntegrationPassword = "chargebee_webhook_password"
 	installKuberlogicDomainParam        = "kuberlogic_domain"
 	installReportErrors                 = "report_errors"
 	installSentryDSNParam               = "sentry_dsn"
@@ -115,6 +117,8 @@ func makeInstallCmd(k8sclient kubernetes.Interface) *cobra.Command {
 	_ = cmd.PersistentFlags().String(installChargebeeKeyParam, "", "Specify ChargeBee API key.\nFor more information, read https://apidocs.chargebee.com/docs/api/?prod_cat_ver=2 . API Key are used to configure Kuberlogic ChargeBee integration.")
 	_ = cmd.PersistentFlags().String(installChargebeeMappingParam, "", "Specify ChargeBee mapping file.\nFor more information, read https://kuberlogic.com/docs/configuring/billing/#mapping-custom-fields .")
 	_ = cmd.PersistentFlags().String(installKuberlogicDomainParam, "", "Specify “Domain name”.\nThis configuration setting is used by KuberLogic to create endpoints for application instances. (e.g. instance1.domainname.com).")
+	_ = cmd.PersistentFlags().String(installChargebeeIntegrationUser, "", "Set authentication user for ChargeBee integration webhook")
+	_ = cmd.PersistentFlags().String(installChargebeeIntegrationPassword, "", "Set authentication password for ChargeBee integration webhook")
 	_ = cmd.PersistentFlags().Bool(installReportErrors, false, "Report errors to KuberLogic?\nChoose 'yes' if you want to help us improve KuberLogic, otherwise, select 'no'. Error reports will be generated and sent automatically, these reports contain only information about the errors and do not contain any user data. Let us receive errors at least from your test environments.")
 	_ = cmd.PersistentFlags().String(installSentryDSNParam, "", "Specify Sentry Data Source Name (DSN).\nFor more information, read https://docs.sentry.io/product/sentry-basics/dsn-explainer/ . (KuberLogic team will not be notified in case of errors).")
 	_ = cmd.PersistentFlags().Bool(installUseDockerRegistryParam, false, "Add docker registry credentials? Choose 'yes' if your application consists of images in private docker-registry")
@@ -186,8 +190,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 			return err
 		}
 		klParams.SetConfigFile(klConfigFile)
-		err = klParams.ReadInConfig()
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
+		if err = klParams.ReadInConfig(); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
 		deploymentId := klParams.GetString(installDeploymentId)
@@ -233,31 +236,48 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 		klParams.Set(installBackupsEnabledParam, backupsEnabled)
 		klParams.Set(installBackupsSnapshotsEnabledParam, snapshotsEnabled)
 
-		var cSite, cKey, cMappingFile string
-		if billingProvider, err := getSelectPrompt(command, installBillingProvider, klParams.GetString(installBillingProvider), []string{noneBillingProvider, chargebeeBillingProvider}); err != nil {
+		var billingProvider, cSite, cKey, cMappingFile, webhookUser, webhookPassword string
+		if billingProvider, err = getSelectPrompt(command, installBillingProvider, klParams.GetString(installBillingProvider), []string{noneBillingProvider, chargebeeBillingProvider}); err != nil {
 			return errors.Wrapf(err, "error processing %s flag", installBillingProvider)
 		} else if billingProvider == chargebeeBillingProvider {
 			cachedChargebeeMappingFile := filepath.Join(cacheDir, "manager/mapping-fields.yaml")
 			if cSite, err = getStringPrompt(command, installChargebeeSiteParam, klParams.GetString(installChargebeeSiteParam), true, nil); err != nil {
 				return errors.Wrapf(err, "error processing %s flag", installChargebeeSiteParam)
-			} else if cSite != "" {
-				cKey, err = getStringPrompt(command, installChargebeeKeyParam, klParams.GetString(installChargebeeKeyParam), true, nil)
-				if err != nil {
-					return errors.Wrapf(err, "error processing %s flag", installChargebeeKeyParam)
-				}
-				cMappingFile, err = getStringPrompt(command, installChargebeeMappingParam, klParams.GetString(installChargebeeMappingParam), false, validateChargebeeMappingfile)
-				if err != nil {
-					return errors.Wrapf(err, "error processing %s flag", installChargebeeMappingParam)
-				}
-				if cMappingFile != "" {
-					if err = cacheConfigFile(cMappingFile, cachedChargebeeMappingFile); err != nil {
-						return errors.Wrapf(err, "error caching %s config file", cachedChargebeeMappingFile)
-					}
+			}
+			if cKey, err = getStringPrompt(command, installChargebeeKeyParam, klParams.GetString(installChargebeeKeyParam), true, nil); err != nil {
+				return errors.Wrapf(err, "error processing %s flag", installChargebeeKeyParam)
+			}
+			if cMappingFile, err = getStringPrompt(command, installChargebeeMappingParam, klParams.GetString(installChargebeeMappingParam), false, validateChargebeeMappingfile); err != nil {
+				return errors.Wrapf(err, "error processing %s flag", installChargebeeMappingParam)
+			}
+			if cMappingFile != "" {
+				if err = cacheConfigFile(cMappingFile, cachedChargebeeMappingFile); err != nil {
+					return errors.Wrapf(err, "error caching %s config file", cachedChargebeeMappingFile)
 				}
 			}
+
+			// set webhook authentication, generate credentials when empty
+			webhookUser, webhookPassword = klParams.GetString(installChargebeeIntegrationUser), klParams.GetString(installChargebeeIntegrationUser)
+			if webhookUser == "" {
+				klParams.Set(installChargebeeIntegrationUser, uuid.New().String())
+			}
+			if webhookPassword == "" {
+				klParams.Set(installChargebeeIntegrationPassword, uuid.New().String())
+			}
+
+			if webhookUser, err = getStringPrompt(command, installChargebeeIntegrationUser, klParams.GetString(installChargebeeIntegrationUser), true, nil); err != nil {
+				return errors.Wrapf(err, "error processing %s flag", installChargebeeIntegrationUser)
+			}
+			if webhookPassword, err = getStringPrompt(command, installChargebeeIntegrationPassword, klParams.GetString(installChargebeeIntegrationPassword), true, nil); err != nil {
+				return errors.Wrapf(err, "error processing %s flag", installChargebeeIntegrationPassword)
+			}
 		}
+		klParams.Set(installBillingProvider, billingProvider)
+
 		klParams.Set(installChargebeeSiteParam, cSite)
 		klParams.Set(installChargebeeKeyParam, cKey)
+		klParams.Set(installChargebeeIntegrationUser, webhookUser)
+		klParams.Set(installChargebeeIntegrationPassword, webhookPassword)
 
 		kuberlogicDomain, err := getStringPrompt(command, installKuberlogicDomainParam, klParams.GetString(installKuberlogicDomainParam), true, nil)
 		if err != nil {
@@ -286,9 +306,7 @@ func runInstall(k8sclient kubernetes.Interface) func(command *cobra.Command, arg
 			}
 		}
 		var useDockerRegistry bool
-		var dockerRegistryUrl string
-		var dockerRegistryUsername string
-		var dockerRegistryPassword string
+		var dockerRegistryUrl, dockerRegistryUsername, dockerRegistryPassword string
 		if useDockerRegistry, err = getBoolPrompt(command, false, installUseDockerRegistryParam); err != nil {
 			return errors.Wrapf(err, "error processing %s flag", installUseDockerRegistryParam)
 		}

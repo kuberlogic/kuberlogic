@@ -11,13 +11,15 @@ import (
 	"github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
+	"github.com/pkg/errors"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+
+	"github.com/kuberlogic/kuberlogic/modules/chargebee-integration/cfg"
 	client2 "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/client/service"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
-	"github.com/pkg/errors"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
 func createService(logger *zap.SugaredLogger, svc *models.Service) error {
@@ -30,7 +32,7 @@ func createService(logger *zap.SugaredLogger, svc *models.Service) error {
 	}
 
 	_, err = apiClient.Service.ServiceAdd(params,
-		httptransport.APIKeyAuth("X-Token", "header", viper.GetString("KUBERLOGIC_APISERVER_TOKEN")))
+		httptransport.APIKeyAuth("X-Token", "header", viper.GetString(cfg.KlApiserverTokenParam)))
 	if err != nil {
 		return err
 	}
@@ -54,7 +56,7 @@ func editService(logger *zap.SugaredLogger, svc *models.Service) error {
 	}
 
 	_, err = apiClient.Service.ServiceEdit(params,
-		httptransport.APIKeyAuth("X-Token", "header", viper.GetString("KUBERLOGIC_APISERVER_TOKEN")))
+		httptransport.APIKeyAuth("X-Token", "header", viper.GetString(cfg.KlApiserverTokenParam)))
 	if err != nil {
 		return err
 	}
@@ -73,7 +75,7 @@ func archiveService(logger *zap.SugaredLogger, serviceId string) error {
 	}
 	_, err = apiClient.Service.ServiceArchive(
 		params,
-		httptransport.APIKeyAuth("X-Token", "header", viper.GetString("KUBERLOGIC_APISERVER_TOKEN")),
+		httptransport.APIKeyAuth("X-Token", "header", viper.GetString(cfg.KlApiserverTokenParam)),
 	)
 	return nil
 }
@@ -89,7 +91,7 @@ func getServiceBySubscriptionId(logger *zap.SugaredLogger, subscriptionId string
 
 	response, err := apiClient.Service.ServiceList(
 		params,
-		httptransport.APIKeyAuth("X-Token", "header", viper.GetString("KUBERLOGIC_APISERVER_TOKEN")),
+		httptransport.APIKeyAuth("X-Token", "header", viper.GetString(cfg.KlApiserverTokenParam)),
 	)
 	if err != nil {
 		return nil, err
@@ -115,7 +117,7 @@ func checkStatus(logger *zap.SugaredLogger, name, subscriptionId string, timeout
 	params := service.NewServiceGetParams()
 	params.ServiceID = name
 	response, err := apiClient.Service.ServiceGet(params,
-		httptransport.APIKeyAuth("X-Token", "header", viper.GetString("KUBERLOGIC_APISERVER_TOKEN")))
+		httptransport.APIKeyAuth("X-Token", "header", viper.GetString(cfg.KlApiserverTokenParam)))
 	if err != nil {
 		logger.Error("get operation error", err)
 		return
@@ -142,8 +144,8 @@ func checkStatus(logger *zap.SugaredLogger, name, subscriptionId string, timeout
 }
 
 func makeClient() (*client2.ServiceAPI, error) {
-	hostname := viper.GetString("KUBERLOGIC_APISERVER_HOST")
-	scheme := viper.GetString("KUBERLOGIC_APISERVER_SCHEME")
+	hostname := viper.GetString(cfg.KlApiserverHostParam)
+	scheme := viper.GetString(cfg.KlApiserverSchemeParam)
 
 	r := httptransport.NewWithClient(hostname, client2.DefaultBasePath, []string{scheme}, nil)
 
@@ -161,7 +163,7 @@ func checkAlreadyExists(err error) bool {
 
 func createServiceItem() *models.Service {
 	name := petname.Generate(2, "-")
-	serviceType := viper.GetString("KUBERLOGIC_TYPE")
+	serviceType := viper.GetString(cfg.KlTypeParam)
 	return &models.Service{
 		ID:   &name,
 		Type: &serviceType,

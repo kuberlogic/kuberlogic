@@ -25,7 +25,7 @@ require (
 	github.com/hashicorp/go-hclog v1.2.0
 	github.com/hashicorp/go-plugin v1.4.3
 	github.com/jessevdk/go-flags v1.5.0
-	github.com/jetstack/cert-manager v1.6.3 // indirect
+	github.com/jetstack/cert-manager v1.6.3
 	github.com/kuberlogic/zapsentry v1.6.2
 	github.com/novln/docker-parser v1.0.0
 	github.com/olekukonko/tablewriter v0.0.5
