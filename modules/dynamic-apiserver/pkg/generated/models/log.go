@@ -21,7 +21,7 @@ type Log struct {
 
 	// container name
 	// Read Only: true
-	ContainerName string `json:"container_name,omitempty"`
+	ContainerName string `json:"containerName,omitempty"`
 
 	// logs
 	// Read Only: true
@@ -53,7 +53,7 @@ func (m *Log) ContextValidate(ctx context.Context, formats strfmt.Registry) erro
 
 func (m *Log) contextValidateContainerName(ctx context.Context, formats strfmt.Registry) error {
 
-	if err := validate.ReadOnly(ctx, "container_name", "body", string(m.ContainerName)); err != nil {
+	if err := validate.ReadOnly(ctx, "containerName", "body", string(m.ContainerName)); err != nil {
 		return err
 	}
 

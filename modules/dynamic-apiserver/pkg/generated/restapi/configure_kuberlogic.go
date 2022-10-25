@@ -109,6 +109,11 @@ func configureAPI(api *operations.KuberlogicAPI) http.Handler {
 			return middleware.NotImplemented("operation service.ServiceEdit has not yet been implemented")
 		})
 	}
+	if api.ServiceServiceExplainHandler == nil {
+		api.ServiceServiceExplainHandler = service.ServiceExplainHandlerFunc(func(params service.ServiceExplainParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation service.ServiceExplain has not yet been implemented")
+		})
+	}
 	if api.ServiceServiceGetHandler == nil {
 		api.ServiceServiceGetHandler = service.ServiceGetHandlerFunc(func(params service.ServiceGetParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceGet has not yet been implemented")
@@ -119,9 +124,9 @@ func configureAPI(api *operations.KuberlogicAPI) http.Handler {
 			return middleware.NotImplemented("operation service.ServiceList has not yet been implemented")
 		})
 	}
-	if api.ServiceServiceLogsListHandler == nil {
-		api.ServiceServiceLogsListHandler = service.ServiceLogsListHandlerFunc(func(params service.ServiceLogsListParams, principal *models.Principal) middleware.Responder {
-			return middleware.NotImplemented("operation service.ServiceLogsList has not yet been implemented")
+	if api.ServiceServiceLogsHandler == nil {
+		api.ServiceServiceLogsHandler = service.ServiceLogsHandlerFunc(func(params service.ServiceLogsParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation service.ServiceLogs has not yet been implemented")
 		})
 	}
 	if api.ServiceServiceSecretsListHandler == nil {

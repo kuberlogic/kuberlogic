@@ -407,7 +407,7 @@ paths:
         - service
       summary: list service logs
       description: List service pod logs
-      operationId: serviceLogsList
+      operationId: serviceLogs
       parameters:
         - $ref: "#/parameters/ServiceID"
         - $ref: "#/parameters/ContainerName"
@@ -416,6 +416,36 @@ paths:
           description: kuberlogic service logs
           schema:
             $ref: "#/definitions/Logs"
+        400:
+          description: bad input parameter
+          schema:
+            $ref: "#/definitions/Error"
+        401:
+          description: bad authentication
+        403:
+          description: bad permissions
+        422:
+          description: bad validation
+          schema:
+            $ref: "#/definitions/Error"
+        503:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
+  /services/{ServiceID}/explain:
+    get:
+      tags:
+        - service
+      summary: explain status of service
+      description: Explain status of service
+      operationId: serviceExplain
+      parameters:
+        - $ref: "#/parameters/ServiceID"
+      responses:
+        200:
+          description: kuberlogic service explain
+          schema:
+            $ref: "#/definitions/Explain"
         400:
           description: bad input parameter
           schema:
@@ -670,6 +700,51 @@ definitions:
     items:
       $ref: "#/definitions/Restore"
 
+  Explain:
+    type: object
+    properties:
+      pvc:
+        type: object
+        properties:
+          size:
+            type: string
+          phase:
+            type: string
+          storageClass:
+            type: string
+          error:
+            type: string
+
+      pod:
+        type: object
+        properties:
+          containers:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                status:
+                  type: string
+                restartCount:
+                  x-nullable: true
+                  type: integer
+          error:
+            type: string
+
+      ingress:
+        type: object
+        properties:
+          hosts:
+            type: array
+            items:
+              type: string
+          ingressClass:
+            type: string
+          error:
+            type: string
+
   Logs:
     type: array
     items:
@@ -678,7 +753,7 @@ definitions:
   Log:
     type: object
     properties:
-      container_name:
+      containerName:
         type: string
         readOnly: true
       logs:

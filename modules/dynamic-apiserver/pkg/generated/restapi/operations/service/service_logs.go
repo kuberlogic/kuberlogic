@@ -13,42 +13,42 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 )
 
-// ServiceLogsListHandlerFunc turns a function with the right signature into a service logs list handler
-type ServiceLogsListHandlerFunc func(ServiceLogsListParams, *models.Principal) middleware.Responder
+// ServiceLogsHandlerFunc turns a function with the right signature into a service logs handler
+type ServiceLogsHandlerFunc func(ServiceLogsParams, *models.Principal) middleware.Responder
 
 // Handle executing the request and returning a response
-func (fn ServiceLogsListHandlerFunc) Handle(params ServiceLogsListParams, principal *models.Principal) middleware.Responder {
+func (fn ServiceLogsHandlerFunc) Handle(params ServiceLogsParams, principal *models.Principal) middleware.Responder {
 	return fn(params, principal)
 }
 
-// ServiceLogsListHandler interface for that can handle valid service logs list params
-type ServiceLogsListHandler interface {
-	Handle(ServiceLogsListParams, *models.Principal) middleware.Responder
+// ServiceLogsHandler interface for that can handle valid service logs params
+type ServiceLogsHandler interface {
+	Handle(ServiceLogsParams, *models.Principal) middleware.Responder
 }
 
-// NewServiceLogsList creates a new http.Handler for the service logs list operation
-func NewServiceLogsList(ctx *middleware.Context, handler ServiceLogsListHandler) *ServiceLogsList {
-	return &ServiceLogsList{Context: ctx, Handler: handler}
+// NewServiceLogs creates a new http.Handler for the service logs operation
+func NewServiceLogs(ctx *middleware.Context, handler ServiceLogsHandler) *ServiceLogs {
+	return &ServiceLogs{Context: ctx, Handler: handler}
 }
 
-/* ServiceLogsList swagger:route GET /services/{ServiceID}/logs service serviceLogsList
+/* ServiceLogs swagger:route GET /services/{ServiceID}/logs service serviceLogs
 
 list service logs
 
 List service pod logs
 
 */
-type ServiceLogsList struct {
+type ServiceLogs struct {
 	Context *middleware.Context
-	Handler ServiceLogsListHandler
+	Handler ServiceLogsHandler
 }
 
-func (o *ServiceLogsList) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (o *ServiceLogs) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	route, rCtx, _ := o.Context.RouteInfo(r)
 	if rCtx != nil {
 		*r = *rCtx
 	}
-	var Params = NewServiceLogsListParams()
+	var Params = NewServiceLogsParams()
 	uprinc, aCtx, err := o.Context.Authorize(r, route)
 	if err != nil {
 		o.Context.Respond(rw, r, route.Produces, route, err)

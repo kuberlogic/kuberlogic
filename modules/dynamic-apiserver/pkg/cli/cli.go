@@ -147,6 +147,7 @@ func makeServiceCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra.Com
 		makeServiceArchiveCmd(apiClientFunc),
 		makeServiceUnarchiveCmd(apiClientFunc),
 		makeServiceLogsCmd(apiClientFunc),
+		makeServiceExplainCmd(apiClientFunc),
 	)
 
 	return operationGroupServiceCmd

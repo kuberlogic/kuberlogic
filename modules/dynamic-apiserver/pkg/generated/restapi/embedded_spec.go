@@ -655,6 +655,53 @@ func init() {
         }
       }
     },
+    "/services/{ServiceID}/explain": {
+      "get": {
+        "description": "Explain status of service",
+        "tags": [
+          "service"
+        ],
+        "summary": "explain status of service",
+        "operationId": "serviceExplain",
+        "parameters": [
+          {
+            "$ref": "#/parameters/ServiceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "kuberlogic service explain",
+            "schema": {
+              "$ref": "#/definitions/Explain"
+            }
+          },
+          "400": {
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/services/{ServiceID}/logs": {
       "get": {
         "description": "List service pod logs",
@@ -662,7 +709,7 @@ func init() {
           "service"
         ],
         "summary": "list service logs",
-        "operationId": "serviceLogsList",
+        "operationId": "serviceLogs",
         "parameters": [
           {
             "$ref": "#/parameters/ServiceID"
@@ -841,6 +888,71 @@ func init() {
         }
       }
     },
+    "Explain": {
+      "type": "object",
+      "properties": {
+        "ingress": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "string"
+            },
+            "hosts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "ingressClass": {
+              "type": "string"
+            }
+          }
+        },
+        "pod": {
+          "type": "object",
+          "properties": {
+            "containers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "restartCount": {
+                    "type": "integer",
+                    "x-nullable": true
+                  },
+                  "status": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "error": {
+              "type": "string"
+            }
+          }
+        },
+        "pvc": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "string"
+            },
+            "phase": {
+              "type": "string"
+            },
+            "size": {
+              "type": "string"
+            },
+            "storageClass": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
     "Limits": {
       "type": "object",
       "properties": {
@@ -858,7 +970,7 @@ func init() {
     "Log": {
       "type": "object",
       "properties": {
-        "container_name": {
+        "containerName": {
           "type": "string",
           "readOnly": true
         },
@@ -1844,6 +1956,60 @@ func init() {
         }
       }
     },
+    "/services/{ServiceID}/explain": {
+      "get": {
+        "description": "Explain status of service",
+        "tags": [
+          "service"
+        ],
+        "summary": "explain status of service",
+        "operationId": "serviceExplain",
+        "parameters": [
+          {
+            "maxLength": 20,
+            "minLength": 3,
+            "pattern": "[a-z0-9]([-a-z0-9]*[a-z0-9])?",
+            "type": "string",
+            "description": "service Resource ID",
+            "name": "ServiceID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "kuberlogic service explain",
+            "schema": {
+              "$ref": "#/definitions/Explain"
+            }
+          },
+          "400": {
+            "description": "bad input parameter",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "bad authentication"
+          },
+          "403": {
+            "description": "bad permissions"
+          },
+          "422": {
+            "description": "bad validation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/services/{ServiceID}/logs": {
       "get": {
         "description": "List service pod logs",
@@ -1851,7 +2017,7 @@ func init() {
           "service"
         ],
         "summary": "list service logs",
-        "operationId": "serviceLogsList",
+        "operationId": "serviceLogs",
         "parameters": [
           {
             "maxLength": 20,
@@ -2054,6 +2220,122 @@ func init() {
         }
       }
     },
+    "Explain": {
+      "type": "object",
+      "properties": {
+        "ingress": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "string"
+            },
+            "hosts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "ingressClass": {
+              "type": "string"
+            }
+          }
+        },
+        "pod": {
+          "type": "object",
+          "properties": {
+            "containers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ExplainPodContainersItems0"
+              }
+            },
+            "error": {
+              "type": "string"
+            }
+          }
+        },
+        "pvc": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "string"
+            },
+            "phase": {
+              "type": "string"
+            },
+            "size": {
+              "type": "string"
+            },
+            "storageClass": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "ExplainIngress": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ingressClass": {
+          "type": "string"
+        }
+      }
+    },
+    "ExplainPod": {
+      "type": "object",
+      "properties": {
+        "containers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExplainPodContainersItems0"
+          }
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "ExplainPodContainersItems0": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "restartCount": {
+          "type": "integer",
+          "x-nullable": true
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "ExplainPvc": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "phase": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string"
+        },
+        "storageClass": {
+          "type": "string"
+        }
+      }
+    },
     "Limits": {
       "type": "object",
       "properties": {
@@ -2071,7 +2353,7 @@ func init() {
     "Log": {
       "type": "object",
       "properties": {
-        "container_name": {
+        "containerName": {
           "type": "string",
           "readOnly": true
         },

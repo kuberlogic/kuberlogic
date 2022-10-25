@@ -114,9 +114,10 @@ func Main(args []string) {
 	api.ServiceServiceCredentialsUpdateHandler = apiService.ServiceCredentialsUpdateHandlerFunc(handlers.ServiceCredentialsUpdateHandler)
 	api.ServiceServiceDeleteHandler = apiService.ServiceDeleteHandlerFunc(handlers.ServiceDeleteHandler)
 	api.ServiceServiceEditHandler = apiService.ServiceEditHandlerFunc(handlers.ServiceEditHandler)
+	api.ServiceServiceExplainHandler = apiService.ServiceExplainHandlerFunc(handlers.ServiceExplainHandler)
 	api.ServiceServiceGetHandler = apiService.ServiceGetHandlerFunc(handlers.ServiceGetHandler)
 	api.ServiceServiceListHandler = apiService.ServiceListHandlerFunc(handlers.ServiceListHandler)
-	api.ServiceServiceLogsListHandler = apiService.ServiceLogsListHandlerFunc(handlers.ServiceLogsListHandler)
+	api.ServiceServiceLogsHandler = apiService.ServiceLogsHandlerFunc(handlers.ServiceLogsHandler)
 	api.ServiceServiceSecretsListHandler = apiService.ServiceSecretsListHandlerFunc(handlers.ServiceSecretsListHandler)
 	api.ServiceServiceUnarchiveHandler = apiService.ServiceUnarchiveHandlerFunc(handlers.ServiceUnarchiveHandler)
 	//api.BearerAuth = handlers.BearerAuthentication
