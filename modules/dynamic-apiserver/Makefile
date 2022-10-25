@@ -54,8 +54,8 @@ build-cli: export GO111MODULE=on
 build-cli: export LDFLAGS="-X github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/cli.ver=$(VERSION)"
 build-cli: build-configs
 	GOOS=darwin GOARCH=amd64 go build -ldflags $(LDFLAGS) -a -o bin/kuberlogic_x86_64_darwin cmd/cli/main.go
-#	GOOS=darwin GOARCH=arm64 go build -ldflags $(LDFLAGS) -a -o bin/kuberlogic_arm64_darwin cmd/cli/main.go
-#	GOOS=linux GOARCH=amd64 go build -ldflags $(LDFLAGS) -a -o bin/kuberlogic_x86_64_linux cmd/cli/main.go
+	GOOS=darwin GOARCH=arm64 go build -ldflags $(LDFLAGS) -a -o bin/kuberlogic_arm64_darwin cmd/cli/main.go
+	GOOS=linux GOARCH=amd64 go build -ldflags $(LDFLAGS) -a -o bin/kuberlogic_x86_64_linux cmd/cli/main.go
 	test -e kuberlogic && rm kuberlogic || echo "link does not exist"
 	ln -s bin/kuberlogic_$(shell uname -m)_$(shell uname | tr '[:upper:]' '[:lower:]') kuberlogic
 
