@@ -9,33 +9,28 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/errors"
-	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 )
 
-// NewServiceLogsListParams creates a new ServiceLogsListParams object
+// NewServiceExplainParams creates a new ServiceExplainParams object
 //
 // There are no default values defined in the spec.
-func NewServiceLogsListParams() ServiceLogsListParams {
+func NewServiceExplainParams() ServiceExplainParams {
 
-	return ServiceLogsListParams{}
+	return ServiceExplainParams{}
 }
 
-// ServiceLogsListParams contains all the bound params for the service logs list operation
+// ServiceExplainParams contains all the bound params for the service explain operation
 // typically these are obtained from a http.Request
 //
-// swagger:parameters serviceLogsList
-type ServiceLogsListParams struct {
+// swagger:parameters serviceExplain
+type ServiceExplainParams struct {
 
 	// HTTP Request Object
 	HTTPRequest *http.Request `json:"-"`
 
-	/*service pod container name to query logs by
-	  In: query
-	*/
-	ContainerName *string
 	/*service Resource ID
 	  Required: true
 	  Max Length: 20
@@ -49,18 +44,11 @@ type ServiceLogsListParams struct {
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
 // for simple values it will use straight method calls.
 //
-// To ensure default values, the struct must have been initialized with NewServiceLogsListParams() beforehand.
-func (o *ServiceLogsListParams) BindRequest(r *http.Request, route *middleware.MatchedRoute) error {
+// To ensure default values, the struct must have been initialized with NewServiceExplainParams() beforehand.
+func (o *ServiceExplainParams) BindRequest(r *http.Request, route *middleware.MatchedRoute) error {
 	var res []error
 
 	o.HTTPRequest = r
-
-	qs := runtime.Values(r.URL.Query())
-
-	qContainerName, qhkContainerName, _ := qs.GetOK("ContainerName")
-	if err := o.bindContainerName(qContainerName, qhkContainerName, route.Formats); err != nil {
-		res = append(res, err)
-	}
 
 	rServiceID, rhkServiceID, _ := route.Params.GetOK("ServiceID")
 	if err := o.bindServiceID(rServiceID, rhkServiceID, route.Formats); err != nil {
@@ -72,26 +60,8 @@ func (o *ServiceLogsListParams) BindRequest(r *http.Request, route *middleware.M
 	return nil
 }
 
-// bindContainerName binds and validates parameter ContainerName from query.
-func (o *ServiceLogsListParams) bindContainerName(rawData []string, hasKey bool, formats strfmt.Registry) error {
-	var raw string
-	if len(rawData) > 0 {
-		raw = rawData[len(rawData)-1]
-	}
-
-	// Required: false
-	// AllowEmptyValue: false
-
-	if raw == "" { // empty values pass all other validations
-		return nil
-	}
-	o.ContainerName = &raw
-
-	return nil
-}
-
 // bindServiceID binds and validates parameter ServiceID from path.
-func (o *ServiceLogsListParams) bindServiceID(rawData []string, hasKey bool, formats strfmt.Registry) error {
+func (o *ServiceExplainParams) bindServiceID(rawData []string, hasKey bool, formats strfmt.Registry) error {
 	var raw string
 	if len(rawData) > 0 {
 		raw = rawData[len(rawData)-1]
@@ -109,7 +79,7 @@ func (o *ServiceLogsListParams) bindServiceID(rawData []string, hasKey bool, for
 }
 
 // validateServiceID carries on validations for parameter ServiceID
-func (o *ServiceLogsListParams) validateServiceID(formats strfmt.Registry) error {
+func (o *ServiceExplainParams) validateServiceID(formats strfmt.Registry) error {
 
 	if err := validate.MinLength("ServiceID", "path", o.ServiceID, 3); err != nil {
 		return err

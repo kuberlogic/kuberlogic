@@ -24,7 +24,7 @@ func makeServiceLogsCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra
 		Use:     "serviceLogs",
 		Short:   `Show service pod logs`,
 		Aliases: []string{"logs"},
-		RunE:    runServiceLogsList(apiClientFunc),
+		RunE:    runServiceLogs(apiClientFunc),
 	}
 	_ = cmd.PersistentFlags().String(serviceIdFlag, "", "Required. Service id")
 	_ = cmd.MarkFlagRequired(serviceIdFlag)
@@ -32,8 +32,8 @@ func makeServiceLogsCmd(apiClientFunc func() (*client.ServiceAPI, error)) *cobra
 	return cmd
 }
 
-// runServiceLogsList uses cmd flags to call endpoint api
-func runServiceLogsList(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *cobra.Command, args []string) error {
+// runServiceLogs uses cmd flags to call endpoint api
+func runServiceLogs(apiClientFunc func() (*client.ServiceAPI, error)) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		var err error
 
@@ -42,7 +42,7 @@ func runServiceLogsList(apiClientFunc func() (*client.ServiceAPI, error)) func(c
 			return err
 		}
 
-		params := service.NewServiceLogsListParams()
+		params := service.NewServiceLogsParams()
 
 		if value, err := getString(cmd, serviceIdFlag); err != nil {
 			return err
@@ -65,7 +65,7 @@ func runServiceLogsList(apiClientFunc func() (*client.ServiceAPI, error)) func(c
 		}
 
 		// make request and then print result
-		response, err := apiClient.Service.ServiceLogsList(params,
+		response, err := apiClient.Service.ServiceLogs(params,
 			client2.APIKeyAuth("X-Token", "header", viper.GetString(tokenFlag)))
 		if err != nil {
 			return humanizeError(err)

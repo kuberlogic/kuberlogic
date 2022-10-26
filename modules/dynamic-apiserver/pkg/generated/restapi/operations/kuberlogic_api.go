@@ -80,14 +80,17 @@ func NewKuberlogicAPI(spec *loads.Document) *KuberlogicAPI {
 		ServiceServiceEditHandler: service.ServiceEditHandlerFunc(func(params service.ServiceEditParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceEdit has not yet been implemented")
 		}),
+		ServiceServiceExplainHandler: service.ServiceExplainHandlerFunc(func(params service.ServiceExplainParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation service.ServiceExplain has not yet been implemented")
+		}),
 		ServiceServiceGetHandler: service.ServiceGetHandlerFunc(func(params service.ServiceGetParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceGet has not yet been implemented")
 		}),
 		ServiceServiceListHandler: service.ServiceListHandlerFunc(func(params service.ServiceListParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceList has not yet been implemented")
 		}),
-		ServiceServiceLogsListHandler: service.ServiceLogsListHandlerFunc(func(params service.ServiceLogsListParams, principal *models.Principal) middleware.Responder {
-			return middleware.NotImplemented("operation service.ServiceLogsList has not yet been implemented")
+		ServiceServiceLogsHandler: service.ServiceLogsHandlerFunc(func(params service.ServiceLogsParams, principal *models.Principal) middleware.Responder {
+			return middleware.NotImplemented("operation service.ServiceLogs has not yet been implemented")
 		}),
 		ServiceServiceSecretsListHandler: service.ServiceSecretsListHandlerFunc(func(params service.ServiceSecretsListParams, principal *models.Principal) middleware.Responder {
 			return middleware.NotImplemented("operation service.ServiceSecretsList has not yet been implemented")
@@ -167,12 +170,14 @@ type KuberlogicAPI struct {
 	ServiceServiceDeleteHandler service.ServiceDeleteHandler
 	// ServiceServiceEditHandler sets the operation handler for the service edit operation
 	ServiceServiceEditHandler service.ServiceEditHandler
+	// ServiceServiceExplainHandler sets the operation handler for the service explain operation
+	ServiceServiceExplainHandler service.ServiceExplainHandler
 	// ServiceServiceGetHandler sets the operation handler for the service get operation
 	ServiceServiceGetHandler service.ServiceGetHandler
 	// ServiceServiceListHandler sets the operation handler for the service list operation
 	ServiceServiceListHandler service.ServiceListHandler
-	// ServiceServiceLogsListHandler sets the operation handler for the service logs list operation
-	ServiceServiceLogsListHandler service.ServiceLogsListHandler
+	// ServiceServiceLogsHandler sets the operation handler for the service logs operation
+	ServiceServiceLogsHandler service.ServiceLogsHandler
 	// ServiceServiceSecretsListHandler sets the operation handler for the service secrets list operation
 	ServiceServiceSecretsListHandler service.ServiceSecretsListHandler
 	// ServiceServiceUnarchiveHandler sets the operation handler for the service unarchive operation
@@ -291,14 +296,17 @@ func (o *KuberlogicAPI) Validate() error {
 	if o.ServiceServiceEditHandler == nil {
 		unregistered = append(unregistered, "service.ServiceEditHandler")
 	}
+	if o.ServiceServiceExplainHandler == nil {
+		unregistered = append(unregistered, "service.ServiceExplainHandler")
+	}
 	if o.ServiceServiceGetHandler == nil {
 		unregistered = append(unregistered, "service.ServiceGetHandler")
 	}
 	if o.ServiceServiceListHandler == nil {
 		unregistered = append(unregistered, "service.ServiceListHandler")
 	}
-	if o.ServiceServiceLogsListHandler == nil {
-		unregistered = append(unregistered, "service.ServiceLogsListHandler")
+	if o.ServiceServiceLogsHandler == nil {
+		unregistered = append(unregistered, "service.ServiceLogsHandler")
 	}
 	if o.ServiceServiceSecretsListHandler == nil {
 		unregistered = append(unregistered, "service.ServiceSecretsListHandler")
@@ -452,6 +460,10 @@ func (o *KuberlogicAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
+	o.handlers["GET"]["/services/{ServiceID}/explain"] = service.NewServiceExplain(o.context, o.ServiceServiceExplainHandler)
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
 	o.handlers["GET"]["/services/{ServiceID}"] = service.NewServiceGet(o.context, o.ServiceServiceGetHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
@@ -460,7 +472,7 @@ func (o *KuberlogicAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/services/{ServiceID}/logs"] = service.NewServiceLogsList(o.context, o.ServiceServiceLogsListHandler)
+	o.handlers["GET"]["/services/{ServiceID}/logs"] = service.NewServiceLogs(o.context, o.ServiceServiceLogsHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}

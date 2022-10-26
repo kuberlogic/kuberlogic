@@ -10,10 +10,10 @@ import (
 
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 	apiService "github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/restapi/operations/service"
-	cloudlinuxv1alpha1 "github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
+	"github.com/kuberlogic/kuberlogic/modules/dynamic-operator/api/v1alpha1"
 )
 
-func TestServiceLogsList(t *testing.T) {
+func TestServiceLogs(t *testing.T) {
 	containerName := "a"
 
 	cases := []testCase{
@@ -23,7 +23,7 @@ func TestServiceLogsList(t *testing.T) {
 			result: &models.Error{
 				Message: "service does not exist",
 			},
-			params: apiService.ServiceLogsListParams{
+			params: apiService.ServiceLogsParams{
 				HTTPRequest: &http.Request{},
 				ServiceID:   "service",
 			},
@@ -32,14 +32,14 @@ func TestServiceLogsList(t *testing.T) {
 			name:   "pod-not-found",
 			status: 503,
 			objects: []runtime.Object{
-				&cloudlinuxv1alpha1.KuberLogicService{
+				&v1alpha1.KuberLogicService{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "logs-test",
 					},
-					Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
+					Spec: v1alpha1.KuberLogicServiceSpec{
 						Type: "demo",
 					},
-					Status: cloudlinuxv1alpha1.KuberLogicServiceStatus{
+					Status: v1alpha1.KuberLogicServiceStatus{
 						Namespace: "secrets-test",
 					},
 				},
@@ -47,7 +47,7 @@ func TestServiceLogsList(t *testing.T) {
 			result: &models.Error{
 				Message: "error listing service pods, no pod is available",
 			},
-			params: apiService.ServiceLogsListParams{
+			params: apiService.ServiceLogsParams{
 				HTTPRequest: &http.Request{},
 				ServiceID:   "logs-test",
 			},
@@ -56,14 +56,14 @@ func TestServiceLogsList(t *testing.T) {
 			name:   "all-containers",
 			status: 200,
 			objects: []runtime.Object{
-				&cloudlinuxv1alpha1.KuberLogicService{
+				&v1alpha1.KuberLogicService{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "logs-test",
 					},
-					Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
+					Spec: v1alpha1.KuberLogicServiceSpec{
 						Type: "demo",
 					},
-					Status: cloudlinuxv1alpha1.KuberLogicServiceStatus{
+					Status: v1alpha1.KuberLogicServiceStatus{
 						Namespace: "secrets-test",
 					},
 				},
@@ -86,7 +86,7 @@ func TestServiceLogsList(t *testing.T) {
 				{ContainerName: "a", Logs: "fake logs"},
 				{ContainerName: "b", Logs: "fake logs"},
 			},
-			params: apiService.ServiceLogsListParams{
+			params: apiService.ServiceLogsParams{
 				HTTPRequest: &http.Request{},
 				ServiceID:   "logs-test",
 			},
@@ -95,14 +95,14 @@ func TestServiceLogsList(t *testing.T) {
 			name:   "single-container",
 			status: 200,
 			objects: []runtime.Object{
-				&cloudlinuxv1alpha1.KuberLogicService{
+				&v1alpha1.KuberLogicService{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "logs-test",
 					},
-					Spec: cloudlinuxv1alpha1.KuberLogicServiceSpec{
+					Spec: v1alpha1.KuberLogicServiceSpec{
 						Type: "demo",
 					},
-					Status: cloudlinuxv1alpha1.KuberLogicServiceStatus{
+					Status: v1alpha1.KuberLogicServiceStatus{
 						Namespace: "secrets-test",
 					},
 				},
@@ -124,7 +124,7 @@ func TestServiceLogsList(t *testing.T) {
 			result: models.Logs{
 				{ContainerName: "a", Logs: "fake logs"},
 			},
-			params: apiService.ServiceLogsListParams{
+			params: apiService.ServiceLogsParams{
 				HTTPRequest:   &http.Request{},
 				ServiceID:     "logs-test",
 				ContainerName: &containerName,
@@ -133,7 +133,7 @@ func TestServiceLogsList(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			checkResponse(newFakeHandlers(t, tc.objects...).ServiceLogsListHandler(tc.params.(apiService.ServiceLogsListParams), nil), t, tc.status, tc.result)
+			checkResponse(newFakeHandlers(t, tc.objects...).ServiceLogsHandler(tc.params.(apiService.ServiceLogsParams), nil), t, tc.status, tc.result)
 		})
 	}
 }

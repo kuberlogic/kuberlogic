@@ -10,7 +10,7 @@ import (
 	"github.com/kuberlogic/kuberlogic/modules/dynamic-apiserver/pkg/generated/models"
 )
 
-func TestListLogs(t *testing.T) {
+func TestLogs(t *testing.T) {
 	input := models.Logs{
 		&models.Log{
 			ContainerName: "test",
